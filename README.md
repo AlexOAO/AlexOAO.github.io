@@ -14,7 +14,7 @@
 + Adminstrative department in [Global Elite Program Student Association](https://www.instagram.com/thu_gepsa/)
 + Principal of Martech Lecture in [Infomation Management 資訊管理學系 智慧行銷課程](http://martech.thu.edu.tw/mobile/)
 
-###  Finnace Certifivation 
+###  Finance Certification 
 + 證卷商業務人員
 + 證卷商高級業務人員
 + 期貨商業務人員
