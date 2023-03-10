@@ -22,7 +22,7 @@
 
 
 ### Foreign Language Skills
-+ Engish -  Advanced ([TOEIC](https://www.toeic.com.tw)855)
++ Engish -  Advanced ([TOEIC](https://www.toeic.com.tw) 855)
 + Japanese - Medium
 + Chinese - Native
 + Taiwanese - Native
