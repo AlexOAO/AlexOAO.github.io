@@ -9,47 +9,35 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* ── Reset & Base ── */
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; font-size: 16px; }
     body {
       font-family: 'Noto Sans TC', 'Inter', sans-serif;
-      background: #0f172a;
-      color: #e2e8f0;
-      line-height: 1.7;
-      overflow-x: hidden;
+      background: #0f172a; color: #e2e8f0;
+      line-height: 1.7; overflow-x: hidden;
     }
     a { text-decoration: none; color: inherit; }
     ul { list-style: none; }
     img { max-width: 100%; display: block; }
-
-    /* ── Scrollbar ── */
     ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-track { background: #0f172a; }
     ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 4px; }
 
-    /* ── Navigation ── */
+    /* ── Nav ── */
     .navbar {
       position: fixed; top: 0; left: 0; width: 100%; z-index: 1000;
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(59, 130, 246, 0.1);
-      transition: all 0.3s ease;
+      background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(59,130,246,0.1); transition: all 0.3s;
     }
-    .navbar.scrolled {
-      background: rgba(15, 23, 42, 0.95);
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
-    }
+    .navbar.scrolled { background: rgba(15,23,42,0.95); box-shadow: 0 4px 30px rgba(0,0,0,0.3); }
     .nav-container {
       max-width: 1200px; margin: 0 auto;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem;
     }
     .nav-logo {
       font-size: 1.25rem; font-weight: 700;
       background: linear-gradient(135deg, #3b82f6, #06b6d4);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
     .nav-links { display: flex; gap: 2rem; align-items: center; }
     .nav-links a {
@@ -59,15 +47,14 @@
     .nav-links a::after {
       content: ''; position: absolute; bottom: -4px; left: 0;
       width: 0; height: 2px;
-      background: linear-gradient(90deg, #3b82f6, #06b6d4);
-      transition: width 0.3s;
+      background: linear-gradient(90deg, #3b82f6, #06b6d4); transition: width 0.3s;
     }
     .nav-links a:hover { color: #e2e8f0; }
     .nav-links a:hover::after { width: 100%; }
     .nav-toggle { display: none; flex-direction: column; gap: 5px; cursor: pointer; background: none; border: none; padding: 4px; }
     .nav-toggle span { width: 24px; height: 2px; background: #e2e8f0; transition: 0.3s; border-radius: 2px; }
 
-    /* ── Sections Common ── */
+    /* ── Shared ── */
     section { padding: 5rem 2rem; }
     .section-container { max-width: 1100px; margin: 0 auto; }
     .section-title {
@@ -76,52 +63,13 @@
     }
     .section-title .accent {
       background: linear-gradient(135deg, #3b82f6, #06b6d4);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
-    .section-subtitle {
-      color: #64748b; font-size: 1rem; margin-bottom: 3rem;
-    }
+    .section-subtitle { color: #64748b; font-size: 1rem; margin-bottom: 3rem; }
     .divider {
       width: 60px; height: 3px; margin-bottom: 3rem;
-      background: linear-gradient(90deg, #3b82f6, #06b6d4);
-      border-radius: 2px;
+      background: linear-gradient(90deg, #3b82f6, #06b6d4); border-radius: 2px;
     }
-
-    /* ── Hero ── */
-    .hero {
-      min-height: 100vh; display: flex; align-items: center;
-      padding-top: 80px;
-      background:
-        radial-gradient(ellipse at 20% 50%, rgba(59,130,246,0.08) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 20%, rgba(6,182,212,0.06) 0%, transparent 50%);
-    }
-    .hero-container {
-      max-width: 1100px; margin: 0 auto; width: 100%;
-      display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;
-    }
-    .hero-text { animation: fadeInUp 0.8s ease; }
-    .hero-greeting {
-      font-size: 1rem; color: #3b82f6; font-weight: 500;
-      letter-spacing: 2px; text-transform: uppercase; margin-bottom: 0.75rem;
-    }
-    .hero-name {
-      font-size: 3.5rem; font-weight: 900; line-height: 1.1; margin-bottom: 1rem;
-    }
-    .hero-name .gradient {
-      background: linear-gradient(135deg, #3b82f6, #06b6d4, #8b5cf6);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .hero-role {
-      font-size: 1.25rem; color: #94a3b8; margin-bottom: 1.5rem;
-      font-weight: 400;
-    }
-    .hero-desc {
-      color: #94a3b8; font-size: 1rem; line-height: 1.8;
-      margin-bottom: 2rem;
-    }
-    .hero-buttons { display: flex; gap: 1rem; flex-wrap: wrap; }
     .btn {
       display: inline-flex; align-items: center; gap: 0.5rem;
       padding: 0.75rem 1.75rem; border-radius: 8px;
@@ -139,64 +87,89 @@
     }
     .btn-outline:hover { border-color: #3b82f6; color: #3b82f6; transform: translateY(-2px); }
 
-    .hero-image { display: flex; justify-content: center; animation: fadeInUp 0.8s ease 0.2s both; }
-    .hero-photo-wrapper {
-      position: relative; width: 320px; height: 320px;
+    /* ── Hero ── */
+    .hero {
+      min-height: 100vh; display: flex; align-items: center; padding-top: 80px;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(59,130,246,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(6,182,212,0.06) 0%, transparent 50%);
+      position: relative;
     }
+    .hero-container {
+      max-width: 1100px; margin: 0 auto; width: 100%;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;
+    }
+    .hero-text { animation: fadeInUp 0.8s ease; }
+    .hero-greeting {
+      font-size: 1rem; color: #3b82f6; font-weight: 500;
+      letter-spacing: 2px; text-transform: uppercase; margin-bottom: 0.75rem;
+    }
+    .hero-name { font-size: 3.5rem; font-weight: 900; line-height: 1.1; margin-bottom: 1rem; }
+    .hero-name .gradient {
+      background: linear-gradient(135deg, #3b82f6, #06b6d4, #8b5cf6);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero-role { font-size: 1.25rem; color: #94a3b8; margin-bottom: 0.5rem; font-weight: 400; }
+    .typing-cursor { display: inline-block; width: 2px; height: 1.2em; background: #3b82f6; margin-left: 2px; animation: blink 1s step-end infinite; vertical-align: text-bottom; }
+    @keyframes blink { 50% { opacity: 0; } }
+    .hero-desc { color: #94a3b8; font-size: 1rem; line-height: 1.8; margin-bottom: 2rem; }
+    .hero-buttons { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .hero-image { display: flex; justify-content: center; animation: fadeInUp 0.8s ease 0.2s both; }
+    .hero-photo-wrapper { position: relative; width: 320px; height: 320px; }
     .hero-photo-wrapper::before {
       content: ''; position: absolute; inset: -4px;
       background: linear-gradient(135deg, #3b82f6, #06b6d4, #8b5cf6);
-      border-radius: 50%; z-index: 0;
-      animation: rotate 6s linear infinite;
+      border-radius: 50%; z-index: 0; animation: rotate 6s linear infinite;
     }
-    @keyframes rotate {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
+    @keyframes rotate { to { transform: rotate(360deg); } }
     .hero-photo-wrapper::after {
-      content: ''; position: absolute; inset: 2px;
-      background: #0f172a; border-radius: 50%; z-index: 1;
+      content: ''; position: absolute; inset: 2px; background: #0f172a; border-radius: 50%; z-index: 1;
     }
     .hero-photo {
       width: 100%; height: 100%; border-radius: 50%;
-      object-fit: cover; position: relative; z-index: 2;
-      border: 4px solid #0f172a;
+      object-fit: cover; position: relative; z-index: 2; border: 4px solid #0f172a;
     }
-    .hero-stats {
-      display: flex; gap: 2rem; margin-top: 2rem;
+
+    /* ── Tech Marquee ── */
+    .marquee-section {
+      padding: 2rem 0; overflow: hidden;
+      border-top: 1px solid rgba(59,130,246,0.06);
+      border-bottom: 1px solid rgba(59,130,246,0.06);
+      background: rgba(30, 41, 59, 0.3);
     }
-    .stat-item { text-align: center; }
-    .stat-number {
-      font-size: 1.75rem; font-weight: 700;
+    .marquee-track {
+      display: flex; width: max-content;
+      animation: marquee 30s linear infinite;
+    }
+    .marquee-track:hover { animation-play-state: paused; }
+    @keyframes marquee { to { transform: translateX(-50%); } }
+    .marquee-item {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 1.5rem; margin: 0 0.5rem;
+      font-size: 0.9rem; font-weight: 500; color: #64748b;
+      white-space: nowrap; transition: color 0.3s;
+    }
+    .marquee-item:hover { color: #3b82f6; }
+    .marquee-item .dot {
+      width: 6px; height: 6px; border-radius: 50%;
       background: linear-gradient(135deg, #3b82f6, #06b6d4);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
     }
-    .stat-label { font-size: 0.8rem; color: #64748b; }
 
     /* ── About ── */
     #about { background: #0f172a; }
-    .about-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;
-    }
+    .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
     .about-text p { color: #94a3b8; margin-bottom: 1rem; font-size: 1rem; line-height: 1.9; }
     .about-info { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
     .info-card {
-      background: rgba(30, 41, 59, 0.6);
-      border: 1px solid rgba(59, 130, 246, 0.1);
-      border-radius: 12px; padding: 1.25rem;
-      transition: all 0.3s;
+      background: rgba(30,41,59,0.6); border: 1px solid rgba(59,130,246,0.1);
+      border-radius: 12px; padding: 1.25rem; transition: all 0.3s;
     }
-    .info-card:hover {
-      border-color: rgba(59, 130, 246, 0.3);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-    }
+    .info-card:hover { border-color: rgba(59,130,246,0.3); transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.2); }
     .info-card .label { font-size: 0.8rem; color: #64748b; margin-bottom: 0.25rem; }
     .info-card .value { font-size: 0.95rem; color: #e2e8f0; font-weight: 500; }
 
     /* ── Experience ── */
-    #experience { background: rgba(15, 23, 42, 0.95); }
+    #experience { background: rgba(15,23,42,0.95); }
     .timeline { position: relative; padding-left: 2rem; }
     .timeline::before {
       content: ''; position: absolute; left: 0; top: 0;
@@ -208,7 +181,7 @@
       content: ''; position: absolute; left: -2.45rem; top: 0.5rem;
       width: 12px; height: 12px; border-radius: 50%;
       background: #3b82f6; border: 3px solid #0f172a;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
     }
     .timeline-header {
       display: flex; justify-content: space-between; align-items: flex-start;
@@ -217,7 +190,7 @@
     .timeline-title { font-size: 1.15rem; font-weight: 700; color: #e2e8f0; }
     .timeline-date {
       font-size: 0.85rem; color: #3b82f6; font-weight: 500;
-      background: rgba(59, 130, 246, 0.1); padding: 0.25rem 0.75rem;
+      background: rgba(59,130,246,0.1); padding: 0.25rem 0.75rem;
       border-radius: 20px; white-space: nowrap;
     }
     .timeline-subtitle { font-size: 0.95rem; color: #94a3b8; margin-bottom: 0.75rem; }
@@ -227,199 +200,135 @@
     }
     .timeline-content li::before {
       content: ''; position: absolute; left: 0; top: 0.6rem;
-      width: 6px; height: 6px; border-radius: 50%;
-      background: #06b6d4;
+      width: 6px; height: 6px; border-radius: 50%; background: #06b6d4;
     }
 
     /* ── Projects ── */
     #projects { background: #0f172a; }
     .projects-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 1.5rem;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.5rem;
     }
     .project-card {
-      background: rgba(30, 41, 59, 0.6);
-      border: 1px solid rgba(59, 130, 246, 0.08);
-      border-radius: 16px; padding: 1.75rem;
-      transition: all 0.35s;
+      background: rgba(30,41,59,0.6); border: 1px solid rgba(59,130,246,0.08);
+      border-radius: 16px; padding: 1.75rem; transition: all 0.35s;
       display: flex; flex-direction: column;
     }
     .project-card:hover {
-      transform: translateY(-4px);
-      border-color: rgba(59, 130, 246, 0.3);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+      transform: translateY(-4px); border-color: rgba(59,130,246,0.3);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.25);
     }
     .project-icon {
       width: 48px; height: 48px; border-radius: 12px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 1.5rem; margin-bottom: 1rem;
-      background: rgba(59, 130, 246, 0.1);
+      font-size: 1.5rem; margin-bottom: 1rem; background: rgba(59,130,246,0.1);
     }
-    .project-card h3 {
-      font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; color: #e2e8f0;
-    }
-    .project-card p {
-      color: #94a3b8; font-size: 0.9rem; line-height: 1.7;
-      flex-grow: 1; margin-bottom: 1.25rem;
-    }
+    .project-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; color: #e2e8f0; }
+    .project-card p { color: #94a3b8; font-size: 0.9rem; line-height: 1.7; flex-grow: 1; margin-bottom: 1.25rem; }
     .project-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; }
     .project-tags span {
       font-size: 0.75rem; padding: 0.25rem 0.65rem; border-radius: 20px;
-      background: rgba(6, 182, 212, 0.1); color: #06b6d4;
-      border: 1px solid rgba(6, 182, 212, 0.15);
+      background: rgba(6,182,212,0.1); color: #06b6d4; border: 1px solid rgba(6,182,212,0.15);
     }
     .project-link {
       display: inline-flex; align-items: center; gap: 0.5rem;
-      font-size: 0.9rem; color: #3b82f6; font-weight: 500;
-      transition: gap 0.3s;
+      font-size: 0.9rem; color: #3b82f6; font-weight: 500; transition: gap 0.3s;
     }
     .project-link:hover { gap: 0.75rem; }
     .project-link svg { width: 16px; height: 16px; }
+    .arrow-svg { display: inline; }
 
-    /* ── Skills ── */
-    #skills { background: rgba(15, 23, 42, 0.95); }
-    .skills-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 1.5rem;
+    /* ── Blog ── */
+    #blog { background: rgba(15,23,42,0.95); }
+    .blog-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(480px, 1fr)); gap: 1.5rem;
     }
-    .skill-category {
-      background: rgba(30, 41, 59, 0.6);
-      border: 1px solid rgba(59, 130, 246, 0.08);
-      border-radius: 16px; padding: 1.75rem;
-      transition: all 0.3s;
+    .blog-card {
+      background: rgba(30,41,59,0.6); border: 1px solid rgba(59,130,246,0.08);
+      border-radius: 16px; padding: 2rem; transition: all 0.35s;
+      display: flex; flex-direction: column; cursor: pointer;
     }
-    .skill-category:hover {
-      border-color: rgba(59, 130, 246, 0.2);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    .blog-card:hover {
+      transform: translateY(-4px); border-color: rgba(139,92,246,0.3);
+      box-shadow: 0 12px 40px rgba(139,92,246,0.1);
     }
-    .skill-category h3 {
-      font-size: 1.05rem; font-weight: 700; margin-bottom: 1.25rem;
-      display: flex; align-items: center; gap: 0.5rem; color: #e2e8f0;
+    .blog-date {
+      font-size: 0.8rem; color: #64748b; margin-bottom: 0.75rem;
+      display: flex; align-items: center; gap: 0.5rem;
     }
-    .skill-items { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-    .skill-tag {
-      padding: 0.4rem 0.85rem; border-radius: 8px;
-      font-size: 0.85rem; font-weight: 500;
-      background: rgba(59, 130, 246, 0.08);
-      color: #94a3b8; border: 1px solid rgba(59, 130, 246, 0.1);
-      transition: all 0.3s;
+    .blog-date::before {
+      content: ''; width: 20px; height: 1px; background: #64748b;
     }
-    .skill-tag:hover {
-      background: rgba(59, 130, 246, 0.15);
-      color: #e2e8f0; border-color: rgba(59, 130, 246, 0.3);
+    .blog-card h3 {
+      font-size: 1.2rem; font-weight: 700; color: #e2e8f0;
+      margin-bottom: 0.75rem; line-height: 1.4;
+      transition: color 0.3s;
     }
-
-    /* ── Education ── */
-    #education { background: #0f172a; }
-    .edu-grid { display: grid; gap: 1.5rem; }
-    .edu-card {
-      background: rgba(30, 41, 59, 0.6);
-      border: 1px solid rgba(59, 130, 246, 0.08);
-      border-radius: 16px; padding: 1.75rem;
-      display: flex; gap: 1.5rem; align-items: flex-start;
-      transition: all 0.3s;
+    .blog-card:hover h3 { color: #a78bfa; }
+    .blog-card .summary {
+      color: #94a3b8; font-size: 0.92rem; line-height: 1.7;
+      flex-grow: 1; margin-bottom: 1.25rem;
     }
-    .edu-card:hover {
-      border-color: rgba(59, 130, 246, 0.2);
-      transform: translateY(-2px);
+    .blog-card .blog-footer {
+      display: flex; justify-content: space-between; align-items: center;
     }
-    .edu-icon {
-      width: 56px; height: 56px; min-width: 56px; border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.5rem;
-      background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(6,182,212,0.15));
+    .blog-card .blog-tags { display: flex; gap: 0.5rem; }
+    .blog-card .blog-tags span {
+      font-size: 0.7rem; padding: 0.2rem 0.55rem; border-radius: 20px;
+      background: rgba(139,92,246,0.1); color: #a78bfa;
+      border: 1px solid rgba(139,92,246,0.15);
     }
-    .edu-info h3 { font-size: 1.1rem; font-weight: 700; color: #e2e8f0; }
-    .edu-info .school { font-size: 0.95rem; color: #3b82f6; margin-bottom: 0.25rem; }
-    .edu-info .date { font-size: 0.85rem; color: #64748b; }
-    .edu-info .gpa {
-      display: inline-block; margin-top: 0.5rem;
-      font-size: 0.85rem; padding: 0.2rem 0.6rem;
-      background: rgba(6, 182, 212, 0.1); color: #06b6d4;
-      border-radius: 6px;
+    .blog-card .read-more {
+      font-size: 0.85rem; color: #a78bfa; font-weight: 500;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      transition: gap 0.3s;
     }
-
-    /* ── Certifications ── */
-    #certs { background: rgba(15, 23, 42, 0.95); }
-    .certs-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 1rem;
-    }
-    .cert-item {
-      background: rgba(30, 41, 59, 0.6);
-      border: 1px solid rgba(59, 130, 246, 0.08);
-      border-radius: 12px; padding: 1.25rem;
-      text-align: center; transition: all 0.3s;
-    }
-    .cert-item:hover {
-      border-color: rgba(59, 130, 246, 0.25);
-      transform: translateY(-2px);
-    }
-    .cert-item .cert-icon {
-      font-size: 1.75rem; margin-bottom: 0.75rem;
-    }
-    .cert-item .cert-name {
-      font-size: 0.9rem; font-weight: 600; color: #e2e8f0;
+    .blog-card:hover .read-more { gap: 0.7rem; }
+    .blog-empty {
+      text-align: center; color: #64748b; padding: 3rem; font-size: 0.95rem;
     }
 
     /* ── Contact ── */
     #contact { background: #0f172a; }
-    .contact-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;
-    }
+    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
     .contact-text p { color: #94a3b8; margin-bottom: 1.5rem; line-height: 1.8; }
     .contact-links { display: flex; flex-direction: column; gap: 1rem; }
     .contact-item {
-      display: flex; align-items: center; gap: 1rem;
-      padding: 1rem 1.25rem;
-      background: rgba(30, 41, 59, 0.6);
-      border: 1px solid rgba(59, 130, 246, 0.08);
+      display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem;
+      background: rgba(30,41,59,0.6); border: 1px solid rgba(59,130,246,0.08);
       border-radius: 12px; transition: all 0.3s;
     }
-    .contact-item:hover {
-      border-color: rgba(59, 130, 246, 0.25);
-      transform: translateX(4px);
-    }
+    .contact-item:hover { border-color: rgba(59,130,246,0.25); transform: translateX(4px); }
     .contact-icon {
       width: 44px; height: 44px; min-width: 44px; border-radius: 10px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 1.2rem;
-      background: rgba(59, 130, 246, 0.1);
+      font-size: 1.2rem; background: rgba(59,130,246,0.1);
     }
     .contact-item .label { font-size: 0.8rem; color: #64748b; }
     .contact-item .value { font-size: 0.95rem; color: #e2e8f0; font-weight: 500; }
-
     .contact-form { display: flex; flex-direction: column; gap: 1rem; }
     .form-group input, .form-group textarea {
       width: 100%; padding: 0.85rem 1rem;
-      background: rgba(30, 41, 59, 0.8);
-      border: 1px solid rgba(59, 130, 246, 0.15);
+      background: rgba(30,41,59,0.8); border: 1px solid rgba(59,130,246,0.15);
       border-radius: 10px; color: #e2e8f0;
-      font-family: inherit; font-size: 0.95rem;
-      transition: border-color 0.3s;
+      font-family: inherit; font-size: 0.95rem; transition: border-color 0.3s;
     }
-    .form-group input:focus, .form-group textarea:focus {
-      outline: none; border-color: #3b82f6;
-    }
+    .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #3b82f6; }
     .form-group textarea { resize: vertical; min-height: 120px; }
 
     /* ── Footer ── */
     footer {
       text-align: center; padding: 2rem;
-      border-top: 1px solid rgba(59, 130, 246, 0.1);
-      background: rgba(15, 23, 42, 0.95);
+      border-top: 1px solid rgba(59,130,246,0.1); background: rgba(15,23,42,0.95);
     }
     .footer-links { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 1rem; }
     .footer-links a {
       width: 40px; height: 40px; border-radius: 10px;
       display: flex; align-items: center; justify-content: center;
-      background: rgba(30, 41, 59, 0.6);
-      border: 1px solid rgba(59, 130, 246, 0.1);
+      background: rgba(30,41,59,0.6); border: 1px solid rgba(59,130,246,0.1);
       transition: all 0.3s; font-size: 1.1rem;
     }
     .footer-links a:hover {
-      border-color: #3b82f6; transform: translateY(-2px);
-      background: rgba(59, 130, 246, 0.1);
+      border-color: #3b82f6; transform: translateY(-2px); background: rgba(59,130,246,0.1);
     }
     footer p { font-size: 0.85rem; color: #64748b; }
 
@@ -442,11 +351,10 @@
       .hero-photo-wrapper { width: 240px; height: 240px; }
       .hero-name { font-size: 2.5rem; }
       .hero-buttons { justify-content: center; }
-      .hero-stats { justify-content: center; }
       .about-grid { grid-template-columns: 1fr; }
       .contact-grid { grid-template-columns: 1fr; }
       .projects-grid { grid-template-columns: 1fr; }
-      .skills-grid { grid-template-columns: 1fr; }
+      .blog-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 600px) {
       section { padding: 3rem 1.25rem; }
@@ -455,15 +363,13 @@
       .nav-links.open {
         display: flex; flex-direction: column;
         position: absolute; top: 100%; left: 0; width: 100%;
-        background: rgba(15, 23, 42, 0.98);
-        padding: 1.5rem 2rem; gap: 1.25rem;
-        border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+        background: rgba(15,23,42,0.98); padding: 1.5rem 2rem; gap: 1.25rem;
+        border-bottom: 1px solid rgba(59,130,246,0.1);
       }
       .nav-toggle { display: flex; }
       .hero-name { font-size: 2rem; }
       .hero-photo-wrapper { width: 200px; height: 200px; }
       .about-info { grid-template-columns: 1fr; }
-      .certs-grid { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
@@ -474,13 +380,11 @@
     <div class="nav-container">
       <a href="#" class="nav-logo">Alex Li</a>
       <div class="nav-links" id="navLinks">
-        <a href="#about">關於我</a>
-        <a href="#experience">經歷</a>
-        <a href="#projects">作品集</a>
-        <a href="#skills">技能</a>
-        <a href="#education">學歷</a>
-        <a href="#certs">證照</a>
-        <a href="#contact">聯絡</a>
+        <a href="#about">About</a>
+        <a href="#experience">Experience</a>
+        <a href="#projects">Projects</a>
+        <a href="#blog">Blog</a>
+        <a href="#contact">Contact</a>
       </div>
       <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
         <span></span><span></span><span></span>
@@ -496,35 +400,23 @@
         <h1 class="hero-name">
           李翔緯<br><span class="gradient">Alex Li</span>
         </h1>
-        <p class="hero-role">AI Developer &amp; FinTech Enthusiast</p>
+        <p class="hero-role">
+          <span id="typewriter"></span><span class="typing-cursor"></span>
+        </p>
         <p class="hero-desc">
-          財金與GMBA雙碩士，專注 LLM 在金融場景的應用開發。<br>
-          熟悉 Python 與 LangGraph 生態系，具備從需求分析、系統開發到敏捷專案管理的完整經驗。
+          用 AI 解決金融場景的真實問題。<br>
+          從 RAG 智能客服到 Multi-Agent 投資決策，我喜歡把前沿技術落地到業務裡。
         </p>
         <div class="hero-buttons">
           <a href="https://github.com/AlexOAO" target="_blank" class="btn btn-primary">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
             GitHub
           </a>
-          <a href="#contact" class="btn btn-outline">聯絡我</a>
+          <a href="#blog" class="btn btn-outline">Read My Blog</a>
           <a href="assets/docs/resume.pdf" target="_blank" class="btn btn-outline">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-            履歷 CV
+            CV
           </a>
-        </div>
-        <div class="hero-stats">
-          <div class="stat-item">
-            <div class="stat-number">9+</div>
-            <div class="stat-label">專業證照</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number">6+</div>
-            <div class="stat-label">AI 專案</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number">2</div>
-            <div class="stat-label">碩士學位</div>
-          </div>
         </div>
       </div>
       <div class="hero-image">
@@ -535,39 +427,78 @@
     </div>
   </section>
 
+  <!-- Tech Marquee -->
+  <div class="marquee-section">
+    <div class="marquee-track" id="marquee">
+      <span class="marquee-item"><span class="dot"></span>Python</span>
+      <span class="marquee-item"><span class="dot"></span>LangGraph</span>
+      <span class="marquee-item"><span class="dot"></span>RAG</span>
+      <span class="marquee-item"><span class="dot"></span>Multi-Agent</span>
+      <span class="marquee-item"><span class="dot"></span>Azure OpenAI</span>
+      <span class="marquee-item"><span class="dot"></span>Docker</span>
+      <span class="marquee-item"><span class="dot"></span>MCP</span>
+      <span class="marquee-item"><span class="dot"></span>Qdrant</span>
+      <span class="marquee-item"><span class="dot"></span>Whisper</span>
+      <span class="marquee-item"><span class="dot"></span>PostgreSQL</span>
+      <span class="marquee-item"><span class="dot"></span>Zipline</span>
+      <span class="marquee-item"><span class="dot"></span>Git</span>
+      <span class="marquee-item"><span class="dot"></span>Scrum</span>
+      <span class="marquee-item"><span class="dot"></span>CI/CD</span>
+      <span class="marquee-item"><span class="dot"></span>SQL</span>
+      <span class="marquee-item"><span class="dot"></span>TEJ</span>
+      <!-- duplicated for seamless loop -->
+      <span class="marquee-item"><span class="dot"></span>Python</span>
+      <span class="marquee-item"><span class="dot"></span>LangGraph</span>
+      <span class="marquee-item"><span class="dot"></span>RAG</span>
+      <span class="marquee-item"><span class="dot"></span>Multi-Agent</span>
+      <span class="marquee-item"><span class="dot"></span>Azure OpenAI</span>
+      <span class="marquee-item"><span class="dot"></span>Docker</span>
+      <span class="marquee-item"><span class="dot"></span>MCP</span>
+      <span class="marquee-item"><span class="dot"></span>Qdrant</span>
+      <span class="marquee-item"><span class="dot"></span>Whisper</span>
+      <span class="marquee-item"><span class="dot"></span>PostgreSQL</span>
+      <span class="marquee-item"><span class="dot"></span>Zipline</span>
+      <span class="marquee-item"><span class="dot"></span>Git</span>
+      <span class="marquee-item"><span class="dot"></span>Scrum</span>
+      <span class="marquee-item"><span class="dot"></span>CI/CD</span>
+      <span class="marquee-item"><span class="dot"></span>SQL</span>
+      <span class="marquee-item"><span class="dot"></span>TEJ</span>
+    </div>
+  </div>
+
   <!-- About -->
   <section id="about">
     <div class="section-container reveal">
-      <h2 class="section-title"><span class="accent">01.</span> 關於我</h2>
+      <h2 class="section-title"><span class="accent">01.</span> About</h2>
       <div class="divider"></div>
       <div class="about-grid">
         <div class="about-text">
           <p>
-            我是李翔緯，財金與GMBA雙碩士，目前就讀於國立臺灣科技大學財務金融研究所。
-            專注於 LLM 在金融場景的應用開發，曾為金控集團開發 AI 治理自動審查系統，建構 Multi-Agent 投資決策架構，
-            並以 RAG 技術打造智能客服系統。
+            臺科大財金所的研究生，同時在凱基金控做 AI 開發實習。
+            之前在 TEJ 待了半年，從 RAG 客服做到 Multi-Agent 投顧系統，
+            踩了不少坑，也學到 AI 真正落地的眉角。
           </p>
           <p>
-            熟悉 Python 與 LangGraph 生態系，具備從需求分析、系統開發到敏捷專案管理的完整經驗，
-            致力以 AI 技術解決金融業務痛點。同時擁有豐富的量化交易策略開發與回測經驗。
+            寫 code 之外，我也喜歡攝影和游泳。
+            相信最好的技術是讓人感覺不到技術存在的那種。
           </p>
         </div>
         <div class="about-info">
           <div class="info-card">
-            <div class="label">姓名</div>
-            <div class="value">李翔緯 Alex Li</div>
+            <div class="label">Currently</div>
+            <div class="value">凱基金控 AI 開發實習</div>
           </div>
           <div class="info-card">
-            <div class="label">學歷</div>
+            <div class="label">Education</div>
             <div class="value">臺科大 財金所</div>
           </div>
           <div class="info-card">
-            <div class="label">專長</div>
-            <div class="value">LLM 應用開發</div>
+            <div class="label">Focus</div>
+            <div class="value">LLM x FinTech</div>
           </div>
           <div class="info-card">
-            <div class="label">語言能力</div>
-            <div class="value">多益 855</div>
+            <div class="label">Fun fact</div>
+            <div class="value">臺科大攝影社 + 臺大游泳社</div>
           </div>
         </div>
       </div>
@@ -577,7 +508,7 @@
   <!-- Experience -->
   <section id="experience">
     <div class="section-container reveal">
-      <h2 class="section-title"><span class="accent">02.</span> 實習與經歷</h2>
+      <h2 class="section-title"><span class="accent">02.</span> Experience</h2>
       <div class="divider"></div>
       <div class="timeline">
 
@@ -590,9 +521,9 @@
             <span class="timeline-date">2026/02 ~ Now</span>
           </div>
           <ul class="timeline-content">
-            <li>為集團AI統籌小組開發 RPA 系統，串接 SharePoint 供子公司上傳與回傳報告，運用 Azure OpenAI 對控管現狀與風險處理計畫進行語義合理性判定</li>
+            <li>為集團AI統籌小組開發 RPA 系統，串接 SharePoint，運用 Azure OpenAI 做語義合理性判定與自動風險分級</li>
             <li>基於 PandasAI 開發自然語言轉圖表工具，支援 Azure OpenAI 與本地 Ollama 雙後端</li>
-            <li>以 Scrum 敏捷框架參與開發流程，運用 Azure DevOps 進行任務追蹤、版本控管與 CI/CD 部署</li>
+            <li>以 Scrum 敏捷框架參與開發流程，運用 Azure DevOps 做任務追蹤與 CI/CD 部署</li>
           </ul>
         </div>
 
@@ -600,14 +531,14 @@
           <div class="timeline-header">
             <div>
               <div class="timeline-title">台灣經濟新報 (TEJ) | 量化交易與資料科學實習生</div>
-              <div class="timeline-subtitle">AI 智能客服、智能投顧、ASR 法說會逐字稿</div>
+              <div class="timeline-subtitle">AI 智能客服 / 智能投顧 / ASR 逐字稿</div>
             </div>
             <span class="timeline-date">2025/07 ~ 12</span>
           </div>
           <ul class="timeline-content">
-            <li>運用 RAG 技術整合 LangExtract 自然語言處理，建構 Qdrant 向量資料庫，在 Docker 上實現 AI 智能客服問答功能</li>
-            <li>以 LangGraph 建構 Multi-Agent 協作架構，透過 MCP 工具串接 TEJ 數據產出投資訊號，並整合 Zipline 回測引擎</li>
-            <li>使用 Whisper 辨識語音並自動化影音檔案處理流程，將法說會影音轉換成精準文字稿</li>
+            <li>用 RAG + Qdrant 建構智能客服，在 Docker 上實現問答功能，設計前端介面與管理者後台</li>
+            <li>以 LangGraph 建構 Multi-Agent 投資決策架構，透過 MCP 串接 TEJ 數據，整合 Zipline 回測引擎</li>
+            <li>用 Whisper 自動化法說會影音轉逐字稿流程，摘要重點至結構化表格</li>
           </ul>
         </div>
 
@@ -615,12 +546,11 @@
           <div class="timeline-header">
             <div>
               <div class="timeline-title">數位發展部 | 第六屆 T 大使</div>
-              <div class="timeline-subtitle">數位轉型政策推動與社群溝通</div>
             </div>
             <span class="timeline-date">2025/09 ~ 12</span>
           </div>
           <ul class="timeline-content">
-            <li>與政府合作推動數位轉型政策宣導，協助企業導入生成式 AI、智慧物聯等技術</li>
+            <li>與政府合作推動數位轉型政策宣導，協助企業導入生成式 AI 與智慧物聯技術</li>
           </ul>
         </div>
 
@@ -628,25 +558,11 @@
           <div class="timeline-header">
             <div>
               <div class="timeline-title">TMBA 26th 程式交易部 | 台指期策略</div>
-              <div class="timeline-subtitle">量化交易策略開發</div>
             </div>
             <span class="timeline-date">2025/07 ~ 12</span>
           </div>
           <ul class="timeline-content">
-            <li>開發台指期 CTA 策略，建立策略回測框架且優化參數，評估報酬率、夏普值及最大回撤等指標，榮獲成果發表第三名</li>
-          </ul>
-        </div>
-
-        <div class="timeline-item">
-          <div class="timeline-header">
-            <div>
-              <div class="timeline-title">富邦投信 | 校園資產管理人才培育計畫</div>
-              <div class="timeline-subtitle">資產管理培訓</div>
-            </div>
-            <span class="timeline-date">2024/09 ~ 11</span>
-          </div>
-          <ul class="timeline-content">
-            <li>參與富邦投信校園資產管理人才培育計畫</li>
+            <li>開發台指期 CTA 策略，建立回測框架與參數優化，榮獲成果發表第三名</li>
           </ul>
         </div>
 
@@ -657,125 +573,88 @@
   <!-- Projects -->
   <section id="projects">
     <div class="section-container reveal">
-      <h2 class="section-title"><span class="accent">03.</span> GitHub 作品集</h2>
-      <p class="section-subtitle">精選開源專案與技術作品</p>
+      <h2 class="section-title"><span class="accent">03.</span> Projects</h2>
+      <p class="section-subtitle">Things I've built or contributed to</p>
       <div class="divider"></div>
       <div class="projects-grid">
 
         <div class="project-card">
           <div class="project-icon">&#129302;</div>
           <h3>AI Financial Agent</h3>
-          <p>金融領域 AI Agent，用於投資研究與分析，整合多種金融數據源進行智能決策。</p>
-          <div class="project-tags">
-            <span>LLM</span><span>LangGraph</span><span>Finance</span>
-          </div>
+          <p>金融 AI Agent，整合多種數據源進行投資研究與智能決策。</p>
+          <div class="project-tags"><span>LLM</span><span>LangGraph</span><span>Finance</span></div>
           <a href="https://github.com/AlexOAO/ai-financial-agent" target="_blank" class="project-link">
-            查看專案
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            View on GitHub <svg class="arrow-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </a>
         </div>
 
         <div class="project-card">
           <div class="project-icon">&#128200;</div>
           <h3>AI Hedge Fund</h3>
-          <p>AI 對沖基金團隊架構，以 Multi-Agent 系統模擬基金經理人協作，進行投資組合管理與交易決策。</p>
-          <div class="project-tags">
-            <span>Multi-Agent</span><span>Trading</span><span>Python</span>
-          </div>
+          <p>Multi-Agent 系統模擬基金經理人協作，進行投資組合管理與交易決策。</p>
+          <div class="project-tags"><span>Multi-Agent</span><span>Trading</span><span>Python</span></div>
           <a href="https://github.com/AlexOAO/ai-hedge-fund" target="_blank" class="project-link">
-            查看專案
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            View on GitHub <svg class="arrow-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </a>
         </div>
 
         <div class="project-card">
           <div class="project-icon">&#128270;</div>
-          <h3>Dexter - Deep Financial Research</h3>
-          <p>自主式深度金融研究 Agent，能自動搜集、分析與整合金融資訊，產出研究報告。</p>
-          <div class="project-tags">
-            <span>Agent</span><span>Research</span><span>NLP</span>
-          </div>
+          <h3>Dexter</h3>
+          <p>自主式深度金融研究 Agent，自動搜集與整合金融資訊產出報告。</p>
+          <div class="project-tags"><span>Agent</span><span>Research</span><span>NLP</span></div>
           <a href="https://github.com/AlexOAO/dexter" target="_blank" class="project-link">
-            查看專案
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            View on GitHub <svg class="arrow-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </a>
         </div>
 
         <div class="project-card">
           <div class="project-icon">&#128202;</div>
           <h3>OpenStrategy</h3>
-          <p>開放式量化交易策略框架，支援策略回測與參數優化，整合多種技術指標。</p>
-          <div class="project-tags">
-            <span>Python</span><span>Quantitative</span><span>Backtesting</span>
-          </div>
+          <p>開放式量化交易策略框架，支援回測與參數優化。</p>
+          <div class="project-tags"><span>Python</span><span>Quant</span><span>Backtesting</span></div>
           <a href="https://github.com/AlexOAO/OpenStrategy" target="_blank" class="project-link">
-            查看專案
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            View on GitHub <svg class="arrow-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </a>
         </div>
 
         <div class="project-card">
           <div class="project-icon">&#128201;</div>
           <h3>Barra Multifactor Model</h3>
-          <p>Barra 多因子模型實現，用於風險分析與投資組合因子分解。</p>
-          <div class="project-tags">
-            <span>Factor Model</span><span>Risk</span><span>Finance</span>
-          </div>
+          <p>Barra 多因子模型，用於風險分析與投資組合因子分解。</p>
+          <div class="project-tags"><span>Factor Model</span><span>Risk</span><span>Finance</span></div>
           <a href="https://github.com/AlexOAO/Barra" target="_blank" class="project-link">
-            查看專案
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            View on GitHub <svg class="arrow-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </a>
         </div>
 
         <div class="project-card">
           <div class="project-icon">&#128187;</div>
           <h3>PyQt Stock Backtesting</h3>
-          <p>使用 PyQt 打造的股票回測工具，整合 Yahoo API 取得 OHLC 數據，結合多策略進行回測與 KPI 優化。</p>
-          <div class="project-tags">
-            <span>PyQt</span><span>Backtesting</span><span>Yahoo API</span>
-          </div>
+          <p>PyQt GUI 回測工具，整合 Yahoo API 與多策略回測。</p>
+          <div class="project-tags"><span>PyQt</span><span>Backtesting</span><span>Yahoo API</span></div>
           <a href="https://github.com/AlexOAO/pyQt_stock_backtesting" target="_blank" class="project-link">
-            查看專案
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            View on GitHub <svg class="arrow-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </a>
         </div>
 
         <div class="project-card">
           <div class="project-icon">&#129516;</div>
-          <h3>Transformer Implementation</h3>
-          <p>PyTorch 實現 "Attention Is All You Need" 論文的 Transformer 模型架構。</p>
-          <div class="project-tags">
-            <span>PyTorch</span><span>Deep Learning</span><span>NLP</span>
-          </div>
+          <h3>Transformer</h3>
+          <p>PyTorch 實現 "Attention Is All You Need" 的 Transformer 架構。</p>
+          <div class="project-tags"><span>PyTorch</span><span>Deep Learning</span></div>
           <a href="https://github.com/AlexOAO/transformer" target="_blank" class="project-link">
-            查看專案
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            View on GitHub <svg class="arrow-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </a>
         </div>
 
         <div class="project-card">
           <div class="project-icon">&#128196;</div>
           <h3>EDGAR Crawler</h3>
-          <p>EDGAR 財報爬蟲工具，可下載 SEC 財務報告並從特定章節提取文字資料至結構化 JSON。</p>
-          <div class="project-tags">
-            <span>Web Scraping</span><span>SEC</span><span>JSON</span>
-          </div>
+          <p>SEC 財報爬蟲，提取特定章節文字資料至結構化 JSON。</p>
+          <div class="project-tags"><span>Web Scraping</span><span>SEC</span><span>JSON</span></div>
           <a href="https://github.com/AlexOAO/edgar-crawler" target="_blank" class="project-link">
-            查看專案
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </a>
-        </div>
-
-        <div class="project-card">
-          <div class="project-icon">&#128218;</div>
-          <h3>NTUST Financial Analytics</h3>
-          <p>臺科大財務金融資料分析課程作業與專案，涵蓋金融數據處理與分析實務。</p>
-          <div class="project-tags">
-            <span>Jupyter</span><span>Data Analysis</span><span>Finance</span>
-          </div>
-          <a href="https://github.com/AlexOAO/NTUST_financial_analytics" target="_blank" class="project-link">
-            查看專案
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            View on GitHub <svg class="arrow-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </a>
         </div>
 
@@ -783,152 +662,14 @@
     </div>
   </section>
 
-  <!-- Skills -->
-  <section id="skills">
+  <!-- Blog -->
+  <section id="blog">
     <div class="section-container reveal">
-      <h2 class="section-title"><span class="accent">04.</span> 技能專長</h2>
+      <h2 class="section-title"><span class="accent">04.</span> Blog</h2>
+      <p class="section-subtitle">Notes, learnings &amp; things I find interesting</p>
       <div class="divider"></div>
-      <div class="skills-grid">
-
-        <div class="skill-category">
-          <h3>&#128736; 開發技術</h3>
-          <div class="skill-items">
-            <span class="skill-tag">Python</span>
-            <span class="skill-tag">SQL</span>
-            <span class="skill-tag">Git</span>
-            <span class="skill-tag">Linux</span>
-            <span class="skill-tag">Docker</span>
-            <span class="skill-tag">HTML</span>
-            <span class="skill-tag">Bash</span>
-          </div>
-        </div>
-
-        <div class="skill-category">
-          <h3>&#129302; AI / LLM</h3>
-          <div class="skill-items">
-            <span class="skill-tag">LangGraph</span>
-            <span class="skill-tag">Azure OpenAI</span>
-            <span class="skill-tag">RAG</span>
-            <span class="skill-tag">MCP</span>
-            <span class="skill-tag">Whisper</span>
-            <span class="skill-tag">Multi-Agent</span>
-          </div>
-        </div>
-
-        <div class="skill-category">
-          <h3>&#128451; 資料庫</h3>
-          <div class="skill-items">
-            <span class="skill-tag">Qdrant</span>
-            <span class="skill-tag">PostgreSQL</span>
-          </div>
-        </div>
-
-        <div class="skill-category">
-          <h3>&#128200; 金融數據</h3>
-          <div class="skill-items">
-            <span class="skill-tag">TEJ</span>
-            <span class="skill-tag">FMP</span>
-            <span class="skill-tag">Cmoney</span>
-            <span class="skill-tag">Zipline</span>
-          </div>
-        </div>
-
-        <div class="skill-category">
-          <h3>&#128295; 技術專長</h3>
-          <div class="skill-items">
-            <span class="skill-tag">敏捷式軟體開發</span>
-            <span class="skill-tag">LLM 應用開發</span>
-            <span class="skill-tag">量化策略回測</span>
-            <span class="skill-tag">CI/CD</span>
-          </div>
-        </div>
-
-        <div class="skill-category">
-          <h3>&#127760; 語言能力</h3>
-          <div class="skill-items">
-            <span class="skill-tag">中文 (母語)</span>
-            <span class="skill-tag">台語 (母語)</span>
-            <span class="skill-tag">英文 (多益 855)</span>
-            <span class="skill-tag">日文 (中級)</span>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- Education -->
-  <section id="education">
-    <div class="section-container reveal">
-      <h2 class="section-title"><span class="accent">05.</span> 教育背景</h2>
-      <div class="divider"></div>
-      <div class="edu-grid">
-
-        <div class="edu-card">
-          <div class="edu-icon">&#127891;</div>
-          <div class="edu-info">
-            <h3>財務金融研究所</h3>
-            <div class="school">國立臺灣科技大學</div>
-            <div class="date">2024/09 ~ 就讀中</div>
-          </div>
-        </div>
-
-        <div class="edu-card">
-          <div class="edu-icon">&#127891;</div>
-          <div class="edu-info">
-            <h3>國際企業管理碩士學位學程 (GMBA)</h3>
-            <div class="school">東海大學</div>
-            <div class="date">2023/09 ~ 2024/06</div>
-            <span class="gpa">GPA: 4.2 / 4.3</span>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- Certifications -->
-  <section id="certs">
-    <div class="section-container reveal">
-      <h2 class="section-title"><span class="accent">06.</span> 專業證照</h2>
-      <div class="divider"></div>
-      <div class="certs-grid">
-        <div class="cert-item">
-          <div class="cert-icon">&#129302;</div>
-          <div class="cert-name">IPAS 初級 AI 應用規劃師</div>
-        </div>
-        <div class="cert-item">
-          <div class="cert-icon">&#9729;&#65039;</div>
-          <div class="cert-name">Azure AI Fundamentals</div>
-        </div>
-        <div class="cert-item">
-          <div class="cert-icon">&#128182;</div>
-          <div class="cert-name">初階授信人員</div>
-        </div>
-        <div class="cert-item">
-          <div class="cert-icon">&#128200;</div>
-          <div class="cert-name">證券商業務員</div>
-        </div>
-        <div class="cert-item">
-          <div class="cert-icon">&#128200;</div>
-          <div class="cert-name">高級證券商業務員</div>
-        </div>
-        <div class="cert-item">
-          <div class="cert-icon">&#128202;</div>
-          <div class="cert-name">期貨商業務員</div>
-        </div>
-        <div class="cert-item">
-          <div class="cert-icon">&#128176;</div>
-          <div class="cert-name">信託業業務員</div>
-        </div>
-        <div class="cert-item">
-          <div class="cert-icon">&#128176;</div>
-          <div class="cert-name">投信投顧業務員</div>
-        </div>
-        <div class="cert-item">
-          <div class="cert-icon">&#128202;</div>
-          <div class="cert-name">衍生性金融商品銷售人員</div>
-        </div>
+      <div class="blog-grid" id="blogGrid">
+        <div class="blog-empty">Loading...</div>
       </div>
     </div>
   </section>
@@ -936,14 +677,13 @@
   <!-- Contact -->
   <section id="contact">
     <div class="section-container reveal">
-      <h2 class="section-title"><span class="accent">07.</span> 聯絡我</h2>
+      <h2 class="section-title"><span class="accent">05.</span> Contact</h2>
       <div class="divider"></div>
       <div class="contact-grid">
         <div>
           <div class="contact-text">
             <p>
-              如果您對我的經歷感興趣，或是有任何合作機會，歡迎透過以下方式與我聯繫。
-              我對 AI 在金融領域的應用充滿熱情，期待與您交流！
+              有合作想法、工作機會，或是純粹想聊聊 AI 在金融領域的應用，都歡迎找我。
             </p>
           </div>
           <div class="contact-links">
@@ -952,13 +692,6 @@
               <div>
                 <div class="label">Email</div>
                 <div class="value">adam3065nd123@gmail.com</div>
-              </div>
-            </a>
-            <a href="tel:+886988776559" class="contact-item">
-              <div class="contact-icon">&#128222;</div>
-              <div>
-                <div class="label">電話</div>
-                <div class="value">+886 0988-776-559</div>
               </div>
             </a>
             <a href="https://github.com/AlexOAO" target="_blank" class="contact-item">
@@ -972,19 +705,13 @@
         </div>
         <div>
           <form class="contact-form" action="https://formsubmit.co/adam3065nd123@gmail.com" method="POST">
-            <input type="hidden" name="_subject" value="來自作品集網站的訊息">
+            <input type="hidden" name="_subject" value="From your portfolio site">
             <input type="hidden" name="_captcha" value="false">
-            <div class="form-group">
-              <input type="text" name="name" placeholder="您的姓名" required>
-            </div>
-            <div class="form-group">
-              <input type="email" name="email" placeholder="您的 Email" required>
-            </div>
-            <div class="form-group">
-              <textarea name="message" placeholder="請輸入您的訊息..." required></textarea>
-            </div>
+            <div class="form-group"><input type="text" name="name" placeholder="Your name" required></div>
+            <div class="form-group"><input type="email" name="email" placeholder="Your email" required></div>
+            <div class="form-group"><textarea name="message" placeholder="What's on your mind?" required></textarea></div>
             <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">
-              送出訊息
+              Send Message
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
             </button>
           </form>
@@ -1003,47 +730,84 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
       </a>
     </div>
-    <p>&copy; 2026 李翔緯 Alex Li. All rights reserved.</p>
+    <p>&copy; 2026 Alex Li. Built with curiosity.</p>
   </footer>
 
   <script>
-    // Navbar scroll effect
-    const navbar = document.getElementById('navbar');
-    window.addEventListener('scroll', () => {
-      navbar.classList.toggle('scrolled', window.scrollY > 50);
-    });
+    // ── Typewriter ──
+    const phrases = [
+      'Building AI for Finance',
+      'LLM Application Developer',
+      'Quant Strategy Explorer',
+      'From RAG to Multi-Agent',
+    ];
+    let phraseIdx = 0, charIdx = 0, deleting = false;
+    const tw = document.getElementById('typewriter');
+    function type() {
+      const current = phrases[phraseIdx];
+      tw.textContent = current.substring(0, charIdx);
+      if (!deleting) {
+        charIdx++;
+        if (charIdx > current.length) { deleting = true; setTimeout(type, 1800); return; }
+        setTimeout(type, 80);
+      } else {
+        charIdx--;
+        if (charIdx < 0) { deleting = false; phraseIdx = (phraseIdx + 1) % phrases.length; charIdx = 0; setTimeout(type, 400); return; }
+        setTimeout(type, 40);
+      }
+    }
+    type();
 
-    // Mobile nav toggle
+    // ── Navbar scroll ──
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50));
+
+    // ── Mobile nav ──
     const navToggle = document.getElementById('navToggle');
     const navLinks = document.getElementById('navLinks');
-    navToggle.addEventListener('click', () => {
-      navLinks.classList.toggle('open');
-    });
-    navLinks.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', () => navLinks.classList.remove('open'));
-    });
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('open'));
+    navLinks.querySelectorAll('a').forEach(l => l.addEventListener('click', () => navLinks.classList.remove('open')));
 
-    // Scroll reveal
-    const reveals = document.querySelectorAll('.reveal');
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('active');
-        }
-      });
+    // ── Scroll reveal ──
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('active'); });
     }, { threshold: 0.1 });
-    reveals.forEach(el => observer.observe(el));
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-    // Smooth scroll for nav links
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-      anchor.addEventListener('click', function (e) {
+    // ── Smooth scroll ──
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', function(e) {
         e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+        const t = document.querySelector(this.getAttribute('href'));
+        if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     });
+
+    // ── Blog: load from posts.json ──
+    const blogGrid = document.getElementById('blogGrid');
+    fetch('posts/posts.json')
+      .then(r => r.json())
+      .then(posts => {
+        if (!posts.length) {
+          blogGrid.innerHTML = '<div class="blog-empty">Coming soon...</div>';
+          return;
+        }
+        posts.sort((a, b) => new Date(b.date) - new Date(a.date));
+        blogGrid.innerHTML = posts.map(p => `
+          <a href="${p.file}" class="blog-card">
+            <div class="blog-date">${p.date}</div>
+            <h3>${p.title}</h3>
+            <div class="summary">${p.summary}</div>
+            <div class="blog-footer">
+              <div class="blog-tags">${p.tags.map(t => `<span>${t}</span>`).join('')}</div>
+              <span class="read-more">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+            </div>
+          </a>
+        `).join('');
+      })
+      .catch(() => {
+        blogGrid.innerHTML = '<div class="blog-empty">Coming soon...</div>';
+      });
   </script>
 
 </body>

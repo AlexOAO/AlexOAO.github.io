@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>用 RAG 打造金融智能客服的踩坑紀錄 | Alex Li</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/post.css">
+</head>
+<body>
+  <nav class="post-nav">
+    <a href="../index.html" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Back
+    </a>
+  </nav>
+
+  <article class="post">
+    <header class="post-header">
+      <div class="post-meta">
+        <time>2025-12-15</time>
+        <div class="post-tags">
+          <span>RAG</span><span>LangChain</span><span>Qdrant</span>
+        </div>
+      </div>
+      <h1>用 RAG 打造金融智能客服的踩坑紀錄</h1>
+    </header>
+
+    <div class="post-body">
+      <p>在 TEJ 實習的第一個專案就是建構 AI 智能客服。聽起來很酷，但實際開發過程充滿了各種意想不到的挑戰。這篇文章記錄了從零到上線的完整歷程。</p>
+
+      <h2>為什麼選擇 RAG？</h2>
+      <p>最初我們考慮過直接 fine-tune 一個模型，但金融產品的技術手冊更新頻繁，每次重新訓練成本太高。RAG（Retrieval-Augmented Generation）讓我們可以把知識庫和模型解耦——文件更新了，只需要重新 embedding 就好。</p>
+
+      <h2>向量資料庫的選型</h2>
+      <p>比較了 Pinecone、Weaviate、Chroma 和 Qdrant 之後，最終選擇了 Qdrant。主要原因：</p>
+      <ul>
+        <li>可以用 Docker 自架，資料不出公司</li>
+        <li>支援 filtering，對金融場景的分類查詢很實用</li>
+        <li>效能在中等資料量下表現優秀</li>
+      </ul>
+
+      <h2>Chunk 策略的血淚教訓</h2>
+      <p>一開始用固定 500 token 切分，結果 LLM 常常拿到不完整的上下文。後來改用語義切分（按段落 + overlap），搭配 metadata 標註來源章節，準確率從 60% 飆升到 85%。</p>
+
+      <h2>最終架構</h2>
+      <p>整個系統跑在 Docker Compose 上：Qdrant 做向量檢索、LangExtract 做文件解析、FastAPI 做後端、加上一個簡單的 HTML 前端和管理者後台。從提問到回答大約 2-3 秒，對內部客服來說完全夠用。</p>
+
+      <h2>學到的事</h2>
+      <p>最大的收穫不是技術本身，而是理解到 AI 落地最難的部分往往是「定義什麼是好的回答」。和業務端反覆對焦需求，比寫 code 花的時間更多——但這才是真正有價值的部分。</p>
+    </div>
+  </article>
+
+  <footer class="post-footer">
+    <a href="../index.html#blog" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      All Posts
+    </a>
+  </footer>
+</body>
+</html>

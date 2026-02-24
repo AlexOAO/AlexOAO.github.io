@@ -1,93 +1,115 @@
 # alexoao.github.io
 
-李翔緯 (Alex Li) 的個人作品集網站。
+Alex Li's portfolio & blog.
 
 **Live:** [https://alexoao.github.io](https://alexoao.github.io)
 
 ---
 
-## 專案結構
+## Structure
 
 ```
 .
-├── index.html                  # 網站主頁面（單頁式）
+├── index.html                  # Main page
 ├── assets/
+│   ├── css/
+│   │   └── post.css            # Shared blog post styles
 │   ├── images/
-│   │   └── profile.jpg         # 個人照片
+│   │   └── profile.jpg         # Profile photo
 │   └── docs/
-│       └── resume.pdf          # 履歷 PDF
+│       └── resume.pdf          # CV
+├── posts/
+│   ├── posts.json              # Blog index (add entries here)
+│   ├── rag-smart-customer-service.html
+│   └── multi-agent-investment.html
 ├── .github/
 │   └── workflows/
-│       └── deploy.yml          # GitHub Pages 自動部署
+│       └── deploy.yml          # Auto-deploy on push
 └── README.md
 ```
 
-## 網站區塊
+## Deployment
 
-| # | 區塊 | 說明 |
-|---|------|------|
-| Hero | 首頁橫幅 | 大頭照、姓名、快速連結 |
-| 01 | 關於我 | 自我介紹與個人資訊 |
-| 02 | 實習與經歷 | 時間軸展示工作經歷 |
-| 03 | GitHub 作品集 | 精選 repo 卡片 |
-| 04 | 技能專長 | 開發技術、AI/LLM、金融數據等 |
-| 05 | 教育背景 | 臺科大財金所、東海 GMBA |
-| 06 | 專業證照 | 金融與 AI 相關證照 |
-| 07 | 聯絡我 | 聯絡資訊與表單 |
+Push to `main` → GitHub Actions auto-deploys to Pages.
 
-## 部署方式
+First-time setup: **Settings > Pages > Source > GitHub Actions**
 
-本站使用 **GitHub Actions** 自動部署：
+## How to Add a Blog Post
 
-- 每次 push 至 `main` 分支即自動觸發部署
-- 也可於 Actions 頁面手動觸發 (`workflow_dispatch`)
-
-### 首次設定
-
-1. 前往 repo **Settings** > **Pages**
-2. Source 選擇 **GitHub Actions**
-3. Push 任意 commit 即完成部署
-
-## 維護指南
-
-### 更新履歷
-
-替換 `assets/docs/resume.pdf` 即可。
-
-### 更新照片
-
-替換 `assets/images/profile.jpg`，建議尺寸 400x400 以上的正方形圖片。
-
-### 新增 GitHub 專案卡片
-
-在 `index.html` 的 `#projects` 區塊內複製一個 `.project-card` 並修改內容：
+**Step 1:** Create `posts/your-post-slug.html`
 
 ```html
-<div class="project-card">
-  <div class="project-icon"><!-- emoji --></div>
-  <h3>專案名稱</h3>
-  <p>專案描述</p>
-  <div class="project-tags">
-    <span>標籤1</span><span>標籤2</span>
-  </div>
-  <a href="https://github.com/AlexOAO/repo-name" target="_blank" class="project-link">
-    查看專案
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-      stroke-linecap="round" stroke-linejoin="round">
-      <line x1="5" y1="12" x2="19" y2="12"/>
-      <polyline points="12 5 19 12 12 19"/>
-    </svg>
-  </a>
-</div>
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Title | Alex Li</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/post.css">
+</head>
+<body>
+  <nav class="post-nav">
+    <a href="../index.html" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"/>
+        <polyline points="12 19 5 12 12 5"/>
+      </svg>
+      Back
+    </a>
+  </nav>
+
+  <article class="post">
+    <header class="post-header">
+      <div class="post-meta">
+        <time>YYYY-MM-DD</time>
+        <div class="post-tags"><span>Tag1</span><span>Tag2</span></div>
+      </div>
+      <h1>Your Title</h1>
+    </header>
+    <div class="post-body">
+      <!-- Write your content here using h2, p, ul, code, pre, blockquote, img -->
+    </div>
+  </article>
+
+  <footer class="post-footer">
+    <a href="../index.html#blog" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"/>
+        <polyline points="12 19 5 12 12 5"/>
+      </svg>
+      All Posts
+    </a>
+  </footer>
+</body>
+</html>
 ```
 
-### 更新經歷
+**Step 2:** Add an entry to `posts/posts.json`
 
-在 `index.html` 的 `#experience` 區塊內新增 `.timeline-item`。
+```json
+{
+  "id": "your-post-slug",
+  "title": "Your Title",
+  "date": "YYYY-MM-DD",
+  "summary": "A one-liner about this post.",
+  "tags": ["Tag1", "Tag2"],
+  "file": "posts/your-post-slug.html"
+}
+```
 
-## 技術棧
+**Step 3:** Push. Done.
 
-- 純 HTML / CSS / JavaScript（無框架依賴）
-- Google Fonts (Noto Sans TC, Inter)
-- FormSubmit（聯絡表單）
-- GitHub Actions（CI/CD）
+## Other Updates
+
+| What | How |
+|------|-----|
+| Profile photo | Replace `assets/images/profile.jpg` |
+| Resume | Replace `assets/docs/resume.pdf` |
+| Project card | Copy a `.project-card` block in `index.html` |
+| Experience | Add a `.timeline-item` block in `index.html` |
+| Tech marquee | Add a `.marquee-item` span (and its duplicate) |

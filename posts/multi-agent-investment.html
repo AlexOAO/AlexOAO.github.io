@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-Agent 投資決策架構 | Alex Li</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/post.css">
+</head>
+<body>
+  <nav class="post-nav">
+    <a href="../index.html" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Back
+    </a>
+  </nav>
+
+  <article class="post">
+    <header class="post-header">
+      <div class="post-meta">
+        <time>2025-11-20</time>
+        <div class="post-tags">
+          <span>LangGraph</span><span>Multi-Agent</span><span>MCP</span>
+        </div>
+      </div>
+      <h1>Multi-Agent 投資決策架構：讓 AI 像基金團隊一樣思考</h1>
+    </header>
+
+    <div class="post-body">
+      <p>一個人做投資決策容易有盲點，基金公司因此設置了不同角色的分析師。那如果 AI 也能這樣分工合作呢？這篇分享用 LangGraph 建構 Multi-Agent 系統的實戰經驗。</p>
+
+      <h2>架構設計</h2>
+      <p>我們設計了五個 Agent，各司其職：</p>
+      <ul>
+        <li><strong>技術分析師</strong> — 計算技術指標，判斷趨勢</li>
+        <li><strong>新聞情緒分析師</strong> — 爬取即時新聞，量化市場情緒</li>
+        <li><strong>基本面分析師</strong> — 分析財報數據，評估公司價值</li>
+        <li><strong>多空辯論員</strong> — 整合以上觀點，正反辯論</li>
+        <li><strong>交易員</strong> — 根據辯論結論，產出最終買賣訊號</li>
+      </ul>
+
+      <h2>為什麼用 LangGraph？</h2>
+      <p>比起 CrewAI 或 AutoGen，LangGraph 給了我們更細粒度的流程控制。每個 Agent 之間的資料傳遞、條件分支、錯誤處理都可以用 Graph 的方式清楚定義。對金融場景來說，「可控性」比「自主性」更重要。</p>
+
+      <h2>MCP 串接 TEJ 數據</h2>
+      <p>透過 MCP（Model Context Protocol）工具，每個 Agent 可以直接呼叫 TEJ API 取得即時數據。這讓整個系統不只是在「聊天」，而是真的在做數據驅動的決策。</p>
+
+      <h2>回測驗證</h2>
+      <p>最後我們把產出的訊號接入 Zipline 回測引擎，在台股歷史資料上跑了三年回測。雖然不能公開具體績效數字，但結果讓我們對這個架構的可行性有了信心。</p>
+
+      <h2>反思</h2>
+      <p>Multi-Agent 系統最大的挑戰不是讓每個 Agent 變聰明，而是設計好它們之間的「溝通協議」。誰先說話、誰有最終決定權、衝突怎麼解決——這些流程設計決定了系統的上限。</p>
+    </div>
+  </article>
+
+  <footer class="post-footer">
+    <a href="../index.html#blog" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      All Posts
+    </a>
+  </footer>
+</body>
+</html>

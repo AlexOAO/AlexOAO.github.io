@@ -1,0 +1,18 @@
+[
+  {
+    "id": "rag-smart-customer-service",
+    "title": "用 RAG 打造金融智能客服的踩坑紀錄",
+    "date": "2025-12-15",
+    "summary": "分享在 TEJ 實習期間，從零建構 RAG 智能客服系統的經驗，包括 Qdrant 向量資料庫的選型、chunk 策略的調整，以及如何讓 LLM 回答得更精準。",
+    "tags": ["RAG", "LangChain", "Qdrant"],
+    "file": "posts/rag-smart-customer-service.html"
+  },
+  {
+    "id": "multi-agent-investment",
+    "title": "Multi-Agent 投資決策架構：讓 AI 像基金團隊一樣思考",
+    "date": "2025-11-20",
+    "summary": "如何用 LangGraph 建構多個 AI Agent 分別負責技術分析、新聞情緒、基本面研究，再透過辯論機制整合出投資訊號。",
+    "tags": ["LangGraph", "Multi-Agent", "MCP"],
+    "file": "posts/multi-agent-investment.html"
+  }
+]
