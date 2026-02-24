@@ -1,0 +1,58 @@
+[
+  {
+    "icon": "\uD83E\uDD16",
+    "name": "AI Financial Agent",
+    "desc": "金融 AI Agent，整合多種數據源進行投資研究與智能決策。",
+    "tags": ["LLM", "LangGraph", "Finance"],
+    "url": "https://github.com/AlexOAO/ai-financial-agent"
+  },
+  {
+    "icon": "\uD83D\uDCC8",
+    "name": "AI Hedge Fund",
+    "desc": "Multi-Agent 系統模擬基金經理人協作，進行投資組合管理與交易決策。",
+    "tags": ["Multi-Agent", "Trading", "Python"],
+    "url": "https://github.com/AlexOAO/ai-hedge-fund"
+  },
+  {
+    "icon": "\uD83D\uDD0D",
+    "name": "Dexter",
+    "desc": "自主式深度金融研究 Agent，自動搜集與整合金融資訊產出報告。",
+    "tags": ["Agent", "Research", "NLP"],
+    "url": "https://github.com/AlexOAO/dexter"
+  },
+  {
+    "icon": "\uD83D\uDCCA",
+    "name": "OpenStrategy",
+    "desc": "開放式量化交易策略框架，支援回測與參數優化。",
+    "tags": ["Python", "Quant", "Backtesting"],
+    "url": "https://github.com/AlexOAO/OpenStrategy"
+  },
+  {
+    "icon": "\uD83D\uDCC9",
+    "name": "Barra Multifactor Model",
+    "desc": "Barra 多因子模型，用於風險分析與投資組合因子分解。",
+    "tags": ["Factor Model", "Risk", "Finance"],
+    "url": "https://github.com/AlexOAO/Barra"
+  },
+  {
+    "icon": "\uD83D\uDCBB",
+    "name": "PyQt Stock Backtesting",
+    "desc": "PyQt GUI 回測工具，整合 Yahoo API 與多策略回測。",
+    "tags": ["PyQt", "Backtesting", "Yahoo API"],
+    "url": "https://github.com/AlexOAO/pyQt_stock_backtesting"
+  },
+  {
+    "icon": "\uD83E\uDDEC",
+    "name": "Transformer",
+    "desc": "PyTorch 實現 \"Attention Is All You Need\" 的 Transformer 架構。",
+    "tags": ["PyTorch", "Deep Learning"],
+    "url": "https://github.com/AlexOAO/transformer"
+  },
+  {
+    "icon": "\uD83D\uDCC4",
+    "name": "EDGAR Crawler",
+    "desc": "SEC 財報爬蟲，提取特定章節文字資料至結構化 JSON。",
+    "tags": ["Web Scraping", "SEC", "JSON"],
+    "url": "https://github.com/AlexOAO/edgar-crawler"
+  }
+]

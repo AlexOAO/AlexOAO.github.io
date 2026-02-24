@@ -1,0 +1,12 @@
+{
+  "paragraphs": [
+    "臺科大財金所的研究生，同時在凱基金控做 AI 開發實習。之前在 TEJ 待了半年，從 RAG 客服做到 Multi-Agent 投顧系統，踩了不少坑，也學到 AI 真正落地的眉角。",
+    "寫 code 之外，我也喜歡攝影和游泳。相信最好的技術是讓人感覺不到技術存在的那種。"
+  ],
+  "cards": [
+    { "label": "Currently", "value": "凱基金控 AI 開發實習" },
+    { "label": "Education", "value": "臺科大 財金所" },
+    { "label": "Focus", "value": "LLM x FinTech" },
+    { "label": "Fun fact", "value": "臺科大攝影社 + 臺大游泳社" }
+  ]
+}

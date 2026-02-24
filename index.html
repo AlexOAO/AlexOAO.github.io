@@ -471,36 +471,9 @@
     <div class="section-container reveal">
       <h2 class="section-title"><span class="accent">01.</span> About</h2>
       <div class="divider"></div>
-      <div class="about-grid">
-        <div class="about-text">
-          <p>
-            臺科大財金所的研究生，同時在凱基金控做 AI 開發實習。
-            之前在 TEJ 待了半年，從 RAG 客服做到 Multi-Agent 投顧系統，
-            踩了不少坑，也學到 AI 真正落地的眉角。
-          </p>
-          <p>
-            寫 code 之外，我也喜歡攝影和游泳。
-            相信最好的技術是讓人感覺不到技術存在的那種。
-          </p>
-        </div>
-        <div class="about-info">
-          <div class="info-card">
-            <div class="label">Currently</div>
-            <div class="value">凱基金控 AI 開發實習</div>
-          </div>
-          <div class="info-card">
-            <div class="label">Education</div>
-            <div class="value">臺科大 財金所</div>
-          </div>
-          <div class="info-card">
-            <div class="label">Focus</div>
-            <div class="value">LLM x FinTech</div>
-          </div>
-          <div class="info-card">
-            <div class="label">Fun fact</div>
-            <div class="value">臺科大攝影社 + 臺大游泳社</div>
-          </div>
-        </div>
+      <div class="about-grid" id="aboutGrid">
+        <div class="about-text" id="aboutText"></div>
+        <div class="about-info" id="aboutInfo"></div>
       </div>
     </div>
   </section>
@@ -510,63 +483,7 @@
     <div class="section-container reveal">
       <h2 class="section-title"><span class="accent">02.</span> Experience</h2>
       <div class="divider"></div>
-      <div class="timeline">
-
-        <div class="timeline-item">
-          <div class="timeline-header">
-            <div>
-              <div class="timeline-title">凱基金融控股 | AI 開發實習生</div>
-              <div class="timeline-subtitle">金融AI治理與產品開發</div>
-            </div>
-            <span class="timeline-date">2026/02 ~ Now</span>
-          </div>
-          <ul class="timeline-content">
-            <li>為集團AI統籌小組開發 RPA 系統，串接 SharePoint，運用 Azure OpenAI 做語義合理性判定與自動風險分級</li>
-            <li>基於 PandasAI 開發自然語言轉圖表工具，支援 Azure OpenAI 與本地 Ollama 雙後端</li>
-            <li>以 Scrum 敏捷框架參與開發流程，運用 Azure DevOps 做任務追蹤與 CI/CD 部署</li>
-          </ul>
-        </div>
-
-        <div class="timeline-item">
-          <div class="timeline-header">
-            <div>
-              <div class="timeline-title">台灣經濟新報 (TEJ) | 量化交易與資料科學實習生</div>
-              <div class="timeline-subtitle">AI 智能客服 / 智能投顧 / ASR 逐字稿</div>
-            </div>
-            <span class="timeline-date">2025/07 ~ 12</span>
-          </div>
-          <ul class="timeline-content">
-            <li>用 RAG + Qdrant 建構智能客服，在 Docker 上實現問答功能，設計前端介面與管理者後台</li>
-            <li>以 LangGraph 建構 Multi-Agent 投資決策架構，透過 MCP 串接 TEJ 數據，整合 Zipline 回測引擎</li>
-            <li>用 Whisper 自動化法說會影音轉逐字稿流程，摘要重點至結構化表格</li>
-          </ul>
-        </div>
-
-        <div class="timeline-item">
-          <div class="timeline-header">
-            <div>
-              <div class="timeline-title">數位發展部 | 第六屆 T 大使</div>
-            </div>
-            <span class="timeline-date">2025/09 ~ 12</span>
-          </div>
-          <ul class="timeline-content">
-            <li>與政府合作推動數位轉型政策宣導，協助企業導入生成式 AI 與智慧物聯技術</li>
-          </ul>
-        </div>
-
-        <div class="timeline-item">
-          <div class="timeline-header">
-            <div>
-              <div class="timeline-title">TMBA 26th 程式交易部 | 台指期策略</div>
-            </div>
-            <span class="timeline-date">2025/07 ~ 12</span>
-          </div>
-          <ul class="timeline-content">
-            <li>開發台指期 CTA 策略，建立回測框架與參數優化，榮獲成果發表第三名</li>
-          </ul>
-        </div>
-
-      </div>
+      <div class="timeline" id="timelineContainer"></div>
     </div>
   </section>
 
@@ -576,89 +493,7 @@
       <h2 class="section-title"><span class="accent">03.</span> Projects</h2>
       <p class="section-subtitle">Things I've built or contributed to</p>
       <div class="divider"></div>
-      <div class="projects-grid">
-
-        <div class="project-card">
-          <div class="project-icon">&#129302;</div>
-          <h3>AI Financial Agent</h3>
-          <p>金融 AI Agent，整合多種數據源進行投資研究與智能決策。</p>
-          <div class="project-tags"><span>LLM</span><span>LangGraph</span><span>Finance</span></div>
-          <a href="https://github.com/AlexOAO/ai-financial-agent" target="_blank" class="project-link">
-            View on GitHub <svg class="arrow-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </a>
-        </div>
-
-        <div class="project-card">
-          <div class="project-icon">&#128200;</div>
-          <h3>AI Hedge Fund</h3>
-          <p>Multi-Agent 系統模擬基金經理人協作，進行投資組合管理與交易決策。</p>
-          <div class="project-tags"><span>Multi-Agent</span><span>Trading</span><span>Python</span></div>
-          <a href="https://github.com/AlexOAO/ai-hedge-fund" target="_blank" class="project-link">
-            View on GitHub <svg class="arrow-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </a>
-        </div>
-
-        <div class="project-card">
-          <div class="project-icon">&#128270;</div>
-          <h3>Dexter</h3>
-          <p>自主式深度金融研究 Agent，自動搜集與整合金融資訊產出報告。</p>
-          <div class="project-tags"><span>Agent</span><span>Research</span><span>NLP</span></div>
-          <a href="https://github.com/AlexOAO/dexter" target="_blank" class="project-link">
-            View on GitHub <svg class="arrow-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </a>
-        </div>
-
-        <div class="project-card">
-          <div class="project-icon">&#128202;</div>
-          <h3>OpenStrategy</h3>
-          <p>開放式量化交易策略框架，支援回測與參數優化。</p>
-          <div class="project-tags"><span>Python</span><span>Quant</span><span>Backtesting</span></div>
-          <a href="https://github.com/AlexOAO/OpenStrategy" target="_blank" class="project-link">
-            View on GitHub <svg class="arrow-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </a>
-        </div>
-
-        <div class="project-card">
-          <div class="project-icon">&#128201;</div>
-          <h3>Barra Multifactor Model</h3>
-          <p>Barra 多因子模型，用於風險分析與投資組合因子分解。</p>
-          <div class="project-tags"><span>Factor Model</span><span>Risk</span><span>Finance</span></div>
-          <a href="https://github.com/AlexOAO/Barra" target="_blank" class="project-link">
-            View on GitHub <svg class="arrow-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </a>
-        </div>
-
-        <div class="project-card">
-          <div class="project-icon">&#128187;</div>
-          <h3>PyQt Stock Backtesting</h3>
-          <p>PyQt GUI 回測工具，整合 Yahoo API 與多策略回測。</p>
-          <div class="project-tags"><span>PyQt</span><span>Backtesting</span><span>Yahoo API</span></div>
-          <a href="https://github.com/AlexOAO/pyQt_stock_backtesting" target="_blank" class="project-link">
-            View on GitHub <svg class="arrow-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </a>
-        </div>
-
-        <div class="project-card">
-          <div class="project-icon">&#129516;</div>
-          <h3>Transformer</h3>
-          <p>PyTorch 實現 "Attention Is All You Need" 的 Transformer 架構。</p>
-          <div class="project-tags"><span>PyTorch</span><span>Deep Learning</span></div>
-          <a href="https://github.com/AlexOAO/transformer" target="_blank" class="project-link">
-            View on GitHub <svg class="arrow-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </a>
-        </div>
-
-        <div class="project-card">
-          <div class="project-icon">&#128196;</div>
-          <h3>EDGAR Crawler</h3>
-          <p>SEC 財報爬蟲，提取特定章節文字資料至結構化 JSON。</p>
-          <div class="project-tags"><span>Web Scraping</span><span>SEC</span><span>JSON</span></div>
-          <a href="https://github.com/AlexOAO/edgar-crawler" target="_blank" class="project-link">
-            View on GitHub <svg class="arrow-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </a>
-        </div>
-
-      </div>
+      <div class="projects-grid" id="projectsGrid"></div>
     </div>
   </section>
 
@@ -783,31 +618,65 @@
       });
     });
 
-    // ── Blog: load from posts.json ──
-    const blogGrid = document.getElementById('blogGrid');
-    fetch('posts/posts.json')
-      .then(r => r.json())
-      .then(posts => {
-        if (!posts.length) {
-          blogGrid.innerHTML = '<div class="blog-empty">Coming soon...</div>';
-          return;
-        }
-        posts.sort((a, b) => new Date(b.date) - new Date(a.date));
-        blogGrid.innerHTML = posts.map(p => `
-          <a href="${p.file}" class="blog-card">
-            <div class="blog-date">${p.date}</div>
-            <h3>${p.title}</h3>
-            <div class="summary">${p.summary}</div>
-            <div class="blog-footer">
-              <div class="blog-tags">${p.tags.map(t => `<span>${t}</span>`).join('')}</div>
-              <span class="read-more">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+    const arrowSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
+    const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+    // ── About: load from data/about.json ──
+    fetch('data/about.json').then(r => r.json()).then(d => {
+      document.getElementById('aboutText').innerHTML =
+        d.paragraphs.map(p => `<p>${esc(p)}</p>`).join('');
+      document.getElementById('aboutInfo').innerHTML =
+        d.cards.map(c => `<div class="info-card"><div class="label">${esc(c.label)}</div><div class="value">${esc(c.value)}</div></div>`).join('');
+    });
+
+    // ── Experience: load from data/experience.json ──
+    fetch('data/experience.json').then(r => r.json()).then(list => {
+      document.getElementById('timelineContainer').innerHTML = list.map(e => `
+        <div class="timeline-item">
+          <div class="timeline-header">
+            <div>
+              <div class="timeline-title">${esc(e.title)}</div>
+              ${e.subtitle ? `<div class="timeline-subtitle">${esc(e.subtitle)}</div>` : ''}
             </div>
-          </a>
-        `).join('');
-      })
-      .catch(() => {
-        blogGrid.innerHTML = '<div class="blog-empty">Coming soon...</div>';
-      });
+            <span class="timeline-date">${esc(e.date)}</span>
+          </div>
+          <ul class="timeline-content">
+            ${e.items.map(i => `<li>${esc(i)}</li>`).join('')}
+          </ul>
+        </div>
+      `).join('');
+    });
+
+    // ── Projects: load from data/projects.json ──
+    fetch('data/projects.json').then(r => r.json()).then(list => {
+      document.getElementById('projectsGrid').innerHTML = list.map(p => `
+        <div class="project-card">
+          <div class="project-icon">${p.icon}</div>
+          <h3>${esc(p.name)}</h3>
+          <p>${esc(p.desc)}</p>
+          <div class="project-tags">${p.tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>
+          <a href="${esc(p.url)}" target="_blank" class="project-link">View on GitHub ${arrowSvg}</a>
+        </div>
+      `).join('');
+    });
+
+    // ── Blog: load from posts/posts.json ──
+    const blogGrid = document.getElementById('blogGrid');
+    fetch('posts/posts.json').then(r => r.json()).then(posts => {
+      if (!posts.length) { blogGrid.innerHTML = '<div class="blog-empty">Coming soon...</div>'; return; }
+      posts.sort((a, b) => new Date(b.date) - new Date(a.date));
+      blogGrid.innerHTML = posts.map(p => `
+        <a href="${esc(p.file)}" class="blog-card">
+          <div class="blog-date">${esc(p.date)}</div>
+          <h3>${esc(p.title)}</h3>
+          <div class="summary">${esc(p.summary)}</div>
+          <div class="blog-footer">
+            <div class="blog-tags">${p.tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>
+            <span class="read-more">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+          </div>
+        </a>
+      `).join('');
+    }).catch(() => { blogGrid.innerHTML = '<div class="blog-empty">Coming soon...</div>'; });
   </script>
 
 </body>

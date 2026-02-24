@@ -1,0 +1,36 @@
+[
+  {
+    "title": "凱基金融控股 | AI 開發實習生",
+    "subtitle": "金融AI治理與產品開發",
+    "date": "2026/02 ~ Now",
+    "items": [
+      "為集團AI統籌小組開發 RPA 系統，串接 SharePoint，運用 Azure OpenAI 做語義合理性判定與自動風險分級",
+      "基於 PandasAI 開發自然語言轉圖表工具，支援 Azure OpenAI 與本地 Ollama 雙後端",
+      "以 Scrum 敏捷框架參與開發流程，運用 Azure DevOps 做任務追蹤與 CI/CD 部署"
+    ]
+  },
+  {
+    "title": "台灣經濟新報 (TEJ) | 量化交易與資料科學實習生",
+    "subtitle": "AI 智能客服 / 智能投顧 / ASR 逐字稿",
+    "date": "2025/07 ~ 12",
+    "items": [
+      "用 RAG + Qdrant 建構智能客服，在 Docker 上實現問答功能，設計前端介面與管理者後台",
+      "以 LangGraph 建構 Multi-Agent 投資決策架構，透過 MCP 串接 TEJ 數據，整合 Zipline 回測引擎",
+      "用 Whisper 自動化法說會影音轉逐字稿流程，摘要重點至結構化表格"
+    ]
+  },
+  {
+    "title": "數位發展部 | 第六屆 T 大使",
+    "date": "2025/09 ~ 12",
+    "items": [
+      "與政府合作推動數位轉型政策宣導，協助企業導入生成式 AI 與智慧物聯技術"
+    ]
+  },
+  {
+    "title": "TMBA 26th 程式交易部 | 台指期策略",
+    "date": "2025/07 ~ 12",
+    "items": [
+      "開發台指期 CTA 策略，建立回測框架與參數優化，榮獲成果發表第三名"
+    ]
+  }
+]
