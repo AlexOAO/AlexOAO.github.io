@@ -1,9 +1,22 @@
 [
   {
-    "title": "凱基金融控股 | AI 開發實習生",
-    "subtitle": "金融AI治理與產品開發",
-    "date": "2026/02 ~ Now",
+    "title": "凱基銀行 科技創新部 | PM 兼 SA",
+    "subtitle": "AI Agent 驗證、選型、成本與治理",
+    "date": "2026/07 ~ Now",
     "items": [
+      "主責 Guardrails PoC（奧義科技）：設計 600 題題庫，以 API 執行 3,600 次驗證",
+      "主責 Agatha／Dify 平台選型：執行 60 項測試，發現 12 項問題（4 阻斷、1 資安）",
+      "建立 3 套 AI Agent 成本模型，計算 4 大 Agent 的三年 TCO／ROI",
+      "規劃 4 大 Agent 對應金管會 6 大規範的行內檢測機制",
+      "協作金管會 FinLLM 資料清洗與法規判讀評分"
+    ]
+  },
+  {
+    "title": "凱基金融控股 | AI 開發實習生",
+    "subtitle": "金融 AI 治理與產品開發",
+    "date": "2026/02 ~ 2026/06",
+    "items": [
+      "主導 Webai Finance 模組從需求分析到正式上線，整合券商報告、總經與新聞",
       "為集團AI統籌小組開發 RPA 系統，串接 SharePoint，運用 Azure OpenAI 做語義合理性判定與自動風險分級",
       "基於 PandasAI 開發自然語言轉圖表工具，支援 Azure OpenAI 與本地 Ollama 雙後端",
       "以 Scrum 敏捷框架參與開發流程，運用 Azure DevOps 做任務追蹤與 CI/CD 部署"
@@ -30,7 +43,7 @@
     "title": "TMBA 26th 程式交易部 | 台指期策略",
     "date": "2025/07 ~ 12",
     "items": [
-      "開發台指期 CTA 策略，建立回測框架與參數優化，榮獲成果發表第三名"
+      "開發台指期 CTA 策略，建立回測框架與參數最佳化，獲成果發表第三名"
     ]
   }
 ]

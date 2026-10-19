@@ -1,0 +1,89 @@
+[
+  {
+    "icon": "🤖",
+    "name": "AI Financial Agent",
+    "desc": "A financial AI Agent that combines multiple data sources for investment research and decisions.",
+    "tags": [
+      "LLM",
+      "LangGraph",
+      "Finance"
+    ],
+    "url": "https://github.com/AlexOAO/ai-financial-agent"
+  },
+  {
+    "icon": "📈",
+    "name": "AI Hedge Fund",
+    "desc": "A Multi-Agent system that simulates fund managers working together on portfolio and trading decisions.",
+    "tags": [
+      "Multi-Agent",
+      "Trading",
+      "Python"
+    ],
+    "url": "https://github.com/AlexOAO/ai-hedge-fund"
+  },
+  {
+    "icon": "🔍",
+    "name": "Dexter",
+    "desc": "An autonomous financial research Agent that collects information and writes reports.",
+    "tags": [
+      "Agent",
+      "Research",
+      "NLP"
+    ],
+    "url": "https://github.com/AlexOAO/dexter"
+  },
+  {
+    "icon": "📊",
+    "name": "OpenStrategy",
+    "desc": "An open quant trading strategy framework with backtesting and parameter optimization.",
+    "tags": [
+      "Python",
+      "Quant",
+      "Backtesting"
+    ],
+    "url": "https://github.com/AlexOAO/OpenStrategy"
+  },
+  {
+    "icon": "📉",
+    "name": "Barra Multifactor Model",
+    "desc": "A Barra multifactor model for risk analysis and portfolio factor decomposition.",
+    "tags": [
+      "Factor Model",
+      "Risk",
+      "Finance"
+    ],
+    "url": "https://github.com/AlexOAO/Barra"
+  },
+  {
+    "icon": "💻",
+    "name": "PyQt Stock Backtesting",
+    "desc": "A PyQt GUI backtesting tool with the Yahoo API and multiple strategies.",
+    "tags": [
+      "PyQt",
+      "Backtesting",
+      "Yahoo API"
+    ],
+    "url": "https://github.com/AlexOAO/pyQt_stock_backtesting"
+  },
+  {
+    "icon": "🧬",
+    "name": "Transformer",
+    "desc": "A PyTorch implementation of the Transformer from \"Attention Is All You Need\".",
+    "tags": [
+      "PyTorch",
+      "Deep Learning"
+    ],
+    "url": "https://github.com/AlexOAO/transformer"
+  },
+  {
+    "icon": "📄",
+    "name": "EDGAR Crawler",
+    "desc": "An SEC filing crawler that extracts selected sections into structured JSON.",
+    "tags": [
+      "Web Scraping",
+      "SEC",
+      "JSON"
+    ],
+    "url": "https://github.com/AlexOAO/edgar-crawler"
+  }
+]

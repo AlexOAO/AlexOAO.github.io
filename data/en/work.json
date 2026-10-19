@@ -1,0 +1,557 @@
+[
+  {
+    "org": "KGI Bank · Technology Innovation Dept.",
+    "role": "PM & System Analyst",
+    "period": "2026/07 ~ Now",
+    "current": true,
+    "projects": [
+      {
+        "title": "Guardrails PoC (CyCraft)",
+        "phase": "PoC",
+        "status": "In progress",
+        "ownership": "Lead",
+        "period": "2026/07 ~ Now",
+        "background": "The bank plans to deploy 4 AI Agents. Before launch, the bank must verify the AI protection controls.",
+        "problem": "The bank had no in-house method to verify Guardrails. Vendor test results did not prove safety for the bank's own use cases.",
+        "approach": [
+          "Design a test set for 6 Policy modules, based on the OWASP LLM Top 10.",
+          "Build a baseline: 40 cases per module, 240 cases in total.",
+          "Expand the test set from feedback: 100 cases per module, 600 cases in total.",
+          "Run 3,600 verifications in batches through the API.",
+          "Fix the System Prompt from the failed cases, then test again."
+        ],
+        "result": [
+          "Completed 600-case verification and prompt tuning for all 6 Policies.",
+          "Covered 4 layers of AI safety: sensitive data, prompt attacks, business scope, and response compliance.",
+          "Built a reusable in-house verification method for the 4 Agents."
+        ],
+        "kpis": [
+          { "name": "Test set size", "value": "600 cases" },
+          { "name": "Batch verifications", "value": "3,600 runs" },
+          { "name": "Policy coverage", "value": "6 / 6" },
+          { "name": "Attack block rate", "value": "To be measured", "note": "Reported in the verification report" }
+        ],
+        "keyProgress": "600-case verification and prompt tuning are complete for all 6 Policies. The verification report and adoption proposal are in progress.",
+        "goal": {
+          "category": "AI projects & technical support",
+          "weight": "40%",
+          "target": "Complete the Guardrails PoC. Set the bank's AI protection specification.",
+          "achievement": "Test set and verification are complete. The report is in progress."
+        },
+        "milestones": [
+          { "date": "2026 Q3", "text": "Build a 240-case baseline (6 modules × 40)", "status": "done" },
+          { "date": "2026 Q3", "text": "Expand to 600 cases (6 modules × 100)", "status": "done" },
+          { "date": "2026 Q3", "text": "Run 3,600 API verifications and tune the System Prompt", "status": "done" },
+          { "date": "2026/10/12", "text": "CyCraft completes the PoC", "status": "done" },
+          { "date": "TBD", "text": "Submit the verification report and adoption proposal", "status": "doing" },
+          { "date": "TBD", "text": "Holding company evaluates 2 more vendors", "status": "todo" }
+        ],
+        "tags": ["Guardrails", "OWASP LLM Top 10", "Red Team", "Prompt Engineering"],
+        "source": "S2,S3,S4"
+      },
+      {
+        "title": "Enterprise Agentic Platform Evaluation (Agatha / Dify)",
+        "phase": "Evaluation",
+        "status": "Done",
+        "ownership": "Lead",
+        "period": "2026/07 ~ 2026/09",
+        "background": "The bank needs an enterprise Agentic platform to build and manage AI Agents.",
+        "problem": "The features and risks of each candidate were not clear. The bank had no common scoring standard.",
+        "approach": [
+          "Design and run 26 hands-on tests on Agatha.",
+          "Design and run 34 functional tests on Dify.",
+          "Record the severity of each issue: blocking, security, or general.",
+          "Complete the department scorecard and the holding company's 42-item scorecard (9 categories)."
+        ],
+        "result": [
+          "Found 12 issues in Agatha: 4 blocking and 1 security.",
+          "Delivered PoC reports and scorecards for Agatha and Dify.",
+          "Gave the selection decision a quantitative basis."
+        ],
+        "kpis": [
+          { "name": "Agatha tests", "value": "26" },
+          { "name": "Issues found", "value": "12 (4 blocking, 1 security)" },
+          { "name": "Dify tests", "value": "34" },
+          { "name": "Scorecard", "value": "42 items in 9 categories" }
+        ],
+        "keyProgress": "Tests, PoC reports, and scorecards for Agatha and Dify are complete.",
+        "goal": {
+          "category": "AI projects & technical support",
+          "weight": "40%",
+          "target": "Complete the enterprise Agentic platform evaluation.",
+          "achievement": "Done."
+        },
+        "milestones": [
+          { "date": "2026 Q3", "text": "Complete 26 Agatha tests", "status": "done" },
+          { "date": "2026 Q3", "text": "Complete 34 Dify tests", "status": "done" },
+          { "date": "2026 Q3", "text": "Submit PoC reports and the 42-item scorecard", "status": "done" }
+        ],
+        "tags": ["Agatha", "Dify", "Vendor Evaluation", "PoC"],
+        "source": "S2,S3"
+      },
+      {
+        "title": "AI Agent Cost Model & 3-Year TCO / ROI",
+        "phase": "Requirements",
+        "status": "In progress",
+        "ownership": "Lead",
+        "period": "2026/07 ~ Now",
+        "background": "The bank plans 4 AI Agents: Sales, Credit, Service, and Wealth Assistant. Resource allocation needs a cost and benefit basis.",
+        "problem": "Each Agent has a different cost structure: on-premises GPU, cloud tokens, and software. The bank had no single model to compare them.",
+        "approach": [
+          "Define the resource formula: AI Agent demand = space (GPU memory) × time (GPU compute).",
+          "Build the capacity model: 5 RTX PRO 6000 cards (96 GB each), 480 GB and 432,000 card-seconds per day.",
+          "Build the on-premises amortization model: memory is a fixed cost, compute is a variable cost.",
+          "Build the cloud token model: monthly cost = volume × tokens in/out per journey × unit price.",
+          "Build the benefit model: monthly benefit = volume × unit improvement × unit value.",
+          "Create a data request form to collect model specifications from 4 vendors."
+        ],
+        "result": [
+          "Delivered 3 cost models (capacity, on-premises amortization, cloud tokens) and the vendor data request form.",
+          "Collected business volumes: Service 43,000 calls/month; Wealth Assistant 324,959 logins/month; Credit 13,513 cases/month.",
+          "Estimated Credit Agent cloud token cost: about NT$1.92 per case; about NT$346,591 / 384,717 / 427,034 for years 1–3.",
+          "Built a 3-year TCO, TBE, and ROI comparison format for the 4 Agents."
+        ],
+        "kpis": [
+          { "name": "Cost models", "value": "3" },
+          { "name": "GPU pool capacity", "value": "480 GB / 432,000 card-sec/day" },
+          { "name": "Credit Agent unit cost", "value": "≈ NT$1.92 / case", "note": "Estimate" },
+          { "name": "3-year ROI of 4 Agents", "value": "To be measured", "note": "Waits for BU benefit data and vendor quotes" }
+        ],
+        "keyProgress": "The 3 cost models and the data request form are complete. Business units supply benefit data. Consolidation and ROI calculation are in progress.",
+        "goal": {
+          "category": "AI projects & technical support / AI business enablement",
+          "weight": "40% / 20%",
+          "target": "Complete token cost, compute estimate, and 3-year TCO / ROI for the 4 Agents.",
+          "achievement": "The cost model and ROI framework are complete. The compute pool model and peak estimate are complete."
+        },
+        "milestones": [
+          { "date": "2026 Q3", "text": "Complete 3 cost models and the vendor data request form", "status": "done" },
+          { "date": "2026 Q3", "text": "Complete the compute pool model and peak usage estimate", "status": "done" },
+          { "date": "2026/10", "text": "Confirm GPU allocation: Wealth Assistant 2 production + 1 test; Credit Agent 1 production", "status": "done" },
+          { "date": "2026/10/30", "text": "Complete the AI Agent compute estimate", "status": "doing" },
+          { "date": "TBD", "text": "Collect forms from 4 vendors; deliver final TCO / ROI and compute quotas", "status": "todo" }
+        ],
+        "tags": ["TCO", "ROI", "GPU Capacity", "Token Cost", "Cost Model"],
+        "source": "S2,S4,S5"
+      },
+      {
+        "title": "AI Agent Technical Specifications & Governance",
+        "phase": "Requirements",
+        "status": "In progress",
+        "ownership": "Lead",
+        "period": "2026/07 ~ Now",
+        "background": "Taiwan's Financial Supervisory Commission (FSC) issued 6 principles for AI use. The 4 Agents must meet them before launch.",
+        "problem": "The bank had no check process that maps Agent use cases to the FSC principles.",
+        "approach": [
+          "Survey pre-launch check methods for AI Agents.",
+          "Map the use cases of the 4 Agents to the 6 FSC principles.",
+          "Plan an in-house Agent check process and interface standards."
+        ],
+        "result": [
+          "Completed the survey of pre-launch AI Agent checks.",
+          "The in-house check process is in planning."
+        ],
+        "kpis": [
+          { "name": "Principles covered", "value": "6 FSC principles" },
+          { "name": "Agents covered", "value": "4" },
+          { "name": "Pre-launch pass rate", "value": "To be measured", "note": "Measured after the process is in place" }
+        ],
+        "keyProgress": "The survey that maps the 4 Agents to the 6 FSC principles is in progress.",
+        "goal": {
+          "category": "AI business enablement",
+          "weight": "20%",
+          "target": "Set technical specifications and interface standards for the 4 Agents. Complete the in-house check process.",
+          "achievement": "In progress."
+        },
+        "milestones": [
+          { "date": "2026 Q3", "text": "Complete the pre-launch AI Agent check survey", "status": "done" },
+          { "date": "TBD", "text": "Complete the check process for the 4 Agents against the 6 FSC principles", "status": "doing" }
+        ],
+        "tags": ["AI Governance", "Compliance", "FSC"],
+        "source": "S2,S3"
+      },
+      {
+        "title": "FSC FinLLM Data Cleaning & Model Evaluation",
+        "phase": "Build",
+        "status": "In progress",
+        "ownership": "Contributor",
+        "period": "2026/07 ~ 2027/03",
+        "background": "The FSC leads FinLLM, a large language model for Taiwan's financial industry. The bank takes part in data cleaning and model evaluation.",
+        "problem": "Training data must be correct and compliant. The raw questions contain errors, so each item needs review.",
+        "approach": [
+          "Clean, proofread, and correct each item.",
+          "Process 1 data batch per week, on the holding company's schedule.",
+          "Score the model's regulatory interpretation."
+        ],
+        "result": [
+          "Completed data batch 2-1 on 2026/10/12.",
+          "Completed regulatory scoring batch 4 on 2026/10/13."
+        ],
+        "kpis": [
+          { "name": "Data batches done", "value": "Batch 2-1" },
+          { "name": "Data batches left", "value": "9" },
+          { "name": "Scoring batches done", "value": "Batch 4" }
+        ],
+        "keyProgress": "Item-by-item cleaning is in progress. The standard process will expand to more items.",
+        "goal": {
+          "category": "AI projects & technical support",
+          "weight": "40%",
+          "target": "Complete data cleaning by 2027/01/08 and model evaluation by 2027/03/06.",
+          "achievement": "In progress, on the holding company's schedule."
+        },
+        "milestones": [
+          { "date": "2026/10/12", "text": "Complete data batch 2-1", "status": "done" },
+          { "date": "2026/10/13", "text": "Complete regulatory scoring batch 4", "status": "done" },
+          { "date": "2026/10/27 ~ 11/12", "text": "Run regulatory scoring batch 5", "status": "doing" },
+          { "date": "2027/01/08", "text": "Complete all data cleaning", "status": "todo" },
+          { "date": "2027/03/06", "text": "Complete model evaluation", "status": "todo" }
+        ],
+        "tags": ["FinLLM", "Data Cleaning", "LLM Evaluation"],
+        "source": "S2,S4"
+      },
+      {
+        "title": "Wealth Assistant App PoC",
+        "phase": "Handover",
+        "status": "Handed over",
+        "ownership": "Lead",
+        "period": "2026/07 ~ 2026/09",
+        "background": "Wealth Assistant is the bank's AI wealth management app. It is one of the 4 Agents.",
+        "problem": "The PoC had to confirm that the Q&A function works and document the system architecture.",
+        "approach": [
+          "Test the Q&A function.",
+          "Draw the first architecture diagram.",
+          "Document the results and hand over to a senior colleague."
+        ],
+        "result": [
+          "Completed Q&A testing and the first architecture diagram.",
+          "Handed over to a senior colleague for development."
+        ],
+        "kpis": [
+          { "name": "Monthly logins (BU data)", "value": "324,959" },
+          { "name": "Monthly logins, year 3 forecast", "value": "495,000" },
+          { "name": "Answer accuracy", "value": "To be measured", "note": "Measured by the receiving team" }
+        ],
+        "keyProgress": "Q&A testing and the first architecture diagram are complete. The project is handed over.",
+        "goal": {
+          "category": "AI projects & technical support",
+          "weight": "40%",
+          "target": "Complete the Wealth Assistant PoC tests.",
+          "achievement": "Done and handed over."
+        },
+        "milestones": [
+          { "date": "2026 Q3", "text": "Complete Q&A testing", "status": "done" },
+          { "date": "2026 Q3", "text": "Complete the first architecture diagram", "status": "done" },
+          { "date": "2026 Q3", "text": "Hand over to a senior colleague", "status": "done" }
+        ],
+        "tags": ["PoC", "Wealth Management", "AI Assistant"],
+        "source": "S2,S5"
+      },
+      {
+        "title": "Gemini Training Program",
+        "phase": "Requirements",
+        "status": "Planned",
+        "ownership": "Lead",
+        "period": "2026/10 ~ 2026/11",
+        "background": "The bank encourages employees to use generative AI tools.",
+        "problem": "Employees do not know which tasks suit AI, or how to use AI safely.",
+        "approach": [
+          "Confirm the course outline with the consultant: safety, tools, and prompts.",
+          "Collect use cases from each business unit.",
+          "Use these cases for hands-on practice in class."
+        ],
+        "result": [
+          "The course outline is confirmed."
+        ],
+        "kpis": [
+          { "name": "Course date", "value": "2026/11/12" },
+          { "name": "Attendees", "value": "To be measured" },
+          { "name": "Use-case proposals after class", "value": "To be measured" }
+        ],
+        "keyProgress": "The outline is confirmed. Use-case collection is in progress.",
+        "goal": {
+          "category": "AI operations: employee enablement",
+          "weight": "—",
+          "target": "Deliver Gemini training on 2026/11/12 with real business cases.",
+          "achievement": "Planned."
+        },
+        "milestones": [
+          { "date": "2026/10", "text": "Confirm the course outline with the consultant", "status": "done" },
+          { "date": "2026/10 ~ 11", "text": "Collect use cases from business units", "status": "doing" },
+          { "date": "2026/11/12", "text": "Deliver the course", "status": "todo" }
+        ],
+        "tags": ["Gemini", "AI Training", "Enablement"],
+        "source": "S4"
+      },
+      {
+        "title": "A2UI Technical Research",
+        "phase": "PoC",
+        "status": "Planned",
+        "ownership": "Lead",
+        "period": "2026/10 ~ Now",
+        "background": "A2UI lets an Agent generate the user interface. The bank evaluates it for use cases such as Wealth Assistant.",
+        "problem": "The bank has no A2UI PoC environment yet. The business value is not confirmed.",
+        "approach": [
+          "Confirm the PoC environment requirements and technical specifications.",
+          "Apply for Azure AI Foundry and tokens.",
+          "Connect to the IT test environment.",
+          "Align use cases with the Wealth Assistant team."
+        ],
+        "result": [
+          "PoC environment requirements are in review."
+        ],
+        "kpis": [
+          { "name": "Checkpoint", "value": "2026/11/12: business value" },
+          { "name": "Use cases", "value": "To be measured" }
+        ],
+        "keyProgress": "Environment requirements and technical specifications are in review.",
+        "goal": {
+          "category": "Bank technical research",
+          "weight": "—",
+          "target": "Confirm the PoC environment and business value by 2026/11/12.",
+          "achievement": "Planned."
+        },
+        "milestones": [
+          { "date": "2026/10", "text": "Confirm PoC environment requirements and specifications", "status": "doing" },
+          { "date": "2026/11/12", "text": "Checkpoint: Azure AI Foundry, tokens, and business value", "status": "todo" },
+          { "date": "TBD", "text": "Connect the IT test environment and Wealth Assistant use cases", "status": "todo" }
+        ],
+        "tags": ["A2UI", "Azure AI Foundry", "Agent UI"],
+        "source": "S4"
+      },
+      {
+        "title": "Office AI: Agentic Workflow Plan",
+        "phase": "Requirements",
+        "status": "Not started",
+        "ownership": "Lead",
+        "period": "TBD",
+        "background": "The bank uses office AI tools such as Copilot and Gemini.",
+        "problem": "Each tool completes only one step. People still connect cross-system office workflows by hand.",
+        "approach": [
+          "List the office workflows that Agents can connect.",
+          "Plan an Agentic workflow solution."
+        ],
+        "result": [
+          "Not started."
+        ],
+        "kpis": [
+          { "name": "Work hours saved", "value": "To be measured" }
+        ],
+        "keyProgress": "Not started.",
+        "goal": {
+          "category": "Office AI research",
+          "weight": "—",
+          "target": "Propose an Agentic workflow plan.",
+          "achievement": "Not started."
+        },
+        "milestones": [
+          { "date": "TBD", "text": "Propose the plan", "status": "todo" }
+        ],
+        "tags": ["Agentic Workflow", "Office AI"],
+        "source": "S4"
+      }
+    ]
+  },
+  {
+    "org": "KGI Financial Holding",
+    "role": "AI Developer Intern",
+    "period": "2026/02 ~ 2026/06",
+    "projects": [
+      {
+        "title": "Webai Finance Module (Kinance AI Market / Stock Assistant)",
+        "phase": "Production",
+        "status": "Done",
+        "ownership": "Lead",
+        "period": "2026/02 ~ 2026/06",
+        "background": "The Kinance AI Market Assistant and AI Stock Assistant answer user questions about markets and stocks.",
+        "problem": "Researchers collected and organized broker reports, macro data, and news by hand. This took time.",
+        "approach": [
+          "Lead the full cycle from requirements and PoC to production launch.",
+          "Orchestrate the AI Agent flow. Integrate broker reports, macro data, and news through SFTP.",
+          "Design access control: open to the whole group, with investment-trust data kept separate.",
+          "Integrate with the existing UI / UX."
+        ],
+        "result": [
+          "Launched Webai Finance in production.",
+          "Reduced the time researchers spend to collect and organize data."
+        ],
+        "kpis": [
+          { "name": "Launch status", "value": "In production" },
+          { "name": "Data sources", "value": "3 (broker reports, macro, news)" },
+          { "name": "Researcher data-prep time", "value": "To be measured" }
+        ],
+        "keyProgress": "All steps from requirements to launch are complete.",
+        "goal": {
+          "category": "Module owner",
+          "weight": "—",
+          "target": "Lead Webai Finance from requirements to production launch.",
+          "achievement": "Done. In production."
+        },
+        "milestones": [
+          { "date": "2026/02 ~ 06", "text": "Requirements analysis", "status": "done" },
+          { "date": "2026/02 ~ 06", "text": "PoC", "status": "done" },
+          { "date": "2026/02 ~ 06", "text": "Production launch", "status": "done" }
+        ],
+        "tags": ["n8n", "AI Agent", "Azure OpenAI", "SFTP"],
+        "source": "S1"
+      },
+      {
+        "title": "AI Governance Automated Review System",
+        "phase": "Production",
+        "status": "Done",
+        "ownership": "Lead",
+        "period": "2026/02 ~ 2026/06",
+        "background": "The group AI committee reviews AI usage reports from subsidiaries.",
+        "problem": "Manual review of report content, risk levels, and the asset register took time. Reviewers did not use the same standard.",
+        "approach": [
+          "Connect SharePoint so subsidiaries can upload reports.",
+          "Use Azure OpenAI to check if the report content is reasonable.",
+          "Recalculate risk levels and cross-check the asset register automatically.",
+          "Deploy to Azure Container Apps with Azure DevOps CI/CD."
+        ],
+        "result": [
+          "The system completes risk grading, asset register checks, and residual risk assessment automatically.",
+          "CI/CD deploys automatically and removes manual deployment steps."
+        ],
+        "kpis": [
+          { "name": "Automated steps", "value": "3 (risk grading, register check, residual risk)" },
+          { "name": "Deployment", "value": "CI/CD → ACA" },
+          { "name": "Review time per report", "value": "To be measured" }
+        ],
+        "keyProgress": "The system is deployed and in operation.",
+        "goal": {
+          "category": "AI governance system",
+          "weight": "—",
+          "target": "Automate the AI governance review process.",
+          "achievement": "Done."
+        },
+        "milestones": [
+          { "date": "2026/02 ~ 06", "text": "Connect the SharePoint upload flow", "status": "done" },
+          { "date": "2026/02 ~ 06", "text": "Complete content checks and risk recalculation", "status": "done" },
+          { "date": "2026/02 ~ 06", "text": "Deploy to ACA with CI/CD", "status": "done" }
+        ],
+        "tags": ["Azure OpenAI", "SharePoint", "Azure DevOps", "ACA"],
+        "source": "S1"
+      }
+    ]
+  },
+  {
+    "org": "Taiwan Economic Journal (TEJ)",
+    "role": "Quant Trading & Data Science Intern",
+    "period": "2025/07 ~ 2025/12",
+    "projects": [
+      {
+        "title": "AI Customer Service Bot \"Little t\"",
+        "phase": "Production",
+        "status": "Done",
+        "ownership": "Lead",
+        "period": "2025/07 ~ 2025/12",
+        "background": "TEJ members need to look up technical manuals and database usage.",
+        "problem": "Answers were spread across technical manuals. When members could not find an answer, they waited for support.",
+        "approach": [
+          "Process the technical manuals with LangExtract.",
+          "Build a Qdrant vector database and answer questions with RAG.",
+          "Adjust the chunking strategy to improve retrieval.",
+          "Build an HTML front end and an admin console. Deploy on Docker."
+        ],
+        "result": [
+          "Launched the system. Members can search technical manuals in natural language.",
+          "Admins maintain the knowledge base in the console."
+        ],
+        "kpis": [
+          { "name": "Launch status", "value": "Launched" },
+          { "name": "Answer accuracy", "value": "To be measured" }
+        ],
+        "keyProgress": "The system is launched.",
+        "goal": {
+          "category": "AI customer service",
+          "weight": "—",
+          "target": "Own the RAG architecture, vector database, and front / back end.",
+          "achievement": "Done and launched."
+        },
+        "milestones": [
+          { "date": "Phase 1", "text": "Build the Qdrant vector database", "status": "done" },
+          { "date": "Phase 2", "text": "Complete RAG Q&A and chunking adjustments", "status": "done" },
+          { "date": "Phase 3", "text": "Complete the front end and admin console; launch", "status": "done" }
+        ],
+        "tags": ["RAG", "Qdrant", "LangExtract", "Docker"],
+        "link": "posts/rag-smart-customer-service.html",
+        "linkLabel": "Read the lessons learned (Chinese)",
+        "source": "S1"
+      },
+      {
+        "title": "Multi-Agent Investment Advisory Architecture",
+        "phase": "Build",
+        "status": "Done",
+        "ownership": "Contributor",
+        "period": "2025/07 ~ 2025/12",
+        "background": "TEJ evaluated AI for investment recommendations.",
+        "problem": "One LLM cannot handle technicals, news sentiment, and fundamentals at the same time. Its recommendations also lack a reasoning trail that people can check.",
+        "approach": [
+          "Build 5 Agents with LangGraph: technical analysis, news sentiment, fundamentals, bull-bear debate, and trader.",
+          "Connect TEJ data through MCP.",
+          "Integrate the Zipline backtest engine."
+        ],
+        "result": [
+          "Delivered the Multi-Agent advisory architecture.",
+          "Verified strategy performance with Zipline backtests."
+        ],
+        "kpis": [
+          { "name": "Agents", "value": "5" },
+          { "name": "Backtest engine", "value": "Zipline" }
+        ],
+        "keyProgress": "Architecture and backtest integration are complete.",
+        "goal": {
+          "category": "AI investment advisory",
+          "weight": "—",
+          "target": "Design the Multi-Agent architecture and integrate MCP with TEJ data.",
+          "achievement": "Done."
+        },
+        "milestones": [
+          { "date": "Phase 1", "text": "Design the roles of 5 Agents", "status": "done" },
+          { "date": "Phase 2", "text": "Connect TEJ data through MCP", "status": "done" },
+          { "date": "Phase 3", "text": "Integrate Zipline backtests", "status": "done" }
+        ],
+        "tags": ["LangGraph", "Multi-Agent", "MCP", "Zipline"],
+        "link": "posts/multi-agent-investment.html",
+        "linkLabel": "Read the architecture notes (Chinese)",
+        "source": "S1"
+      },
+      {
+        "title": "ASR Earnings Call Transcription",
+        "phase": "Build",
+        "status": "Done",
+        "ownership": "Contributor",
+        "period": "2025/07 ~ 2025/12",
+        "background": "The research team needs the text and key points of earnings calls.",
+        "problem": "Manual transcription and summary of earnings call videos took time.",
+        "approach": [
+          "Transcribe speech with Whisper.",
+          "Automate the video file processing.",
+          "Summarize the transcript into structured tables."
+        ],
+        "result": [
+          "Reduced the time to prepare earnings call transcripts.",
+          "Delivered structured summary tables."
+        ],
+        "kpis": [
+          { "name": "Output", "value": "Transcript + structured summary" },
+          { "name": "Prep time per call", "value": "To be measured" }
+        ],
+        "keyProgress": "The automated pipeline is complete.",
+        "goal": {
+          "category": "ASR transcription",
+          "weight": "—",
+          "target": "Build an automated video processing and summary pipeline.",
+          "achievement": "Done."
+        },
+        "milestones": [
+          { "date": "Phase 1", "text": "Complete speech recognition with Whisper", "status": "done" },
+          { "date": "Phase 2", "text": "Automate video processing", "status": "done" },
+          { "date": "Phase 3", "text": "Deliver structured summary tables", "status": "done" }
+        ],
+        "tags": ["Whisper", "ASR", "Summarization"],
+        "source": "S1"
+      }
+    ]
+  }
+]

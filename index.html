@@ -1,10 +1,41 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>李翔緯 Alex Li | AI &amp; FinTech Developer</title>
-  <meta name="description" content="李翔緯的個人作品集 — 專注LLM在金融場景的應用開發">
+  <title>Alex Li (李翔緯) | Personal Portfolio &amp; Blog</title>
+  <meta name="description" content="Personal website of Alex Li (李翔緯), PM and System Analyst at KGI Bank. Portfolio of AI Agent projects in finance, with case studies, experience, and a blog. 李翔緯的個人網站與作品集。">
+  <meta name="author" content="Alex Li (李翔緯)">
+  <link rel="canonical" href="https://xiang-wei-li.com/">
+  <link rel="alternate" hreflang="en" href="https://xiang-wei-li.com/?lang=en">
+  <link rel="alternate" hreflang="zh-Hant" href="https://xiang-wei-li.com/?lang=zh">
+  <link rel="alternate" hreflang="x-default" href="https://xiang-wei-li.com/">
+  <meta property="og:type" content="profile">
+  <meta property="og:title" content="Alex Li (李翔緯) | Personal Portfolio">
+  <meta property="og:description" content="Personal portfolio of Alex Li, PM and System Analyst for AI Agents in finance.">
+  <meta property="og:url" content="https://xiang-wei-li.com/">
+  <meta property="og:image" content="https://xiang-wei-li.com/assets/images/profile.jpg">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    "name": "Alex Li (李翔緯) — Personal Website",
+    "url": "https://xiang-wei-li.com/",
+    "inLanguage": ["en", "zh-Hant"],
+    "mainEntity": {
+      "@type": "Person",
+      "name": "Alex Li",
+      "alternateName": "李翔緯",
+      "url": "https://xiang-wei-li.com/",
+      "image": "https://xiang-wei-li.com/assets/images/profile.jpg",
+      "jobTitle": "PM & System Analyst",
+      "worksFor": { "@type": "Organization", "name": "KGI Bank" },
+      "alumniOf": { "@type": "CollegeOrUniversity", "name": "National Taiwan University of Science and Technology" },
+      "knowsAbout": ["AI Agents", "LLM", "RAG", "AI Governance", "FinTech", "Quantitative Finance"],
+      "sameAs": ["https://github.com/AlexOAO"]
+    }
+  }
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -51,6 +82,15 @@
     }
     .nav-links a:hover { color: #e2e8f0; }
     .nav-links a:hover::after { width: 100%; }
+    .lang-toggle {
+      font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: #e2e8f0;
+      background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.3);
+      border-radius: 20px; padding: 0.3rem 0.8rem; cursor: pointer; transition: background 0.3s;
+    }
+    .lang-toggle:hover { background: rgba(59,130,246,0.25); }
+    .load-error { color: #f59e0b; font-size: 0.9rem; padding: 1rem 0; }
+    .static-note { color: #94a3b8; font-size: 0.92rem; line-height: 1.8; }
+    .static-note li { margin-bottom: 0.35rem; }
     .nav-toggle { display: none; flex-direction: column; gap: 5px; cursor: pointer; background: none; border: none; padding: 4px; }
     .nav-toggle span { width: 24px; height: 2px; background: #e2e8f0; transition: 0.3s; border-radius: 2px; }
 
@@ -155,6 +195,24 @@
       background: linear-gradient(135deg, #3b82f6, #06b6d4);
     }
 
+    /* ── Proof ── */
+    .proof-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-bottom: 3.5rem;
+    }
+    .proof-card {
+      background: rgba(30,41,59,0.6); border: 1px solid rgba(59,130,246,0.1);
+      border-radius: 16px; padding: 1.75rem; transition: border-color 0.3s, transform 0.3s;
+    }
+    .proof-card:hover { border-color: rgba(59,130,246,0.3); transform: translateY(-3px); }
+    .proof-value {
+      font-family: 'Inter', sans-serif; font-size: 2.75rem; font-weight: 800; line-height: 1;
+      background: linear-gradient(135deg, #3b82f6, #06b6d4);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .proof-unit { font-size: 1rem; font-weight: 600; color: #06b6d4; margin-left: 0.25rem; }
+    .proof-label { font-size: 1rem; font-weight: 700; color: #e2e8f0; margin: 0.85rem 0 0.4rem; }
+    .proof-context { font-size: 0.88rem; color: #94a3b8; line-height: 1.7; }
+
     /* ── About ── */
     #about { background: #0f172a; }
     .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
@@ -167,6 +225,100 @@
     .info-card:hover { border-color: rgba(59,130,246,0.3); transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.2); }
     .info-card .label { font-size: 0.8rem; color: #64748b; margin-bottom: 0.25rem; }
     .info-card .value { font-size: 0.95rem; color: #e2e8f0; font-weight: 500; }
+
+    /* ── Work (PM-style project records) ── */
+    #work { background: rgba(15,23,42,0.95); }
+    .work-group { margin-bottom: 3.5rem; }
+    .work-group:last-child { margin-bottom: 0; }
+    .group-head {
+      display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.5rem 1rem;
+      padding-bottom: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(148,163,184,0.12);
+    }
+    .group-head .org { font-size: 1.35rem; font-weight: 800; color: #e2e8f0; }
+    .group-head .role { color: #94a3b8; font-size: 0.95rem; }
+    .group-head .period { color: #3b82f6; font-size: 0.85rem; font-weight: 500; margin-left: auto; }
+    .current-tag {
+      font-family: 'Inter', sans-serif; font-size: 0.7rem; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: #10b981; background: rgba(16,185,129,0.12);
+      border: 1px solid rgba(16,185,129,0.25); padding: 0.15rem 0.55rem; border-radius: 20px;
+    }
+    .work-list { display: flex; flex-direction: column; gap: 1.5rem; }
+    .case-card {
+      background: rgba(30,41,59,0.6); border: 1px solid rgba(59,130,246,0.08);
+      border-radius: 16px; padding: 2rem; transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .case-card:hover { border-color: rgba(59,130,246,0.3); box-shadow: 0 12px 40px rgba(0,0,0,0.25); }
+    .case-badges { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.85rem; }
+    .badge {
+      font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.65rem; border-radius: 20px;
+      border: 1px solid transparent; white-space: nowrap;
+    }
+    .badge.phase { color: #cbd5e1; background: rgba(148,163,184,0.1); border-color: rgba(148,163,184,0.2); }
+    .badge.own { color: #a78bfa; background: rgba(139,92,246,0.1); border-color: rgba(139,92,246,0.2); }
+    .badge.st-done { color: #10b981; background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.25); }
+    .badge.st-doing { color: #3b82f6; background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.25); }
+    .badge.st-handover { color: #f59e0b; background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.25); }
+    .badge.st-plan { color: #06b6d4; background: rgba(6,182,212,0.1); border-color: rgba(6,182,212,0.25); }
+    .badge.st-idle { color: #64748b; background: rgba(100,116,139,0.1); border-color: rgba(100,116,139,0.25); }
+    .case-period { font-size: 0.8rem; color: #64748b; margin-left: auto; }
+    .case-card h3 { font-size: 1.3rem; font-weight: 700; color: #e2e8f0; line-height: 1.4; margin-bottom: 1.25rem; }
+    .case-row { display: grid; grid-template-columns: 96px 1fr; gap: 1rem; margin-bottom: 0.9rem; }
+    .case-row .k {
+      font-family: 'Inter', sans-serif; font-size: 0.72rem; font-weight: 600;
+      letter-spacing: 1.5px; text-transform: uppercase; color: #64748b; padding-top: 0.2rem;
+    }
+    .case-row .v { color: #94a3b8; font-size: 0.93rem; line-height: 1.75; }
+    .case-row .v li { position: relative; padding-left: 1rem; }
+    .case-row .v li::before { content: '–'; position: absolute; left: 0; color: #475569; }
+    .case-row.result .k { color: #06b6d4; }
+    .case-row.result .v { color: #e2e8f0; }
+    .kpi-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.75rem;
+      margin: 1.25rem 0 0.25rem;
+    }
+    .kpi {
+      background: rgba(15,23,42,0.6); border: 1px solid rgba(59,130,246,0.1);
+      border-radius: 10px; padding: 0.75rem 0.9rem;
+    }
+    .kpi .n { font-size: 0.75rem; color: #64748b; }
+    .kpi .val { font-size: 0.98rem; font-weight: 700; color: #e2e8f0; margin-top: 0.15rem; line-height: 1.4; }
+    .kpi .note { font-size: 0.72rem; color: #64748b; margin-top: 0.2rem; }
+    .kpi.pending .val { color: #64748b; font-weight: 500; }
+    .case-details { margin-top: 1.25rem; border-top: 1px solid rgba(148,163,184,0.1); padding-top: 1rem; }
+    .case-details summary {
+      cursor: pointer; list-style: none; font-size: 0.88rem; font-weight: 600; color: #3b82f6;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+    }
+    .case-details summary::-webkit-details-marker { display: none; }
+    .case-details summary::before { content: '▸'; transition: transform 0.2s; }
+    .case-details[open] summary::before { transform: rotate(90deg); }
+    .details-body { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1.25rem; }
+    .details-body h4 {
+      font-family: 'Inter', sans-serif; font-size: 0.72rem; font-weight: 600; letter-spacing: 1.5px;
+      text-transform: uppercase; color: #64748b; margin-bottom: 0.5rem;
+    }
+    .details-body p { color: #94a3b8; font-size: 0.9rem; line-height: 1.7; margin-bottom: 1.25rem; }
+    .goal-meta { font-size: 0.8rem; color: #64748b; margin-bottom: 0.35rem; }
+    .ms-list { position: relative; padding-left: 1.25rem; }
+    .ms-list::before {
+      content: ''; position: absolute; left: 5px; top: 0.4rem; bottom: 0.4rem; width: 2px;
+      background: rgba(148,163,184,0.15);
+    }
+    .ms { position: relative; margin-bottom: 0.85rem; }
+    .ms::before {
+      content: ''; position: absolute; left: -1.25rem; top: 0.35rem;
+      width: 12px; height: 12px; border-radius: 50%; box-sizing: border-box;
+    }
+    .ms.done::before { background: #10b981; }
+    .ms.doing::before { background: #3b82f6; box-shadow: 0 0 0 4px rgba(59,130,246,0.2); animation: pulse 2s infinite; }
+    .ms.todo::before { background: #0f172a; border: 2px solid #475569; }
+    @keyframes pulse { 50% { box-shadow: 0 0 0 7px rgba(59,130,246,0.05); } }
+    .ms .d { font-size: 0.75rem; color: #64748b; }
+    .ms .t { font-size: 0.9rem; color: #cbd5e1; line-height: 1.6; }
+    .case-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 1rem; margin-top: 1.25rem;
+    }
 
     /* ── Experience ── */
     #experience { background: rgba(15,23,42,0.95); }
@@ -193,6 +345,7 @@
       background: rgba(59,130,246,0.1); padding: 0.25rem 0.75rem;
       border-radius: 20px; white-space: nowrap;
     }
+    .timeline-role { font-size: 0.92rem; color: #cbd5e1; margin-top: 0.15rem; }
     .timeline-subtitle { font-size: 0.95rem; color: #94a3b8; margin-bottom: 0.75rem; }
     .timeline-content li {
       position: relative; padding-left: 1.25rem; margin-bottom: 0.5rem;
@@ -205,26 +358,19 @@
 
     /* ── Projects ── */
     #projects { background: #0f172a; }
-    .projects-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.5rem;
+    .side-list { border-top: 1px solid rgba(148,163,184,0.12); }
+    .side-item {
+      display: grid; grid-template-columns: 56px 1fr auto; gap: 1.5rem; align-items: center;
+      padding: 1.5rem 0.5rem; border-bottom: 1px solid rgba(148,163,184,0.12);
+      transition: background 0.3s, padding 0.3s;
     }
-    .project-card {
-      background: rgba(30,41,59,0.6); border: 1px solid rgba(59,130,246,0.08);
-      border-radius: 16px; padding: 1.75rem; transition: all 0.35s;
-      display: flex; flex-direction: column;
-    }
-    .project-card:hover {
-      transform: translateY(-4px); border-color: rgba(59,130,246,0.3);
-      box-shadow: 0 12px 40px rgba(0,0,0,0.25);
-    }
-    .project-icon {
-      width: 48px; height: 48px; border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.5rem; margin-bottom: 1rem; background: rgba(59,130,246,0.1);
-    }
-    .project-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; color: #e2e8f0; }
-    .project-card p { color: #94a3b8; font-size: 0.9rem; line-height: 1.7; flex-grow: 1; margin-bottom: 1.25rem; }
-    .project-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; }
+    .side-item:hover { background: rgba(30,41,59,0.5); padding-left: 1rem; padding-right: 1rem; }
+    .side-num { font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 600; color: #3b82f6; }
+    .side-item h3 { font-size: 1.05rem; font-weight: 700; color: #e2e8f0; margin-bottom: 0.25rem; }
+    .side-item p { color: #94a3b8; font-size: 0.9rem; line-height: 1.6; margin-bottom: 0.6rem; }
+    .side-arrow { color: #64748b; transition: color 0.3s, transform 0.3s; }
+    .side-item:hover .side-arrow { color: #3b82f6; transform: translateX(4px); }
+    .project-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; }
     .project-tags span {
       font-size: 0.75rem; padding: 0.25rem 0.65rem; border-radius: 20px;
       background: rgba(6,182,212,0.1); color: #06b6d4; border: 1px solid rgba(6,182,212,0.15);
@@ -234,7 +380,6 @@
       font-size: 0.9rem; color: #3b82f6; font-weight: 500; transition: gap 0.3s;
     }
     .project-link:hover { gap: 0.75rem; }
-    .project-link svg { width: 16px; height: 16px; }
     .arrow-svg { display: inline; }
 
     /* ── Blog ── */
@@ -353,7 +498,8 @@
       .hero-buttons { justify-content: center; }
       .about-grid { grid-template-columns: 1fr; }
       .contact-grid { grid-template-columns: 1fr; }
-      .projects-grid { grid-template-columns: 1fr; }
+      .proof-grid { grid-template-columns: 1fr 1fr; }
+      .details-body { grid-template-columns: 1fr; gap: 0.5rem; }
       .blog-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 600px) {
@@ -367,9 +513,17 @@
         border-bottom: 1px solid rgba(59,130,246,0.1);
       }
       .nav-toggle { display: flex; }
+      .nav-right { display: flex; align-items: center; gap: 0.75rem; }
       .hero-name { font-size: 2rem; }
       .hero-photo-wrapper { width: 200px; height: 200px; }
       .about-info { grid-template-columns: 1fr; }
+      .proof-grid { grid-template-columns: 1fr; }
+      .case-card { padding: 1.5rem 1.25rem; }
+      .case-period { margin-left: 0; width: 100%; }
+      .group-head .period { margin-left: 0; }
+      .case-row { grid-template-columns: 1fr; gap: 0.2rem; }
+      .side-item { grid-template-columns: 36px 1fr; gap: 1rem; }
+      .side-arrow { display: none; }
     }
   </style>
 </head>
@@ -380,15 +534,19 @@
     <div class="nav-container">
       <a href="#" class="nav-logo">Alex Li</a>
       <div class="nav-links" id="navLinks">
-        <a href="#about">About</a>
+        <a href="#about">Proof</a>
+        <a href="#work">Work</a>
         <a href="#experience">Experience</a>
-        <a href="#projects">Projects</a>
+        <a href="#projects">Side Projects</a>
         <a href="#blog">Blog</a>
         <a href="#contact">Contact</a>
       </div>
-      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
-        <span></span><span></span><span></span>
-      </button>
+      <div class="nav-right">
+        <button class="lang-toggle" id="langToggle" aria-label="Switch language">中文</button>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
     </div>
   </nav>
 
@@ -404,15 +562,14 @@
           <span id="typewriter"></span><span class="typing-cursor"></span>
         </p>
         <p class="hero-desc">
-          用 AI 解決金融場景的真實問題。<br>
-          從 RAG 智能客服到 Multi-Agent 投資決策，我喜歡把前沿技術落地到業務裡。
+          <span data-i18n="heroDesc">PM and System Analyst at KGI Bank. I define the problem of each AI project, verify the solution, measure cost and benefit, and take it to production.</span>
         </p>
         <div class="hero-buttons">
           <a href="https://github.com/AlexOAO" target="_blank" class="btn btn-primary">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
             GitHub
           </a>
-          <a href="#blog" class="btn btn-outline">Read My Blog</a>
+          <a href="#blog" class="btn btn-outline" data-i18n="readBlog">Read My Blog</a>
           <a href="assets/docs/resume.pdf" target="_blank" class="btn btn-outline">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
             CV
@@ -469,39 +626,51 @@
   <!-- About -->
   <section id="about">
     <div class="section-container reveal">
-      <h2 class="section-title"><span class="accent">01.</span> About</h2>
+      <h2 class="section-title"><span class="accent">01.</span> Proof</h2>
+      <p class="section-subtitle" id="proofSubhead"></p>
       <div class="divider"></div>
+      <div class="proof-grid" id="proofGrid"></div>
       <div class="about-grid" id="aboutGrid">
-        <div class="about-text" id="aboutText"></div>
+        <div class="about-text" id="aboutText"><!-- static:about --><p>I am a PM and System Analyst at KGI Bank, Technology Innovation Department. I lead AI Agent PoCs, platform evaluation, cost and ROI models, and pre-launch governance.</p><p>Before this, I led the Webai Finance launch at KGI Financial Holding. At TEJ, I built a RAG customer service bot and a Multi-Agent advisory system. I am also a graduate student in Finance at NTUST.</p><p>Outside work, I enjoy photography and swimming.</p><!-- /static:about --></div>
         <div class="about-info" id="aboutInfo"></div>
       </div>
+    </div>
+  </section>
+
+  <!-- Work -->
+  <section id="work">
+    <div class="section-container reveal">
+      <h2 class="section-title"><span class="accent">02.</span> Work</h2>
+      <p class="section-subtitle" data-i18n="workSub">Each project: phase, background, problem, approach, result, and KPIs. Expand for key progress, goal, and milestones.</p>
+      <div class="divider"></div>
+      <div id="workList"><!-- static:work --><ul class="static-note"><li><strong>KGI Bank · Technology Innovation Dept.</strong> · PM &amp; System Analyst · 2026/07 ~ Now: Guardrails PoC (CyCraft); Enterprise Agentic Platform Evaluation (Agatha / Dify); AI Agent Cost Model &amp; 3-Year TCO / ROI; AI Agent Technical Specifications &amp; Governance; FSC FinLLM Data Cleaning &amp; Model Evaluation; Wealth Assistant App PoC; Gemini Training Program; A2UI Technical Research; Office AI: Agentic Workflow Plan</li><li><strong>KGI Financial Holding</strong> · AI Developer Intern · 2026/02 ~ 2026/06: Webai Finance Module (Kinance AI Market / Stock Assistant); AI Governance Automated Review System</li><li><strong>Taiwan Economic Journal (TEJ)</strong> · Quant Trading &amp; Data Science Intern · 2025/07 ~ 2025/12: AI Customer Service Bot &quot;Little t&quot;; Multi-Agent Investment Advisory Architecture; ASR Earnings Call Transcription</li></ul><!-- /static:work --></div>
     </div>
   </section>
 
   <!-- Experience -->
   <section id="experience">
     <div class="section-container reveal">
-      <h2 class="section-title"><span class="accent">02.</span> Experience</h2>
+      <h2 class="section-title"><span class="accent">03.</span> Experience</h2>
       <div class="divider"></div>
-      <div class="timeline" id="timelineContainer"></div>
+      <div class="timeline" id="timelineContainer"><!-- static:experience --><ul class="static-note"><li><strong>KGI Bank, Technology Innovation Dept. | PM &amp; System Analyst</strong> · 2026/07 ~ Now</li><li><strong>KGI Financial Holding | AI Developer Intern</strong> · 2026/02 ~ 2026/06</li><li><strong>Taiwan Economic Journal (TEJ) | Quant Trading &amp; Data Science Intern</strong> · 2025/07 ~ 12</li><li><strong>Ministry of Digital Affairs | 6th T-Ambassador</strong> · 2025/09 ~ 12</li><li><strong>TMBA 26th, Algorithmic Trading | TAIEX Futures Strategy</strong> · 2025/07 ~ 12</li></ul><!-- /static:experience --></div>
     </div>
   </section>
 
   <!-- Projects -->
   <section id="projects">
     <div class="section-container reveal">
-      <h2 class="section-title"><span class="accent">03.</span> Projects</h2>
-      <p class="section-subtitle">Things I've built or contributed to</p>
+      <h2 class="section-title"><span class="accent">04.</span> Side Projects</h2>
+      <p class="section-subtitle" data-i18n="sideSub">Things I've built or contributed to</p>
       <div class="divider"></div>
-      <div class="projects-grid" id="projectsGrid"></div>
+      <div class="side-list" id="projectsList"></div>
     </div>
   </section>
 
   <!-- Blog -->
   <section id="blog">
     <div class="section-container reveal">
-      <h2 class="section-title"><span class="accent">04.</span> Blog</h2>
-      <p class="section-subtitle">Notes, learnings &amp; things I find interesting</p>
+      <h2 class="section-title"><span class="accent">05.</span> Blog</h2>
+      <p class="section-subtitle" data-i18n="blogSub">Notes, learnings &amp; things I find interesting</p>
       <div class="divider"></div>
       <div class="blog-grid" id="blogGrid">
         <div class="blog-empty">Loading...</div>
@@ -512,14 +681,12 @@
   <!-- Contact -->
   <section id="contact">
     <div class="section-container reveal">
-      <h2 class="section-title"><span class="accent">05.</span> Contact</h2>
+      <h2 class="section-title"><span class="accent">06.</span> Contact</h2>
       <div class="divider"></div>
       <div class="contact-grid">
         <div>
           <div class="contact-text">
-            <p>
-              有合作想法、工作機會，或是純粹想聊聊 AI 在金融領域的應用，都歡迎找我。
-            </p>
+            <p data-i18n="contactText">Contact me about collaboration, job opportunities, or AI in finance.</p>
           </div>
           <div class="contact-links">
             <a href="mailto:adam3065nd123@gmail.com" class="contact-item">
@@ -542,11 +709,11 @@
           <form class="contact-form" action="https://formsubmit.co/adam3065nd123@gmail.com" method="POST">
             <input type="hidden" name="_subject" value="From your portfolio site">
             <input type="hidden" name="_captcha" value="false">
-            <div class="form-group"><input type="text" name="name" placeholder="Your name" required></div>
-            <div class="form-group"><input type="email" name="email" placeholder="Your email" required></div>
-            <div class="form-group"><textarea name="message" placeholder="What's on your mind?" required></textarea></div>
+            <div class="form-group"><input type="text" name="name" placeholder="Your name" data-i18n-ph="phName" required></div>
+            <div class="form-group"><input type="email" name="email" placeholder="Your email" data-i18n-ph="phEmail" required></div>
+            <div class="form-group"><textarea name="message" placeholder="What's on your mind?" data-i18n-ph="phMsg" required></textarea></div>
             <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">
-              Send Message
+              <span data-i18n="send">Send Message</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
             </button>
           </form>
@@ -565,16 +732,16 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
       </a>
     </div>
-    <p>&copy; 2026 Alex Li. Built with curiosity.</p>
+    <p>&copy; 2026 Alex Li (李翔緯) · <span data-i18n="footer">Personal website · Built with curiosity.</span></p>
   </footer>
 
   <script>
     // ── Typewriter ──
     const phrases = [
+      'AI Product Manager',
+      'System Analyst',
+      'From Governance to Production',
       'Building AI for Finance',
-      'LLM Application Developer',
-      'Quant Strategy Explorer',
-      'From RAG to Multi-Agent',
     ];
     let phraseIdx = 0, charIdx = 0, deleting = false;
     const tw = document.getElementById('typewriter');
@@ -621,21 +788,153 @@
     const arrowSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
     const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
-    // ── About: load from data/about.json ──
-    fetch('data/about.json').then(r => r.json()).then(d => {
+    // ── Proof + Work: load data/about.json and data/work.json ──
+    // ── i18n ──
+    const I18N = {
+      en: {
+        heroDesc: 'PM and System Analyst at KGI Bank. I define the problem of each AI project, verify the solution, measure cost and benefit, and take it to production.',
+        readBlog: 'Read My Blog',
+        workSub: 'Each project: phase, background, problem, approach, result, and KPIs. Expand for key progress, goal, and milestones.',
+        sideSub: "Things I've built or contributed to",
+        blogSub: 'Notes, learnings & things I find interesting',
+        contactText: 'Contact me about collaboration, job opportunities, or AI in finance.',
+        phName: 'Your name', phEmail: 'Your email', phMsg: "What's on your mind?", send: 'Send Message',
+        footer: 'Personal website · Built with curiosity.',
+        details: 'Key Progress · Goal · Milestone', target: 'Target', achieved: 'Achieved', weight: 'Weight',
+        readMore: 'Read more', read: 'Read', soon: 'Coming soon...',
+        loadError: 'Content failed to load. A network filter may block this site.',
+        toggle: '中文',
+      },
+      zh: {
+        heroDesc: '凱基銀行科技創新部 PM 兼 SA。我定義 AI 專案的問題、驗證方案、量化成本與效益，再把它推到上線。',
+        readBlog: '閱讀部落格',
+        workSub: '每個專案：Phase、背景、問題、方法、結果與 KPI；展開可看 Key Progress、Goal 與 Milestone',
+        sideSub: '我做過或參與的專案',
+        blogSub: '筆記、學習心得與有趣的事',
+        contactText: '有合作想法、工作機會，或是想聊 AI 在金融領域的應用，都歡迎找我。',
+        phName: '你的名字', phEmail: '你的 Email', phMsg: '想說什麼？', send: '送出訊息',
+        footer: '個人網站 · Built with curiosity.',
+        details: 'Key Progress · Goal · Milestone', target: '目標', achieved: '達成', weight: '權重',
+        readMore: '閱讀更多', read: '閱讀', soon: '即將推出...',
+        loadError: '內容載入失敗。可能是網路過濾設備封鎖了本站。',
+        toggle: 'EN',
+      },
+    };
+    function pickLang() {
+      const q = new URLSearchParams(location.search).get('lang');
+      if (q === 'en' || q === 'zh') return q;
+      try { const s = localStorage.getItem('lang'); if (s === 'en' || s === 'zh') return s; } catch (e) {}
+      return (navigator.language || '').toLowerCase().startsWith('zh') ? 'zh' : 'en';
+    }
+    let lang = pickLang();
+    const T = k => I18N[lang][k];
+    const dataPath = f => lang === 'en' ? `data/en/${f}` : `data/${f}`;
+    const getJSON = url => fetch(url).then(r => { if (!r.ok) throw new Error(url); return r.json(); });
+    const showError = id => { document.getElementById(id).innerHTML = `<div class="load-error">${esc(T('loadError'))}</div>`; };
+
+    const STATUS_CLASS = {
+      '已完成': 'st-done', '進行中': 'st-doing', '已移交': 'st-handover', '規劃中': 'st-plan', '未啟動': 'st-idle',
+      'Done': 'st-done', 'In progress': 'st-doing', 'Handed over': 'st-handover', 'Planned': 'st-plan', 'Not started': 'st-idle',
+    };
+    const DELIVERED = ['已完成', '進行中', '已移交', 'Done', 'In progress', 'Handed over'];
+    const PENDING = ['待量測', 'To be measured'];
+    const list = items => `<ul>${items.map(i => `<li>${esc(i)}</li>`).join('')}</ul>`;
+    const row = (k, v, cls = '') => v ? `<div class="case-row ${cls}"><div class="k">${k}</div><div class="v">${v}</div></div>` : '';
+
+    function renderProject(p) {
+      const kpis = (p.kpis || []).map(k => `
+        <div class="kpi ${PENDING.includes(k.value) ? 'pending' : ''}">
+          <div class="n">${esc(k.name)}</div>
+          <div class="val">${esc(k.value)}</div>
+          ${k.note ? `<div class="note">${esc(k.note)}</div>` : ''}
+        </div>`).join('');
+      const g = p.goal || {};
+      const ms = (p.milestones || []).map(m => `
+        <div class="ms ${esc(m.status)}"><div class="d">${esc(m.date)}</div><div class="t">${esc(m.text)}</div></div>`).join('');
+      return `
+        <article class="case-card">
+          <div class="case-badges">
+            <span class="badge phase">${esc(p.phase)}</span>
+            <span class="badge ${STATUS_CLASS[p.status] || 'st-idle'}">${esc(p.status)}</span>
+            <span class="badge own">${esc(p.ownership)}</span>
+            <span class="case-period">${esc(p.period)}</span>
+          </div>
+          <h3>${esc(p.title)}</h3>
+          ${row('Background', esc(p.background))}
+          ${row('Problem', esc(p.problem))}
+          ${row('Approach', list(p.approach || []))}
+          ${row('Result', list(p.result || []), 'result')}
+          ${kpis ? `<div class="kpi-grid">${kpis}</div>` : ''}
+          <details class="case-details">
+            <summary>${esc(T('details'))}</summary>
+            <div class="details-body">
+              <div>
+                <h4>Key Progress</h4>
+                <p>${esc(p.keyProgress || '')}</p>
+                <h4>Goal Achievement</h4>
+                <div class="goal-meta">${esc(g.category || '')}${g.weight && g.weight !== '—' ? ` · ${esc(T('weight'))} ${esc(g.weight)}` : ''}</div>
+                <p>${esc(T('target'))}: ${esc(g.target || '')}<br>${esc(T('achieved'))}: ${esc(g.achievement || '')}</p>
+              </div>
+              <div>
+                <h4>Milestone</h4>
+                <div class="ms-list">${ms}</div>
+              </div>
+            </div>
+          </details>
+          <div class="case-footer">
+            <div class="project-tags">${(p.tags || []).map(t => `<span>${esc(t)}</span>`).join('')}</div>
+            ${p.link ? `<a href="${esc(p.link)}" class="project-link">${esc(p.linkLabel || T('readMore'))} ${arrowSvg}</a>` : ''}
+          </div>
+        </article>`;
+    }
+
+    function render() {
+    document.documentElement.lang = lang === 'en' ? 'en' : 'zh-Hant';
+    document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = T(el.dataset.i18n); });
+    document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = T(el.dataset.i18nPh); });
+    document.getElementById('langToggle').textContent = T('toggle');
+
+    Promise.all([
+      getJSON(dataPath('about.json')),
+      getJSON(dataPath('work.json')),
+    ]).then(([d, groups]) => {
+      const auto = {
+        delivered: groups.flatMap(g => g.projects).filter(p => DELIVERED.includes(p.status)).length,
+      };
+      document.getElementById('proofSubhead').textContent = d.subhead || '';
+      document.getElementById('proofGrid').innerHTML = (d.proof || []).map(c => `
+        <div class="proof-card">
+          <div><span class="proof-value">${esc(String(c.auto ? auto[c.auto] : c.value))}</span><span class="proof-unit">${esc(c.unit || '')}</span></div>
+          <div class="proof-label">${esc(c.label)}</div>
+          <div class="proof-context">${esc(c.context)}</div>
+        </div>`).join('');
       document.getElementById('aboutText').innerHTML =
         d.paragraphs.map(p => `<p>${esc(p)}</p>`).join('');
       document.getElementById('aboutInfo').innerHTML =
         d.cards.map(c => `<div class="info-card"><div class="label">${esc(c.label)}</div><div class="value">${esc(c.value)}</div></div>`).join('');
-    });
+
+      document.getElementById('workList').innerHTML = groups.map(g => `
+        <div class="work-group">
+          <div class="group-head">
+            <span class="org">${esc(g.org)}</span>
+            <span class="role">${esc(g.role)}</span>
+            ${g.current ? '<span class="current-tag">Current</span>' : ''}
+            <span class="period">${esc(g.period)}</span>
+          </div>
+          <div class="work-list">${g.projects.map(renderProject).join('')}</div>
+        </div>`).join('');
+    }).catch(() => { showError('workList'); showError('proofGrid'); });
 
     // ── Experience: load from data/experience.json ──
-    fetch('data/experience.json').then(r => r.json()).then(list => {
-      document.getElementById('timelineContainer').innerHTML = list.map(e => `
+    getJSON(dataPath('experience.json')).then(list => {
+      document.getElementById('timelineContainer').innerHTML = list.map(e => {
+        const [org, role] = e.title.split(/\s*\|\s*/);
+        return `
         <div class="timeline-item">
           <div class="timeline-header">
             <div>
-              <div class="timeline-title">${esc(e.title)}</div>
+              <div class="timeline-title">${esc(org)}</div>
+              ${role ? `<div class="timeline-role">${esc(role)}</div>` : ''}
               ${e.subtitle ? `<div class="timeline-subtitle">${esc(e.subtitle)}</div>` : ''}
             </div>
             <span class="timeline-date">${esc(e.date)}</span>
@@ -644,39 +943,50 @@
             ${e.items.map(i => `<li>${esc(i)}</li>`).join('')}
           </ul>
         </div>
-      `).join('');
-    });
+      `;
+      }).join('');
+    }).catch(() => showError('timelineContainer'));
 
-    // ── Projects: load from data/projects.json ──
-    fetch('data/projects.json').then(r => r.json()).then(list => {
-      document.getElementById('projectsGrid').innerHTML = list.map(p => `
-        <div class="project-card">
-          <div class="project-icon">${p.icon}</div>
-          <h3>${esc(p.name)}</h3>
-          <p>${esc(p.desc)}</p>
-          <div class="project-tags">${p.tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>
-          <a href="${esc(p.url)}" target="_blank" class="project-link">View on GitHub ${arrowSvg}</a>
-        </div>
+    // ── Side Projects: load from data/projects.json ──
+    getJSON(dataPath('projects.json')).then(list => {
+      document.getElementById('projectsList').innerHTML = list.map((p, i) => `
+        <a href="${esc(p.url)}" target="_blank" rel="noopener" class="side-item">
+          <span class="side-num">${String(i + 1).padStart(2, '0')}</span>
+          <div>
+            <h3>${esc(p.name)}</h3>
+            <p>${esc(p.desc)}</p>
+            <div class="project-tags">${p.tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>
+          </div>
+          <span class="side-arrow">${arrowSvg}</span>
+        </a>
       `).join('');
-    });
+    }).catch(() => showError('projectsList'));
 
     // ── Blog: load from posts/posts.json ──
     const blogGrid = document.getElementById('blogGrid');
-    fetch('posts/posts.json').then(r => r.json()).then(posts => {
-      if (!posts.length) { blogGrid.innerHTML = '<div class="blog-empty">Coming soon...</div>'; return; }
+    getJSON('posts/posts.json').then(posts => {
+      if (!posts.length) { blogGrid.innerHTML = `<div class="blog-empty">${esc(T('soon'))}</div>`; return; }
       posts.sort((a, b) => new Date(b.date) - new Date(a.date));
       blogGrid.innerHTML = posts.map(p => `
         <a href="${esc(p.file)}" class="blog-card">
           <div class="blog-date">${esc(p.date)}</div>
-          <h3>${esc(p.title)}</h3>
-          <div class="summary">${esc(p.summary)}</div>
+          <h3>${esc(lang === 'en' && p.title_en ? p.title_en : p.title)}</h3>
+          <div class="summary">${esc(lang === 'en' && p.summary_en ? p.summary_en : p.summary)}</div>
           <div class="blog-footer">
             <div class="blog-tags">${p.tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>
-            <span class="read-more">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+            <span class="read-more">${esc(T('read'))} <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
           </div>
         </a>
       `).join('');
-    }).catch(() => { blogGrid.innerHTML = '<div class="blog-empty">Coming soon...</div>'; });
+    }).catch(() => { blogGrid.innerHTML = `<div class="blog-empty">${esc(T('soon'))}</div>`; });
+    }
+
+    document.getElementById('langToggle').addEventListener('click', () => {
+      lang = lang === 'en' ? 'zh' : 'en';
+      try { localStorage.setItem('lang', lang); } catch (e) {}
+      render();
+    });
+    render();
   </script>
 
 </body>
