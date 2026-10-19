@@ -771,10 +771,23 @@
     navLinks.querySelectorAll('a').forEach(l => l.addEventListener('click', () => navLinks.classList.remove('open')));
 
     // ── Scroll reveal ──
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('active'); });
-    }, { threshold: 0.1 });
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    // Show a section once its top edge enters the viewport. A ratio threshold
+    // (IntersectionObserver threshold) never fires on sections taller than the screen.
+    let pending = [...document.querySelectorAll('.reveal')];
+    function revealCheck() {
+      const limit = window.innerHeight - 60;
+      pending = pending.filter(el => {
+        if (el.getBoundingClientRect().top < limit) { el.classList.add('active'); return false; }
+        return true;
+      });
+      if (!pending.length) {
+        window.removeEventListener('scroll', revealCheck);
+        window.removeEventListener('resize', revealCheck);
+      }
+    }
+    window.addEventListener('scroll', revealCheck, { passive: true });
+    window.addEventListener('resize', revealCheck);
+    revealCheck();
 
     // ── Smooth scroll ──
     document.querySelectorAll('a[href^="#"]').forEach(a => {
