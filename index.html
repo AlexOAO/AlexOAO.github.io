@@ -195,6 +195,71 @@
       background: linear-gradient(135deg, #3b82f6, #06b6d4);
     }
 
+    /* ── AI SDLC map ── */
+    .sdlc { margin-bottom: 3rem; }
+    .sdlc-title { font-size: 1.15rem; font-weight: 700; color: #e2e8f0; margin-bottom: 0.35rem; }
+    .sdlc-note { font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem; }
+    .sdlc-grid {
+      display: grid; grid-template-columns: 120px repeat(4, minmax(0, 1fr));
+      column-gap: 0.75rem; row-gap: 0.75rem;
+    }
+    .sdlc-stage {
+      position: relative; border-radius: 12px; padding: 1rem 1rem 0.9rem;
+      background: rgba(30,41,59,0.8); border: 1px solid rgba(59,130,246,0.2);
+      border-top: 3px solid var(--c);
+    }
+    .sdlc-stage:not(.last)::after {
+      content: ''; position: absolute; right: -0.75rem; top: 50%; transform: translate(50%, -50%);
+      width: 0; height: 0; z-index: 2;
+      border-top: 7px solid transparent; border-bottom: 7px solid transparent; border-left: 9px solid #475569;
+    }
+    .sdlc-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 50%; margin-right: 0.4rem;
+      font-family: 'Inter', sans-serif; font-size: 0.75rem; font-weight: 700;
+      color: #0f172a; background: var(--c);
+    }
+    .sdlc-name { font-size: 1rem; font-weight: 700; color: #e2e8f0; }
+    .sdlc-desc { font-size: 0.8rem; color: #94a3b8; line-height: 1.6; margin-top: 0.4rem; }
+    .sdlc-lane { display: flex; flex-direction: column; justify-content: center; padding-right: 0.25rem; }
+    .sdlc-lane .org { font-size: 0.92rem; font-weight: 700; color: #e2e8f0; }
+    .sdlc-lane .period { font-size: 0.75rem; color: #64748b; }
+    .sdlc-cell {
+      border-radius: 12px; padding: 0.75rem; min-height: 64px;
+      background: rgba(15,23,42,0.55); border: 1px dashed rgba(148,163,184,0.12);
+      display: flex; flex-wrap: wrap; gap: 0.5rem; align-content: flex-start;
+    }
+    .cell-lane { display: none; }
+    .sdlc-chip {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      font-size: 0.8rem; line-height: 1.3; padding: 0.35rem 0.65rem; border-radius: 8px;
+      color: #e2e8f0; background: color-mix(in srgb, var(--c) 18%, transparent);
+      border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
+      transition: transform 0.2s, background 0.2s;
+    }
+    .sdlc-chip:hover { transform: translateY(-2px); background: color-mix(in srgb, var(--c) 30%, transparent); }
+    .sdlc-chip.secondary { background: transparent; border-style: dashed; color: #94a3b8; }
+    .sdlc-chip .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+    .dot.st-done { background: #10b981; } .dot.st-doing { background: #3b82f6; }
+    .dot.st-handover { background: #f59e0b; } .dot.st-plan { background: #06b6d4; } .dot.st-idle { background: #64748b; }
+    .sdlc-loop {
+      grid-column: 2 / -1; position: relative; height: 34px; margin: 0 10% 0 10%;
+      border: 2px solid #475569; border-top: none; border-radius: 0 0 14px 14px;
+    }
+    .sdlc-loop::before {
+      content: ''; position: absolute; left: -7px; top: -2px;
+      border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 9px solid #475569;
+    }
+    .sdlc-loop span {
+      position: absolute; left: 50%; bottom: -0.65rem; transform: translateX(-50%);
+      font-size: 0.75rem; color: #94a3b8; background: #0f172a; padding: 0 0.6rem; white-space: nowrap;
+    }
+    .sdlc-legend { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1.75rem; font-size: 0.78rem; color: #64748b; }
+    .sdlc-legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+    .sdlc-legend .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .case-card { scroll-margin-top: 90px; }
+    .case-card.flash { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.35); }
+
     /* ── Proof ── */
     .proof-grid {
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-bottom: 3.5rem;
@@ -499,6 +564,12 @@
       .about-grid { grid-template-columns: 1fr; }
       .contact-grid { grid-template-columns: 1fr; }
       .proof-grid { grid-template-columns: 1fr 1fr; }
+      .sdlc-grid { display: flex; flex-direction: column; gap: 0.6rem; }
+      .sdlc-grid > * { order: var(--o); }
+      .sdlc-stage { margin-top: 0.9rem; }
+      .sdlc-stage::after { display: none; }
+      .sdlc-lane, .sdlc-cell.empty, .sdlc-loop { display: none; }
+      .cell-lane { display: block; width: 100%; font-size: 0.75rem; font-weight: 600; color: #64748b; }
       .details-body { grid-template-columns: 1fr; gap: 0.5rem; }
       .blog-grid { grid-template-columns: 1fr; }
     }
@@ -629,6 +700,7 @@
       <h2 class="section-title"><span class="accent">01.</span> Proof</h2>
       <p class="section-subtitle" id="proofSubhead"></p>
       <div class="divider"></div>
+      <div class="sdlc" id="sdlcMap"></div>
       <div class="proof-grid" id="proofGrid"></div>
       <div class="about-grid" id="aboutGrid">
         <div class="about-text" id="aboutText"><!-- static:about --><p>I am a PM and System Analyst at KGI Bank, Technology Innovation Department. I lead AI Agent PoCs, platform evaluation, cost and ROI models, and pre-launch governance.</p><p>Before this, I led the Webai Finance launch at KGI Financial Holding. At TEJ, I built a RAG customer service bot and a Multi-Agent advisory system. I am also a graduate student in Finance at NTUST.</p><p>Outside work, I enjoy photography and swimming.</p><!-- /static:about --></div>
@@ -816,7 +888,8 @@
         details: 'Key Progress · Goal · Milestone', target: 'Target', achieved: 'Achieved', weight: 'Weight',
         readMore: 'Read more', read: 'Read', soon: 'Coming soon...',
         loadError: 'Content failed to load. A network filter may block this site.',
-        toggle: '中文',
+        toggle: '中文', loop: 'Continuous loop: operations feed the next plan',
+        legend: { 'st-done': 'Done', 'st-doing': 'In progress', 'st-handover': 'Handed over', 'st-plan': 'Planned', 'st-idle': 'Not started' },
       },
       zh: {
         heroDesc: '凱基銀行科技創新部 PM 兼 SA。我定義 AI 專案的問題、驗證方案、量化成本與效益，再把它推到上線。',
@@ -830,7 +903,8 @@
         details: 'Key Progress · Goal · Milestone', target: '目標', achieved: '達成', weight: '權重',
         readMore: '閱讀更多', read: '閱讀', soon: '即將推出...',
         loadError: '內容載入失敗。可能是網路過濾設備封鎖了本站。',
-        toggle: 'EN',
+        toggle: 'EN', loop: '持續迭代：營運回饋下一輪規劃',
+        legend: { 'st-done': '已完成', 'st-doing': '進行中', 'st-handover': '已移交', 'st-plan': '規劃中', 'st-idle': '未啟動' },
       },
     };
     function pickLang() {
@@ -854,7 +928,42 @@
     const list = items => `<ul>${items.map(i => `<li>${esc(i)}</li>`).join('')}</ul>`;
     const row = (k, v, cls = '') => v ? `<div class="case-row ${cls}"><div class="k">${k}</div><div class="v">${v}</div></div>` : '';
 
-    function renderProject(p) {
+    const STAGE_COLOR = { plan: '#3b82f6', tune: '#8b5cf6', build: '#06b6d4', ops: '#10b981' };
+
+    function renderSdlc(cfg, groups) {
+      if (!cfg) return '';
+      const stages = cfg.stages;
+      const parts = [];
+      stages.forEach((st, si) => parts.push(`
+        <div class="sdlc-stage ${si === stages.length - 1 ? 'last' : ''}"
+             style="grid-row:1;grid-column:${si + 2};--c:${STAGE_COLOR[st.key]};--o:${si * 10}">
+          <div><span class="sdlc-num">${si + 1}</span><span class="sdlc-name">${esc(st.name)}</span></div>
+          <div class="sdlc-desc">${esc(st.desc)}</div>
+        </div>`));
+      groups.forEach((g, gi) => {
+        parts.push(`<div class="sdlc-lane" style="grid-row:${gi + 2};grid-column:1">
+          <span class="org">${esc(g.short || g.org)}</span><span class="period">${esc(g.period)}</span></div>`);
+        stages.forEach((st, si) => {
+          const chips = g.projects.map((p, pi) => ({ p, pi, idx: (p.sdlc || []).indexOf(st.key) }))
+            .filter(x => x.idx >= 0)
+            .map(({ p, pi, idx }) => `
+              <a class="sdlc-chip ${idx > 0 ? 'secondary' : ''}" href="#proj-${gi}-${pi}" data-target="proj-${gi}-${pi}"
+                 style="--c:${STAGE_COLOR[st.key]}" title="${esc(p.title)} · ${esc(p.status)}">
+                <span class="dot ${STATUS_CLASS[p.status] || 'st-idle'}"></span>${esc(p.short || p.title)}</a>`).join('');
+          parts.push(`<div class="sdlc-cell ${chips ? '' : 'empty'}" style="grid-row:${gi + 2};grid-column:${si + 2};--o:${si * 10 + gi + 1}">
+            <span class="cell-lane">${esc(g.short || g.org)}</span>${chips}</div>`);
+        });
+      });
+      parts.push(`<div class="sdlc-loop" style="grid-row:${groups.length + 2}"><span>↺ ${esc(T('loop'))}</span></div>`);
+      const legend = Object.entries(T('legend')).map(([k, v]) => `<span><span class="dot ${k}"></span>${esc(v)}</span>`).join('');
+      return `
+        <div class="sdlc-title">${esc(cfg.title)}</div>
+        <div class="sdlc-note">${esc(cfg.note)}</div>
+        <div class="sdlc-grid">${parts.join('')}</div>
+        <div class="sdlc-legend">${legend}</div>`;
+    }
+
+    function renderProject(p, id) {
       const kpis = (p.kpis || []).map(k => `
         <div class="kpi ${PENDING.includes(k.value) ? 'pending' : ''}">
           <div class="n">${esc(k.name)}</div>
@@ -865,7 +974,7 @@
       const ms = (p.milestones || []).map(m => `
         <div class="ms ${esc(m.status)}"><div class="d">${esc(m.date)}</div><div class="t">${esc(m.text)}</div></div>`).join('');
       return `
-        <article class="case-card">
+        <article class="case-card" id="${id}">
           <div class="case-badges">
             <span class="badge phase">${esc(p.phase)}</span>
             <span class="badge ${STATUS_CLASS[p.status] || 'st-idle'}">${esc(p.status)}</span>
@@ -926,7 +1035,8 @@
       document.getElementById('aboutInfo').innerHTML =
         d.cards.map(c => `<div class="info-card"><div class="label">${esc(c.label)}</div><div class="value">${esc(c.value)}</div></div>`).join('');
 
-      document.getElementById('workList').innerHTML = groups.map(g => `
+      document.getElementById('sdlcMap').innerHTML = renderSdlc(d.sdlc, groups);
+      document.getElementById('workList').innerHTML = groups.map((g, gi) => `
         <div class="work-group">
           <div class="group-head">
             <span class="org">${esc(g.org)}</span>
@@ -934,7 +1044,7 @@
             ${g.current ? '<span class="current-tag">Current</span>' : ''}
             <span class="period">${esc(g.period)}</span>
           </div>
-          <div class="work-list">${g.projects.map(renderProject).join('')}</div>
+          <div class="work-list">${g.projects.map((p, pi) => renderProject(p, `proj-${gi}-${pi}`)).join('')}</div>
         </div>`).join('');
     }).catch(() => { showError('workList'); showError('proofGrid'); });
 
@@ -993,6 +1103,19 @@
       `).join('');
     }).catch(() => { blogGrid.innerHTML = `<div class="blog-empty">${esc(T('soon'))}</div>`; });
     }
+
+    // SDLC chips: jump to the project card and highlight it
+    document.getElementById('sdlcMap').addEventListener('click', e => {
+      const a = e.target.closest('.sdlc-chip[data-target]');
+      if (!a) return;
+      e.preventDefault();
+      const card = document.getElementById(a.dataset.target);
+      if (!card) return;
+      card.closest('.reveal')?.classList.add('active');
+      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      card.classList.add('flash');
+      setTimeout(() => card.classList.remove('flash'), 1600);
+    });
 
     document.getElementById('langToggle').addEventListener('click', () => {
       lang = lang === 'en' ? 'zh' : 'en';

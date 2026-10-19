@@ -63,6 +63,8 @@ All content lives in JSON files. Edit JSON, push, done.
 }
 ```
 
+`sdlc` holds the chart title, note, and the 4 stage names and descriptions. The chart places projects from `work.json` automatically.
+
 `"auto": "delivered"` counts projects in `work.json` with status 已完成、進行中 or 已移交. Use it instead of a fixed number.
 
 ### 02. Work (`data/work.json`)
@@ -104,6 +106,8 @@ Projects are grouped by company. Each project has the PM record fields:
 - `status`: 已完成, 進行中, 已移交, 規劃中, 未啟動 (each has its own badge color).
 - `phase`: 需求分析, PoC 驗證, 評測選型, 建置開發, 上線維運, 移交.
 - `ownership`: 主責 or 協作.
+- `short`: short label shown on the AI SDLC chart (project and company level).
+- `sdlc`: lifecycle stages for the AI SDLC chart in Proof, main stage first: `plan` (業務規劃), `tune` (模型調教), `build` (開發部署), `ops` (營運監控). The first stage shows as a solid tag; others show as dashed tags.
 - `milestones[].status`: `done`, `doing`, `todo`.
 - A KPI with value `待量測` shows in gray.
 - `link`, `linkLabel`, `weight` (use `—` to hide) are optional. `source` is not displayed; it records which document supports the claim.

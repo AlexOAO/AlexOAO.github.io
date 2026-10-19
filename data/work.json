@@ -1,12 +1,15 @@
 [
   {
     "org": "凱基銀行 科技創新部",
+    "short": "凱基銀行",
     "role": "PM 兼 SA",
     "period": "2026/07 ~ Now",
     "current": true,
     "projects": [
       {
         "title": "Guardrails PoC（奧義科技）",
+        "short": "Guardrails PoC",
+        "sdlc": ["tune"],
         "phase": "PoC 驗證",
         "status": "進行中",
         "ownership": "主責",
@@ -51,6 +54,8 @@
       },
       {
         "title": "企業 Agentic 平台選型評測（Agatha／Dify）",
+        "short": "Agentic 平台選型",
+        "sdlc": ["build"],
         "phase": "評測選型",
         "status": "已完成",
         "ownership": "主責",
@@ -91,6 +96,8 @@
       },
       {
         "title": "AI Agent 成本模型與三年 TCO／ROI",
+        "short": "成本模型與 ROI",
+        "sdlc": ["plan"],
         "phase": "需求分析",
         "status": "進行中",
         "ownership": "主責",
@@ -136,6 +143,8 @@
       },
       {
         "title": "AI Agent 技術規格與治理機制",
+        "short": "Agent 治理機制",
+        "sdlc": ["plan", "ops"],
         "phase": "需求分析",
         "status": "進行中",
         "ownership": "主責",
@@ -172,6 +181,8 @@
       },
       {
         "title": "金管會 FinLLM 資料清洗與模型評測",
+        "short": "FinLLM 清洗與評測",
+        "sdlc": ["tune"],
         "phase": "建置開發",
         "status": "進行中",
         "ownership": "協作",
@@ -211,6 +222,8 @@
       },
       {
         "title": "智富管家 PoC",
+        "short": "智富管家 PoC",
+        "sdlc": ["build"],
         "phase": "移交",
         "status": "已移交",
         "ownership": "主責",
@@ -248,6 +261,8 @@
       },
       {
         "title": "Gemini 教育訓練",
+        "short": "Gemini 教育訓練",
+        "sdlc": ["ops"],
         "phase": "需求分析",
         "status": "規劃中",
         "ownership": "主責",
@@ -284,6 +299,8 @@
       },
       {
         "title": "A2UI 技研",
+        "short": "A2UI 技研",
+        "sdlc": ["plan"],
         "phase": "PoC 驗證",
         "status": "規劃中",
         "ownership": "主責",
@@ -320,6 +337,8 @@
       },
       {
         "title": "辦公 AI：Agentic 工作流程方案",
+        "short": "辦公 Agentic 流程",
+        "sdlc": ["plan"],
         "phase": "需求分析",
         "status": "未啟動",
         "ownership": "主責",
@@ -353,11 +372,14 @@
   },
   {
     "org": "凱基金融控股",
+    "short": "凱基金控",
     "role": "AI 開發實習生",
     "period": "2026/02 ~ 2026/06",
     "projects": [
       {
         "title": "Webai Finance 模組（Kinance AI 市場／個股助手）",
+        "short": "Webai Finance",
+        "sdlc": ["build", "plan"],
         "phase": "上線維運",
         "status": "已完成",
         "ownership": "主責",
@@ -396,6 +418,8 @@
       },
       {
         "title": "AI 治理自動審查系統",
+        "short": "AI 治理自動審查",
+        "sdlc": ["ops", "build"],
         "phase": "上線維運",
         "status": "已完成",
         "ownership": "主責",
@@ -436,11 +460,14 @@
   },
   {
     "org": "台灣經濟新報 TEJ",
+    "short": "TEJ",
     "role": "量化交易與資料科學實習生",
     "period": "2025/07 ~ 2025/12",
     "projects": [
       {
         "title": "AI 智能客服「小t寶」",
+        "short": "RAG 客服小t寶",
+        "sdlc": ["build", "tune"],
         "phase": "上線維運",
         "status": "已完成",
         "ownership": "主責",
@@ -480,6 +507,8 @@
       },
       {
         "title": "Multi-Agent 智能投顧決策架構",
+        "short": "Multi-Agent 投顧",
+        "sdlc": ["build"],
         "phase": "建置開發",
         "status": "已完成",
         "ownership": "協作",
@@ -518,6 +547,8 @@
       },
       {
         "title": "ASR 法說會逐字稿自動化",
+        "short": "ASR 逐字稿",
+        "sdlc": ["build"],
         "phase": "建置開發",
         "status": "已完成",
         "ownership": "協作",

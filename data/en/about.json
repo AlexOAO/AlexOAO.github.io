@@ -1,5 +1,31 @@
 {
   "subhead": "From AI governance and PoC to production. Each project is backed by numbers.",
+  "sdlc": {
+    "title": "AI SDLC: where each project sits in the lifecycle",
+    "note": "Solid tag = main stage. Dashed tag = secondary stage. Click a tag to open the project.",
+    "stages": [
+      {
+        "key": "plan",
+        "name": "Business Planning",
+        "desc": "Define use case, value, cost, and rules: is it worth it, and how to measure it."
+      },
+      {
+        "key": "tune",
+        "name": "Model Tuning",
+        "desc": "Data, prompts, evaluation, and red teaming: make the model correct and safe."
+      },
+      {
+        "key": "build",
+        "name": "Development & Deployment",
+        "desc": "Select the platform, integrate systems, launch: turn the plan into a service."
+      },
+      {
+        "key": "ops",
+        "name": "Operations & Monitoring",
+        "desc": "Governance, risk, and adoption: keep it running and get people to use it."
+      }
+    ]
+  },
   "proof": [
     { "value": "600", "unit": "cases", "label": "Guardrails test set", "context": "6 Policies × 100 cases based on OWASP, run 3,600 times through the API." },
     { "value": "12", "unit": "issues", "label": "Platform issues found early", "context": "26 hands-on tests on Agatha found 12 issues: 4 blocking, 1 security." },

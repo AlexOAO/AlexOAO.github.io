@@ -1,12 +1,15 @@
 [
   {
     "org": "KGI Bank · Technology Innovation Dept.",
+    "short": "KGI Bank",
     "role": "PM & System Analyst",
     "period": "2026/07 ~ Now",
     "current": true,
     "projects": [
       {
         "title": "Guardrails PoC (CyCraft)",
+        "short": "Guardrails PoC",
+        "sdlc": ["tune"],
         "phase": "PoC",
         "status": "In progress",
         "ownership": "Lead",
@@ -51,6 +54,8 @@
       },
       {
         "title": "Enterprise Agentic Platform Evaluation (Agatha / Dify)",
+        "short": "Agentic platform eval",
+        "sdlc": ["build"],
         "phase": "Evaluation",
         "status": "Done",
         "ownership": "Lead",
@@ -91,6 +96,8 @@
       },
       {
         "title": "AI Agent Cost Model & 3-Year TCO / ROI",
+        "short": "Cost model & ROI",
+        "sdlc": ["plan"],
         "phase": "Requirements",
         "status": "In progress",
         "ownership": "Lead",
@@ -136,6 +143,8 @@
       },
       {
         "title": "AI Agent Technical Specifications & Governance",
+        "short": "Agent governance",
+        "sdlc": ["plan", "ops"],
         "phase": "Requirements",
         "status": "In progress",
         "ownership": "Lead",
@@ -172,6 +181,8 @@
       },
       {
         "title": "FSC FinLLM Data Cleaning & Model Evaluation",
+        "short": "FinLLM data & eval",
+        "sdlc": ["tune"],
         "phase": "Build",
         "status": "In progress",
         "ownership": "Contributor",
@@ -211,6 +222,8 @@
       },
       {
         "title": "Wealth Assistant App PoC",
+        "short": "Wealth Assistant PoC",
+        "sdlc": ["build"],
         "phase": "Handover",
         "status": "Handed over",
         "ownership": "Lead",
@@ -248,6 +261,8 @@
       },
       {
         "title": "Gemini Training Program",
+        "short": "Gemini training",
+        "sdlc": ["ops"],
         "phase": "Requirements",
         "status": "Planned",
         "ownership": "Lead",
@@ -284,6 +299,8 @@
       },
       {
         "title": "A2UI Technical Research",
+        "short": "A2UI research",
+        "sdlc": ["plan"],
         "phase": "PoC",
         "status": "Planned",
         "ownership": "Lead",
@@ -320,6 +337,8 @@
       },
       {
         "title": "Office AI: Agentic Workflow Plan",
+        "short": "Office Agentic workflow",
+        "sdlc": ["plan"],
         "phase": "Requirements",
         "status": "Not started",
         "ownership": "Lead",
@@ -353,11 +372,14 @@
   },
   {
     "org": "KGI Financial Holding",
+    "short": "KGI Holding",
     "role": "AI Developer Intern",
     "period": "2026/02 ~ 2026/06",
     "projects": [
       {
         "title": "Webai Finance Module (Kinance AI Market / Stock Assistant)",
+        "short": "Webai Finance",
+        "sdlc": ["build", "plan"],
         "phase": "Production",
         "status": "Done",
         "ownership": "Lead",
@@ -396,6 +418,8 @@
       },
       {
         "title": "AI Governance Automated Review System",
+        "short": "AI governance review",
+        "sdlc": ["ops", "build"],
         "phase": "Production",
         "status": "Done",
         "ownership": "Lead",
@@ -436,11 +460,14 @@
   },
   {
     "org": "Taiwan Economic Journal (TEJ)",
+    "short": "TEJ",
     "role": "Quant Trading & Data Science Intern",
     "period": "2025/07 ~ 2025/12",
     "projects": [
       {
         "title": "AI Customer Service Bot \"Little t\"",
+        "short": "RAG support bot",
+        "sdlc": ["build", "tune"],
         "phase": "Production",
         "status": "Done",
         "ownership": "Lead",
@@ -480,6 +507,8 @@
       },
       {
         "title": "Multi-Agent Investment Advisory Architecture",
+        "short": "Multi-Agent advisory",
+        "sdlc": ["build"],
         "phase": "Build",
         "status": "Done",
         "ownership": "Contributor",
@@ -518,6 +547,8 @@
       },
       {
         "title": "ASR Earnings Call Transcription",
+        "short": "ASR transcription",
+        "sdlc": ["build"],
         "phase": "Build",
         "status": "Done",
         "ownership": "Contributor",
