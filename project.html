@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project | Alex Li (李翔緯)</title>
+  <meta name="description" content="Project story by Alex Li (李翔緯): context, problem, goal, approach, milestones, results, and KPIs.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/post.css">
+  <style>
+    .post-nav { display: flex; justify-content: space-between; align-items: center; }
+    .lang-toggle {
+      font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: #e2e8f0;
+      background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.3);
+      border-radius: 20px; padding: 0.3rem 0.8rem; cursor: pointer;
+    }
+    .eyebrow { font-size: 0.9rem; color: #3b82f6; font-weight: 500; margin-bottom: 0.75rem; }
+    .lead { font-size: 1.1rem; color: #94a3b8; line-height: 1.8; margin-top: 1rem; }
+    .post-tags { flex-wrap: wrap; }
+    .meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 1.25rem; }
+    .stage-pill {
+      font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.65rem; border-radius: 20px; color: #e2e8f0;
+      background: linear-gradient(90deg, color-mix(in srgb, var(--c) 24%, transparent), color-mix(in srgb, var(--c2) 24%, transparent));
+      border: 1px solid color-mix(in srgb, var(--c) 50%, transparent);
+    }
+    .own { font-size: 0.8rem; color: #a78bfa; }
+    .step-label {
+      display: inline-block; font-family: 'Inter', sans-serif; font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase; color: #64748b; margin-right: 0.5rem;
+    }
+    .goal-meta { font-size: 0.85rem; color: #64748b; margin-bottom: 0.5rem; }
+    .bar { height: 8px; border-radius: 4px; background: rgba(148,163,184,0.15); overflow: hidden; margin: 0.75rem 0 0.4rem; }
+    .bar span { display: block; height: 100%; background: linear-gradient(90deg, #10b981, #06b6d4); }
+    .bar-label { font-size: 0.85rem; color: #94a3b8; }
+    .ms-list { position: relative; padding-left: 1.5rem; margin: 0.5rem 0 1.5rem; }
+    .ms-list::before { content: ''; position: absolute; left: 5px; top: 0.6rem; bottom: 0.6rem; width: 2px; background: rgba(148,163,184,0.2); }
+    .ms { position: relative; margin-bottom: 1rem; line-height: 1.6; }
+    .ms::before { content: ''; position: absolute; left: -1.5rem; top: 0.45rem; width: 12px; height: 12px; border-radius: 50%; box-sizing: border-box; }
+    .ms.done::before { background: #10b981; }
+    .ms.doing::before { background: #3b82f6; box-shadow: 0 0 0 4px rgba(59,130,246,0.25); }
+    .ms.todo::before { background: #0f172a; border: 2px solid #475569; }
+    .ms .d { display: block; font-size: 0.8rem; color: #64748b; }
+    .ms .t { color: #e2e8f0; }
+    .ms.todo .t { color: #94a3b8; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 0.75rem; margin: 1rem 0 1.5rem; }
+    .kpi { background: rgba(30,41,59,0.7); border: 1px solid rgba(59,130,246,0.12); border-radius: 10px; padding: 0.75rem 0.9rem; line-height: 1.5; }
+    .kpi .n { font-size: 0.78rem; color: #64748b; }
+    .kpi .v { font-size: 1rem; font-weight: 700; color: #e2e8f0; }
+    .kpi .note { font-size: 0.75rem; color: #64748b; }
+    .kpi.pending .v { color: #64748b; font-weight: 500; }
+    .pager { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .pager a { color: #3b82f6; font-size: 0.9rem; max-width: 48%; }
+    .pager a:hover { color: #60a5fa; }
+    .pager .next { margin-left: auto; text-align: right; }
+    .error { color: #f59e0b; }
+    .error a { color: #3b82f6; }
+  </style>
+</head>
+<body>
+  <nav class="post-nav">
+    <a href="index.html#experience" class="back-link" id="backLink">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      <span id="backText">Back</span>
+    </a>
+    <button class="lang-toggle" id="langToggle" aria-label="Switch language">中文</button>
+  </nav>
+
+  <article class="post" id="project">
+    <p class="lead">Loading...</p>
+  </article>
+  <div class="post-footer"><div class="pager" id="pager"></div></div>
+
+  <script src="assets/js/common.js"></script>
+  <script>
+    const { esc, dataPath, getJSON, stageNames, stagePills, progressOf, visibleGroups, PENDING } = Site;
+    const I18N = {
+      en: {
+        back: 'Back to Alex Li', toggle: '中文', lead: 'Lead', context: 'Context', problem: 'Problem', goal: 'Goal',
+        approach: 'Approach', milestones: 'Milestones', results: 'Results & KPIs', progress: 'Key Progress', more: 'Further reading',
+        weight: 'Weight', doneOf: (d, t) => `${d} of ${t} milestones complete`,
+        allDone: t => `All ${t} milestones are complete.`, now: 'Now', next: 'Next',
+        prev: 'Previous', nextProj: 'Next',
+        notFound: 'This project does not exist.', home: 'Back to the homepage',
+        loadError: 'Content failed to load. A network filter may block this site.',
+      },
+      zh: {
+        back: '回到首頁', toggle: 'EN', lead: '主責', context: '背景', problem: '問題', goal: '目標',
+        approach: '方法', milestones: 'Milestone', results: '結果與 KPI', progress: 'Key Progress', more: '延伸閱讀',
+        weight: '權重', doneOf: (d, t) => `已完成 ${d}／${t} 個 Milestone`,
+        allDone: t => `${t} 個 Milestone 全部完成。`, now: '目前', next: '下一步',
+        prev: '上一個專案', nextProj: '下一個專案',
+        notFound: '找不到這個專案。', home: '回到首頁',
+        loadError: '內容載入失敗。可能是網路過濾設備封鎖了本站。',
+      },
+    };
+    const T = k => I18N[Site.getLang()][k];
+    const slug = new URLSearchParams(location.search).get('id');
+    const h2 = (n, label) => `<h2><span class="step-label">${String(n).padStart(2, '0')}</span>${esc(label)}</h2>`;
+    const colon = () => Site.getLang() === 'en' ? ': ' : '：';
+    const paren = t => Site.getLang() === 'en' ? ` (${t})` : `（${t}）`;
+    const ul = items => `<ul>${(items || []).map(i => `<li>${esc(i)}</li>`).join('')}</ul>`;
+
+    function render() {
+      document.documentElement.lang = Site.getLang() === 'en' ? 'en' : 'zh-Hant';
+      document.getElementById('langToggle').textContent = T('toggle');
+      document.getElementById('backText').textContent = T('back');
+      const root = document.getElementById('project');
+      const pager = document.getElementById('pager');
+
+      Promise.all([getJSON(dataPath('about.json')), getJSON(dataPath('work.json'))]).then(([about, raw]) => {
+        const all = visibleGroups(raw).flatMap(g => g.projects.map(p => ({ g, p })));
+        const i = all.findIndex(x => x.p.slug === slug);
+        if (i < 0) {
+          root.innerHTML = `<p class="lead error">${esc(T('notFound'))} <a href="index.html#experience">${esc(T('home'))}</a></p>`;
+          pager.innerHTML = '';
+          return;
+        }
+        const { g, p } = all[i];
+        const names = stageNames(about.sdlc);
+        const pr = progressOf(p.milestones);
+        const pct = pr.total ? Math.round(pr.done / pr.total * 100) : 0;
+        document.title = `${p.title} | Alex Li (李翔緯)`;
+
+        const pills = stagePills(p, names);
+        const ms = (p.milestones || []).map(m =>
+          `<div class="ms ${esc(m.status)}"><span class="d">${esc(m.date)}</span><span class="t">${esc(m.text)}</span></div>`).join('');
+        const kpis = (p.kpis || []).map(k => `
+          <div class="kpi ${PENDING.includes(k.value) ? 'pending' : ''}">
+            <div class="n">${esc(k.name)}</div><div class="v">${esc(k.value)}</div>
+            ${k.note ? `<div class="note">${esc(k.note)}</div>` : ''}
+          </div>`).join('');
+        const goal = p.goal || {};
+        const goalMeta = [goal.category, goal.weight && goal.weight !== '—' ? `${T('weight')} ${goal.weight}` : ''].filter(Boolean).join(' · ');
+        const progress = pr.done === pr.total
+          ? `<p>${esc(T('allDone')(pr.total))}</p>`
+          : `<ul>
+              <li>${esc(T('doneOf')(pr.done, pr.total))}</li>
+              ${pr.current ? `<li><strong>${esc(T('now'))}${colon()}</strong>${esc(pr.current.text)}${esc(paren(pr.current.date))}</li>` : ''}
+              ${pr.next ? `<li><strong>${esc(T('next'))}${colon()}</strong>${esc(pr.next.text)}${esc(paren(pr.next.date))}</li>` : ''}
+            </ul>`;
+
+        let n = 0;
+        root.innerHTML = `
+          <header class="post-header">
+            <p class="eyebrow">${esc(g.org)} · ${esc(g.role)} · ${esc(p.period)}</p>
+            <h1>${esc(p.title)}</h1>
+            <p class="lead">${esc(p.summary)}</p>
+            <div class="meta-row">${pills}<span class="own">${esc(p.ownership)}</span></div>
+            <div class="meta-row post-tags">${(p.tags || []).map(t => `<span>${esc(t)}</span>`).join('')}</div>
+          </header>
+          <div class="post-body">
+            ${h2(++n, T('context'))}<p>${esc(p.background)}</p>
+            ${h2(++n, T('problem'))}<p>${esc(p.problem)}</p>
+            ${h2(++n, T('goal'))}
+              ${goalMeta ? `<p class="goal-meta">${esc(goalMeta)}</p>` : ''}
+              <p>${esc(goal.target || '')}</p>
+              <div class="bar"><span style="width:${pct}%"></span></div>
+              <p class="bar-label">${esc(T('doneOf')(pr.done, pr.total))}</p>
+            ${h2(++n, T('approach'))}${ul(p.approach)}
+            ${h2(++n, T('milestones'))}<div class="ms-list">${ms}</div>
+            ${h2(++n, T('results'))}${ul(p.result)}${kpis ? `<div class="kpi-grid">${kpis}</div>` : ''}
+            ${h2(++n, T('progress'))}${progress}
+            ${p.link ? `${h2(++n, T('more'))}<p><a href="${esc(p.link)}" style="color:#3b82f6">${esc(p.linkLabel || p.link)} →</a></p>` : ''}
+          </div>`;
+
+        const prev = all[i - 1], next = all[i + 1];
+        const link = (x, cls, label) => x ? `<a class="${cls}" href="project.html?id=${encodeURIComponent(x.p.slug)}">${cls === 'prev' ? '← ' : ''}${esc(label)}${colon()}${esc(x.p.short || x.p.title)}${cls === 'next' ? ' →' : ''}</a>` : '';
+        pager.innerHTML = link(prev, 'prev', T('prev')) + link(next, 'next', T('nextProj'));
+      }).catch(() => { root.innerHTML = `<p class="lead error">${esc(T('loadError'))}</p>`; });
+    }
+
+    document.getElementById('langToggle').addEventListener('click', () => { Site.toggleLang(); render(); });
+    render();
+  </script>
+</body>
+</html>

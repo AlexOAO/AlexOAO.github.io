@@ -5,17 +5,20 @@
     "role": "PM 兼 SA",
     "period": "2026/07 ~ Now",
     "current": true,
+    "scope": "AI Agent 驗證、選型、成本與治理",
+    "other": [],
     "projects": [
       {
-        "title": "Guardrails PoC（奧義科技）",
         "short": "Guardrails PoC",
+        "slug": "guardrails-poc",
+        "title": "Guardrails PoC（奧義科技）",
+        "summary": "建立行內 Guardrails 驗證方法，確立 AI 防護規格。",
         "sdlc": ["tune"],
-        "phase": "PoC 驗證",
-        "status": "進行中",
         "ownership": "主責",
         "period": "2026/07 ~ Now",
         "background": "本行規劃導入 4 大 AI Agent。上線前，本行必須確認 AI 的防護能力。",
         "problem": "本行沒有自己的 Guardrails 驗證方法。廠商的測試結果無法直接證明本行場景的安全性。",
+        "goal": {"category": "AI 專案與技術支援", "weight": "40%", "target": "完成 Guardrails 導入 PoC，確立行內 AI 防護規格。"},
         "approach": [
           "依 OWASP LLM Top 10 設計 6 個 Policy 模組的題庫。",
           "建立基準測試集：每模組 40 題，共 240 題。",
@@ -23,87 +26,70 @@
           "以 API 批量執行 3,600 次驗證。",
           "依失敗案例補強 System Prompt，再回測。"
         ],
+        "milestones": [
+          {"date": "2026 Q3", "text": "建立 240 題基準題庫", "status": "done"},
+          {"date": "2026 Q3", "text": "擴充至 600 題", "status": "done"},
+          {"date": "2026 Q3", "text": "API 驗證 3,600 次", "status": "done"},
+          {"date": "2026/10/12", "text": "奧義完成 PoC", "status": "done"},
+          {"date": "TBD", "text": "提交驗證報告與建議", "status": "doing"}
+        ],
         "result": [
           "完成 6 大 Policy 的 600 題驗證與 Prompt 調校。",
           "題庫涵蓋 AI Safety 4 層防禦：敏感資料、提示詞攻擊、業務範圍、回應合規。",
           "建立可重用的行內驗證方法，供後續 4 大 Agent 檢測使用。"
         ],
         "kpis": [
-          { "name": "題庫規模", "value": "600 題" },
-          { "name": "批量驗證次數", "value": "3,600 次" },
-          { "name": "Policy 覆蓋率", "value": "6 / 6" },
-          { "name": "攻擊攔截率", "value": "待量測", "note": "於驗證報告中統計" }
-        ],
-        "keyProgress": "6 大 Policy 的 600 題驗證與 Prompt 調校已完成。驗證報告與導入建議進行中。",
-        "goal": {
-          "category": "AI 專案與技術支援",
-          "weight": "40%",
-          "target": "完成 Guardrails 導入 PoC，確立行內 AI 防護規格。",
-          "achievement": "題庫與驗證已完成。驗證報告與導入建議進行中。"
-        },
-        "milestones": [
-          { "date": "2026 Q3", "text": "建立 240 題基準測試集（6 模組 × 40 題）", "status": "done" },
-          { "date": "2026 Q3", "text": "擴充至 600 題（6 模組 × 100 題）", "status": "done" },
-          { "date": "2026 Q3", "text": "API 批量驗證 3,600 次，調校 System Prompt", "status": "done" },
-          { "date": "2026/10/12", "text": "奧義科技完成 PoC", "status": "done" },
-          { "date": "TBD", "text": "提交驗證報告與導入建議", "status": "doing" },
-          { "date": "TBD", "text": "金控評估其餘 2 家廠商", "status": "todo" }
+          {"name": "題庫規模", "value": "600 題"},
+          {"name": "批量驗證次數", "value": "3,600 次"},
+          {"name": "Policy 覆蓋率", "value": "6 / 6"},
+          {"name": "攻擊攔截率", "value": "待量測", "note": "於驗證報告中統計"}
         ],
         "tags": ["Guardrails", "OWASP LLM Top 10", "Red Team", "Prompt Engineering"],
         "source": "S2,S3,S4"
       },
       {
-        "title": "企業 Agentic 平台選型評測（Agatha／Dify）",
         "short": "Agentic 平台選型",
+        "slug": "agentic-platform-eval",
+        "title": "企業 Agentic 平台選型評測（Agatha／Dify）",
+        "summary": "以 60 項測試評測 2 個平台，提前發現 12 項問題。",
         "sdlc": ["ops", "build"],
-        "phase": "評測選型",
-        "status": "已完成",
         "ownership": "主責",
         "period": "2026/07 ~ 2026/09",
         "background": "本行需要一個企業級 Agentic 平台，用來建置與管理 AI Agent。",
         "problem": "候選平台的功能與風險不透明。本行沒有一致的評分標準可以比較。",
+        "goal": {"category": "AI 專案與技術支援", "weight": "40%", "target": "完成企業級 Agentic 平台選型評測。"},
         "approach": [
           "設計 Agatha 的實測項目，執行 26 項測試。",
           "設計 Dify 的功能測試，執行 34 項測試。",
           "記錄每一個問題的嚴重度：阻斷、資安、一般。",
           "填寫部門內部評分表與金控的 9 大類 42 項評分表。"
         ],
-        "result": [
-          "Agatha 實測發現 12 項問題，其中 4 項阻斷、1 項資安。",
-          "完成 Agatha 與 Dify 的 PoC 報告與評分表。",
-          "提供選型決策的量化依據。"
-        ],
-        "kpis": [
-          { "name": "Agatha 測試項目", "value": "26 項" },
-          { "name": "發現問題", "value": "12 項（4 阻斷、1 資安）" },
-          { "name": "Dify 測試項目", "value": "34 項" },
-          { "name": "評分表", "value": "9 大類 42 項" }
-        ],
-        "keyProgress": "Agatha 與 Dify 的測試、PoC 報告與評分表全部完成。",
-        "goal": {
-          "category": "AI 專案與技術支援",
-          "weight": "40%",
-          "target": "完成企業級 Agentic 平台選型評測。",
-          "achievement": "已完成。"
-        },
         "milestones": [
-          { "date": "2026 Q3", "text": "完成 Agatha 26 項實測", "status": "done" },
-          { "date": "2026 Q3", "text": "完成 Dify 34 項功能測試", "status": "done" },
-          { "date": "2026 Q3", "text": "提交 PoC 報告與 9 大類 42 項評分表", "status": "done" }
+          {"date": "2026 Q3", "text": "完成 Agatha 26 項實測", "status": "done"},
+          {"date": "2026 Q3", "text": "完成 Dify 34 項測試", "status": "done"},
+          {"date": "2026 Q3", "text": "提交 42 項評分表", "status": "done"}
+        ],
+        "result": ["Agatha 實測發現 12 項問題，其中 4 項阻斷、1 項資安。", "完成 Agatha 與 Dify 的 PoC 報告與評分表。", "提供選型決策的量化依據。"],
+        "kpis": [
+          {"name": "Agatha 測試項目", "value": "26 項"},
+          {"name": "發現問題", "value": "12 項（4 阻斷、1 資安）"},
+          {"name": "Dify 測試項目", "value": "34 項"},
+          {"name": "評分表", "value": "9 大類 42 項"}
         ],
         "tags": ["Agatha", "Dify", "Vendor Evaluation", "PoC"],
         "source": "S2,S3"
       },
       {
-        "title": "AI Agent 成本模型與三年 TCO／ROI",
         "short": "成本模型與 ROI",
+        "slug": "agent-cost-roi",
+        "title": "AI Agent 成本模型與三年 TCO／ROI",
+        "summary": "量化 4 大 Agent 的成本與效益，作為資源配置依據。",
         "sdlc": ["plan"],
-        "phase": "需求分析",
-        "status": "進行中",
         "ownership": "主責",
         "period": "2026/07 ~ Now",
         "background": "本行規劃 4 大 AI Agent：Sales、Credit（信用）、Service（客服）、智富管家。資源配置需要成本與效益的依據。",
         "problem": "各 Agent 的成本結構不同：地端 GPU、雲端 Token、軟體建維。本行沒有一個模型可以在同一基準上比較它們。",
+        "goal": {"category": "AI 專案與技術支援／AI 業務推動", "weight": "40% ／ 20%", "target": "完成 4 大 Agent 的 Token 成本、算力評估與三年 TCO／ROI。"},
         "approach": [
           "定義資源公式：AI Agent 資源需求 = 空間（GPU 記憶體）× 時間（GPU 算力）。",
           "建立容量模型：5 張 RTX PRO 6000（每張 96 GB），共 480 GB、每日 432,000 卡秒。",
@@ -112,6 +98,13 @@
           "建立效益模型：月效益 = 業務量 × 單位效益 × 價值單價。",
           "製作廠商資料索取表，向 4 家廠商收集模型規格。"
         ],
+        "milestones": [
+          {"date": "2026 Q3", "text": "完成 3 套成本模型", "status": "done"},
+          {"date": "2026 Q3", "text": "完成算力池與尖峰估算", "status": "done"},
+          {"date": "2026/10", "text": "確認智富與信用 GPU", "status": "done"},
+          {"date": "2026/10/30", "text": "完成 Agent 算力估算", "status": "doing"},
+          {"date": "TBD", "text": "產出正式 TCO／ROI", "status": "todo"}
+        ],
         "result": [
           "完成容量、地端攤提、雲端 Token 3 套成本模型與廠商資料索取表。",
           "整理 BU 業務量：客服 43,000 通／月；智富管家 324,959 次登入／月；信用 13,513 件／月。",
@@ -119,253 +112,142 @@
           "建立 4 大 Agent 的三年 TCO、TBE 與 ROI 比較表格式。"
         ],
         "kpis": [
-          { "name": "成本模型", "value": "3 套" },
-          { "name": "GPU 池容量", "value": "480 GB／432,000 卡秒／日" },
-          { "name": "信用 Agent 單位成本", "value": "約 1.92 元／件", "note": "試算" },
-          { "name": "4 大 Agent 三年 ROI", "value": "待量測", "note": "待 BU 效益與廠商報價" }
-        ],
-        "keyProgress": "3 套成本模型與資料索取表已完成。效益數據由 BU 提供，正在彙整比較並計算 ROI。",
-        "goal": {
-          "category": "AI 專案與技術支援／AI 業務推動",
-          "weight": "40% ／ 20%",
-          "target": "完成 4 大 Agent 的 Token 成本、算力評估與三年 TCO／ROI。",
-          "achievement": "成本模型與 ROI 框架已建立。算力池模型與尖峰估算已完成。"
-        },
-        "milestones": [
-          { "date": "2026 Q3", "text": "完成 3 套成本模型與廠商資料索取表", "status": "done" },
-          { "date": "2026 Q3", "text": "完成算力池模型與尖峰佔用估算", "status": "done" },
-          { "date": "2026/10", "text": "確認 GPU 配置：智富管家正式 2 張、測試 1 張；Credit Agent 正式 1 張", "status": "done" },
-          { "date": "2026/10/30", "text": "完成 AI Agent 算力估算", "status": "doing" },
-          { "date": "TBD", "text": "收回 4 家廠商回填表，產出正式 TCO／ROI 與算力配額", "status": "todo" }
+          {"name": "成本模型", "value": "3 套"},
+          {"name": "GPU 池容量", "value": "480 GB／432,000 卡秒／日"},
+          {"name": "信用 Agent 單位成本", "value": "約 1.92 元／件", "note": "試算"},
+          {"name": "4 大 Agent 三年 ROI", "value": "待量測", "note": "待 BU 效益與廠商報價"}
         ],
         "tags": ["TCO", "ROI", "GPU Capacity", "Token Cost", "Cost Model"],
         "source": "S2,S4,S5"
       },
       {
-        "title": "AI Agent 技術規格與治理機制",
         "short": "Agent 治理機制",
+        "slug": "agent-governance",
+        "title": "AI Agent 技術規格與治理機制",
+        "summary": "在 Agent 上線前，確認它符合金管會規範。",
         "sdlc": ["plan", "gov"],
-        "phase": "需求分析",
-        "status": "進行中",
         "ownership": "主責",
         "period": "2026/07 ~ Now",
         "background": "金管會對 AI 應用發布 6 大規範。本行的 4 大 Agent 上線前必須符合這些規範。",
         "problem": "本行沒有把 Agent 場景對應到金管會規範的檢測機制。",
-        "approach": [
-          "調查 AI Agent 上線前的檢核機制。",
-          "把 4 大 Agent 的場景對應到金管會 6 大規範。",
-          "規劃行內的 Agent 檢測機制與介面標準。"
-        ],
-        "result": [
-          "完成 AI Agent 上線前檢核機制的 Survey。",
-          "行內檢測機制規劃進行中。"
-        ],
-        "kpis": [
-          { "name": "對應規範", "value": "金管會 6 大規範" },
-          { "name": "涵蓋 Agent", "value": "4 個" },
-          { "name": "上線前檢核通過率", "value": "待量測", "note": "機制完成後統計" }
-        ],
-        "keyProgress": "4 大 Agent 場景對應金管會 6 大規範的 Survey 進行中。",
-        "goal": {
-          "category": "AI 業務推動",
-          "weight": "20%",
-          "target": "訂定 4 大 Agent 技術規格與介面標準，完成行內檢測機制。",
-          "achievement": "進行中。"
-        },
+        "goal": {"category": "AI 業務推動", "weight": "20%", "target": "訂定 4 大 Agent 技術規格與介面標準，完成行內檢測機制。"},
+        "approach": ["調查 AI Agent 上線前的檢核機制。", "把 4 大 Agent 的場景對應到金管會 6 大規範。", "規劃行內的 Agent 檢測機制與介面標準。"],
         "milestones": [
-          { "date": "2026 Q3", "text": "完成 AI Agent 上線前檢核機制 Survey", "status": "done" },
-          { "date": "TBD", "text": "完成 4 大 Agent 對應金管會 6 大規範的檢測機制", "status": "doing" }
+          {"date": "2026 Q3", "text": "完成上線前檢核 Survey", "status": "done"},
+          {"date": "TBD", "text": "對應金管會 6 大規範", "status": "doing"}
+        ],
+        "result": ["完成 AI Agent 上線前檢核機制的 Survey。", "行內檢測機制規劃進行中。"],
+        "kpis": [
+          {"name": "對應規範", "value": "金管會 6 大規範"},
+          {"name": "涵蓋 Agent", "value": "4 個"},
+          {"name": "上線前檢核通過率", "value": "待量測", "note": "機制完成後統計"}
         ],
         "tags": ["AI Governance", "Compliance", "金管會規範"],
         "source": "S2,S3"
       },
       {
-        "title": "金管會 FinLLM 資料清洗與模型評測",
         "short": "FinLLM 清洗與評測",
+        "slug": "finllm",
+        "title": "金管會 FinLLM 資料清洗與模型評測",
+        "summary": "逐題清洗金融 LLM 訓練資料，並評分法規判讀。",
         "sdlc": ["tune"],
-        "phase": "建置開發",
-        "status": "進行中",
         "ownership": "協作",
         "period": "2026/07 ~ 2027/03",
         "background": "金管會推動金融業專用的 FinLLM。本行參與資料清洗與模型評測。",
         "problem": "訓練資料必須正確且符合法遵。原始題目有錯誤，需要逐題處理。",
-        "approach": [
-          "逐題清洗、校對與修正資料。",
-          "依金控通知，每週處理 1 批資料。",
-          "執行法規判讀評分作業。"
-        ],
-        "result": [
-          "2026/10/12 完成第 2-1 批資料清洗。",
-          "2026/10/13 完成第 4 批法規判讀評分。"
-        ],
-        "kpis": [
-          { "name": "已完成資料批次", "value": "第 2-1 批" },
-          { "name": "剩餘資料批次", "value": "9 批" },
-          { "name": "已完成評分批次", "value": "第 4 批" }
-        ],
-        "keyProgress": "逐題清洗與校對進行中。結構化的標準流程待擴大範圍。",
-        "goal": {
-          "category": "AI 專案與技術支援",
-          "weight": "40%",
-          "target": "2027/01/08 完成資料清洗；2027/03/06 完成模型評測。",
-          "achievement": "進行中，依金控排程推進。"
-        },
+        "goal": {"category": "AI 專案與技術支援", "weight": "40%", "target": "2027/01/08 完成資料清洗；2027/03/06 完成模型評測。"},
+        "approach": ["逐題清洗、校對與修正資料。", "依金控通知，每週處理 1 批資料。", "執行法規判讀評分作業。"],
         "milestones": [
-          { "date": "2026/10/12", "text": "完成第 2-1 批資料清洗", "status": "done" },
-          { "date": "2026/10/13", "text": "完成第 4 批法規判讀評分", "status": "done" },
-          { "date": "2026/10/27 ~ 11/12", "text": "執行第 5 批法規判讀評分", "status": "doing" },
-          { "date": "2027/01/08", "text": "完成全部資料清洗", "status": "todo" },
-          { "date": "2027/03/06", "text": "完成模型評測", "status": "todo" }
+          {"date": "2026/10/12", "text": "完成第 2-1 批清洗", "status": "done"},
+          {"date": "2026/10/13", "text": "完成第 4 批法規評分", "status": "done"},
+          {"date": "2026/10/27 ~ 11/12", "text": "執行第 5 批法規評分", "status": "doing"},
+          {"date": "2027/01/08", "text": "完成全部資料清洗", "status": "todo"},
+          {"date": "2027/03/06", "text": "完成模型評測", "status": "todo"}
+        ],
+        "result": ["2026/10/12 完成第 2-1 批資料清洗。", "2026/10/13 完成第 4 批法規判讀評分。"],
+        "kpis": [
+          {"name": "已完成資料批次", "value": "第 2-1 批"},
+          {"name": "剩餘資料批次", "value": "9 批"},
+          {"name": "已完成評分批次", "value": "第 4 批"}
         ],
         "tags": ["FinLLM", "Data Cleaning", "LLM Evaluation"],
         "source": "S2,S4"
       },
       {
-        "title": "智富管家 PoC",
         "short": "智富管家 PoC",
+        "slug": "wealth-assistant-poc",
+        "title": "智富管家 PoC",
+        "summary": "驗證理財 App 的 AI 問答可行性，完成 PoC 後移交。",
         "sdlc": ["build"],
-        "phase": "移交",
-        "status": "已移交",
         "ownership": "主責",
         "period": "2026/07 ~ 2026/09",
         "background": "智富管家是本行的 AI 理財助理 App，屬於 4 大 Agent 之一。",
         "problem": "PoC 階段需要確認問答功能是否可用，並畫出系統架構。",
-        "approach": [
-          "測試問答功能。",
-          "繪製系統架構圖初稿。",
-          "整理測試結果與文件，移交資深同仁。"
-        ],
-        "result": [
-          "完成問答功能測試與架構圖初稿。",
-          "移交資深同仁接續開發。"
-        ],
-        "kpis": [
-          { "name": "月登入量（BU 提供）", "value": "324,959 次" },
-          { "name": "三年後預估月登入量", "value": "495,000 次" },
-          { "name": "問答正確率", "value": "待量測", "note": "由接手團隊統計" }
-        ],
-        "keyProgress": "問答測試與架構圖初稿完成，已移交。",
-        "goal": {
-          "category": "AI 專案與技術支援",
-          "weight": "40%",
-          "target": "完成智富管家 PoC 測試。",
-          "achievement": "已完成並移交。"
-        },
+        "goal": {"category": "AI 專案與技術支援", "weight": "40%", "target": "完成智富管家 PoC 測試。"},
+        "approach": ["測試問答功能。", "繪製系統架構圖初稿。", "整理測試結果與文件，移交資深同仁。"],
         "milestones": [
-          { "date": "2026 Q3", "text": "完成問答功能測試", "status": "done" },
-          { "date": "2026 Q3", "text": "完成架構圖初稿", "status": "done" },
-          { "date": "2026 Q3", "text": "移交資深同仁", "status": "done" }
+          {"date": "2026 Q3", "text": "完成問答功能測試", "status": "done"},
+          {"date": "2026 Q3", "text": "完成架構圖初稿", "status": "done"},
+          {"date": "2026 Q3", "text": "移交資深同仁", "status": "done"}
+        ],
+        "result": ["完成問答功能測試與架構圖初稿。", "移交資深同仁接續開發。"],
+        "kpis": [
+          {"name": "月登入量（BU 提供）", "value": "324,959 次"},
+          {"name": "三年後預估月登入量", "value": "495,000 次"},
+          {"name": "問答正確率", "value": "待量測", "note": "由接手團隊統計"}
         ],
         "tags": ["PoC", "Wealth Management", "AI Assistant"],
         "source": "S2,S5"
       },
       {
-        "title": "Gemini 教育訓練",
         "short": "Gemini 教育訓練",
+        "slug": "gemini-training",
+        "title": "Gemini 教育訓練",
+        "summary": "設計以業務場景實作的 Gemini 課程。",
         "sdlc": ["ops"],
-        "phase": "需求分析",
-        "status": "規劃中",
         "ownership": "主責",
         "period": "2026/10 ~ 2026/11",
         "background": "本行推動員工使用生成式 AI 工具。",
         "problem": "員工不知道 AI 適合哪些業務場景，也不知道如何安全使用。",
-        "approach": [
-          "與顧問確認課程大綱：安全、工具、Prompt。",
-          "收集各業務單位期望的場景。",
-          "在課堂中用這些場景實作。"
-        ],
-        "result": [
-          "課程大綱已確認。"
-        ],
-        "kpis": [
-          { "name": "開課日期", "value": "2026/11/12" },
-          { "name": "參訓人數", "value": "待量測" },
-          { "name": "課後場景提案數", "value": "待量測" }
-        ],
-        "keyProgress": "大綱已確認，正在收集業務場景。",
-        "goal": {
-          "category": "AI 營運：員工賦能",
-          "weight": "—",
-          "target": "2026/11/12 完成 Gemini 訓練，課堂以實際業務場景實作。",
-          "achievement": "規劃中。"
-        },
+        "goal": {"category": "AI 營運：員工賦能", "weight": "—", "target": "2026/11/12 完成 Gemini 訓練，課堂以實際業務場景實作。"},
+        "approach": ["與顧問確認課程大綱：安全、工具、Prompt。", "收集各業務單位期望的場景。", "在課堂中用這些場景實作。"],
         "milestones": [
-          { "date": "2026/10", "text": "確認顧問課程大綱", "status": "done" },
-          { "date": "2026/10 ~ 11", "text": "收集各業務單位期望場景", "status": "doing" },
-          { "date": "2026/11/12", "text": "開課", "status": "todo" }
+          {"date": "2026/10", "text": "確認課程大綱", "status": "done"},
+          {"date": "2026/10 ~ 11", "text": "收集業務場景", "status": "doing"},
+          {"date": "2026/11/12", "text": "開課", "status": "todo"}
+        ],
+        "result": ["課程大綱已確認。"],
+        "kpis": [
+          {"name": "開課日期", "value": "2026/11/12"},
+          {"name": "參訓人數", "value": "待量測"},
+          {"name": "課後場景提案數", "value": "待量測"}
         ],
         "tags": ["Gemini", "AI Training", "Enablement"],
         "source": "S4"
       },
       {
-        "title": "A2UI 技研",
         "short": "A2UI 技研",
+        "slug": "a2ui-research",
+        "title": "A2UI 技研",
+        "summary": "評估讓 Agent 直接生成介面的技術，用於理財場景。",
         "sdlc": ["plan"],
-        "phase": "PoC 驗證",
-        "status": "規劃中",
         "ownership": "主責",
         "period": "2026/10 ~ Now",
         "background": "A2UI 讓 Agent 直接產生使用者介面。本行評估它能否用在智富管家等業務場景。",
         "problem": "本行還沒有 A2UI 的 PoC 環境，也沒有確認業務價值。",
-        "approach": [
-          "確認 PoC 環境需求與技術規格。",
-          "申請 Azure AI Foundry 與 Token。",
-          "對接 IT 測試環境。",
-          "與智富管家對接業務場景。"
-        ],
-        "result": [
-          "PoC 環境需求確認進行中。"
-        ],
-        "kpis": [
-          { "name": "Checkpoint", "value": "2026/11/12：業務價值" },
-          { "name": "業務場景數", "value": "待量測" }
-        ],
-        "keyProgress": "環境需求與技術規格確認中。",
-        "goal": {
-          "category": "商銀技研",
-          "weight": "—",
-          "target": "2026/11/12 確認 PoC 環境與業務價值。",
-          "achievement": "規劃中。"
-        },
+        "goal": {"category": "商銀技研", "weight": "—", "target": "2026/11/12 確認 PoC 環境與業務價值。"},
+        "approach": ["確認 PoC 環境需求與技術規格。", "申請 Azure AI Foundry 與 Token。", "對接 IT 測試環境。", "與智富管家對接業務場景。"],
         "milestones": [
-          { "date": "2026/10", "text": "確認 PoC 環境需求與技術規格", "status": "doing" },
-          { "date": "2026/11/12", "text": "Checkpoint：Azure AI Foundry 與 Token 申請、業務價值", "status": "todo" },
-          { "date": "TBD", "text": "對接 IT 測試環境與智富管家場景", "status": "todo" }
+          {"date": "2026/10", "text": "確認 PoC 環境規格", "status": "doing"},
+          {"date": "2026/11/12", "text": "Checkpoint：業務價值", "status": "todo"},
+          {"date": "TBD", "text": "對接測試環境與場景", "status": "todo"}
+        ],
+        "result": ["PoC 環境需求確認進行中。"],
+        "kpis": [
+          {"name": "Checkpoint", "value": "2026/11/12：業務價值"},
+          {"name": "業務場景數", "value": "待量測"}
         ],
         "tags": ["A2UI", "Azure AI Foundry", "Agent UI"],
-        "source": "S4"
-      },
-      {
-        "title": "辦公 AI：Agentic 工作流程方案",
-        "short": "辦公 Agentic 流程",
-        "sdlc": ["plan"],
-        "phase": "需求分析",
-        "status": "未啟動",
-        "ownership": "主責",
-        "period": "TBD",
-        "background": "本行已導入 Copilot 與 Gemini 等辦公 AI 工具。",
-        "problem": "單一工具只能完成單一步驟。跨系統的辦公流程仍需要人工串接。",
-        "approach": [
-          "盤點可用 Agent 串接的辦公流程。",
-          "規劃 Agentic 工作流程方案。"
-        ],
-        "result": [
-          "尚未啟動。"
-        ],
-        "kpis": [
-          { "name": "節省工時", "value": "待量測" }
-        ],
-        "keyProgress": "尚未啟動。",
-        "goal": {
-          "category": "辦公 AI 技研",
-          "weight": "—",
-          "target": "提出 Agentic 工作流程方案。",
-          "achievement": "未啟動。"
-        },
-        "milestones": [
-          { "date": "TBD", "text": "提出方案規劃", "status": "todo" }
-        ],
-        "tags": ["Agentic Workflow", "Office AI"],
         "source": "S4"
       }
     ]
@@ -375,83 +257,67 @@
     "short": "凱基金控",
     "role": "AI 開發實習生",
     "period": "2026/02 ~ 2026/06",
+    "scope": "金融 AI 治理與產品開發",
+    "other": ["基於 PandasAI 開發自然語言轉圖表工具，支援 Azure OpenAI 與本地 Ollama。", "以 Scrum 參與開發，以 Azure DevOps 追蹤任務與 CI/CD。"],
     "projects": [
       {
-        "title": "Webai Finance 模組（Kinance AI 市場／個股助手）",
         "short": "Webai Finance",
+        "slug": "webai-finance",
+        "title": "Webai Finance 模組（Kinance AI 市場／個股助手）",
+        "summary": "從需求到上線，主導 AI 市場與個股助手。",
         "sdlc": ["build", "plan"],
-        "phase": "上線維運",
-        "status": "已完成",
         "ownership": "主責",
         "period": "2026/02 ~ 2026/06",
         "background": "Kinance 的 AI 市場助手與 AI 個股助手，回答使用者對市場與個股的問題。",
         "problem": "研究員要從券商報告、總經資料與新聞中人工收集與整理資訊，耗費時間。",
+        "goal": {"category": "模組負責人", "weight": "—", "target": "獨立主導 Webai Finance 從需求分析到正式上線。"},
         "approach": [
           "主導需求分析、PoC 驗證到正式上線的全流程。",
           "編排 AI Agent 流程，透過 SFTP 整合券商報告、總經與新聞。",
           "設計權限機制：全集團可用，投信資料保持隔離。",
           "整合既有 UI／UX。"
         ],
-        "result": [
-          "Webai Finance 正式上線。",
-          "縮短研究員收集與整理資料的時間。"
-        ],
-        "kpis": [
-          { "name": "上線狀態", "value": "正式上線" },
-          { "name": "資料來源", "value": "3 類（券商報告、總經、新聞）" },
-          { "name": "研究員資料整理時間", "value": "待量測" }
-        ],
-        "keyProgress": "從需求到上線全部完成。",
-        "goal": {
-          "category": "模組負責人",
-          "weight": "—",
-          "target": "獨立主導 Webai Finance 從需求分析到正式上線。",
-          "achievement": "已完成，正式上線。"
-        },
         "milestones": [
-          { "date": "2026/02 ~ 06", "text": "需求分析", "status": "done" },
-          { "date": "2026/02 ~ 06", "text": "PoC 驗證", "status": "done" },
-          { "date": "2026/02 ~ 06", "text": "正式上線", "status": "done" }
+          {"date": "2026/02 ~ 06", "text": "需求分析", "status": "done"},
+          {"date": "2026/02 ~ 06", "text": "PoC 驗證", "status": "done"},
+          {"date": "2026/02 ~ 06", "text": "正式上線", "status": "done"}
+        ],
+        "result": ["Webai Finance 正式上線。", "縮短研究員收集與整理資料的時間。"],
+        "kpis": [
+          {"name": "上線狀態", "value": "正式上線"},
+          {"name": "資料來源", "value": "3 類（券商報告、總經、新聞）"},
+          {"name": "研究員資料整理時間", "value": "待量測"}
         ],
         "tags": ["n8n", "AI Agent", "Azure OpenAI", "SFTP"],
         "source": "S1"
       },
       {
-        "title": "AI 治理自動審查系統",
         "short": "AI 治理自動審查",
+        "slug": "ai-governance-review",
+        "title": "AI 治理自動審查系統",
+        "summary": "把 AI 使用報告的人工審查改為自動化。",
         "sdlc": ["ops", "gov"],
-        "phase": "上線維運",
-        "status": "已完成",
         "ownership": "主責",
         "period": "2026/02 ~ 2026/06",
         "background": "集團 AI 統籌小組審查子公司提交的 AI 使用報告。",
         "problem": "人工審查報告內容、判定風險等級並勾稽資產清冊，耗時且標準不一。",
+        "goal": {"category": "AI 治理系統開發", "weight": "—", "target": "自動化 AI 治理審查流程。"},
         "approach": [
           "串接 SharePoint，讓子公司上傳報告。",
           "使用 Azure OpenAI 判定報告內容的語義合理性。",
           "自動驗算風險分級，並勾稽資產清冊。",
           "以 Azure DevOps CI/CD 部署至 Azure Container Apps。"
         ],
-        "result": [
-          "系統自動完成風險分級、資產清冊勾稽與剩餘風險判定。",
-          "CI/CD 自動部署，減少人工部署步驟。"
-        ],
-        "kpis": [
-          { "name": "自動化步驟", "value": "3 項（風險分級、清冊勾稽、剩餘風險）" },
-          { "name": "部署方式", "value": "CI/CD → ACA" },
-          { "name": "每份報告審查時間", "value": "待量測" }
-        ],
-        "keyProgress": "系統已部署並運作。",
-        "goal": {
-          "category": "AI 治理系統開發",
-          "weight": "—",
-          "target": "自動化 AI 治理審查流程。",
-          "achievement": "已完成。"
-        },
         "milestones": [
-          { "date": "2026/02 ~ 06", "text": "串接 SharePoint 上傳流程", "status": "done" },
-          { "date": "2026/02 ~ 06", "text": "完成語義判定與風險分級驗算", "status": "done" },
-          { "date": "2026/02 ~ 06", "text": "CI/CD 部署至 ACA", "status": "done" }
+          {"date": "2026/02 ~ 06", "text": "串接 SharePoint 上傳", "status": "done"},
+          {"date": "2026/02 ~ 06", "text": "語義判定與風險分級", "status": "done"},
+          {"date": "2026/02 ~ 06", "text": "CI/CD 部署至 ACA", "status": "done"}
+        ],
+        "result": ["系統自動完成風險分級、資產清冊勾稽與剩餘風險判定。", "CI/CD 自動部署，減少人工部署步驟。"],
+        "kpis": [
+          {"name": "自動化步驟", "value": "3 項（風險分級、清冊勾稽、剩餘風險）"},
+          {"name": "部署方式", "value": "CI/CD → ACA"},
+          {"name": "每份報告審查時間", "value": "待量測"}
         ],
         "tags": ["Azure OpenAI", "SharePoint", "Azure DevOps", "ACA"],
         "source": "S1"
@@ -461,44 +327,38 @@
   {
     "org": "台灣經濟新報 TEJ",
     "short": "TEJ",
+    "lane": "2025",
     "role": "量化交易與資料科學實習生",
     "period": "2025/07 ~ 2025/12",
+    "scope": "AI 智能客服、智能投顧與 ASR 逐字稿",
+    "other": [],
     "projects": [
       {
-        "title": "AI 智能客服「小t寶」",
         "short": "RAG 客服小t寶",
+        "slug": "rag-support-bot",
+        "title": "AI 智能客服「小t寶」",
+        "summary": "以 RAG 讓會員用自然語言查詢技術手冊。",
         "sdlc": ["build", "tune"],
-        "phase": "上線維運",
-        "status": "已完成",
         "ownership": "主責",
         "period": "2025/07 ~ 2025/12",
         "background": "TEJ 官網會員需要查詢技術手冊與資料庫的使用方式。",
         "problem": "答案分散在技術手冊中。會員找不到答案時，必須等客服回覆。",
+        "goal": {"category": "AI 智能客服", "weight": "—", "target": "負責 RAG 架構、向量資料庫與前後台開發的全流程。"},
         "approach": [
           "以 LangExtract 處理技術手冊。",
           "建置 Qdrant 向量資料庫，以 RAG 架構回答問題。",
           "調整 chunk 策略，改善檢索結果。",
           "開發 HTML 前端與管理者後台，部署在 Docker。"
         ],
-        "result": [
-          "獨立完成上線，會員可用自然語言查詢技術手冊。",
-          "管理者可在後台維護知識庫。"
-        ],
-        "kpis": [
-          { "name": "上線狀態", "value": "已上線" },
-          { "name": "回答正確率", "value": "待量測" }
-        ],
-        "keyProgress": "系統已上線。",
-        "goal": {
-          "category": "AI 智能客服",
-          "weight": "—",
-          "target": "負責 RAG 架構、向量資料庫與前後台開發的全流程。",
-          "achievement": "已完成並上線。"
-        },
         "milestones": [
-          { "date": "Phase 1", "text": "建置 Qdrant 向量資料庫", "status": "done" },
-          { "date": "Phase 2", "text": "完成 RAG 問答與 chunk 策略調整", "status": "done" },
-          { "date": "Phase 3", "text": "完成前端與管理者後台，上線", "status": "done" }
+          {"date": "Phase 1", "text": "建置 Qdrant 向量庫", "status": "done"},
+          {"date": "Phase 2", "text": "RAG 問答與 chunk 調整", "status": "done"},
+          {"date": "Phase 3", "text": "前後台完成並上線", "status": "done"}
+        ],
+        "result": ["獨立完成上線，會員可用自然語言查詢技術手冊。", "管理者可在後台維護知識庫。"],
+        "kpis": [
+          {"name": "上線狀態", "value": "已上線"},
+          {"name": "回答正確率", "value": "待量測"}
         ],
         "tags": ["RAG", "Qdrant", "LangExtract", "Docker"],
         "link": "posts/rag-smart-customer-service.html",
@@ -506,39 +366,26 @@
         "source": "S1"
       },
       {
-        "title": "Multi-Agent 智能投顧決策架構",
         "short": "Multi-Agent 投顧",
+        "slug": "multi-agent-advisory",
+        "title": "Multi-Agent 智能投顧決策架構",
+        "summary": "讓 AI 像基金團隊一樣分工討論，產生可回測的投資訊號。",
         "sdlc": ["build"],
-        "phase": "建置開發",
-        "status": "已完成",
         "ownership": "協作",
         "period": "2025/07 ~ 2025/12",
         "background": "TEJ 評估用 AI 產生投資建議。",
         "problem": "單一 LLM 無法同時處理技術面、新聞情緒與基本面。投資建議也缺少可檢驗的推理過程。",
-        "approach": [
-          "以 LangGraph 建構 5 個 Agent：技術分析、新聞情緒、基本面、多空辯論、交易員。",
-          "透過 MCP 串接 TEJ 數據。",
-          "整合 Zipline 回測引擎。"
-        ],
-        "result": [
-          "完成 Multi-Agent 投顧架構。",
-          "用 Zipline 回測驗證投資策略績效。"
-        ],
-        "kpis": [
-          { "name": "Agent 數量", "value": "5 個" },
-          { "name": "回測引擎", "value": "Zipline" }
-        ],
-        "keyProgress": "架構與回測整合完成。",
-        "goal": {
-          "category": "AI 智能投顧",
-          "weight": "—",
-          "target": "設計 Multi-Agent 協作架構，整合 MCP 與 TEJ 數據。",
-          "achievement": "已完成。"
-        },
+        "goal": {"category": "AI 智能投顧", "weight": "—", "target": "設計 Multi-Agent 協作架構，整合 MCP 與 TEJ 數據。"},
+        "approach": ["以 LangGraph 建構 5 個 Agent：技術分析、新聞情緒、基本面、多空辯論、交易員。", "透過 MCP 串接 TEJ 數據。", "整合 Zipline 回測引擎。"],
         "milestones": [
-          { "date": "Phase 1", "text": "設計 5 個 Agent 的分工", "status": "done" },
-          { "date": "Phase 2", "text": "透過 MCP 串接 TEJ 數據", "status": "done" },
-          { "date": "Phase 3", "text": "整合 Zipline 回測", "status": "done" }
+          {"date": "Phase 1", "text": "設計 5 個 Agent 分工", "status": "done"},
+          {"date": "Phase 2", "text": "MCP 串接 TEJ 數據", "status": "done"},
+          {"date": "Phase 3", "text": "整合 Zipline 回測", "status": "done"}
+        ],
+        "result": ["完成 Multi-Agent 投顧架構。", "用 Zipline 回測驗證投資策略績效。"],
+        "kpis": [
+          {"name": "Agent 數量", "value": "5 個"},
+          {"name": "回測引擎", "value": "Zipline"}
         ],
         "tags": ["LangGraph", "Multi-Agent", "MCP", "Zipline"],
         "link": "posts/multi-agent-investment.html",
@@ -546,42 +393,172 @@
         "source": "S1"
       },
       {
-        "title": "ASR 法說會逐字稿自動化",
         "short": "ASR 逐字稿",
+        "slug": "asr-transcription",
+        "title": "ASR 法說會逐字稿自動化",
+        "summary": "縮短研究團隊整理法說會內容的時間。",
         "sdlc": ["build"],
-        "phase": "建置開發",
-        "status": "已完成",
         "ownership": "協作",
         "period": "2025/07 ~ 2025/12",
         "background": "研究團隊需要法說會的文字內容與重點摘要。",
         "problem": "人工聽打法說會影音並整理重點，耗費時間。",
-        "approach": [
-          "使用 Whisper 辨識語音。",
-          "自動化影音檔處理流程。",
-          "把文字稿摘要成結構化表格。"
-        ],
-        "result": [
-          "縮短法說會文字稿的整理時間。",
-          "產出結構化摘要表格。"
-        ],
-        "kpis": [
-          { "name": "輸出格式", "value": "逐字稿＋結構化摘要表" },
-          { "name": "每場整理時間", "value": "待量測" }
-        ],
-        "keyProgress": "自動化流程完成。",
-        "goal": {
-          "category": "ASR 逐字稿",
-          "weight": "—",
-          "target": "建立影音自動化處理與摘要流程。",
-          "achievement": "已完成。"
-        },
+        "goal": {"category": "ASR 逐字稿", "weight": "—", "target": "建立影音自動化處理與摘要流程。"},
+        "approach": ["使用 Whisper 辨識語音。", "自動化影音檔處理流程。", "把文字稿摘要成結構化表格。"],
         "milestones": [
-          { "date": "Phase 1", "text": "以 Whisper 完成語音辨識", "status": "done" },
-          { "date": "Phase 2", "text": "自動化影音檔處理", "status": "done" },
-          { "date": "Phase 3", "text": "產出結構化摘要表格", "status": "done" }
+          {"date": "Phase 1", "text": "Whisper 語音辨識", "status": "done"},
+          {"date": "Phase 2", "text": "自動化影音處理", "status": "done"},
+          {"date": "Phase 3", "text": "產出結構化摘要表", "status": "done"}
+        ],
+        "result": ["縮短法說會文字稿的整理時間。", "產出結構化摘要表格。"],
+        "kpis": [
+          {"name": "輸出格式", "value": "逐字稿＋結構化摘要表"},
+          {"name": "每場整理時間", "value": "待量測"}
         ],
         "tags": ["Whisper", "ASR", "Summarization"],
         "source": "S1"
+      }
+    ]
+  },
+  {
+    "org": "數位發展部 數位產業署",
+    "short": "數位部",
+    "lane": "2025",
+    "role": "第六屆數位青年 T 大使",
+    "period": "2025/09 ~ 2025/12",
+    "scope": "推動數位轉型政策，協助企業導入生成式 AI",
+    "other": [],
+    "projects": [
+      {
+        "short": "T 大使：企業導入 AI",
+        "slug": "moda-t-ambassador",
+        "title": "推動企業導入生成式 AI（數位青年 T 大使）",
+        "summary": "以「地方出題，人才解題」模式，與企業共同研擬數位解決方案。",
+        "sdlc": ["plan"],
+        "ownership": "協作",
+        "period": "2025/09 ~ 2025/12",
+        "background": "數位發展部推動「數位青年 T 大使」計畫。計畫目標是促進數位平權，並補足產業人才缺口。",
+        "problem": "偏鄉組織與中小企業缺少數位與 AI 人才，難以自行導入生成式 AI。",
+        "goal": {"category": "數位轉型推動", "weight": "—", "target": "協助企業導入生成式 AI 與智慧物聯技術。"},
+        "approach": ["以「地方出題，人才解題」模式，與企業共同研擬數位解決方案。", "與政府合作，進行數位轉型政策宣導與社群溝通。", "協助企業導入生成式 AI 與智慧物聯技術。"],
+        "milestones": [
+          {"date": "2025/09", "text": "加入第六屆 T 大使", "status": "done"},
+          {"date": "2025/09 ~ 12", "text": "政策宣導與社群溝通", "status": "done"},
+          {"date": "2025/09 ~ 12", "text": "協助企業導入生成式 AI", "status": "done"}
+        ],
+        "result": ["完成第六屆 T 大使計畫。", "協助企業導入生成式 AI 與智慧物聯技術。"],
+        "kpis": [
+          {"name": "計畫", "value": "第六屆數位青年 T 大使"},
+          {"name": "導入技術", "value": "生成式 AI、智慧物聯"}
+        ],
+        "tags": ["Generative AI", "Digital Transformation", "SME", "AIoT"],
+        "link": "https://moda.gov.tw/ADI/industry-counseling/digital-service/4093",
+        "linkLabel": "數位部計畫介紹",
+        "source": "resume.pdf, moda.gov.tw"
+      }
+    ]
+  },
+  {
+    "org": "TMBA 第 26 屆 程式交易部",
+    "short": "TMBA",
+    "role": "量化策略開發",
+    "period": "2025/07 ~ 2025/12",
+    "scope": "開發與回測台指期交易策略",
+    "other": [],
+    "projects": [
+      {
+        "short": "CTA 策略",
+        "slug": "tmba-cta-taiex",
+        "kind": "量化策略",
+        "title": "CTA 策略：台指期",
+        "summary": "建立台指期 CTA 策略與回測框架，以風險報酬指標評估。",
+        "sdlc": [],
+        "ownership": "主責",
+        "period": "2025/07 ~ 2025/12",
+        "background": "TMBA 程式交易部每屆開發交易策略，並在期末成果發表中評比。",
+        "problem": "台指期策略需要可重現的回測，並用一致的指標評估風險與報酬。",
+        "goal": {"category": "成果發表", "weight": "—", "target": "開發可回測、可量化評估的台指期 CTA 策略。"},
+        "approach": ["開發台指期 CTA 策略。", "建立策略回測框架。", "最佳化策略參數。", "以報酬率、夏普值與最大回撤評估策略。"],
+        "milestones": [
+          {"date": "Phase 1", "text": "建立回測框架", "status": "done"},
+          {"date": "Phase 2", "text": "最佳化策略參數", "status": "done"},
+          {"date": "2025/12", "text": "成果發表第三名", "status": "done"}
+        ],
+        "result": ["獲成果發表第三名。"],
+        "kpis": [
+          {"name": "成果發表名次", "value": "第三名"}
+        ],
+        "tags": ["TAIEX Futures", "CTA", "Backtesting", "Python"],
+        "source": "resume.pdf"
+      },
+      {
+        "short": "事件交易：法說會",
+        "slug": "tmba-event-earnings-call",
+        "kind": "量化策略",
+        "title": "事件交易策略：法說會",
+        "summary": "以法說會為事件，開發台股事件交易策略。",
+        "sdlc": [],
+        "ownership": "主責",
+        "period": "2025/07 ~ 2025/12",
+        "background": "TMBA 程式交易部每屆開發交易策略，並在期末成果發表中評比。",
+        "problem": "法說會會釋出公司營運與展望資訊。策略要判斷這個事件能否形成可交易的訊號。",
+        "goal": {"category": "成果發表", "weight": "—", "target": "開發以法說會為事件的交易策略。"},
+        "approach": ["以法說會為交易事件，設計事件交易策略。", "以回測評估策略的報酬與風險。"],
+        "milestones": [
+          {"date": "2025/07 ~ 12", "text": "開發事件交易策略", "status": "done"}
+        ],
+        "result": ["策略細節與回測績效待補充。"],
+        "kpis": [
+          {"name": "回測績效", "value": "待補充", "note": "報酬率、夏普值、最大回撤"}
+        ],
+        "tags": ["Event Trading", "Earnings Call"],
+        "source": "TMBA 經歷（細節待使用者提供）"
+      }
+    ]
+  },
+  {
+    "org": "國立臺灣科技大學 財務金融研究所",
+    "short": "臺科大",
+    "role": "碩士",
+    "period": "2024/09 ~ 2026",
+    "scope": "碩士論文：RAG-LLM 與縱橫資料模型的股價報酬預測",
+    "other": [],
+    "projects": [
+      {
+        "short": "碩士論文",
+        "slug": "thesis-rag-panel",
+        "title": "結合檢索增強生成與縱橫資料模型之股價報酬預測：以臺灣電子產業為例",
+        "kind": "學術研究",
+        "summary": "RAG-LLM 財報評分讓解釋力從 5.14% 升到 63.73%。",
+        "sdlc": [],
+        "ownership": "主責",
+        "period": "2024/09 ~ 2026",
+        "background": "財務報表包含大量文字與數字資訊。傳統財務比率只能解釋一小部分的股價報酬變異。",
+        "problem": "傳統財務變數對臺灣電子業股價報酬的解釋力低。研究問題：LLM 能否從財報萃取更有解釋力的訊號？",
+        "goal": {"category": "碩士論文", "weight": "—", "target": "驗證 RAG-LLM 的財報評分能否提升股價報酬模型的解釋力。"},
+        "approach": [
+          "建立 RAG-LLM 系統，分析 101 個財務變數。",
+          "由 LLM 產生 6 個構面的評分。",
+          "以固定效果縱橫資料模型，比較基準模型與加入 LLM 評分的模型。",
+          "樣本：592 家上市電子公司、64 季（2009Q3–2025Q2）、37,888 筆公司季資料。",
+          "以 ICC 試行評估評分的信度。"
+        ],
+        "milestones": [
+          {"date": "Phase 1", "text": "建立 RAG-LLM 財報評分", "status": "done"},
+          {"date": "Phase 2", "text": "縱橫資料模型實證", "status": "done"},
+          {"date": "2026", "text": "完成論文，取得碩士", "status": "done"}
+        ],
+        "result": ["加入 6 個 LLM 構面評分後，within R² 由 5.14% 升至 63.73%。", "6 個構面評分皆在 1% 水準下顯著。", "試行信度評估 ICC = 0.759。"],
+        "kpis": [
+          {"name": "within R²（傳統變數）", "value": "5.14%"},
+          {"name": "within R²（加入 LLM 評分）", "value": "63.73%"},
+          {"name": "顯著構面", "value": "6 / 6（1% 水準）"},
+          {"name": "信度 ICC（試行）", "value": "0.759"},
+          {"name": "樣本", "value": "37,888 筆公司季資料"}
+        ],
+        "tags": ["RAG-LLM", "Panel Data", "Fixed Effects", "Financial Statements"],
+        "link": "https://etheses.lib.ntust.edu.tw/detail/27b99ae63b98c427ee18434207d7cdc4/?seq=18",
+        "linkLabel": "臺科大博碩士論文系統",
+        "source": "etheses.lib.ntust.edu.tw"
       }
     ]
   }

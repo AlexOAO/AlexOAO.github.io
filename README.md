@@ -10,17 +10,19 @@ Alex Li's portfolio & blog.
 
 ```
 .
-├── index.html                  # Main page (layout only, content from JSON)
+├── index.html                  # One-page resume (layout only, content from JSON)
+├── project.html                # Project story page: project.html?id=<slug>
 ├── data/
-│   ├── about.json              # 01. Proof + About
-│   ├── work.json               # 02. Work (PM-style project records)
-│   ├── experience.json         # 03. Experience
-│   └── projects.json           # 04. Side Projects
+│   ├── about.json              # 01. Proof (AI SDLC chart text)
+│   ├── work.json               # 02. Experience: companies and projects
+│   ├── experience.json         # 02. Experience: other experience & education
+│   └── projects.json           # 03. Side Projects
 ├── posts/
-│   ├── posts.json              # 05. Blog index
+│   ├── posts.json              # 04. Blog index
 │   └── *.html                  # Individual blog posts
 ├── assets/
-│   ├── css/post.css            # Shared blog post styles
+│   ├── css/post.css            # Shared blog post and project page styles
+│   ├── js/common.js            # Shared helpers (language, data loading, stage colors, progress)
 │   ├── images/profile.jpg      # Profile photo
 │   └── docs/resume.pdf         # CV
 ├── data/en/                    # English versions of the data files
@@ -45,57 +47,64 @@ All content lives in JSON files. Edit JSON, push, done.
 
 - Chinese: `data/*.json`. English: `data/en/*.json`, with the same structure. When you change one, change the other.
 - Blog posts stay in Chinese. Add `title_en` and `summary_en` in `posts/posts.json` for the English card.
-- English status values: `Done`, `In progress`, `Handed over`, `Planned`, `Not started`.
 - The toggle in the nav remembers the choice. `?lang=en` or `?lang=zh` forces a language.
 - `index.html` contains a short static English summary between `<!-- static:... -->` comments. Crawlers that do not run JavaScript read it. Update it when you add a company or a project.
 
-### 01. Proof + About (`data/about.json`)
+### Where each fact lives
+
+Write each fact once. The homepage shows a summary; the project page shows the detail.
+
+| Place | Shows | Source fields |
+|---|---|---|
+| 01. Proof | AI SDLC chart: where each project sits | `about.json` → `sdlc`; `work.json` → `short`, `sdlc` |
+| 02. Experience card | Title, 1-line summary, up to 5 milestones | `title`, `summary`, `milestones` |
+| Project page | Context, problem, goal, approach, milestones, results & KPIs, key progress | all project fields |
+
+Key Progress and goal completion are calculated from `milestones`. Do not write them by hand.
+
+### 01. Proof (`data/about.json`)
 
 ```json
 {
   "subhead": "One line under the section title",
-  "proof": [
-    { "value": "600", "unit": "題", "label": "Guardrails 驗證題庫", "context": "One sentence: how the number was produced." },
-    { "auto": "delivered", "unit": "個", "label": "AI 專案交付或驗證", "context": "..." }
-  ],
-  "paragraphs": ["Short intro paragraph..."],
-  "cards": [{ "label": "Currently", "value": "Your current role" }]
+  "sdlc": {
+    "title": "Chart title",
+    "note": "How to read the chart",
+    "stages": [{ "key": "plan", "name": "業務規劃", "desc": "One sentence." }],
+    "governance": { "name": "AI 治理（貫穿全週期）", "desc": "One sentence." }
+  }
 }
 ```
 
-`sdlc` holds the chart title, note, and the 4 stage names and descriptions. The chart places projects from `work.json` automatically.
+Stage keys: `plan`, `tune`, `build`, `ops`. The governance band uses the key `gov`.
 
-`"auto": "delivered"` counts projects in `work.json` with status 已完成、進行中 or 已移交. Use it instead of a fixed number.
+### 02. Experience (`data/work.json`)
 
-### 02. Work (`data/work.json`)
-
-Projects are grouped by company. Each project has the PM record fields:
+Companies, newest first. Each company has its projects:
 
 ```json
 [
   {
-    "org": "Company",
-    "role": "Your role",
-    "period": "2026/07 ~ Now",
-    "current": true,
+    "org": "Company", "short": "Short name", "role": "Your role", "period": "2026/07 ~ Now", "current": true,
+    "lane": "optional: companies with the same value share one row on the AI SDLC chart",
+    "scope": "One line: what you are responsible for",
+    "other": ["Non-project work, one line each"],
     "projects": [
       {
-        "title": "Project name",
-        "phase": "PoC 驗證",
-        "status": "進行中",
+        "short": "Chart label", "slug": "url-id", "title": "Project name",
+        "summary": "One sentence, ≤ 40 characters: verb + result.",
+        "sdlc": ["build", "ops"],
         "ownership": "主責",
         "period": "2026/07 ~ Now",
         "background": "One or two sentences.",
         "problem": "One or two sentences.",
-        "approach": ["Verb-first step.", "Verb-first step."],
+        "goal": { "category": "Goal category", "weight": "40%", "target": "Target." },
+        "approach": ["Verb-first step."],
+        "milestones": [{ "date": "2026/10/12", "text": "≤ 20 characters", "status": "done" }],
         "result": ["Verb-first result."],
         "kpis": [{ "name": "題庫規模", "value": "600 題" }, { "name": "攔截率", "value": "待量測", "note": "How it will be measured" }],
-        "keyProgress": "Current progress.",
-        "goal": { "category": "Goal category", "weight": "40%", "target": "Target.", "achievement": "Status." },
-        "milestones": [{ "date": "2026/10/12", "text": "Milestone", "status": "done" }],
         "tags": ["Tag1"],
-        "link": "posts/some-post.html",
-        "linkLabel": "Read more",
+        "link": "posts/some-post.html", "linkLabel": "Read more",
         "source": "S2,S3"
       }
     ]
@@ -103,36 +112,25 @@ Projects are grouped by company. Each project has the PM record fields:
 ]
 ```
 
-- `status`: 已完成, 進行中, 已移交, 規劃中, 未啟動 (each has its own badge color).
-- `phase`: 需求分析, PoC 驗證, 評測選型, 建置開發, 上線維運, 移交.
-- `ownership`: 主責 or 協作.
-- `short`: short label shown on the AI SDLC chart (project and company level).
-- `sdlc`: lifecycle stages for the AI SDLC chart in Proof, main stage first: `plan` (業務規劃), `tune` (模型調教), `build` (開發部署), `ops` (營運監控). The first stage shows as a solid tag; others show as dashed tags.
-- `milestones[].status`: `done`, `doing`, `todo`.
-- A KPI with value `待量測` shows in gray.
-- `link`, `linkLabel`, `weight` (use `—` to hide) are optional. `source` is not displayed; it records which document supports the claim.
+- `slug`: unique; the project page URL is `project.html?id=<slug>`. Use the same `slug` and `sdlc` in both languages.
+- `sdlc`: the stages the project covers. The chart draws one bar from the earliest to the latest stage, so `["plan", "build"]` also covers `tune`. Add `gov` to place the project in the governance band instead of a lane. Use `[]` to keep the project off the chart.
+- `ownership`: 主責 / 協作 (English: Lead / Contributor).
+- `kind`: optional neutral tag for a project with no AI stage (for example 量化策略). Use `"sdlc": []` to keep it off the AI SDLC chart.
+- `draft`: `true` hides the project everywhere (card, chart, project page). Use it while the content is not ready.
+- `milestones[].status`: `done`, `doing`, `todo`. The card shows the first 5.
+- A KPI with value `待量測` (English: `To be measured`) shows in gray.
+- `link`, `linkLabel`, `weight` (use `—` to hide), `other` are optional. `source` is not displayed; it records which document supports the claim.
+- Add a new project to `sitemap.xml` as `https://xiang-wei-li.com/project?id=<slug>`.
 
-### 03. Experience (`data/experience.json`)
+### 02. Experience: other (`data/experience.json`)
 
-Array of entries, newest first:
+Experience and education without a project card:
 
 ```json
-[
-  {
-    "title": "Company | Role",  // shown as two lines: company, then role
-    "subtitle": "Optional one-liner",
-    "date": "2026/02 ~ Now",
-    "items": [
-      "What you did",
-      "Another thing you did"
-    ]
-  }
-]
+[{ "title": "Role or degree", "org": "Organization", "date": "2025/09 ~ 12", "note": "One line, optional" }]
 ```
 
-`subtitle` is optional — omit the field to skip it.
-
-### 04. Side Projects (`data/projects.json`)
+### 03. Side Projects (`data/projects.json`)
 
 Shown as a numbered list (`icon` is kept but no longer displayed):
 
@@ -150,7 +148,7 @@ Shown as a numbered list (`icon` is kept but no longer displayed):
 
 Emoji reference for `icon`: use any emoji character or unicode escape.
 
-### 05. Blog
+### 04. Blog
 
 **Step 1:** Create `posts/your-slug.html` (copy an existing post as template)
 
@@ -175,8 +173,7 @@ Emoji reference for `icon`: use any emoji character or unicode escape.
 |------|-----|
 | Profile photo | Replace `assets/images/profile.jpg` |
 | Resume | Replace `assets/docs/resume.pdf` |
-| Tech marquee | Edit the marquee HTML in `index.html` |
-| Hero text | Edit the hero HTML in `index.html` |
+| Hero text | Edit `heroDesc` in the `I18N` object in `index.html` (both languages) |
 | Contact info | Edit the contact HTML in `index.html` |
 
 ---
@@ -185,7 +182,7 @@ Emoji reference for `icon`: use any emoji character or unicode escape.
 
 Every claim on the site must trace to a source document. Write only numbers that the source contains.
 
-1. One sentence, one topic. Descriptive sentences ≤ 40 characters; step sentences ≤ 30 characters.
+1. One sentence, one topic. Project `summary` ≤ 40 characters; milestone `text` ≤ 20 characters. Descriptive sentences ≤ 40 characters; step sentences ≤ 30 characters.
 2. Active voice. Start list items with a verb: 建立、驗證、整合、設計.
 3. One term, one meaning. Use the glossary below; do not mix variants.
 4. No vague words: 大幅、眾多、顯著、優化、提升效率. Use a number, or delete the word.

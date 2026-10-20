@@ -1,6 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://xiang-wei-li.com/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://xiang-wei-li.com/project?id=guardrails-poc</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://xiang-wei-li.com/project?id=agentic-platform-eval</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://xiang-wei-li.com/project?id=agent-cost-roi</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://xiang-wei-li.com/project?id=agent-governance</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://xiang-wei-li.com/project?id=finllm</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://xiang-wei-li.com/project?id=wealth-assistant-poc</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://xiang-wei-li.com/project?id=gemini-training</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://xiang-wei-li.com/project?id=a2ui-research</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://xiang-wei-li.com/project?id=webai-finance</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://xiang-wei-li.com/project?id=ai-governance-review</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://xiang-wei-li.com/project?id=rag-support-bot</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://xiang-wei-li.com/project?id=multi-agent-advisory</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://xiang-wei-li.com/project?id=asr-transcription</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://xiang-wei-li.com/project?id=moda-t-ambassador</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://xiang-wei-li.com/project?id=tmba-cta-taiex</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://xiang-wei-li.com/project?id=tmba-event-earnings-call</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://xiang-wei-li.com/project?id=thesis-rag-panel</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://xiang-wei-li.com/posts/rag-smart-customer-service</loc><changefreq>monthly</changefreq></url>
   <url><loc>https://xiang-wei-li.com/posts/multi-agent-investment</loc><changefreq>monthly</changefreq></url>
 </urlset>
