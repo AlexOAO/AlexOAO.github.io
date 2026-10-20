@@ -17,6 +17,15 @@
     "parent": "Vibe-Edge"
   },
   {
+    "icon": "📊",
+    "name": "OpenStrategy",
+    "desc": "開放式量化交易策略框架，支援回測與參數最佳化。",
+    "tags": ["Python", "Quant", "Backtesting"],
+    "url": "https://github.com/AlexOAO/OpenStrategy",
+    "layers": ["research", "test"],
+    "parent": "Vibe-Edge"
+  },
+  {
     "icon": "🤖",
     "name": "AI Financial Agent",
     "desc": "金融 AI Agent，整合多種數據源進行投資研究與智能決策。",
@@ -39,14 +48,6 @@
     "tags": ["Agent", "Research", "NLP"],
     "url": "https://github.com/AlexOAO/dexter",
     "layers": ["research"]
-  },
-  {
-    "icon": "📊",
-    "name": "OpenStrategy",
-    "desc": "開放式量化交易策略框架，支援回測與參數優化。",
-    "tags": ["Python", "Quant", "Backtesting"],
-    "url": "https://github.com/AlexOAO/OpenStrategy",
-    "layers": ["research", "test"]
   },
   {
     "icon": "📉",

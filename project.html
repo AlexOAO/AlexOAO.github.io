@@ -50,6 +50,14 @@
     .kpi .v { font-size: 1rem; font-weight: 700; color: #e2e8f0; }
     .kpi .note { font-size: 0.75rem; color: #64748b; }
     .kpi.pending .v { color: #64748b; font-weight: 500; }
+    .story h2 { border-left-color: #8b5cf6; }
+    .story h3 { font-size: 1.1rem; font-weight: 700; color: #e2e8f0; margin: 1.75rem 0 0.5rem; }
+    .story a { color: #3b82f6; }
+    .facts-title {
+      margin: 3.5rem 0 0.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(148,163,184,0.15);
+      font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: #64748b;
+    }
     .kids { display: grid; gap: 0.75rem; margin: 0.5rem 0 1.5rem; }
     .kid { display: block; background: rgba(30,41,59,0.7); border-left: 3px solid #3b82f6; border-radius: 8px; padding: 0.75rem 1rem; transition: background 0.2s; }
     .kid:hover { background: rgba(59,130,246,0.15); }
@@ -85,7 +93,7 @@
     const I18N = {
       en: {
         back: 'Back to Alex Li', toggle: '中文', lead: 'Lead', context: 'Context', problem: 'Problem', goal: 'Goal',
-        approach: 'Approach', milestones: 'Milestones', results: 'Results & KPIs', progress: 'Key Progress', more: 'Further reading', kids: 'Sub-projects', partOf: 'Part of: ',
+        approach: 'Approach', milestones: 'Milestones', results: 'Results & KPIs', progress: 'Key Progress', more: 'Further reading', kids: 'Sub-projects', partOf: 'Part of: ', facts: 'Project facts', story: 'Project story',
         weight: 'Weight', doneOf: (d, t) => `${d} of ${t} milestones complete`,
         allDone: t => `All ${t} milestones are complete.`, now: 'Now', next: 'Next',
         prev: 'Previous', nextProj: 'Next',
@@ -94,7 +102,7 @@
       },
       zh: {
         back: '回到首頁', toggle: 'EN', lead: '主責', context: '背景', problem: '問題', goal: '目標',
-        approach: '方法', milestones: 'Milestone', results: '結果與 KPI', progress: 'Key Progress', more: '延伸閱讀', kids: '子專案', partOf: '上層專案：',
+        approach: '方法', milestones: 'Milestone', results: '結果與 KPI', progress: 'Key Progress', more: '延伸閱讀', kids: '子專案', partOf: '上層專案：', facts: '專案數據', story: '專案故事',
         weight: '權重', doneOf: (d, t) => `已完成 ${d}／${t} 個 Milestone`,
         allDone: t => `${t} 個 Milestone 全部完成。`, now: '目前', next: '下一步',
         prev: '上一個專案', nextProj: '下一個專案',
@@ -109,6 +117,33 @@
     const paren = t => Site.getLang() === 'en' ? ` (${t})` : `（${t}）`;
     const ul = items => `<ul>${(items || []).map(i => `<li>${esc(i)}</li>`).join('')}</ul>`;
 
+    function inline(t) {
+      return esc(t)
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/`(.+?)`/g, '<code>$1</code>')
+        .replace(/\[(.+?)\]\((https?:\/\/[^\s)]+|[\w./?=&#-]+)\)/g, '<a href="$2">$1</a>');
+    }
+    function markdown(md) {
+      const out = []; let para = [], list = null;
+      const flush = () => {
+        if (para.length) { out.push(`<p>${inline(para.join(' '))}</p>`); para = []; }
+        if (list) { out.push(`<ul>${list.map(li => `<li>${inline(li)}</li>`).join('')}</ul>`); list = null; }
+      };
+      md.replace(/\r/g, '').split('\n').forEach(line => {
+        const l = line.trim();
+        if (!l) return flush();
+        let m;
+        if ((m = l.match(/^(#{2,3}) (.+)/))) { flush(); out.push(m[1].length === 2 ? `<h2>${inline(m[2])}</h2>` : `<h3>${inline(m[2])}</h3>`); }
+        else if ((m = l.match(/^[-*] (.+)/))) { if (para.length) flush(); (list = list || []).push(m[1]); }
+        else if ((m = l.match(/^> (.+)/))) { flush(); out.push(`<blockquote>${inline(m[1])}</blockquote>`); }
+        else { if (list) flush(); para.push(l); }
+      });
+      flush();
+      return out.join('');
+    }
+    // The story is optional: data/stories/<slug>.md (English: data/en/stories/<slug>.md).
+    const getStory = () => slug ? fetch(dataPath(`stories/${slug}.md`)).then(r => r.ok ? r.text() : null).catch(() => null) : Promise.resolve(null);
+
     function render() {
       document.documentElement.lang = Site.getLang() === 'en' ? 'en' : 'zh-Hant';
       document.getElementById('langToggle').textContent = T('toggle');
@@ -116,7 +151,7 @@
       const root = document.getElementById('project');
       const pager = document.getElementById('pager');
 
-      Promise.all([getJSON(dataPath('about.json')), getJSON(dataPath('work.json'))]).then(([about, raw]) => {
+      Promise.all([getJSON(dataPath('about.json')), getJSON(dataPath('work.json')), getStory()]).then(([about, raw, story]) => {
         const all = visibleGroups(raw).flatMap(g => g.projects.map(p => ({ g, p })));
         const i = all.findIndex(x => x.p.slug === slug);
         if (i < 0) {
@@ -160,17 +195,19 @@
             <div class="meta-row">${pills}<span class="own">${esc(p.ownership)}</span></div>
             <div class="meta-row post-tags">${(p.tags || []).map(t => `<span>${esc(t)}</span>`).join('')}</div>
           </header>
+          ${story ? `<div class="post-body story">${markdown(story)}</div><div class="facts-title">${esc(T('facts'))}</div>` : ''}
           <div class="post-body">
-            ${h2(++n, T('context'))}<p>${esc(p.background)}</p>
-            ${h2(++n, T('problem'))}<p>${esc(p.problem)}</p>
+            ${story ? '' : `${h2(++n, T('context'))}<p>${esc(p.background)}</p>
+            ${h2(++n, T('problem'))}<p>${esc(p.problem)}</p>`}
             ${h2(++n, T('goal'))}
               ${goalMeta ? `<p class="goal-meta">${esc(goalMeta)}</p>` : ''}
               <p>${esc(goal.target || '')}</p>
               <div class="bar"><span style="width:${pct}%"></span></div>
               <p class="bar-label">${esc(T('doneOf')(pr.done, pr.total))}</p>
-            ${h2(++n, T('approach'))}${ul(p.approach)}
+            ${story ? '' : `${h2(++n, T('approach'))}${ul(p.approach)}`}
             ${h2(++n, T('milestones'))}<div class="ms-list">${ms}</div>
-            ${h2(++n, T('results'))}${ul(p.result)}${kpis ? `<div class="kpi-grid">${kpis}</div>` : ''}
+            ${story ? (kpis ? `${h2(++n, 'KPI')}<div class="kpi-grid">${kpis}</div>` : '')
+                    : `${h2(++n, T('results'))}${ul(p.result)}${kpis ? `<div class="kpi-grid">${kpis}</div>` : ''}`}
             ${kids.length ? `${h2(++n, T('kids'))}<div class="kids">${kids.map(x =>
               `<a class="kid" href="project.html?id=${encodeURIComponent(x.p.slug)}"><div class="kid-name">↳ ${esc(x.p.title)}</div><p>${esc(x.p.summary)}</p></a>`).join('')}</div>` : ''}
             ${h2(++n, T('progress'))}${progress}

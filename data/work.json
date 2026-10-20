@@ -9,46 +9,49 @@
     "other": [],
     "projects": [
       {
-        "short": "AI 安全：Guardrails PoC",
+        "short": "AI 安全護欄：Guardrails PoC",
         "slug": "guardrails-poc",
         "title": "Guardrails PoC（奧義科技）",
         "summary": "建立行內 Guardrails 驗證方法，確立 AI 防護規格。",
         "sdlc": ["tune"],
         "ownership": "主責",
-        "period": "2026/07 ~ Now",
+        "period": "2026/08 ~ 2026/10",
         "background": "本行規劃導入 4 大 AI Agent。上線前，本行必須確認 AI 的防護能力。",
         "problem": "本行沒有自己的 Guardrails 驗證方法。廠商的測試結果無法直接證明本行場景的安全性。",
         "goal": {"category": "AI 專案與技術支援", "weight": "40%", "target": "完成 Guardrails 導入 PoC，確立行內 AI 防護規格。"},
         "approach": [
-          "依 OWASP LLM Top 10 設計 6 個 Policy 模組的題庫。",
-          "建立基準測試集：每模組 40 題，共 240 題。",
-          "依測試回饋擴充題庫：每模組 100 題，共 600 題。",
-          "以 API 批量執行 3,600 次驗證。",
-          "依失敗案例補強 System Prompt，再回測。"
+          "拆解 XecGuard 的六大 Policy，對應金管會原則 2、3、4、5。",
+          "依 OWASP AI Testing Guide 自建 3 組標註題庫，共 3,600 題。",
+          "逐題送測，記錄每個 Policy 的判斷與回應時間。",
+          "比對兩種設定：六大 Policy，以及六大 Policy 加客製化 Policy。",
+          "以 9 大構面的 AI Safety 評估表，比較 XecGuard 與廠商既有機制。"
         ],
         "milestones": [
-          {"date": "2026 Q3", "text": "建立 240 題基準題庫", "status": "done"},
-          {"date": "2026 Q3", "text": "擴充至 600 題", "status": "done"},
-          {"date": "2026 Q3", "text": "API 驗證 3,600 次", "status": "done"},
-          {"date": "2026/10/12", "text": "奧義完成 PoC", "status": "done"},
-          {"date": "TBD", "text": "提交驗證報告與建議", "status": "doing"}
+          {"date": "2026/08/24", "text": "PoC 開始", "status": "done"},
+          {"date": "2026/08/31", "text": "R1：240 題基線", "status": "done"},
+          {"date": "2026/09/16", "text": "R2：600 題", "status": "done"},
+          {"date": "2026/09/21", "text": "Final：3,600 題", "status": "done"},
+          {"date": "2026/09/29", "text": "提出導入建議", "status": "done"},
+          {"date": "2026/10/12", "text": "奧義完成 PoC", "status": "done"}
         ],
         "result": [
-          "完成 6 大 Policy 的 600 題驗證與 Prompt 調校。",
-          "題庫涵蓋 AI Safety 4 層防禦：敏感資料、提示詞攻擊、業務範圍、回應合規。",
-          "建立可重用的行內驗證方法，供後續 4 大 Agent 檢測使用。"
+          "特定業務 1,500 題：加入客製化 Policy 後，漏放率由 10.2% 降到 2.2%。",
+          "通用 1,000 題：補強治理原則後，漏放率只由 21.1% 降到 20.0%。",
+          "1,330 題攻擊題攔截 98.3%，但正常提問有 20／30 題被誤擋。",
+          "評估總分 62.5／100。建議現階段優先採用廠商既有機制。"
         ],
         "kpis": [
-          {"name": "題庫規模", "value": "600 題"},
-          {"name": "批量驗證次數", "value": "3,600 次"},
-          {"name": "Policy 覆蓋率", "value": "6 / 6"},
-          {"name": "攻擊攔截率", "value": "待量測", "note": "於驗證報告中統計"}
+          {"name": "題庫", "value": "3,600 題（3 組）"},
+          {"name": "漏放率（特定業務）", "value": "10.2% → 2.2%"},
+          {"name": "攻擊攔截率（1,330 題）", "value": "98.3%"},
+          {"name": "正常提問誤擋", "value": "20 / 30"},
+          {"name": "評估總分", "value": "62.5 / 100"}
         ],
         "tags": ["Guardrails", "OWASP LLM Top 10", "Red Team", "Prompt Engineering"],
-        "source": "S2,S3,S4"
+        "source": "S2,S3,S4, XecGuard_簡報_final (2026/09/22), XecGuard_vs_Vulcan_回饋 (2026/09/29)"
       },
       {
-        "short": "平台選型：Agatha／Dify",
+        "short": "AI 營運成效：Agatha／Dify",
         "slug": "agentic-platform-eval",
         "title": "企業 Agentic 平台選型評測（Agatha／Dify）",
         "summary": "以 60 項測試評測 2 個平台，提前發現 12 項問題。",
@@ -258,7 +261,7 @@
         "source": "S2,S3"
       },
       {
-        "short": "金管會 FinLLM：資料清洗與評測",
+        "short": "模型管理：金管會 FinLLM",
         "slug": "finllm",
         "title": "金管會 FinLLM 資料清洗與模型評測",
         "summary": "逐題清洗金融 LLM 訓練資料，並評分法規判讀。",
@@ -443,13 +446,14 @@
         ],
         "result": ["獨立完成上線，會員可用自然語言查詢技術手冊。", "管理者可在後台維護知識庫。"],
         "kpis": [
-          {"name": "上線狀態", "value": "已上線"},
-          {"name": "回答正確率", "value": "待量測"}
+          {"name": "準確率", "value": "60% → 85%", "note": "調整 chunk 策略後"},
+          {"name": "回應時間", "value": "約 2–3 秒"},
+          {"name": "上線狀態", "value": "已上線"}
         ],
         "tags": ["RAG", "Qdrant", "LangExtract", "Docker"],
         "link": "posts/rag-smart-customer-service.html",
         "linkLabel": "閱讀踩坑紀錄",
-        "source": "S1"
+        "source": "S1, posts/rag-smart-customer-service.html"
       },
       {
         "short": "智能投顧：Multi-Agent 決策",

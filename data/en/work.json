@@ -9,13 +9,13 @@
     "other": [],
     "projects": [
       {
-        "short": "AI safety: Guardrails PoC",
+        "short": "AI guardrails: Guardrails PoC",
         "slug": "guardrails-poc",
         "title": "Guardrails PoC (CyCraft)",
         "summary": "Built the bank's own Guardrails verification method for AI safety.",
         "sdlc": ["tune"],
         "ownership": "Lead",
-        "period": "2026/07 ~ Now",
+        "period": "2026/08 ~ 2026/10",
         "background": "The bank plans to deploy 4 AI Agents. Before launch, the bank must verify the AI protection controls.",
         "problem": "The bank had no in-house method to verify Guardrails. Vendor test results did not prove safety for the bank's own use cases.",
         "goal": {
@@ -24,35 +24,38 @@
           "target": "Complete the Guardrails PoC. Set the bank's AI protection specification."
         },
         "approach": [
-          "Design a test set for 6 Policy modules, based on the OWASP LLM Top 10.",
-          "Build a baseline: 40 cases per module, 240 cases in total.",
-          "Expand the test set from feedback: 100 cases per module, 600 cases in total.",
-          "Run 3,600 verifications in batches through the API.",
-          "Fix the System Prompt from the failed cases, then test again."
+          "Map the 6 XecGuard Policies to FSC principles 2, 3, 4, and 5.",
+          "Build 3 labeled test sets (3,600 cases) based on the OWASP AI Testing Guide.",
+          "Send each case and record each Policy's verdict and response time.",
+          "Compare two settings: the 6 Policies, and the 6 Policies plus custom Policies.",
+          "Score XecGuard against the vendor's built-in guardrail on a 9-dimension AI Safety scorecard."
         ],
         "milestones": [
-          {"date": "2026 Q3", "text": "Build 240-case baseline", "status": "done"},
-          {"date": "2026 Q3", "text": "Expand to 600 cases", "status": "done"},
-          {"date": "2026 Q3", "text": "Run 3,600 API checks", "status": "done"},
-          {"date": "2026/10/12", "text": "CyCraft completes PoC", "status": "done"},
-          {"date": "TBD", "text": "Submit report & proposal", "status": "doing"}
+          {"date": "2026/08/24", "text": "PoC starts", "status": "done"},
+          {"date": "2026/08/31", "text": "R1: 240-case baseline", "status": "done"},
+          {"date": "2026/09/16", "text": "R2: 600 cases", "status": "done"},
+          {"date": "2026/09/21", "text": "Final: 3,600 cases", "status": "done"},
+          {"date": "2026/09/29", "text": "Adoption proposal", "status": "done"},
+          {"date": "2026/10/12", "text": "CyCraft completes PoC", "status": "done"}
         ],
         "result": [
-          "Completed 600-case verification and prompt tuning for all 6 Policies.",
-          "Covered 4 layers of AI safety: sensitive data, prompt attacks, business scope, and response compliance.",
-          "Built a reusable in-house verification method for the 4 Agents."
+          "Business-specific 1,500 cases: custom Policies cut the miss rate from 10.2% to 2.2%.",
+          "General 1,000 cases: extra governance rules moved the miss rate only from 21.1% to 20.0%.",
+          "1,330 attack cases: 98.3% blocked, but 20 of 30 normal questions were also blocked.",
+          "Scorecard total: 62.5 / 100. Recommendation: use the vendor's built-in guardrail for now."
         ],
         "kpis": [
-          {"name": "Test set size", "value": "600 cases"},
-          {"name": "Batch verifications", "value": "3,600 runs"},
-          {"name": "Policy coverage", "value": "6 / 6"},
-          {"name": "Attack block rate", "value": "To be measured", "note": "Reported in the verification report"}
+          {"name": "Test cases", "value": "3,600 (3 sets)"},
+          {"name": "Miss rate (business-specific)", "value": "10.2% → 2.2%"},
+          {"name": "Attack block rate (1,330)", "value": "98.3%"},
+          {"name": "Normal questions blocked", "value": "20 / 30"},
+          {"name": "Scorecard total", "value": "62.5 / 100"}
         ],
         "tags": ["Guardrails", "OWASP LLM Top 10", "Red Team", "Prompt Engineering"],
-        "source": "S2,S3,S4"
+        "source": "S2,S3,S4, XecGuard_簡報_final (2026/09/22), XecGuard_vs_Vulcan_回饋 (2026/09/29)"
       },
       {
-        "short": "Platform selection: Agatha / Dify",
+        "short": "AI operations performance: Agatha / Dify",
         "slug": "agentic-platform-eval",
         "title": "Enterprise Agentic Platform Evaluation (Agatha / Dify)",
         "summary": "Ran 60 tests on 2 platforms and found 12 issues before selection.",
@@ -316,7 +319,7 @@
         "source": "S2,S3"
       },
       {
-        "short": "FSC FinLLM: data cleaning & evaluation",
+        "short": "Model management: FSC FinLLM",
         "slug": "finllm",
         "title": "FSC FinLLM Data Cleaning & Model Evaluation",
         "summary": "Clean FinLLM training data item by item and score regulatory answers.",
@@ -534,13 +537,14 @@
           "Admins maintain the knowledge base in the console."
         ],
         "kpis": [
-          {"name": "Launch status", "value": "Launched"},
-          {"name": "Answer accuracy", "value": "To be measured"}
+          {"name": "Accuracy", "value": "60% → 85%", "note": "After the chunking change"},
+          {"name": "Response time", "value": "About 2–3 seconds"},
+          {"name": "Status", "value": "Launched"}
         ],
         "tags": ["RAG", "Qdrant", "LangExtract", "Docker"],
         "link": "posts/rag-smart-customer-service.html",
         "linkLabel": "Read the lessons learned (Chinese)",
-        "source": "S1"
+        "source": "S1, posts/rag-smart-customer-service.html"
       },
       {
         "short": "AI advisory: Multi-Agent decisions",
