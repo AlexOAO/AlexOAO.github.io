@@ -127,6 +127,16 @@ Companies, newest first. Each company has its projects:
 - `link`, `linkLabel`, `weight` (use `—` to hide), `other` are optional. `source` is not displayed; it records which document supports the claim.
 - Add a new project to `sitemap.xml` as `https://xiang-wei-li.com/project?id=<slug>`.
 
+### Project stories (`data/stories/<slug>.md`)
+
+Each project page shows a blog-style story, then a facts panel (goal, milestones, KPIs, key progress).
+
+- Chinese: `data/stories/<slug>.md`. English: `data/en/stories/<slug>.md`. The file name is the project's `slug`.
+- Supported Markdown: `## ` and `### ` headings, paragraphs, `- ` lists, `> ` quotes, `**bold**`, `` `code` ``, `[text](url)`.
+- Suggested outline: why this project → my role → what I did (and why) → results → next steps.
+- Write only what a source supports. Mark missing facts as 待補充 / to be added.
+- No story file: the page falls back to the structured fields (background, problem, approach, result).
+
 ### 02. Experience: other (`data/experience.json`)
 
 Experience and education without a project card:
