@@ -22,9 +22,13 @@
       {
         "key": "ops",
         "name": "營運監控",
-        "desc": "治理、風險與導入：上線後持續運作並推廣使用。"
+        "desc": "AI 營運平台、監控與導入：上線後持續運作，並推廣使用。"
       }
-    ]
+    ],
+    "governance": {
+      "name": "AI 治理（貫穿全週期）",
+      "desc": "業務規劃訂規範，每個階段做檢核，營運監控持續追蹤。"
+    }
   },
   "proof": [
     {
@@ -70,9 +74,21 @@
     "工作之外，我喜歡攝影和游泳。"
   ],
   "cards": [
-    { "label": "Currently", "value": "凱基銀行 科技創新部 PM／SA" },
-    { "label": "Education", "value": "臺科大 財金所" },
-    { "label": "Focus", "value": "AI Agent 治理 × 落地" },
-    { "label": "Fun fact", "value": "臺科大攝影社 + 臺大游泳社" }
+    {
+      "label": "Currently",
+      "value": "凱基銀行 科技創新部 PM／SA"
+    },
+    {
+      "label": "Education",
+      "value": "臺科大 財金所"
+    },
+    {
+      "label": "Focus",
+      "value": "AI Agent 治理 × 落地"
+    },
+    {
+      "label": "Fun fact",
+      "value": "臺科大攝影社 + 臺大游泳社"
+    }
   ]
 }

@@ -22,17 +22,51 @@
       {
         "key": "ops",
         "name": "Operations & Monitoring",
-        "desc": "Governance, risk, and adoption: keep it running and get people to use it."
+        "desc": "AI operations platform, monitoring, and adoption: keep it running and get people to use it."
       }
-    ]
+    ],
+    "governance": {
+      "name": "AI governance (across the full lifecycle)",
+      "desc": "Set the rules in planning, check at every stage, and track in operations."
+    }
   },
   "proof": [
-    { "value": "600", "unit": "cases", "label": "Guardrails test set", "context": "6 Policies × 100 cases based on OWASP, run 3,600 times through the API." },
-    { "value": "12", "unit": "issues", "label": "Platform issues found early", "context": "26 hands-on tests on Agatha found 12 issues: 4 blocking, 1 security." },
-    { "value": "42", "unit": "items", "label": "Platform scoring standard", "context": "A 42-item scorecard in 9 categories to compare Agatha and Dify." },
-    { "value": "3", "unit": "models", "label": "AI Agent cost models", "context": "Capacity, on-premises amortization, and cloud tokens for 3-year TCO / ROI." },
-    { "value": "1", "unit": "module", "label": "Launched to production", "context": "Webai Finance: I led it from requirements and PoC to launch." },
-    { "auto": "delivered", "unit": "projects", "label": "AI projects delivered or verified", "context": "Across a bank, a financial holding company, and a data company." }
+    {
+      "value": "600",
+      "unit": "cases",
+      "label": "Guardrails test set",
+      "context": "6 Policies × 100 cases based on OWASP, run 3,600 times through the API."
+    },
+    {
+      "value": "12",
+      "unit": "issues",
+      "label": "Platform issues found early",
+      "context": "26 hands-on tests on Agatha found 12 issues: 4 blocking, 1 security."
+    },
+    {
+      "value": "42",
+      "unit": "items",
+      "label": "Platform scoring standard",
+      "context": "A 42-item scorecard in 9 categories to compare Agatha and Dify."
+    },
+    {
+      "value": "3",
+      "unit": "models",
+      "label": "AI Agent cost models",
+      "context": "Capacity, on-premises amortization, and cloud tokens for 3-year TCO / ROI."
+    },
+    {
+      "value": "1",
+      "unit": "module",
+      "label": "Launched to production",
+      "context": "Webai Finance: I led it from requirements and PoC to launch."
+    },
+    {
+      "auto": "delivered",
+      "unit": "projects",
+      "label": "AI projects delivered or verified",
+      "context": "Across a bank, a financial holding company, and a data company."
+    }
   ],
   "paragraphs": [
     "I am a PM and System Analyst at KGI Bank, Technology Innovation Department. I lead AI Agent PoCs, platform evaluation, cost and ROI models, and pre-launch governance.",
@@ -40,9 +74,21 @@
     "Outside work, I enjoy photography and swimming."
   ],
   "cards": [
-    { "label": "Currently", "value": "PM / SA, KGI Bank" },
-    { "label": "Education", "value": "M.A. Finance, NTUST" },
-    { "label": "Focus", "value": "AI Agent governance × delivery" },
-    { "label": "Fun fact", "value": "NTUST Photography + NTU Swim Club" }
+    {
+      "label": "Currently",
+      "value": "PM / SA, KGI Bank"
+    },
+    {
+      "label": "Education",
+      "value": "M.A. Finance, NTUST"
+    },
+    {
+      "label": "Focus",
+      "value": "AI Agent governance × delivery"
+    },
+    {
+      "label": "Fun fact",
+      "value": "NTUST Photography + NTU Swim Club"
+    }
   ]
 }

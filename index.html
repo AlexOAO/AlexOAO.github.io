@@ -221,6 +221,20 @@
     }
     .sdlc-name { font-size: 1rem; font-weight: 700; color: #e2e8f0; }
     .sdlc-desc { font-size: 0.8rem; color: #94a3b8; line-height: 1.6; margin-top: 0.4rem; }
+    .sdlc-gov {
+      position: relative; border-radius: 12px; padding: 0.85rem 1rem;
+      background: linear-gradient(90deg, rgba(245,158,11,0.14), rgba(245,158,11,0.05));
+      border: 1px solid rgba(245,158,11,0.35);
+    }
+    .sdlc-gov::before {
+      content: ''; position: absolute; left: 1rem; right: 1rem; top: -0.45rem; height: 0.45rem;
+      border: 2px solid rgba(245,158,11,0.45); border-bottom: none; border-radius: 6px 6px 0 0;
+    }
+    .gov-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.75rem; margin-bottom: 0.6rem; }
+    .gov-name { font-size: 0.95rem; font-weight: 700; color: #fbbf24; }
+    .gov-desc { font-size: 0.8rem; color: #94a3b8; }
+    .gov-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .sdlc-chip .org-tag { font-size: 0.7rem; color: #94a3b8; }
     .sdlc-lane { display: flex; flex-direction: column; justify-content: center; padding-right: 0.25rem; }
     .sdlc-lane .org { font-size: 0.92rem; font-weight: 700; color: #e2e8f0; }
     .sdlc-lane .period { font-size: 0.75rem; color: #64748b; }
@@ -567,6 +581,7 @@
       .sdlc-grid { display: flex; flex-direction: column; gap: 0.6rem; }
       .sdlc-grid > * { order: var(--o); }
       .sdlc-stage { margin-top: 0.9rem; }
+      .sdlc-gov { margin-top: 0.6rem; }
       .sdlc-stage::after { display: none; }
       .sdlc-lane, .sdlc-cell.empty, .sdlc-loop { display: none; }
       .cell-lane { display: block; width: 100%; font-size: 0.75rem; font-weight: 600; color: #64748b; }
@@ -940,8 +955,20 @@
           <div><span class="sdlc-num">${si + 1}</span><span class="sdlc-name">${esc(st.name)}</span></div>
           <div class="sdlc-desc">${esc(st.desc)}</div>
         </div>`));
+      if (cfg.governance) {
+        const govChips = groups.flatMap((g, gi) => g.projects.map((p, pi) => ({ g, gi, p, pi })))
+          .filter(x => (x.p.sdlc || []).includes('gov'))
+          .map(({ g, gi, p, pi }) => `
+            <a class="sdlc-chip" href="#proj-${gi}-${pi}" data-target="proj-${gi}-${pi}" style="--c:#f59e0b" title="${esc(p.title)} · ${esc(p.status)}">
+              <span class="dot ${STATUS_CLASS[p.status] || 'st-idle'}"></span>${esc(p.short || p.title)}
+              <span class="org-tag">${esc(g.short || g.org)}</span></a>`).join('');
+        parts.push(`<div class="sdlc-gov" style="grid-row:2;grid-column:2 / -1;--o:-1">
+          <div class="gov-head"><span class="gov-name">${esc(cfg.governance.name)}</span><span class="gov-desc">${esc(cfg.governance.desc)}</span></div>
+          <div class="gov-chips">${govChips}</div></div>`);
+      }
+      const row0 = cfg.governance ? 3 : 2;
       groups.forEach((g, gi) => {
-        parts.push(`<div class="sdlc-lane" style="grid-row:${gi + 2};grid-column:1">
+        parts.push(`<div class="sdlc-lane" style="grid-row:${gi + row0};grid-column:1">
           <span class="org">${esc(g.short || g.org)}</span><span class="period">${esc(g.period)}</span></div>`);
         stages.forEach((st, si) => {
           const chips = g.projects.map((p, pi) => ({ p, pi, idx: (p.sdlc || []).indexOf(st.key) }))
@@ -950,11 +977,11 @@
               <a class="sdlc-chip ${idx > 0 ? 'secondary' : ''}" href="#proj-${gi}-${pi}" data-target="proj-${gi}-${pi}"
                  style="--c:${STAGE_COLOR[st.key]}" title="${esc(p.title)} · ${esc(p.status)}">
                 <span class="dot ${STATUS_CLASS[p.status] || 'st-idle'}"></span>${esc(p.short || p.title)}</a>`).join('');
-          parts.push(`<div class="sdlc-cell ${chips ? '' : 'empty'}" style="grid-row:${gi + 2};grid-column:${si + 2};--o:${si * 10 + gi + 1}">
+          parts.push(`<div class="sdlc-cell ${chips ? '' : 'empty'}" style="grid-row:${gi + row0};grid-column:${si + 2};--o:${si * 10 + gi + 1}">
             <span class="cell-lane">${esc(g.short || g.org)}</span>${chips}</div>`);
         });
       });
-      parts.push(`<div class="sdlc-loop" style="grid-row:${groups.length + 2}"><span>↺ ${esc(T('loop'))}</span></div>`);
+      parts.push(`<div class="sdlc-loop" style="grid-row:${groups.length + row0}"><span>↺ ${esc(T('loop'))}</span></div>`);
       const legend = Object.entries(T('legend')).map(([k, v]) => `<span><span class="dot ${k}"></span>${esc(v)}</span>`).join('');
       return `
         <div class="sdlc-title">${esc(cfg.title)}</div>

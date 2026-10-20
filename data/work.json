@@ -55,7 +55,7 @@
       {
         "title": "企業 Agentic 平台選型評測（Agatha／Dify）",
         "short": "Agentic 平台選型",
-        "sdlc": ["build"],
+        "sdlc": ["ops", "build"],
         "phase": "評測選型",
         "status": "已完成",
         "ownership": "主責",
@@ -144,7 +144,7 @@
       {
         "title": "AI Agent 技術規格與治理機制",
         "short": "Agent 治理機制",
-        "sdlc": ["plan", "ops"],
+        "sdlc": ["plan", "gov"],
         "phase": "需求分析",
         "status": "進行中",
         "ownership": "主責",
@@ -419,7 +419,7 @@
       {
         "title": "AI 治理自動審查系統",
         "short": "AI 治理自動審查",
-        "sdlc": ["ops", "build"],
+        "sdlc": ["ops", "gov"],
         "phase": "上線維運",
         "status": "已完成",
         "ownership": "主責",

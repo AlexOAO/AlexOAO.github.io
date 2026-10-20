@@ -55,7 +55,7 @@
       {
         "title": "Enterprise Agentic Platform Evaluation (Agatha / Dify)",
         "short": "Agentic platform eval",
-        "sdlc": ["build"],
+        "sdlc": ["ops", "build"],
         "phase": "Evaluation",
         "status": "Done",
         "ownership": "Lead",
@@ -144,7 +144,7 @@
       {
         "title": "AI Agent Technical Specifications & Governance",
         "short": "Agent governance",
-        "sdlc": ["plan", "ops"],
+        "sdlc": ["plan", "gov"],
         "phase": "Requirements",
         "status": "In progress",
         "ownership": "Lead",
@@ -419,7 +419,7 @@
       {
         "title": "AI Governance Automated Review System",
         "short": "AI governance review",
-        "sdlc": ["ops", "build"],
+        "sdlc": ["ops", "gov"],
         "phase": "Production",
         "status": "Done",
         "ownership": "Lead",
