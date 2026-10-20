@@ -9,7 +9,7 @@
     "other": [],
     "projects": [
       {
-        "short": "Guardrails PoC",
+        "short": "AI safety: Guardrails PoC",
         "slug": "guardrails-poc",
         "title": "Guardrails PoC (CyCraft)",
         "summary": "Built the bank's own Guardrails verification method for AI safety.",
@@ -52,7 +52,7 @@
         "source": "S2,S3,S4"
       },
       {
-        "short": "Agentic platform eval",
+        "short": "Platform selection: Agatha / Dify",
         "slug": "agentic-platform-eval",
         "title": "Enterprise Agentic Platform Evaluation (Agatha / Dify)",
         "summary": "Ran 60 tests on 2 platforms and found 12 issues before selection.",
@@ -88,7 +88,7 @@
         "source": "S2,S3"
       },
       {
-        "short": "Cost model & ROI",
+        "short": "Business AI services: cost & benefit",
         "slug": "agent-cost-roi",
         "title": "AI Agent Cost Model & 3-Year TCO / ROI",
         "summary": "Quantify the cost and benefit of 4 Agents to guide resource allocation.",
@@ -113,27 +113,174 @@
         "milestones": [
           {"date": "2026 Q3", "text": "Build 3 cost models", "status": "done"},
           {"date": "2026 Q3", "text": "Model GPU pool & peak load", "status": "done"},
-          {"date": "2026/10", "text": "Confirm GPU for 2 Agents", "status": "done"},
           {"date": "2026/10/30", "text": "Finish compute estimate", "status": "doing"},
           {"date": "TBD", "text": "Deliver final TCO / ROI", "status": "todo"}
         ],
         "result": [
           "Delivered 3 cost models (capacity, on-premises amortization, cloud tokens) and the vendor data request form.",
-          "Collected business volumes: Service 43,000 calls/month; Wealth Assistant 324,959 logins/month; Credit 13,513 cases/month.",
-          "Estimated Credit Agent cloud token cost: about NT$1.92 per case; about NT$346,591 / 384,717 / 427,034 for years 1–3.",
+          "Collected business volume and cost estimates for the 4 Agents (see sub-projects).",
           "Built a 3-year TCO, TBE, and ROI comparison format for the 4 Agents."
         ],
         "kpis": [
           {"name": "Cost models", "value": "3"},
+          {"name": "Agents covered", "value": "4"},
           {"name": "GPU pool capacity", "value": "480 GB / 432,000 card-sec/day"},
-          {"name": "Credit Agent unit cost", "value": "≈ NT$1.92 / case", "note": "Estimate"},
           {"name": "3-year ROI of 4 Agents", "value": "To be measured", "note": "Waits for BU benefit data and vendor quotes"}
         ],
         "tags": ["TCO", "ROI", "GPU Capacity", "Token Cost", "Cost Model"],
         "source": "S2,S4,S5"
       },
       {
-        "short": "Agent governance",
+        "short": "Loan Assistant",
+        "slug": "agent-loan-assistant",
+        "parent": "agent-cost-roi",
+        "title": "Loan Assistant (Sales Agent): Cost & Benefit",
+        "summary": "Set a cost and benefit baseline for the loan application Agent.",
+        "sdlc": ["plan"],
+        "ownership": "Lead",
+        "period": "2026/07 ~ Now",
+        "background": "The Loan Assistant (Sales Agent) supports loan applications. It is one of the 4 business AI Agents.",
+        "problem": "The business volume of the Loan Assistant is not set yet, so cost and benefit cannot be calculated.",
+        "goal": {"category": "AI projects & technical support", "weight": "40%", "target": "Add the Loan Assistant to the 3-year TCO / ROI comparison."},
+        "approach": [
+          "Confirm the on-premises parts: CPU only, for data masking.",
+          "Estimate cost with the cloud token model: volume × tokens per journey × unit price.",
+          "Request the business volume from the business unit."
+        ],
+        "milestones": [
+          {"date": "2026 Q3", "text": "Confirm on-prem parts", "status": "done"},
+          {"date": "TBD", "text": "Get BU volume", "status": "todo"},
+          {"date": "TBD", "text": "Deliver TCO / ROI", "status": "todo"}
+        ],
+        "result": ["Confirmed that the Loan Assistant needs no GPU; it uses CPU only for data masking."],
+        "kpis": [
+          {"name": "GPU need", "value": "0 (CPU only)"},
+          {"name": "Monthly volume", "value": "To be added", "note": "Waiting for the business unit"}
+        ],
+        "tags": ["Sales Agent", "Cost Model", "Loan"],
+        "source": "S5"
+      },
+      {
+        "short": "Credit Review",
+        "slug": "agent-credit-review",
+        "parent": "agent-cost-roi",
+        "title": "Credit Review (Credit Agent): Cost & Benefit",
+        "summary": "Estimated the cost per case of the credit review Agent for the 3-year budget.",
+        "sdlc": ["plan"],
+        "ownership": "Lead",
+        "period": "2026/07 ~ Now",
+        "background": "Credit Review (Credit Agent) handles credit review documents. On premises, OCR reads the documents; a cloud LLM processes the results.",
+        "problem": "Credit case volume grows each year. The bank needs the cost per case and the 3-year total.",
+        "goal": {
+          "category": "AI projects & technical support",
+          "weight": "40%",
+          "target": "Complete the cloud token cost and GPU allocation for Credit Review."
+        },
+        "approach": [
+          "Use the monthly case volume as the base and forecast years 1–3.",
+          "Tokens per journey: 11,250 input, 2,500 output.",
+          "Estimate with the GPT5.5 price assumption ($2.5 input / $15 output).",
+          "Run OCR ×2 and SLM review on premises as off-peak batch jobs."
+        ],
+        "milestones": [
+          {"date": "2026 Q3", "text": "Token cost estimate", "status": "done"},
+          {"date": "2026/10", "text": "Confirm production GPU", "status": "done"},
+          {"date": "TBD", "text": "Deliver final TCO / ROI", "status": "todo"}
+        ],
+        "result": [
+          "Cloud token cost is about NT$1.92 per case.",
+          "Token cost for years 1–3 is about NT$346,591 / 384,717 / 427,034.",
+          "Production uses 1 GPU."
+        ],
+        "kpis": [
+          {"name": "Monthly cases", "value": "13,513"},
+          {"name": "Monthly cases, year 3", "value": "18,480"},
+          {"name": "Cost per case", "value": "≈ NT$1.92", "note": "Estimate"},
+          {"name": "Production GPUs", "value": "1"}
+        ],
+        "tags": ["Credit Agent", "OCR", "Token Cost"],
+        "source": "S4,S5"
+      },
+      {
+        "short": "Customer Service",
+        "slug": "agent-customer-service",
+        "parent": "agent-cost-roi",
+        "title": "Customer Service (Service Agent): Cost & Benefit",
+        "summary": "Estimated speech recognition compute for the customer service Agent from call volume.",
+        "sdlc": ["plan"],
+        "ownership": "Contributor",
+        "period": "2026/07 ~ Now",
+        "background": "The Customer Service Agent handles service calls. On premises, STT turns speech into text; an SLM processes the text.",
+        "problem": "Speech recognition needs GPU compute. The bank needs the peak demand during business hours.",
+        "goal": {
+          "category": "AI projects & technical support",
+          "weight": "40%",
+          "target": "Estimate on-premises compute and cost for the Customer Service Agent."
+        },
+        "approach": [
+          "Use the monthly call volume as the base.",
+          "Measure STT work in minutes: GPU time is similar for fast and slow speakers in the same call.",
+          "Place customer service in the business-hours peak when counting card-seconds."
+        ],
+        "milestones": [
+          {"date": "2026 Q3", "text": "Call volume & hours model", "status": "done"},
+          {"date": "2026/10/16", "text": "First vendor compute meeting", "status": "done"},
+          {"date": "2026/10/23", "text": "Vendor updates estimate", "status": "todo"}
+        ],
+        "result": [
+          "Confirmed that STT is measured in minutes, not tokens.",
+          "Customer Service is the only Agent measured in both minutes and tokens."
+        ],
+        "kpis": [
+          {"name": "Monthly calls", "value": "43,000"},
+          {"name": "Work unit", "value": "Minutes + tokens"},
+          {"name": "GPU allocation", "value": "To be added", "note": "Waiting for the vendor's updated estimate"}
+        ],
+        "tags": ["Service Agent", "STT", "GPU Capacity"],
+        "source": "S4,S5"
+      },
+      {
+        "short": "Wealth Assistant",
+        "slug": "agent-wealth-assistant",
+        "parent": "agent-cost-roi",
+        "title": "Wealth Assistant (App 2.0): PoC & Cost",
+        "summary": "Verified AI Q&A for the wealth app and planned compute for launch.",
+        "sdlc": ["plan"],
+        "ownership": "Lead",
+        "period": "2026/07 ~ Now",
+        "background": "The Wealth Assistant is the bank's AI wealth management app (App 2.0). It is one of the 4 business AI Agents.",
+        "problem": "The PoC had to confirm that Q&A works. Before launch, the bank needs the GPU allocation and usage growth.",
+        "goal": {
+          "category": "AI projects & technical support",
+          "weight": "40%",
+          "target": "Complete the Q&A PoC and confirm the GPU allocation for launch."
+        },
+        "approach": [
+          "Test the Q&A function.",
+          "Draw the first system architecture.",
+          "Forecast usage for years 1–3 from monthly logins.",
+          "Count the all-day SLM in the GPU pool."
+        ],
+        "milestones": [
+          {"date": "2026 Q3", "text": "Test the Q&A function", "status": "done"},
+          {"date": "2026 Q3", "text": "Draw the architecture", "status": "done"},
+          {"date": "2026 Q3", "text": "Hand over to senior dev", "status": "done"},
+          {"date": "2026/10", "text": "Confirm GPU allocation", "status": "done"}
+        ],
+        "result": [
+          "Completed Q&A testing and the first architecture; handed over to a senior colleague.",
+          "Confirmed GPUs: 2 in production, 1 in test."
+        ],
+        "kpis": [
+          {"name": "Monthly logins", "value": "324,959"},
+          {"name": "Monthly logins, year 3", "value": "495,000"},
+          {"name": "GPUs", "value": "2 production / 1 test"}
+        ],
+        "tags": ["App 2.0", "PoC", "Wealth Management"],
+        "source": "S2,S4,S5"
+      },
+      {
+        "short": "AI governance: Agent pre-launch checks",
         "slug": "agent-governance",
         "title": "AI Agent Technical Specifications & Governance",
         "summary": "Make sure each Agent meets FSC principles before launch.",
@@ -169,7 +316,7 @@
         "source": "S2,S3"
       },
       {
-        "short": "FinLLM data & eval",
+        "short": "FSC FinLLM: data cleaning & evaluation",
         "slug": "finllm",
         "title": "FSC FinLLM Data Cleaning & Model Evaluation",
         "summary": "Clean FinLLM training data item by item and score regulatory answers.",
@@ -205,40 +352,7 @@
         "source": "S2,S4"
       },
       {
-        "short": "Wealth Assistant PoC",
-        "slug": "wealth-assistant-poc",
-        "title": "Wealth Assistant App PoC",
-        "summary": "Verified that AI Q&A works for the wealth app, then handed over.",
-        "sdlc": ["build"],
-        "ownership": "Lead",
-        "period": "2026/07 ~ 2026/09",
-        "background": "Wealth Assistant is the bank's AI wealth management app. It is one of the 4 Agents.",
-        "problem": "The PoC had to confirm that the Q&A function works and document the system architecture.",
-        "goal": {"category": "AI projects & technical support", "weight": "40%", "target": "Complete the Wealth Assistant PoC tests."},
-        "approach": [
-          "Test the Q&A function.",
-          "Draw the first architecture diagram.",
-          "Document the results and hand over to a senior colleague."
-        ],
-        "milestones": [
-          {"date": "2026 Q3", "text": "Test the Q&A function", "status": "done"},
-          {"date": "2026 Q3", "text": "Draw the architecture", "status": "done"},
-          {"date": "2026 Q3", "text": "Hand over to senior dev", "status": "done"}
-        ],
-        "result": [
-          "Completed Q&A testing and the first architecture diagram.",
-          "Handed over to a senior colleague for development."
-        ],
-        "kpis": [
-          {"name": "Monthly logins (BU data)", "value": "324,959"},
-          {"name": "Monthly logins, year 3 forecast", "value": "495,000"},
-          {"name": "Answer accuracy", "value": "To be measured", "note": "Measured by the receiving team"}
-        ],
-        "tags": ["PoC", "Wealth Management", "AI Assistant"],
-        "source": "S2,S5"
-      },
-      {
-        "short": "Gemini training",
+        "short": "Enablement: Gemini training",
         "slug": "gemini-training",
         "title": "Gemini Training Program",
         "summary": "Designed a Gemini course with hands-on business use cases.",
@@ -272,7 +386,7 @@
         "source": "S4"
       },
       {
-        "short": "A2UI research",
+        "short": "Tech research: A2UI",
         "slug": "a2ui-research",
         "title": "A2UI Technical Research",
         "summary": "Evaluate Agent-generated UI for wealth management use cases.",
@@ -315,7 +429,7 @@
     ],
     "projects": [
       {
-        "short": "Webai Finance",
+        "short": "AI research assistant: Webai Finance",
         "slug": "webai-finance",
         "title": "Webai Finance Module (Kinance AI Market / Stock Assistant)",
         "summary": "Led the AI market and stock assistants from requirements to launch.",
@@ -349,7 +463,7 @@
         "source": "S1"
       },
       {
-        "short": "AI governance review",
+        "short": "AI governance: automated review",
         "slug": "ai-governance-review",
         "title": "AI Governance Automated Review System",
         "summary": "Automated the manual review of AI usage reports.",
@@ -394,7 +508,7 @@
     "other": [],
     "projects": [
       {
-        "short": "RAG support bot",
+        "short": "AI customer service: RAG bot",
         "slug": "rag-support-bot",
         "title": "AI Customer Service Bot \"Little t\"",
         "summary": "Let members search technical manuals in natural language with RAG.",
@@ -429,7 +543,7 @@
         "source": "S1"
       },
       {
-        "short": "Multi-Agent advisory",
+        "short": "AI advisory: Multi-Agent decisions",
         "slug": "multi-agent-advisory",
         "title": "Multi-Agent Investment Advisory Architecture",
         "summary": "Let AI work like a fund team to produce signals that can be backtested.",
@@ -463,7 +577,7 @@
         "source": "S1"
       },
       {
-        "short": "ASR transcription",
+        "short": "Earnings calls: ASR transcripts",
         "slug": "asr-transcription",
         "title": "ASR Earnings Call Transcription",
         "summary": "Cut the time the research team spends on earnings call notes.",
@@ -503,7 +617,7 @@
     "other": [],
     "projects": [
       {
-        "short": "T-Ambassador: AI adoption",
+        "short": "T-Ambassador: AI adoption for firms",
         "slug": "moda-t-ambassador",
         "title": "Helping Companies Adopt Generative AI (Digital Youth T-Ambassador)",
         "summary": "Developed digital solutions with companies through a \"local problems, talent solutions\" model.",
@@ -547,6 +661,7 @@
         "short": "CTA strategy",
         "slug": "tmba-cta-taiex",
         "kind": "Quant strategy",
+        "layers": ["data", "test"],
         "title": "CTA Strategy: TAIEX Futures",
         "summary": "Built a TAIEX futures CTA strategy and backtest framework with risk-return metrics.",
         "sdlc": [],
@@ -577,6 +692,7 @@
         "short": "Event trading: earnings calls",
         "slug": "tmba-event-earnings-call",
         "kind": "Quant strategy",
+        "layers": ["data", "test"],
         "title": "Event Trading Strategy: Earnings Calls",
         "summary": "Developed a Taiwan stock event trading strategy around earnings calls.",
         "sdlc": [],
@@ -606,7 +722,7 @@
     "short": "NTUST",
     "role": "M.A. in Finance",
     "period": "2024/09 ~ 2026",
-    "scope": "Thesis: stock return prediction with RAG-LLM and panel data models",
+    "scope": "Master's thesis and asset management practice",
     "other": [],
     "projects": [
       {
@@ -653,6 +769,112 @@
         "link": "https://etheses.lib.ntust.edu.tw/detail/27b99ae63b98c427ee18434207d7cdc4/?seq=18",
         "linkLabel": "NTUST thesis record",
         "source": "etheses.lib.ntust.edu.tw"
+      },
+      {
+        "short": "Fubon ESG portfolio",
+        "slug": "fubon-esg-portfolio",
+        "kind": "Investment practice",
+        "title": "Fubon Asset Management Campus Talent Program: ESG Portfolio Allocation",
+        "summary": "Built a Taiwan stock portfolio that integrates ESG factors.",
+        "sdlc": [],
+        "ownership": "Contributor",
+        "period": "2024/09 ~ 2024/11",
+        "background": "Fubon Asset Management trains asset management talent with 5 universities. NTUST joined for the first time in 2024; that cohort had 113 students.",
+        "problem": "Does ESG add value in stock investing? The final project had to answer this question.",
+        "goal": {"category": "Final project", "weight": "—", "target": "Complete the final project report on integrating ESG into investment practice."},
+        "approach": [
+          "Select investment targets, mainly Taiwan stocks.",
+          "Integrate the ESG factors from class into the portfolio allocation.",
+          "Collect and combine data as a team, and write the report.",
+          "Present in class and get feedback from fund managers."
+        ],
+        "milestones": [
+          {"date": "2024/09", "text": "Join the program", "status": "done"},
+          {"date": "2024/09 ~ 11", "text": "Team assignments & talks", "status": "done"},
+          {"date": "2024/11", "text": "Finish ESG final project", "status": "done"}
+        ],
+        "result": ["Completed the final project report on integrating ESG into investment practice."],
+        "kpis": [
+          {"name": "Cohort", "value": "2024 (first NTUST cohort)"},
+          {"name": "Students", "value": "113 (5 universities)"},
+          {"name": "Program length", "value": "3 months"},
+          {"name": "Portfolio results", "value": "To be added"}
+        ],
+        "tags": ["ESG", "Portfolio", "Taiwan Stocks", "Asset Management"],
+        "link": "https://www.moneyweekly.com.tw/_Article?AID=161517",
+        "linkLabel": "Money Weekly article (Chinese)",
+        "source": "resume.pdf; Money Weekly 2024/12/25"
+      }
+    ]
+  },
+  {
+    "org": "Tunghai University, Global MBA (GMBA)",
+    "short": "Tunghai GMBA",
+    "role": "Master's",
+    "period": "2023/09 ~ 2024/06",
+    "scope": "Master's thesis and teaching assistant for English-taught courses",
+    "other": [],
+    "projects": [
+      {
+        "short": "GMBA thesis",
+        "slug": "thesis-esg-capital-structure",
+        "kind": "Research",
+        "title": "The Effect of ESG Risk Scores on the Capital Structure of Taiwanese Companies",
+        "summary": "Studied how ESG risk scores relate to the capital structure of Taiwanese companies.",
+        "sdlc": [],
+        "ownership": "Lead",
+        "period": "2023/09 ~ 2024/06",
+        "background": "Investors use ESG risk scores as one measure to evaluate companies.",
+        "problem": "Research question: do ESG risk scores affect the capital structure of Taiwanese companies?",
+        "goal": {
+          "category": "Master's thesis",
+          "weight": "—",
+          "target": "Test the effect of ESG risk scores on the capital structure of Taiwanese companies."
+        },
+        "approach": ["Research design, sample, and method: to be added."],
+        "milestones": [
+          {"date": "2023/09", "text": "Start Tunghai GMBA", "status": "done"},
+          {"date": "2024/06", "text": "Thesis done; degree earned", "status": "done"}
+        ],
+        "result": ["Findings: to be added."],
+        "kpis": [
+          {"name": "Findings", "value": "To be added"}
+        ],
+        "tags": ["ESG", "Capital Structure", "Corporate Finance", "Taiwan"],
+        "link": "https://hdl.handle.net/11296/us53cs",
+        "linkLabel": "National Digital Library of Theses (Chinese)",
+        "source": "title from user; abstract pending"
+      },
+      {
+        "short": "English-taught TA",
+        "slug": "tunghai-english-ta",
+        "kind": "Teaching",
+        "title": "Teaching Assistant for English-Taught Courses: Statistics, Economics, Financial Management",
+        "summary": "Helped students learn core business courses taught in English.",
+        "sdlc": [],
+        "ownership": "Contributor",
+        "period": "2023/09 ~ 2024/06",
+        "background": "Tunghai University offers core business courses taught in English.",
+        "problem": "Students learn statistics, economics, and financial management in English and need a teaching assistant.",
+        "goal": {"category": "Teaching assistant", "weight": "—", "target": "Support the teaching of 3 English-taught courses."},
+        "approach": [
+          "Serve as TA for Statistics (taught in English).",
+          "Serve as TA for Economics (taught in English).",
+          "Serve as TA for Financial Management (taught in English).",
+          "Duties: to be added."
+        ],
+        "milestones": [
+          {"date": "2023/09 ~ 2024/06", "text": "Statistics TA", "status": "done"},
+          {"date": "2023/09 ~ 2024/06", "text": "Economics TA", "status": "done"},
+          {"date": "2023/09 ~ 2024/06", "text": "Financial Management TA", "status": "done"}
+        ],
+        "result": ["Completed the TA role for 3 English-taught courses."],
+        "kpis": [
+          {"name": "English-taught courses", "value": "3"},
+          {"name": "Language", "value": "English"}
+        ],
+        "tags": ["Teaching Assistant", "Statistics", "Economics", "Financial Management"],
+        "source": "resume.pdf; period assumed from GMBA dates"
       }
     ]
   }

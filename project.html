@@ -50,6 +50,13 @@
     .kpi .v { font-size: 1rem; font-weight: 700; color: #e2e8f0; }
     .kpi .note { font-size: 0.75rem; color: #64748b; }
     .kpi.pending .v { color: #64748b; font-weight: 500; }
+    .kids { display: grid; gap: 0.75rem; margin: 0.5rem 0 1.5rem; }
+    .kid { display: block; background: rgba(30,41,59,0.7); border-left: 3px solid #3b82f6; border-radius: 8px; padding: 0.75rem 1rem; transition: background 0.2s; }
+    .kid:hover { background: rgba(59,130,246,0.15); }
+    .parent-link { font-size: 0.85rem; color: #64748b; margin: -0.25rem 0 0.75rem; }
+    .parent-link a { color: #3b82f6; }
+    .kid-name { font-weight: 700; color: #e2e8f0; }
+    .kid p { margin: 0.25rem 0 0; font-size: 0.95rem; line-height: 1.7; color: #94a3b8; }
     .pager { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
     .pager a { color: #3b82f6; font-size: 0.9rem; max-width: 48%; }
     .pager a:hover { color: #60a5fa; }
@@ -78,7 +85,7 @@
     const I18N = {
       en: {
         back: 'Back to Alex Li', toggle: '中文', lead: 'Lead', context: 'Context', problem: 'Problem', goal: 'Goal',
-        approach: 'Approach', milestones: 'Milestones', results: 'Results & KPIs', progress: 'Key Progress', more: 'Further reading',
+        approach: 'Approach', milestones: 'Milestones', results: 'Results & KPIs', progress: 'Key Progress', more: 'Further reading', kids: 'Sub-projects', partOf: 'Part of: ',
         weight: 'Weight', doneOf: (d, t) => `${d} of ${t} milestones complete`,
         allDone: t => `All ${t} milestones are complete.`, now: 'Now', next: 'Next',
         prev: 'Previous', nextProj: 'Next',
@@ -87,7 +94,7 @@
       },
       zh: {
         back: '回到首頁', toggle: 'EN', lead: '主責', context: '背景', problem: '問題', goal: '目標',
-        approach: '方法', milestones: 'Milestone', results: '結果與 KPI', progress: 'Key Progress', more: '延伸閱讀',
+        approach: '方法', milestones: 'Milestone', results: '結果與 KPI', progress: 'Key Progress', more: '延伸閱讀', kids: '子專案', partOf: '上層專案：',
         weight: '權重', doneOf: (d, t) => `已完成 ${d}／${t} 個 Milestone`,
         allDone: t => `${t} 個 Milestone 全部完成。`, now: '目前', next: '下一步',
         prev: '上一個專案', nextProj: '下一個專案',
@@ -118,6 +125,8 @@
           return;
         }
         const { g, p } = all[i];
+        const kids = all.filter(x => x.p.parent === p.slug);
+        const parent = p.parent && all.find(x => x.p.slug === p.parent);
         const names = stageNames(about.sdlc);
         const pr = progressOf(p.milestones);
         const pct = pr.total ? Math.round(pr.done / pr.total * 100) : 0;
@@ -145,6 +154,7 @@
         root.innerHTML = `
           <header class="post-header">
             <p class="eyebrow">${esc(g.org)} · ${esc(g.role)} · ${esc(p.period)}</p>
+            ${parent ? `<p class="parent-link">${esc(T('partOf'))}<a href="project.html?id=${encodeURIComponent(parent.p.slug)}">${esc(parent.p.short || parent.p.title)}</a></p>` : ''}
             <h1>${esc(p.title)}</h1>
             <p class="lead">${esc(p.summary)}</p>
             <div class="meta-row">${pills}<span class="own">${esc(p.ownership)}</span></div>
@@ -161,6 +171,8 @@
             ${h2(++n, T('approach'))}${ul(p.approach)}
             ${h2(++n, T('milestones'))}<div class="ms-list">${ms}</div>
             ${h2(++n, T('results'))}${ul(p.result)}${kpis ? `<div class="kpi-grid">${kpis}</div>` : ''}
+            ${kids.length ? `${h2(++n, T('kids'))}<div class="kids">${kids.map(x =>
+              `<a class="kid" href="project.html?id=${encodeURIComponent(x.p.slug)}"><div class="kid-name">↳ ${esc(x.p.title)}</div><p>${esc(x.p.summary)}</p></a>`).join('')}</div>` : ''}
             ${h2(++n, T('progress'))}${progress}
             ${p.link ? `${h2(++n, T('more'))}<p><a href="${esc(p.link)}" style="color:#3b82f6">${esc(p.linkLabel || p.link)} →</a></p>` : ''}
           </div>`;

@@ -78,6 +78,8 @@ Key Progress and goal completion are calculated from `milestones`. Do not write 
 
 Stage keys: `plan`, `tune`, `build`, `ops`. The governance band uses the key `gov`.
 
+`quant` holds the quant trading pipeline chart above Side Projects: title, note, and 5 layers with keys `data`, `research`, `test`, `alloc`, `trade`.
+
 ### 02. Experience (`data/work.json`)
 
 Companies, newest first. Each company has its projects:
@@ -115,7 +117,10 @@ Companies, newest first. Each company has its projects:
 - `slug`: unique; the project page URL is `project.html?id=<slug>`. Use the same `slug` and `sdlc` in both languages.
 - `sdlc`: the stages the project covers. The chart draws one bar from the earliest to the latest stage, so `["plan", "build"]` also covers `tune`. Add `gov` to place the project in the governance band instead of a lane. Use `[]` to keep the project off the chart.
 - `ownership`: 主責 / 協作 (English: Lead / Contributor).
+- `parent`: optional `slug` of another project in the same company. The project becomes a sub-project: it shows inside the parent's frame on the AI SDLC chart, as an indented card under the parent card, and both project pages link to each other. Put sub-projects right after their parent in the file.
+- Card title: a project on the AI SDLC chart shows its `short` label as the card title, so the chart and the card match. The project page shows the full `title`.
 - `kind`: optional neutral tag for a project with no AI stage (for example 量化策略). Use `"sdlc": []` to keep it off the AI SDLC chart.
+- `layers`: optional quant pipeline layers (`data`, `research`, `test`, `alloc`, `trade`). The project then also shows as a bar on the quant chart, from the earliest to the latest layer.
 - `draft`: `true` hides the project everywhere (card, chart, project page). Use it while the content is not ready.
 - `milestones[].status`: `done`, `doing`, `todo`. The card shows the first 5.
 - A KPI with value `待量測` (English: `To be measured`) shows in gray.
@@ -147,6 +152,10 @@ Shown as a numbered list (`icon` is kept but no longer displayed):
 ```
 
 Emoji reference for `icon`: use any emoji character or unicode escape.
+
+`layers`: quant pipeline layers for the chart above this list (`data`, `research`, `test`, `alloc`, `trade`). Use `[]` to keep a repo off the chart.
+
+`parent`: optional name of another repo. The repo then shows indented right under its parent, in the list and on the chart (for example FinCLI under Vibe-Edge).
 
 ### 04. Blog
 

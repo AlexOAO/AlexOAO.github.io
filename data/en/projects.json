@@ -1,89 +1,83 @@
 [
   {
+    "icon": "🏭",
+    "name": "Vibe-Edge",
+    "desc": "An end-to-end system I built from scratch to turn trading ideas into trades: an 8-layer flow from data to trade lists, with a fixed statistical validation engine that blocks overfitting and look-ahead bias.",
+    "tags": ["Quant Research", "Validation", "Factor Mining", "CLI Agent"],
+    "url": "https://github.com/AlexOAO/Vibe-Edge",
+    "layers": ["data", "trade"]
+  },
+  {
+    "icon": "🗄️",
+    "name": "FinCLI",
+    "desc": "The data layer of Vibe-Edge: a Taiwan market data CLI that fetches raw data from TWSE, TPEx, MOPS, TEJ, and more, with daily incremental updates.",
+    "tags": ["Python", "Data Pipeline", "TWSE", "PostgreSQL"],
+    "url": "https://github.com/AlexOAO/FinCLI",
+    "layers": ["data"],
+    "parent": "Vibe-Edge"
+  },
+  {
     "icon": "🤖",
     "name": "AI Financial Agent",
     "desc": "A financial AI Agent that combines multiple data sources for investment research and decisions.",
-    "tags": [
-      "LLM",
-      "LangGraph",
-      "Finance"
-    ],
-    "url": "https://github.com/AlexOAO/ai-financial-agent"
+    "tags": ["LLM", "LangGraph", "Finance"],
+    "url": "https://github.com/AlexOAO/ai-financial-agent",
+    "layers": ["data", "research"]
   },
   {
     "icon": "📈",
     "name": "AI Hedge Fund",
     "desc": "A Multi-Agent system that simulates fund managers working together on portfolio and trading decisions.",
-    "tags": [
-      "Multi-Agent",
-      "Trading",
-      "Python"
-    ],
-    "url": "https://github.com/AlexOAO/ai-hedge-fund"
+    "tags": ["Multi-Agent", "Trading", "Python"],
+    "url": "https://github.com/AlexOAO/ai-hedge-fund",
+    "layers": ["research", "trade"]
   },
   {
     "icon": "🔍",
     "name": "Dexter",
     "desc": "An autonomous financial research Agent that collects information and writes reports.",
-    "tags": [
-      "Agent",
-      "Research",
-      "NLP"
-    ],
-    "url": "https://github.com/AlexOAO/dexter"
+    "tags": ["Agent", "Research", "NLP"],
+    "url": "https://github.com/AlexOAO/dexter",
+    "layers": ["research"]
   },
   {
     "icon": "📊",
     "name": "OpenStrategy",
     "desc": "An open quant trading strategy framework with backtesting and parameter optimization.",
-    "tags": [
-      "Python",
-      "Quant",
-      "Backtesting"
-    ],
-    "url": "https://github.com/AlexOAO/OpenStrategy"
+    "tags": ["Python", "Quant", "Backtesting"],
+    "url": "https://github.com/AlexOAO/OpenStrategy",
+    "layers": ["research", "test"]
   },
   {
     "icon": "📉",
     "name": "Barra Multifactor Model",
     "desc": "A Barra multifactor model for risk analysis and portfolio factor decomposition.",
-    "tags": [
-      "Factor Model",
-      "Risk",
-      "Finance"
-    ],
-    "url": "https://github.com/AlexOAO/Barra"
+    "tags": ["Factor Model", "Risk", "Finance"],
+    "url": "https://github.com/AlexOAO/Barra",
+    "layers": ["alloc"]
   },
   {
     "icon": "💻",
     "name": "PyQt Stock Backtesting",
     "desc": "A PyQt GUI backtesting tool with the Yahoo API and multiple strategies.",
-    "tags": [
-      "PyQt",
-      "Backtesting",
-      "Yahoo API"
-    ],
-    "url": "https://github.com/AlexOAO/pyQt_stock_backtesting"
+    "tags": ["PyQt", "Backtesting", "Yahoo API"],
+    "url": "https://github.com/AlexOAO/pyQt_stock_backtesting",
+    "layers": ["data", "test"]
   },
   {
     "icon": "🧬",
     "name": "Transformer",
     "desc": "A PyTorch implementation of the Transformer from \"Attention Is All You Need\".",
-    "tags": [
-      "PyTorch",
-      "Deep Learning"
-    ],
-    "url": "https://github.com/AlexOAO/transformer"
+    "tags": ["PyTorch", "Deep Learning"],
+    "url": "https://github.com/AlexOAO/transformer",
+    "layers": []
   },
   {
     "icon": "📄",
     "name": "EDGAR Crawler",
     "desc": "An SEC filing crawler that extracts selected sections into structured JSON.",
-    "tags": [
-      "Web Scraping",
-      "SEC",
-      "JSON"
-    ],
-    "url": "https://github.com/AlexOAO/edgar-crawler"
+    "tags": ["Web Scraping", "SEC", "JSON"],
+    "url": "https://github.com/AlexOAO/edgar-crawler",
+    "layers": ["data"]
   }
 ]

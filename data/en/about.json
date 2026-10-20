@@ -18,5 +18,36 @@
       }
     ],
     "governance": {"name": "AI governance (across the full lifecycle)", "desc": "Set the rules in planning, check at every stage, and track in operations."}
+  },
+  "quant": {
+    "title": "Quant trading pipeline: where each project sits",
+    "note": "A bar spans the layers that the project covers. Click a bar to see the project.",
+    "stages": [
+      {
+        "key": "data",
+        "name": "Data",
+        "desc": "Collect, clean, and store market and financial data."
+      },
+      {
+        "key": "research",
+        "name": "Research",
+        "desc": "Build factors, signals, and strategy hypotheses."
+      },
+      {
+        "key": "test",
+        "name": "Validation",
+        "desc": "Confirm the strategy with backtests and statistical tests."
+      },
+      {
+        "key": "alloc",
+        "name": "Allocation",
+        "desc": "Set position size, risk, and portfolio weights."
+      },
+      {
+        "key": "trade",
+        "name": "Execution",
+        "desc": "Create orders, execute trades, and track performance."
+      }
+    ]
   }
 }
