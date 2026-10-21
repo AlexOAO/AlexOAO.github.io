@@ -1,4 +1,5 @@
 # Sveltia CMS: the admin at /admin. Every save is a commit to main; Cloudflare Pages then redeploys.
+# English is generated from Chinese by .github/workflows/translate.yml; it is not edited here.
 # Sign in: "Sign In with Token" with a GitHub fine-grained token (this repo only, Contents: Read and write).
 backend:
   name: github
@@ -17,20 +18,6 @@ collections:
     label: "專案文章（中文）"
     label_singular: "文章"
     folder: /data/stories
-    format: yaml-frontmatter
-    extension: md
-    identifier_field: title
-    slug: "{{title}}"
-    summary: "{{title}}"
-    sortable_fields: [title]
-    create: true
-    fields:
-      - { name: title, label: "專案代碼（檔名，要和 work.json 的 slug 相同）", widget: string, pattern: ["^[a-z0-9-]+$", "只能用小寫英文、數字、連字號"] }
-      - { name: body, label: "文章：## 結果 → ## 為什麼要做 → ## 我的角色 → ## 我怎麼做（第一階段…）→ ## 下一步", widget: markdown }
-  - name: stories_en
-    label: "Project stories (English)"
-    label_singular: "文章"
-    folder: /data/en/stories
     format: yaml-frontmatter
     extension: md
     identifier_field: title
@@ -148,113 +135,6 @@ collections:
               - { name: org, label: "單位", widget: string }
               - { name: date, label: "期間", widget: string }
               - { name: note, label: "一句說明", widget: string, required: false }
-  - name: data_en
-    label: "Homepage data (English)"
-    files:
-      - name: work
-        label: "Experience & project cards"
-        file: /data/en/work.json
-        format: json
-        fields:
-          - name: groups
-            label: "公司／學校"
-            label_singular: "公司／學校"
-            widget: list
-            root: true
-            summary: "{{fields.org}} · {{fields.period}}"
-            fields:
-              - { name: org, label: "名稱", widget: string }
-              - { name: short, label: "簡稱（圖表用）", widget: string }
-              - { name: lane, label: "圖表共用列代碼（同代碼的公司放同一列）", widget: string, required: false }
-              - { name: role, label: "職稱", widget: string }
-              - { name: period, label: "期間", widget: string }
-              - { name: current, label: "現職", widget: boolean, required: false, default: false }
-              - { name: scope, label: "一句職責範圍", widget: string, required: false }
-              - { name: other, label: "其他工作（每行一項）", widget: list, required: false, field: { name: item, label: "項目", widget: string } }
-              - name: projects
-                label: "專案卡片"
-                label_singular: "專案"
-                widget: list
-                summary: "{{fields.short}}"
-                fields:
-                  - { name: short, label: "圖表標籤（類別：內容）", widget: string }
-                  - { name: slug, label: "專案代碼（網址用，中英文要相同）", widget: string, pattern: ["^[a-z0-9-]+$", "只能用小寫英文、數字、連字號"] }
-                  - { name: parent, label: "上層專案的代碼（子專案才填）", widget: string, required: false }
-                  - { name: kind, label: "中性標籤（不在 AI SDLC 圖上時，例如 量化策略）", widget: string, required: false }
-                  - { name: title, label: "完整標題（說明頁大標）", widget: string }
-                  - { name: summary, label: "一句摘要（≤ 40 字，不要重複 Milestone 的數字）", widget: text }
-                  - { name: sdlc, label: "AI SDLC 階段（長條從最早畫到最晚）", widget: select, multiple: true, required: false, options: [{ label: "業務規劃 plan", value: "plan" }, { label: "模型調教 tune", value: "tune" }, { label: "開發部署 build", value: "build" }, { label: "營運監控 ops", value: "ops" }, { label: "AI 治理帶 gov", value: "gov" }] }
-                  - { name: layers, label: "量化交易流程的層", widget: select, multiple: true, required: false, options: [{ label: "資料層 data", value: "data" }, { label: "研究層 research", value: "research" }, { label: "檢定層 test", value: "test" }, { label: "配置層 alloc", value: "alloc" }, { label: "交易層 trade", value: "trade" }] }
-                  - { name: ownership, label: "主責／協作", widget: string }
-                  - { name: period, label: "期間", widget: string }
-                  - name: milestones
-                    label: "Milestone（首頁卡片的進展條，最多顯示 5 個）"
-                    label_singular: Milestone
-                    widget: list
-                    summary: "{{fields.date}} · {{fields.text}}"
-                    fields:
-                      - { name: date, label: "日期", widget: string }
-                      - { name: text, label: "內容（≤ 20 字）", widget: string }
-                      - { name: status, label: "狀態", widget: select, options: [{ label: "完成", value: done }, { label: "進行中", value: doing }, { label: "待辦", value: todo }] }
-                  - { name: tags, label: "技術標籤", widget: list, required: false, field: { name: tag, label: "標籤", widget: string } }
-                  - { name: draft, label: "草稿（勾選後網站上不顯示）", widget: boolean, required: false, default: false }
-                  - { name: source, label: "資料來源（不顯示，供自己追溯）", widget: string, required: false }
-      - name: projects
-        label: "Side Projects"
-        file: /data/en/projects.json
-        format: json
-        fields:
-          - name: items
-            label: "Side Projects"
-            label_singular: "Side Project"
-            widget: list
-            root: true
-            summary: "{{fields.name}}"
-            fields:
-              - { name: icon, label: "圖示（emoji）", widget: string, required: false }
-              - { name: name, label: "名稱", widget: string }
-              - { name: desc, label: "說明", widget: text }
-              - { name: tags, label: "標籤", widget: list, required: false, field: { name: tag, label: "標籤", widget: string } }
-              - { name: url, label: "GitHub 網址", widget: string }
-              - { name: layers, label: "量化交易流程的層", widget: select, multiple: true, required: false, options: [{ label: "資料層 data", value: "data" }, { label: "研究層 research", value: "research" }, { label: "檢定層 test", value: "test" }, { label: "配置層 alloc", value: "alloc" }, { label: "交易層 trade", value: "trade" }] }
-              - { name: parent, label: "上層專案名稱（例如 Vibe-Edge）", widget: string, required: false }
-      - name: about
-        label: "Proof chart text"
-        file: /data/en/about.json
-        format: json
-        fields:
-          - { name: subhead, label: "Proof 副標", widget: string }
-          - name: sdlc
-            label: "AI SDLC 圖"
-            widget: object
-            fields:
-              - { name: title, label: "標題", widget: string }
-              - { name: note, label: "說明", widget: string }
-              - { name: stages, label: "四個階段", widget: list, summary: "{{fields.name}}", fields: [{ name: key, label: "代碼", widget: string }, { name: name, label: "名稱", widget: string }, { name: desc, label: "說明", widget: string }] }
-              - { name: governance, label: "AI 治理帶", widget: object, fields: [{ name: name, label: "名稱", widget: string }, { name: desc, label: "說明", widget: string }] }
-          - name: quant
-            label: "量化交易流程圖"
-            widget: object
-            fields:
-              - { name: title, label: "標題", widget: string }
-              - { name: note, label: "說明", widget: string }
-              - { name: stages, label: "五個層", widget: list, summary: "{{fields.name}}", fields: [{ name: key, label: "代碼", widget: string }, { name: name, label: "名稱", widget: string }, { name: desc, label: "說明", widget: string }] }
-      - name: experience
-        label: "Other experience & education"
-        file: /data/en/experience.json
-        format: json
-        fields:
-          - name: items
-            label: "其他經歷與學歷"
-            label_singular: "項目"
-            widget: list
-            root: true
-            summary: "{{fields.title}}"
-            fields:
-              - { name: title, label: "職稱或學位", widget: string }
-              - { name: org, label: "單位", widget: string }
-              - { name: date, label: "期間", widget: string }
-              - { name: note, label: "一句說明", widget: string, required: false }
   - name: blog
     label: "部落格清單"
     files:
@@ -272,9 +152,7 @@ collections:
             fields:
               - { name: id, label: "代碼", widget: string }
               - { name: title, label: "標題", widget: string }
-              - { name: title_en, label: "英文標題", widget: string, required: false }
               - { name: date, label: "日期（YYYY-MM-DD）", widget: string }
               - { name: summary, label: "摘要", widget: text }
-              - { name: summary_en, label: "英文摘要", widget: text, required: false }
               - { name: tags, label: "標籤", widget: list, field: { name: tag, label: "標籤", widget: string } }
               - { name: file, label: "文章檔案路徑", widget: string }

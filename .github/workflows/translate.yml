@@ -1,0 +1,50 @@
+name: Translate zh to en
+
+# Runs after a push that changes Chinese content (for example a save in /admin).
+# Writes the English files and commits them; Cloudflare Pages then deploys that commit.
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'data/*.json'
+      - 'data/stories/**'
+      - 'posts/posts.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: translate
+  cancel-in-progress: false
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install the free translator
+        run: pip install deep-translator
+
+      - name: Translate changed Chinese content
+        env:
+          MYMEMORY_EMAIL: ${{ secrets.MYMEMORY_EMAIL }}   # optional: raises the free daily limit
+        run: python scripts/translate.py
+
+      - name: Commit the English files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/en posts/posts.json
+          if git diff --cached --quiet; then
+            echo "No English changes."
+          else
+            git commit -m "Auto-translate zh to en"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
