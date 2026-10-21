@@ -32,7 +32,7 @@
       "worksFor": { "@type": "Organization", "name": "KGI Bank" },
       "alumniOf": { "@type": "CollegeOrUniversity", "name": "National Taiwan University of Science and Technology" },
       "knowsAbout": ["AI Agents", "LLM", "RAG", "AI Governance", "FinTech", "Quantitative Finance"],
-      "sameAs": ["https://github.com/AlexOAO"]
+      "sameAs": ["https://github.com/AlexOAO", "https://www.linkedin.com/in/xiangweili123"]
     }
   }
   </script>
@@ -153,7 +153,8 @@
     .typing-cursor { display: inline-block; width: 2px; height: 1.2em; background: #3b82f6; margin-left: 2px; animation: blink 1s step-end infinite; vertical-align: text-bottom; }
     @keyframes blink { 50% { opacity: 0; } }
     .hero-desc { color: #94a3b8; font-size: 1rem; line-height: 1.8; margin-bottom: 2rem; }
-    .hero-buttons { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .hero-buttons { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .hero-buttons .btn { padding: 0.75rem 1.25rem; }
     .hero-image { display: flex; justify-content: center; animation: fadeInUp 0.8s ease 0.2s both; }
     .hero-photo-wrapper { position: relative; width: 320px; height: 320px; }
     .hero-photo-wrapper::before {
@@ -435,34 +436,6 @@
       text-align: center; color: #64748b; padding: 3rem; font-size: 0.95rem;
     }
 
-    /* ── Contact ── */
-    #contact { background: #0f172a; }
-    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
-    .contact-text p { color: #94a3b8; margin-bottom: 1.5rem; line-height: 1.8; }
-    .contact-links { display: flex; flex-direction: column; gap: 1rem; }
-    .contact-item {
-      display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem;
-      background: rgba(30,41,59,0.6); border: 1px solid rgba(59,130,246,0.08);
-      border-radius: 12px; transition: all 0.3s;
-    }
-    .contact-item:hover { border-color: rgba(59,130,246,0.25); transform: translateX(4px); }
-    .contact-icon {
-      width: 44px; height: 44px; min-width: 44px; border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.2rem; background: rgba(59,130,246,0.1);
-    }
-    .contact-item .label { font-size: 0.8rem; color: #64748b; }
-    .contact-item .value { font-size: 0.95rem; color: #e2e8f0; font-weight: 500; }
-    .contact-form { display: flex; flex-direction: column; gap: 1rem; }
-    .form-group input, .form-group textarea {
-      width: 100%; padding: 0.85rem 1rem;
-      background: rgba(30,41,59,0.8); border: 1px solid rgba(59,130,246,0.15);
-      border-radius: 10px; color: #e2e8f0;
-      font-family: inherit; font-size: 0.95rem; transition: border-color 0.3s;
-    }
-    .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #3b82f6; }
-    .form-group textarea { resize: vertical; min-height: 120px; }
-
     /* ── Footer ── */
     footer {
       text-align: center; padding: 2rem;
@@ -499,7 +472,6 @@
       .hero-photo-wrapper { width: 240px; height: 240px; }
       .hero-name { font-size: 2.5rem; }
       .hero-buttons { justify-content: center; }
-      .contact-grid { grid-template-columns: 1fr; }
       .card-grid { grid-template-columns: 1fr; }
       .card-family .kids { grid-template-columns: 1fr; margin-left: 0.75rem; padding-left: 0.75rem; }
       .sdlc-grid { display: flex; flex-direction: column; gap: 0.6rem; }
@@ -552,7 +524,6 @@
         <a href="#experience">Experience</a>
         <a href="#projects">Side Projects</a>
         <a href="#blog">Blog</a>
-        <a href="#contact">Contact</a>
       </div>
       <div class="nav-right">
         <button class="lang-toggle" id="langToggle" aria-label="Switch language">中文</button>
@@ -582,7 +553,11 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
             GitHub
           </a>
-          <a href="#blog" class="btn btn-outline" data-i18n="readBlog">Read My Blog</a>
+          <a href="https://www.linkedin.com/in/xiangweili123" target="_blank" rel="noopener" class="btn btn-outline">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.07 2.07 0 110-4.13 2.07 2.07 0 010 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></svg>
+            LinkedIn
+          </a>
+          <a href="#blog" class="btn btn-outline" data-i18n="readBlog">Blog</a>
           <a href="assets/docs/resume.pdf" target="_blank" class="btn btn-outline">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
             CV
@@ -647,55 +622,14 @@
     </div>
   </section>
 
-  <!-- Contact -->
-  <section id="contact">
-    <div class="section-container reveal">
-      <h2 class="section-title"><span class="accent">05.</span> Contact</h2>
-      <div class="divider"></div>
-      <div class="contact-grid">
-        <div>
-          <div class="contact-text">
-            <p data-i18n="contactText">Contact me about collaboration, job opportunities, or AI in finance.</p>
-          </div>
-          <div class="contact-links">
-            <a href="mailto:adam3065nd123@gmail.com" class="contact-item">
-              <div class="contact-icon">&#9993;&#65039;</div>
-              <div>
-                <div class="label">Email</div>
-                <div class="value">adam3065nd123@gmail.com</div>
-              </div>
-            </a>
-            <a href="https://github.com/AlexOAO" target="_blank" class="contact-item">
-              <div class="contact-icon">&#128187;</div>
-              <div>
-                <div class="label">GitHub</div>
-                <div class="value">github.com/AlexOAO</div>
-              </div>
-            </a>
-          </div>
-        </div>
-        <div>
-          <form class="contact-form" action="https://formsubmit.co/adam3065nd123@gmail.com" method="POST">
-            <input type="hidden" name="_subject" value="From your portfolio site">
-            <input type="hidden" name="_captcha" value="false">
-            <div class="form-group"><input type="text" name="name" placeholder="Your name" data-i18n-ph="phName" required></div>
-            <div class="form-group"><input type="email" name="email" placeholder="Your email" data-i18n-ph="phEmail" required></div>
-            <div class="form-group"><textarea name="message" placeholder="What's on your mind?" data-i18n-ph="phMsg" required></textarea></div>
-            <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">
-              <span data-i18n="send">Send Message</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <!-- Footer -->
   <footer>
     <div class="footer-links">
       <a href="https://github.com/AlexOAO" target="_blank" title="GitHub">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+      </a>
+      <a href="https://www.linkedin.com/in/xiangweili123" target="_blank" rel="noopener" title="LinkedIn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.07 2.07 0 110-4.13 2.07 2.07 0 010 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></svg>
       </a>
       <a href="mailto:adam3065nd123@gmail.com" title="Email">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
@@ -772,13 +706,11 @@
     const I18N = {
       en: {
         heroDesc: 'PM and System Analyst at KGI Bank. I define the problem of each AI project, verify the solution, measure cost and benefit, and take it to production.',
-        readBlog: 'Read My Blog',
+        readBlog: 'Blog',
         expSub: 'Each card shows the milestones. Open a card for the full project story.',
         sideSub: "Things I've built or contributed to",
         blogSub: 'Notes, learnings & things I find interesting',
         postCount: '{n} posts · swipe or use the arrows',
-        contactText: 'Contact me about collaboration, job opportunities, or AI in finance.',
-        phName: 'Your name', phEmail: 'Your email', phMsg: "What's on your mind?", send: 'Send Message',
         footer: 'Personal website · Built with curiosity.',
         current: 'Current', readCase: 'Read the project story', otherExp: 'Other experience & education',
         read: 'Read', soon: 'Coming soon...',
@@ -787,13 +719,11 @@
       },
       zh: {
         heroDesc: '凱基銀行科技創新部 PM 兼 SA。我定義 AI 專案的問題、驗證方案、量化成本與效益，再把它推到上線。',
-        readBlog: '閱讀部落格',
+        readBlog: 'Blog',
         expSub: '卡片顯示專案的 Milestone。點卡片看完整的專案說明。',
         sideSub: '我做過或參與的專案',
         blogSub: '筆記、學習心得與有趣的事',
         postCount: '共 {n} 篇 · 左右滑動或點箭頭看更多',
-        contactText: '有合作想法、工作機會，或是想聊 AI 在金融領域的應用，都歡迎找我。',
-        phName: '你的名字', phEmail: '你的 Email', phMsg: '想說什麼？', send: '送出訊息',
         footer: '個人網站 · Built with curiosity.',
         current: '現職', readCase: '閱讀專案說明', otherExp: '其他經歷與學歷',
         read: '閱讀', soon: '即將推出...',
@@ -944,7 +874,6 @@
     function render() {
     document.documentElement.lang = Site.getLang() === 'en' ? 'en' : 'zh-Hant';
     document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = T(el.dataset.i18n); });
-    document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = T(el.dataset.i18nPh); });
     document.getElementById('langToggle').textContent = T('toggle');
 
     const sideP = getJSON(dataPath('projects.json'));
