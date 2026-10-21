@@ -34,3 +34,7 @@ title: agent-cost-roi
 
 - 收回四家廠商的回填表與 BU 的效益數據。
 - 完成 AI Agent 算力估算，產出正式的 TCO／ROI 與算力配額。
+
+## 延伸閱讀
+
+我把這個專案的方法整理成一篇文章：[AI Agent 的算力成本怎麼算：把 GPU 拆成空間與時間](posts/ai-agent-gpu-cost.html)。

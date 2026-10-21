@@ -39,11 +39,16 @@
         "ownership": "主責",
         "period": "2026/07 ~ 2026/09",
         "milestones": [
-          {"date": "2026 Q3", "text": "問題定義：選型風險", "status": "done"},
-          {"date": "2026 Q3", "text": "測試設計：拆 5 大模組", "status": "done"},
-          {"date": "2026 Q3", "text": "實測：60 項測試", "status": "done"},
-          {"date": "2026 Q3", "text": "比較：42 項評分表", "status": "done"},
-          {"date": "TBD", "text": "導入決策", "status": "todo"}
+          {"track": "Agatha", "date": "2026 Q3", "text": "問題定義：選型風險", "status": "done"},
+          {"track": "Agatha", "date": "2026 Q3", "text": "實測：26 項", "status": "done"},
+          {"track": "Agatha", "date": "2026 Q3", "text": "實測：找出 12 個問題", "status": "done"},
+          {"track": "Agatha", "date": "2026 Q3", "text": "比較：42 項評分表", "status": "done"},
+          {"track": "Agatha", "date": "TBD", "text": "導入決策", "status": "todo"},
+          {"track": "Dify", "date": "2026 Q3", "text": "測試設計：拆 5 大模組", "status": "done"},
+          {"track": "Dify", "date": "2026 Q3", "text": "測試設計：已知問題", "status": "done"},
+          {"track": "Dify", "date": "2026 Q3", "text": "實測：34 項測試", "status": "done"},
+          {"track": "Dify", "date": "2026 Q3", "text": "比較：42 項評分表", "status": "done"},
+          {"track": "Dify", "date": "TBD", "text": "導入決策", "status": "todo"}
         ],
         "tags": ["Agatha", "Dify", "Vendor Evaluation", "PoC"],
         "source": "S2,S3"
@@ -307,7 +312,7 @@
       {
         "short": "AI 智能投顧：Multi-Agent",
         "slug": "multi-agent-advisory",
-        "title": "Multi-Agent 智能投顧決策架構",
+        "title": "Multi-Agent 智能投顧架構",
         "summary": "讓 AI 像基金團隊一樣分工討論，產生可回測的投資訊號。",
         "sdlc": ["build"],
         "ownership": "協作",

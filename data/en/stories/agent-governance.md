@@ -33,3 +33,7 @@ I led the design of the bank's internal pre-launch check for AI.
 
 - Finish mapping the four Agents to the six principles.
 - Pilot with the Loan Assistant, then write the check into the AI rules.
+
+## Further reading
+
+I wrote up the method of this project in a post (Chinese): [What to check before an AI Agent launches: turning six FSC principles into a nine-cell table](posts/ai-agent-prelaunch-check.html).

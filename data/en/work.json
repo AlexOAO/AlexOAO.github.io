@@ -39,11 +39,16 @@
         "ownership": "Lead",
         "period": "2026/07 ~ 2026/09",
         "milestones": [
-          {"date": "2026 Q3", "text": "Problem: selection risk", "status": "done"},
-          {"date": "2026 Q3", "text": "Test design: 5 modules", "status": "done"},
-          {"date": "2026 Q3", "text": "Testing: 60 tests", "status": "done"},
-          {"date": "2026 Q3", "text": "Comparison: 42-item scorecard", "status": "done"},
-          {"date": "TBD", "text": "Adoption decision", "status": "todo"}
+          {"track": "Agatha", "date": "2026 Q3", "text": "Problem: selection risk", "status": "done"},
+          {"track": "Agatha", "date": "2026 Q3", "text": "Testing: 26 tests", "status": "done"},
+          {"track": "Agatha", "date": "2026 Q3", "text": "Testing: 12 issues found", "status": "done"},
+          {"track": "Agatha", "date": "2026 Q3", "text": "Comparison: 42-item scorecard", "status": "done"},
+          {"track": "Agatha", "date": "TBD", "text": "Adoption decision", "status": "todo"},
+          {"track": "Dify", "date": "2026 Q3", "text": "Test design: 5 modules", "status": "done"},
+          {"track": "Dify", "date": "2026 Q3", "text": "Test design: known issues", "status": "done"},
+          {"track": "Dify", "date": "2026 Q3", "text": "Testing: 34 tests", "status": "done"},
+          {"track": "Dify", "date": "2026 Q3", "text": "Comparison: 42-item scorecard", "status": "done"},
+          {"track": "Dify", "date": "TBD", "text": "Adoption decision", "status": "todo"}
         ],
         "tags": ["Agatha", "Dify", "Vendor Evaluation", "PoC"],
         "source": "S2,S3"

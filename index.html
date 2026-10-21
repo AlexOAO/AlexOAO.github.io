@@ -297,6 +297,7 @@
     }
     .pcard.child h3::before { content: '↳ '; color: #3b82f6; }
     .ms-rows { margin-top: auto; display: grid; gap: 0.9rem; }
+    .ms-step .t .why { display: block; color: #94a3b8; font-weight: 400; }
     .ms-track-label { font-family: 'Inter', sans-serif; font-size: 0.72rem; font-weight: 700; letter-spacing: 1px; color: #94a3b8; margin-bottom: -0.4rem; }
     .ms-track { list-style: none; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); }
     .ms-step { position: relative; padding-top: 1.35rem; padding-right: 0.4rem; }
@@ -370,9 +371,25 @@
 
     /* ── Blog ── */
     #blog { background: rgba(15,23,42,0.95); }
+    .blog-slider { position: relative; }
     .blog-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(480px, 1fr)); gap: 1.5rem;
+      display: grid; grid-auto-flow: column; grid-auto-columns: calc((100% - 3rem) / 3); gap: 1.5rem;
+      overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth;
+      padding: 0.5rem 0 1.25rem; scrollbar-width: none;
     }
+    .blog-grid::-webkit-scrollbar { display: none; }
+    .blog-grid > .blog-card { scroll-snap-align: start; }
+    .blog-grid > .blog-empty { grid-column: 1 / -1; }
+    .blog-nav { display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
+    .blog-count { font-size: 0.8rem; color: #64748b; margin-right: auto; }
+    .blog-btn {
+      width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: rgba(30,41,59,0.8); color: #e2e8f0; border: 1px solid rgba(139,92,246,0.3);
+      transition: background 0.2s, opacity 0.2s;
+    }
+    .blog-btn:hover:not(:disabled) { background: rgba(139,92,246,0.2); }
+    .blog-btn:disabled { opacity: 0.3; cursor: default; }
     .blog-card {
       background: rgba(30,41,59,0.6); border: 1px solid rgba(59,130,246,0.08);
       border-radius: 16px; padding: 2rem; transition: all 0.35s;
@@ -494,7 +511,7 @@
       .sdlc-family { grid-template-columns: 1fr; }
       .sdlc-bar { flex-wrap: wrap; }
       .sdlc-bar .range { display: block; width: 100%; }
-      .blog-grid { grid-template-columns: 1fr; }
+      .blog-grid { grid-auto-columns: 85%; }
     }
     @media (max-width: 600px) {
       section { padding: 3rem 1.25rem; }
@@ -617,8 +634,15 @@
       <h2 class="section-title"><span class="accent">04.</span> Blog</h2>
       <p class="section-subtitle" data-i18n="blogSub">Notes, learnings &amp; things I find interesting</p>
       <div class="divider"></div>
-      <div class="blog-grid" id="blogGrid">
-        <div class="blog-empty">Loading...</div>
+      <div class="blog-nav">
+        <span class="blog-count" id="blogCount"></span>
+        <button class="blog-btn" id="blogPrev" aria-label="Previous posts"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <button class="blog-btn" id="blogNext" aria-label="Next posts"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>
+      <div class="blog-slider">
+        <div class="blog-grid" id="blogGrid">
+          <div class="blog-empty">Loading...</div>
+        </div>
       </div>
     </div>
   </section>
@@ -752,6 +776,7 @@
         expSub: 'Each card shows the milestones. Open a card for the full project story.',
         sideSub: "Things I've built or contributed to",
         blogSub: 'Notes, learnings & things I find interesting',
+        postCount: '{n} posts · swipe or use the arrows',
         contactText: 'Contact me about collaboration, job opportunities, or AI in finance.',
         phName: 'Your name', phEmail: 'Your email', phMsg: "What's on your mind?", send: 'Send Message',
         footer: 'Personal website · Built with curiosity.',
@@ -766,6 +791,7 @@
         expSub: '卡片顯示專案的 Milestone。點卡片看完整的專案說明。',
         sideSub: '我做過或參與的專案',
         blogSub: '筆記、學習心得與有趣的事',
+        postCount: '共 {n} 篇 · 左右滑動或點箭頭看更多',
         contactText: '有合作想法、工作機會，或是想聊 AI 在金融領域的應用，都歡迎找我。',
         phName: '你的名字', phEmail: '你的 Email', phMsg: '想說什麼？', send: '送出訊息',
         footer: '個人網站 · Built with curiosity.',
@@ -895,12 +921,14 @@
     function renderCard(p, id, names) {
       const pills = stagePills(p, names);
       // One progress row per milestone track (e.g. two vendors); up to 5 steps per row.
+      // "Station: detail" shows the detail on its own line.
+      const msText = t => { const m = t.match(/^(.+?)[：:]\s*(.+)$/); return m ? `${esc(m[1])}<span class="why">${esc(m[2])}</span>` : esc(t); };
       const all = p.milestones || [];
       const tracks = [...new Set(all.map(m => m.track || ''))];
       const rows = tracks.map(t => {
         const ms = all.filter(m => (m.track || '') === t).slice(0, 5);
         const steps = ms.map(m => `
-          <li class="ms-step ${esc(m.status)}"><span class="d">${esc(m.date)}</span><span class="t">${esc(m.text)}</span></li>`).join('');
+          <li class="ms-step ${esc(m.status)}"><span class="d">${esc(m.date)}</span><span class="t">${msText(m.text)}</span></li>`).join('');
         return `${t ? `<div class="ms-track-label">${esc(t)}</div>` : ''}<ol class="ms-track" style="--n:${ms.length}">${steps}</ol>`;
       }).join('');
       return `
@@ -981,6 +1009,17 @@
 
     // ── Blog: load from posts/posts.json ──
     const blogGrid = document.getElementById('blogGrid');
+    // Slider: the arrows move one card width; swipe and trackpad scroll also work.
+    const blogPrev = document.getElementById('blogPrev'), blogNext = document.getElementById('blogNext');
+    const blogStep = () => { const c = blogGrid.querySelector('.blog-card'); return c ? c.offsetWidth + 24 : blogGrid.clientWidth; };
+    const blogNav = () => {
+      const max = blogGrid.scrollWidth - blogGrid.clientWidth - 2;
+      blogPrev.disabled = blogGrid.scrollLeft <= 2; blogNext.disabled = blogGrid.scrollLeft >= max;
+    };
+    blogPrev.onclick = () => blogGrid.scrollBy({ left: -blogStep() });
+    blogNext.onclick = () => blogGrid.scrollBy({ left: blogStep() });
+    blogGrid.addEventListener('scroll', blogNav, { passive: true });
+    window.addEventListener('resize', blogNav);
     const en = Site.getLang() === 'en';
     getJSON('posts/posts.json').then(posts => {
       if (!posts.length) { blogGrid.innerHTML = `<div class="blog-empty">${esc(T('soon'))}</div>`; return; }
@@ -996,6 +1035,8 @@
           </div>
         </a>
       `).join('');
+      document.getElementById('blogCount').textContent = T('postCount').replace('{n}', posts.length);
+      blogNav();
     }).catch(() => { blogGrid.innerHTML = `<div class="blog-empty">${esc(T('soon'))}</div>`; });
     }
 

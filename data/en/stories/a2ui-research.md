@@ -42,3 +42,5 @@ The boundary comes first too: under the pre-launch check, the Wealth Assistant m
 ## Further reading
 
 Google's introduction to A2UI: [Introducing A2UI: An open project for agent-driven interfaces](https://developers.googleblog.com/en/introducing-a2ui-an-open-project-for-agent-driven-interfaces/).
+
+I wrote up the method of this project in a post (Chinese): [From technology research to product: the A2UI productization journey](posts/a2ui-productization.html).

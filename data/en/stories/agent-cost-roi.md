@@ -34,3 +34,7 @@ I led the cost model and the 3-year TCO / ROI. Business units supplied volumes a
 
 - Collect the four vendors' forms and the business units' benefit data.
 - Finish the AI Agent compute estimate, then deliver the final TCO / ROI and GPU quotas.
+
+## Further reading
+
+I wrote up the method of this project in a post (Chinese): [How to price AI Agent compute: split the GPU into space and time](posts/ai-agent-gpu-cost.html).

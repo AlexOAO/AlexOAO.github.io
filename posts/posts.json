@@ -1,5 +1,61 @@
 [
   {
+    "id": "ai-agent-gpu-cost",
+    "title": "AI Agent 的算力成本怎麼算：把 GPU 拆成空間與時間",
+    "date": "2026-10-21",
+    "summary": "把成本結構完全不同的四個 AI Agent 放進同一個公式：GPU 拆成空間與時間，工作量依元件改用頁、分鐘或 Token，再把尖峰與離峰分開估算。",
+    "tags": [
+      "TCO",
+      "ROI",
+      "GPU"
+    ],
+    "file": "posts/ai-agent-gpu-cost.html",
+    "title_en": "How to price AI Agent compute: split the GPU into space and time",
+    "summary_en": "Four AI Agents with very different cost structures, one formula: split the GPU into space and time, measure work in pages, minutes, or tokens by component, and estimate peak and off-peak separately."
+  },
+  {
+    "id": "ai-agent-prelaunch-check",
+    "title": "AI Agent 上線前要檢查什麼：把金管會六大原則變成一張九格表",
+    "date": "2026-10-21",
+    "summary": "把金管會六大 AI 原則拆成文件、產出、行為三層，乘上評估、紀錄、持續管理三問，變成一張可以留下證據、新專案也能沿用的九格檢核表。",
+    "tags": [
+      "AI Governance",
+      "FSC",
+      "Checklist"
+    ],
+    "file": "posts/ai-agent-prelaunch-check.html",
+    "title_en": "What to check before an AI Agent launches: turning six FSC principles into a nine-cell table",
+    "summary_en": "Split the six FSC AI principles into three layers (documents, output, behavior) and three questions (assessed, recorded, still managed): a nine-cell check that leaves evidence and that new projects can reuse."
+  },
+  {
+    "id": "ai-platform-poc",
+    "title": "AI 代理平台怎麼選：在採購前用實測找出 12 個問題",
+    "date": "2026-10-21",
+    "summary": "AI 代理平台選型 PoC 的做法：依平台拆模組設計測試、先查 GitHub 的真實回報、用自己的法規 QA 實測、問題標嚴重度，再用同一張 42 項評分表比較。",
+    "tags": [
+      "PoC",
+      "Dify",
+      "Platform"
+    ],
+    "file": "posts/ai-platform-poc.html",
+    "title_en": "How to choose an AI agent platform: 12 issues found by testing before purchase",
+    "summary_en": "How I ran the platform selection PoC: tests designed per module, real GitHub reports reviewed first, the bank’s own regulatory QA as test data, a severity on every issue, and one 42-item scorecard for both platforms."
+  },
+  {
+    "id": "a2ui-productization",
+    "title": "從技術研究到產品：A2UI 的產品化旅程",
+    "date": "2026-10-21",
+    "summary": "用 A2UI 為例，整理把新技術推向產品的五個站點：商用場景、所需資源、價值驗證、PoC、產品化，以及為什麼順序不能反過來。",
+    "tags": [
+      "A2UI",
+      "Product",
+      "AI Agent"
+    ],
+    "file": "posts/a2ui-productization.html",
+    "title_en": "From technology research to product: the A2UI productization journey",
+    "summary_en": "Using A2UI as the example, five stations that take a new technology to a product: use cases, resources, value check, PoC, and productization, and why the order matters."
+  },
+  {
     "id": "ai-ops-dashboard",
     "title": "AI 營運成效怎麼看：一張 Dashboard 回答「AI 值不值得」",
     "date": "2026-10-21",

@@ -33,3 +33,7 @@ title: agent-governance
 
 - 完成四大 Agent 對應六大規範的資料蒐集。
 - 從貸款助理開始試行，再寫進管理要點。
+
+## 延伸閱讀
+
+我把這個專案的方法整理成一篇文章：[AI Agent 上線前要檢查什麼：把金管會六大原則變成一張九格表](posts/ai-agent-prelaunch-check.html)。

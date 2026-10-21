@@ -32,3 +32,7 @@ title: agentic-platform-eval
 ## 下一步
 
 平台選定之後，Guardrails PoC 的版本化題庫與上線前檢核機制，會套用到在平台上建置的每一個 Agent。
+
+## 延伸閱讀
+
+我把這個專案的方法整理成一篇文章：[AI 代理平台怎麼選：在採購前用實測找出 12 個問題](posts/ai-platform-poc.html)。

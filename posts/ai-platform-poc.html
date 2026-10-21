@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 代理平台怎麼選：在採購前用實測找出 12 個問題 | Alex Li</title>
+  <meta name="description" content="Alex Li（李翔緯）整理 AI 代理平台選型 PoC 的方法：依平台拆模組設計測試、先查 GitHub 的真實回報、問題標嚴重度，再用同一張評分表比較 Agatha 與 Dify。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/post.css">
+</head>
+<body>
+  <nav class="post-nav">
+    <a href="../index.html" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Back
+    </a>
+  </nav>
+
+  <article class="post">
+    <header class="post-header">
+      <div class="post-meta">
+        <time>2026-10-21</time>
+        <div class="post-tags">
+          <span>PoC</span><span>Dify</span><span>Platform</span>
+        </div>
+      </div>
+      <h1>AI 代理平台怎麼選：在採購前用實測找出 12 個問題</h1>
+    </header>
+
+    <div class="post-body">
+      <p>四大 AI Agent 需要一個平台來建置與管理，候選的是 Agatha 和開源的 Dify。選錯平台的代價很高：做到一半才發現少了關鍵功能，或上線後才發現資安漏洞。這篇整理我怎麼設計這次的選型 PoC。</p>
+
+      <h2>一、評測要回答的問題</h2>
+      <p>選型評測最常見的做法，是拿一張功能清單逐項打勾。但功能多，不代表在我們的場景裡不會出事。所以這次 PoC 要回答的問題是：<strong>哪個平台在我們的場景裡不會出事？</strong></p>
+
+      <h2>二、依平台拆模組，不抄別人的清單</h2>
+      <p>評測 Dify 時，我先讀官方文件，把它拆成五大功能模組：Knowledge Pipeline（RAG 資料處理）、Workflow、Agent、Plugins 與 MCP、發布與監控，再依模組設計測試。別的平台的測試清單，問的不一定是這個平台的問題。</p>
+
+      <h2>三、先查真實使用者踩過的坑</h2>
+      <p>官方文件寫的是平台能做什麼；GitHub 上的回報，寫的是平台實際上哪裡會壞。我先整理了和我們情境有關的真實回報：</p>
+      <ul>
+        <li>Excel 上傳後內容是空的。</li>
+        <li>PDF 裡的表格被忽略。</li>
+        <li>跨頁的句子被切成兩段。</li>
+        <li>Workflow 模式下，引用來源不穩定。</li>
+      </ul>
+      <p>每一項都先準備好因應方式，測試時就知道要特別盯哪裡。</p>
+
+      <h2>四、用自己的資料測，問題標上嚴重度</h2>
+      <p>Dify 的 34 項測試分成兩層。基本測試用本行的法規輔助檢核 QA（238 題）與裁罰 QA（119 題），測知識庫的匯入、解析、檢索，以及回答的準確性、引用來源與防幻覺。進階測試涵蓋 Workflow、Agent、多模型管理、MCP 工具擴充、權限治理（RBAC、防注入）、維運監控、效能與穩定性。</p>
+      <p>Agatha 的 26 項實測裡，每一個問題都標上嚴重度：阻斷、資安或一般。最後找出 12 個問題，其中 4 個會讓 Agent 無法上線、1 個是資安漏洞。</p>
+      <p>嚴重度比問題數量重要。12 個一般問題可能都可以接受，但 1 個阻斷問題，就足以改變選型結果。</p>
+
+      <h2>五、同一把尺比較</h2>
+      <p>兩個平台都用同一套評分表比較：部門內部的評分表，以及金控提供的 9 大類 42 項評分表。評分表一致，選型決策才有可以並排比較的依據。</p>
+
+      <h2>學到的事</h2>
+      <p>這次 PoC 最大的價值，是這些問題在採購前就被找到，而不是在 Agent 上線之後。PoC 的目的不是證明平台很好，而是在還來得及改變決定的時候，找出它哪裡不好。</p>
+
+      <h2>參考資料</h2>
+      <ul>
+        <li><a href="https://docs.dify.ai/">Dify 官方文件</a></li>
+        <li><a href="https://github.com/langgenius/dify/issues">Dify GitHub Issues</a></li>
+      </ul>
+    </div>
+  </article>
+
+  <footer class="post-footer">
+    <a href="../index.html#blog" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      All Posts
+    </a>
+  </footer>
+</body>
+</html>

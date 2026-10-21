@@ -42,3 +42,5 @@ A2UI 是 Google 在 2025 年 12 月開源的協定，讓 AI Agent 不只回覆�
 ## 延伸閱讀
 
 Google 官方的 A2UI 介紹：[Introducing A2UI: An open project for agent-driven interfaces](https://developers.googleblog.com/en/introducing-a2ui-an-open-project-for-agent-driven-interfaces/)。
+
+我把這個專案的方法整理成一篇文章：[從技術研究到產品：A2UI 的產品化旅程](posts/a2ui-productization.html)。

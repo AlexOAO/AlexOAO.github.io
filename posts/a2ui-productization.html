@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>從技術研究到產品：A2UI 的產品化旅程 | Alex Li</title>
+  <meta name="description" content="Alex Li（李翔緯）整理 A2UI 技術研究的產品化旅程：先找商用場景、再確認資源、驗證業務價值、做 PoC，最後才排進產品時程。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/post.css">
+</head>
+<body>
+  <nav class="post-nav">
+    <a href="../index.html" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Back
+    </a>
+  </nav>
+
+  <article class="post">
+    <header class="post-header">
+      <div class="post-meta">
+        <time>2026-10-21</time>
+        <div class="post-tags">
+          <span>A2UI</span><span>Product</span><span>AI Agent</span>
+        </div>
+      </div>
+      <h1>從技術研究到產品：A2UI 的產品化旅程</h1>
+    </header>
+
+    <div class="post-body">
+      <p>技術研究很容易停在「這個技術好酷」。但在銀行，技術研究要回答的問題只有一個：<strong>這項技術能不能變成產品功能？</strong>這篇用 A2UI 為例，整理我怎麼把一項新技術推向產品。</p>
+
+      <h2>一、A2UI 是什麼</h2>
+      <p>A2UI 是 Google 在 2025 年 12 月開源的協定，讓 AI Agent 不只回覆文字，還能回覆一個「介面」：Agent 送出描述元件與資料的 JSON，前端再用自己預先核准的元件畫出來。因為 Agent 送的是資料、不是程式碼，它不能執行任意程式，只能從前端的元件清單裡挑選。</p>
+      <p>對銀行來說，這解決一個實際的問題：理財資訊用一大段文字回答，客戶很難讀；但讓 AI 直接產生網頁程式碼，又不可能通過資安審查。A2UI 剛好在中間：<strong>畫面怎麼排由 AI 決定，能用哪些元件由銀行決定。</strong></p>
+
+      <h2>二、產品化的五個站點</h2>
+      <p>我把技術研究排成一條旅程，每一站都要先過關，才進下一站：</p>
+      <ul>
+        <li><strong>商用場景</strong>：它能用在哪裡？</li>
+        <li><strong>所需資源</strong>：要做 PoC，需要什麼？</li>
+        <li><strong>價值驗證</strong>：業務單位覺得值得做嗎？</li>
+        <li><strong>PoC</strong>：在測試環境裡真的做得出來嗎？</li>
+        <li><strong>產品化</strong>：排進產品的開發時程。</li>
+      </ul>
+
+      <h2>三、第一站：先找場景，再劃邊界</h2>
+      <p>以智富管家為主要場景，我整理出三個候選：</p>
+      <ul>
+        <li>資產總覽：用卡片與圖表呈現客戶的資產配置，取代一長串文字。</li>
+        <li>商品比較：把客戶問到的幾檔基金，整理成一張比較表。</li>
+        <li>資料填寫：用表單協助客戶完成風險屬性問卷這類資料。</li>
+      </ul>
+      <p>找場景的同時，也要先劃出邊界：依上線前檢核機制，智富管家不能執行交易，所以 A2UI 只用在「資訊呈現與資料填寫」，不放下單按鈕。</p>
+
+      <h2>四、第二站：資源決定技術能做到哪裡</h2>
+      <p>PoC 需要的資源包括：環境需求與技術規格、Azure AI Foundry 與 Token 的申請、IT 測試環境的對接，以及前端可用的元件清單。最後一項最關鍵：A2UI 能畫出什麼，取決於銀行准許哪些元件。</p>
+
+      <h2>五、第三站：技術可行只是門檻</h2>
+      <p>在進入 PoC 之前，要先和業務單位確認兩件事：哪一個場景最值得先做？成功要用什麼指標衡量？少了這一站，PoC 做得再好，也可能做的是沒人要的功能。</p>
+
+      <h2>六、第四、五站：PoC 與產品化</h2>
+      <p>選定場景後，在測試環境實作，並套用 Guardrails 與上線前檢核：Agent 產生的介面，同樣要通過產出層的驗證。PoC 通過後，再和產品團隊對接，把 A2UI 排進開發時程。</p>
+
+      <h2>學到的事</h2>
+      <p>技術研究的順序，決定了它會不會變成產品。先問「能用在哪裡」，再問「需要什麼」，最後才問「做不做得出來」。順序反過來，常常會得到一個做得出來、卻沒有人要用的 Demo。</p>
+
+      <h2>參考資料</h2>
+      <ul>
+        <li><a href="https://developers.googleblog.com/en/introducing-a2ui-an-open-project-for-agent-driven-interfaces/">Google Developers Blog：Introducing A2UI: An open project for agent-driven interfaces</a></li>
+      </ul>
+    </div>
+  </article>
+
+  <footer class="post-footer">
+    <a href="../index.html#blog" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      All Posts
+    </a>
+  </footer>
+</body>
+</html>

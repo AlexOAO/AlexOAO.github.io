@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Agent 的算力成本怎麼算：把 GPU 拆成空間與時間 | Alex Li</title>
+  <meta name="description" content="Alex Li（李翔緯）整理銀行四大 AI Agent 的成本模型：把 GPU 拆成空間（記憶體）與時間（算力），再用同一個公式比較地端 GPU、雲端 Token 與 CPU 三種成本結構。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/post.css">
+</head>
+<body>
+  <nav class="post-nav">
+    <a href="../index.html" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Back
+    </a>
+  </nav>
+
+  <article class="post">
+    <header class="post-header">
+      <div class="post-meta">
+        <time>2026-10-21</time>
+        <div class="post-tags">
+          <span>TCO</span><span>ROI</span><span>GPU</span>
+        </div>
+      </div>
+      <h1>AI Agent 的算力成本怎麼算：把 GPU 拆成空間與時間</h1>
+    </header>
+
+    <div class="post-body">
+      <p>銀行同時要上線四個 AI Agent：貸款助理、智能徵審、客服助理、智富管家。財務問的問題很簡單：GPU 怎麼分？預算怎麼編？難的是，這四個 Agent 的成本長得完全不一樣：有的吃地端 GPU，有的燒雲端 Token，有的只用 CPU。這篇整理我怎麼把它們放進同一張表。</p>
+
+      <h2>一、先找共同的計算單位</h2>
+      <p>不同的成本結構不能直接相加，所以第一步不是算數字，而是找一個共同的公式：</p>
+      <p><strong>成本＝事件數量 × 每個事件消耗的資源 × 資源單價。</strong></p>
+      <p>「事件」可以是一件徵審案件、一通客服電話，或一次理財問答。只要每個 Agent 都能說出「一個事件吃掉多少資源」，四個 Agent 就能在同一張表上比較。</p>
+
+      <h2>二、把 GPU 拆成空間與時間</h2>
+      <p>我用一棟大樓來說明算力中心：</p>
+      <ul>
+        <li><strong>空間</strong>是 GPU 記憶體，像樓板面積，決定能進駐多少 AI 模型。模型放上去就一直佔著，不會還回來，所以它是<strong>固定成本</strong>。</li>
+        <li><strong>時間</strong>是 GPU 算力，像營運工時，決定能服務多少請求。一個請求跑完，算力就可以給下一個，所以它是<strong>變動成本</strong>。</li>
+      </ul>
+      <p>空間模型有一個容易算錯的地方：KV 快取占用的記憶體，取決於「同時處理幾件」，而不是「一天處理幾件」。一天一萬件、但同時只有十件，和一天一千件、但同時有五十件，後者需要的記憶體更多。</p>
+
+      <h2>三、三套成本模型，一套效益模型</h2>
+      <ul>
+        <li><strong>容量模型</strong>：算出每個元件要佔多少空間、多少時間。</li>
+        <li><strong>地端攤提模型</strong>：多個 Agent 共用的元件只算一份，再依時間佔比分攤。</li>
+        <li><strong>雲端 Token 模型</strong>：業務量 × 每段旅程的 Token × 單價。</li>
+        <li><strong>效益模型</strong>：業務量 × 單位效益 × 價值單價。</li>
+      </ul>
+      <p>本行的算力池是 5 張 RTX PRO 6000，每張 96 GB，合計 480 GB、每日 432,000 卡秒。四個 Agent 的元件放進這個池子，就能看出尖峰時段會不會塞車。</p>
+
+      <h2>四、工作量的單位，要跟著元件走</h2>
+      <p>Token 看起來是最直覺的單位，但它不是每個元件都適用：</p>
+      <ul>
+        <li><strong>OCR 用「頁」</strong>：同一頁密密麻麻的表格和一行標題，Token 數差十倍，掃描時間卻差不多。</li>
+        <li><strong>語音辨識用「分鐘」</strong>：同一通 3 分鐘的電話，客戶講快講慢，Token 數可以差到近兩倍，GPU 耗時卻幾乎一樣。</li>
+        <li><strong>語言模型用 Token</strong>：輸入與輸出的單價不同，要分開算。</li>
+      </ul>
+      <p>以智能徵審為例：每件案件輸入 11,250、輸出 2,500 Token，以 GPT5.5 的單價假設（輸入 $2.5、輸出 $15）計算，每件約 1.92 元。再乘上逐年成長的案件量，就得到三年的 Token 成本。</p>
+
+      <h2>五、時段也是成本</h2>
+      <p>同樣的算力，放在尖峰和離峰的價值不同。智能徵審的 OCR 可以排在離峰批次執行，不佔用營業時間的算力；客服電話必須即時回應，只能放在尖峰；智富管家全天運作，兩段都佔。估算時把時段分開，才不會在尖峰時段才發現 GPU 不夠。</p>
+
+      <h2>學到的事</h2>
+      <p>成本模型最難的不是公式，而是資料。我設計的廠商資料索取表，只問地端元件的規格：模型大小、量化格式、每字佔用、同時件數，並要求附上代表性的測試樣本。問得越少、越精準，廠商回得越快，數字也越能互相比較。</p>
+
+      <h2>參考資料</h2>
+      <ul>
+        <li><a href="https://arxiv.org/abs/2309.06180">Efficient Memory Management for Large Language Model Serving with PagedAttention（vLLM，arXiv）</a></li>
+        <li><a href="https://www.nvidia.com/en-us/data-center/rtx-pro-6000-blackwell-server-edition/">NVIDIA RTX PRO 6000 Blackwell Server Edition</a></li>
+      </ul>
+    </div>
+  </article>
+
+  <footer class="post-footer">
+    <a href="../index.html#blog" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      All Posts
+    </a>
+  </footer>
+</body>
+</html>

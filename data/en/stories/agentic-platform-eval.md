@@ -32,3 +32,7 @@ I led the platform evaluation: test design, test runs, issue logging, and the sc
 ## Next steps
 
 After the platform is chosen, the Guardrails test set and the pre-launch check will apply to every Agent built on it.
+
+## Further reading
+
+I wrote up the method of this project in a post (Chinese): [How to choose an AI agent platform: 12 issues found by testing before purchase](posts/ai-platform-poc.html).
