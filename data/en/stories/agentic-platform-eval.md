@@ -19,13 +19,15 @@ I led the platform evaluation: test design, test runs, issue logging, and the sc
 
 ## What I did
 
-**Phase 1: split the features first, do not copy a checklist.** For Dify, I split the official documentation into 5 modules: Knowledge Pipeline (RAG data processing), Workflow, Agent, Plugins and MCP, and Publish and Monitor, then designed tests per module. Another platform's checklist does not ask this platform's questions. I also collected real reports from Dify's GitHub that matter to our case (empty content after Excel upload, PDF tables ignored, sentences split across pages, unstable citations in Workflow mode) and prepared a response for each.
+**Phase 1 | Problem definition.** A wrong platform is expensive: you find a missing capability halfway through, or a security gap after launch. So the evaluation must answer not "which platform has more features" but "which platform will not fail in our use cases".
 
-**Phase 2: 26 hands-on tests on Agatha.** Every issue got a severity: blocking, security, or general.
+**Phase 2 | Test design.** For Dify, I split the official documentation into 5 modules (Knowledge Pipeline for RAG data processing, Workflow, Agent, Plugins and MCP, and Publish and Monitor) and designed tests per module. Another platform's checklist does not ask this platform's questions. I also collected real reports from Dify's GitHub that matter to our case (empty content after Excel upload, PDF tables ignored, sentences split across pages, unstable citations in Workflow mode) and prepared a response for each.
 
-**Phase 3: 34 tests on Dify, in two levels.** Basic tests used the bank's regulatory QA (238 questions) and penalty QA (119 questions) to check import, parsing, and retrieval, plus answer accuracy, citations, and hallucination control. Advanced tests covered Workflow, Agents, multi-model management, MCP tools, access control (RBAC, injection defense), monitoring, performance, and stability.
+**Phase 3 | Testing.** Agatha had 26 hands-on tests, and every issue got a severity: blocking, security, or general. Dify had 34 tests in two levels: basic tests used the bank's regulatory QA (238 questions) and penalty QA (119 questions) to check import, parsing, and retrieval, plus answer accuracy, citations, and hallucination control; advanced tests covered Workflow, Agents, multi-model management, MCP tools, access control (RBAC, injection defense), monitoring, performance, and stability.
 
-**Phase 4: one scorecard.** I filled in the department scorecard and the holding company's 42-item scorecard, so the two platforms could be compared side by side.
+**Phase 4 | Comparison.** Both platforms were scored on the same sheets: the department scorecard and the holding company's 42-item scorecard in 9 categories.
+
+**Phase 5 | Adoption decision.** The PoC reports and scorecards are the basis for the holding company's selection decision.
 
 ## Next steps
 

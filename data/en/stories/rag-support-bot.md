@@ -16,11 +16,15 @@ A team project and my first internship project. I owned the RAG architecture, th
 
 ## What I did
 
-**Phase 1: build the Qdrant vector database.** We first considered fine-tuning a model, but the manuals change often and retraining each time costs too much. RAG separates the knowledge base from the model: when a document changes, only its embeddings are rebuilt. I compared Pinecone, Weaviate, Chroma, and Qdrant, and chose Qdrant: it runs self-hosted on Docker so data stays inside the company, it supports filtering for category queries, and it performs well at medium data volume.
+**Phase 1 | Requirements.** The answers were in the technical manuals, but spread across them. Members needed to ask in natural language and get the manual's answer directly.
 
-**Phase 2: RAG Q&A and chunk tuning.** With fixed 500-token chunks, the LLM often got incomplete context, and accuracy was 60%. I switched to semantic chunks (by paragraph, with overlap) and tagged each chunk with its source section. Accuracy rose to 85%.
+**Phase 2 | PoC.** We first considered fine-tuning a model, but the manuals change often and retraining each time costs too much. RAG separates the knowledge base from the model: when a document changes, only its embeddings are rebuilt. I compared Pinecone, Weaviate, Chroma, and Qdrant, and chose Qdrant: it runs self-hosted on Docker so data stays inside the company, it supports filtering for category queries, and it performs well at medium data volume.
 
-**Phase 3: front end, admin console, and launch.** The system runs on Docker Compose: Qdrant for vector search, LangExtract for parsing, FastAPI for the back end, plus an HTML front end and an admin console.
+**Phase 3 | Build.** With fixed 500-token chunks, the LLM often got incomplete context, and accuracy was 60%. I switched to semantic chunks (by paragraph, with overlap) and tagged each chunk with its source section. Accuracy rose to 85%.
+
+**Phase 4 | Launch.** The system runs on Docker Compose: Qdrant for vector search, LangExtract for parsing, FastAPI for the back end, plus an HTML front end and an admin console.
+
+**Phase 5 | Operate.** Admins maintain the knowledge base in the console, so document updates need no engineer.
 
 ## What I learned
 

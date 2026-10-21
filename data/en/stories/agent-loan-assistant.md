@@ -16,11 +16,13 @@ I add the Loan Assistant to the 4-Agent cost model.
 
 ## What I did
 
-**Phase 1: confirm the on-premises parts.** The Loan Assistant has one on-premises part: CPU-based data masking. It takes no space in the GPU pool, so its cost follows the cloud token model: volume × tokens per journey × unit price.
+**Phase 1 | Framework design.** The Loan Assistant has one on-premises part: CPU-based data masking. It takes no space in the GPU pool, so its cost follows the cloud token model: volume × tokens per journey × unit price.
 
-**Phase 2: get the business volume.** I requested the monthly volume from the business unit and am waiting for the reply.
+**Phase 2 | Data collection.** I requested the monthly volume from the business unit and am waiting for the reply.
 
-**Phase 3: deliver TCO / ROI.** This follows when the volume arrives.
+**Phase 3 | Estimate.** When the volume arrives, estimate the cloud token cost.
+
+**Phase 4 | Institutionalize.** Add the Loan Assistant's TCO and ROI to the 4-Agent comparison.
 
 ## Next steps
 

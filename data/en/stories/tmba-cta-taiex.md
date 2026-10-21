@@ -16,11 +16,13 @@ I led this strategy.
 
 ## What I did
 
-**Phase 1: build the backtest framework.** Make sure every result can be reproduced.
+**Phase 1 | Hypothesis.** Develop a CTA strategy on TAIEX futures.
 
-**Phase 2: optimize the parameters.** Tune the strategy on the framework and evaluate it with three measures: return, Sharpe ratio, and maximum drawdown. Return alone hides how much risk was taken; the other two show it.
+**Phase 2 | Backtest.** Build the backtest framework first, so every result can be reproduced.
 
-**Phase 3: the showcase.** The strategy won 3rd place.
+**Phase 3 | Optimization.** Tune the parameters on the framework and evaluate with three measures: return, Sharpe ratio, and maximum drawdown. Return alone hides how much risk was taken; the other two show it.
+
+**Phase 4 | Result.** The strategy won 3rd place at the showcase.
 
 ## Next steps
 

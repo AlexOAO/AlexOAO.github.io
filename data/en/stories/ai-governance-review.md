@@ -16,11 +16,13 @@ I developed the AI governance automated review system.
 
 ## What I did
 
-**Phase 1: SharePoint intake.** Subsidiaries upload reports to SharePoint and get results back in the same place, instead of by email.
+**Phase 1 | Requirements.** The most labor-intensive parts of a review are judging whether the content is reasonable, recalculating the risk level, and cross-checking the asset register. Those three are what the system takes over.
 
-**Phase 2: content check and risk recalculation.** Azure OpenAI judges whether the "current controls" and "risk treatment plan" are reasonable, which used to take the most effort. The system then recalculates risk levels, cross-checks the asset register, assesses residual risk, and writes a review report with fixes ranked by severity.
+**Phase 2 | Build.** I first connected SharePoint: subsidiaries upload reports there and get results back in the same place. Azure OpenAI then judges whether the "current controls" and "risk treatment plan" are reasonable, and the system recalculates risk levels, cross-checks the asset register, assesses residual risk, and writes a review report with fixes ranked by severity.
 
-**Phase 3: deploy to ACA with CI/CD.** Azure DevOps CI/CD deploys the system to Azure Container Apps; every change goes through the same automated pipeline.
+**Phase 3 | Launch.** Azure DevOps CI/CD deploys the system to Azure Container Apps; every change goes through the same automated pipeline.
+
+**Phase 4 | Operate.** The next step is to measure review time per report before and after the system.
 
 ## Next steps
 

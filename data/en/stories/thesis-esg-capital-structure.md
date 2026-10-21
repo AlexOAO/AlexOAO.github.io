@@ -16,9 +16,11 @@ Author.
 
 ## What I did
 
-**Phase 1: start the Tunghai GMBA.**
+**Phase 1 | Question.** Do ESG risk scores affect the capital structure of Taiwanese companies?
 
-**Phase 2: thesis done, degree earned.** The full thesis is in the [National Digital Library of Theses](https://hdl.handle.net/11296/us53cs) (Chinese).
+**Phase 2 | Data and method.** Research design, sample, and method: to be added.
+
+**Phase 3 | Conclusion.** Thesis done and degree earned. The full thesis is in the [National Digital Library of Theses](https://hdl.handle.net/11296/us53cs) (Chinese).
 
 ## Next steps
 

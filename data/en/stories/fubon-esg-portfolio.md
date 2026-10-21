@@ -16,13 +16,15 @@ Team member; we completed the final project together.
 
 ## What I did
 
-**Phase 1: join the program.** In the 3-month program, every class had an assignment and a team presentation, to show what researchers and fund managers do.
+**Phase 1 | Question.** Does ESG add value in stock investing? That was the question for that year's final project.
 
-**Phase 2: team assignments and class presentations.** Collect information, combine data, write it up, and present.
+**Phase 2 | Data.** Our team selected investment targets, mainly Taiwan stocks.
 
-**Phase 3: the ESG final project.** Our team selected investment targets, mainly Taiwan stocks, and integrated the ESG factors from class into the portfolio allocation. We wrote the report and presented it to fund managers for feedback.
+**Phase 3 | Method.** Integrate the ESG factors from class into the portfolio allocation. In the 3-month program, every class had an assignment and a team presentation, to show what researchers and fund managers do.
 
-About the program (in Chinese): [Money Weekly article](https://www.moneyweekly.com.tw/_Article?AID=161517).
+**Phase 4 | Evidence.** We wrote the report and presented it to fund managers for feedback. About the program (in Chinese): [Money Weekly article](https://www.moneyweekly.com.tw/_Article?AID=161517).
+
+**Phase 5 | Conclusion.** Portfolio allocation logic and results: to be added.
 
 ## Next steps
 

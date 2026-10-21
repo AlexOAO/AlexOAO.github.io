@@ -16,11 +16,13 @@ A 6th-cohort Digital Youth T-Ambassador, working with the government on digital 
 
 ## What I did
 
-**Phase 1: join the 6th cohort.** The program works on "local problems, talent solutions": companies and organizations bring real problems, and T-Ambassadors develop digital solutions with them and help put them in place.
+**Phase 1 | Needs.** The program works on "local problems, talent solutions": companies and organizations bring real problems.
 
-**Phase 2: policy outreach and community communication.** Explained digital transformation policy and available resources with the government.
+**Phase 2 | Design.** T-Ambassadors develop digital solutions with the companies.
 
-**Phase 3: help companies adopt generative AI.** Helped companies adopt generative AI and AIoT.
+**Phase 3 | Delivery.** Policy outreach and community communication with the government, and help for companies to adopt generative AI and AIoT.
+
+**Phase 4 | Follow-up.** Number of companies, industries, and specific results: to be added.
 
 ## Next steps
 

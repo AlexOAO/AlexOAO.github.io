@@ -16,11 +16,15 @@ I owned the Webai Finance module end to end.
 
 ## What I did
 
-**Phase 1: requirements.** The hardest part was access: the tool had to be open to the whole group, but investment-trust data had to stay separate. One need opens, the other closes; the access design had to meet both.
+**Phase 1 | Requirements.** The hardest part was access: the tool had to be open to the whole group, but investment-trust data had to stay separate. One need opens, the other closes; the access design had to meet both.
 
-**Phase 2: PoC.** I orchestrated the AI Agent flow and integrated broker reports, macro data, and news through SFTP, then confirmed that the AI answers market and stock questions from that data.
+**Phase 2 | PoC.** I orchestrated the AI Agent flow and integrated broker reports, macro data, and news through SFTP, then confirmed that the AI answers market and stock questions from that data.
 
-**Phase 3: production launch.** I integrated the assistant into the existing UI / UX, so users did not need a new tool.
+**Phase 3 | Build.** I integrated the assistant into the existing UI / UX, so users did not need a new tool.
+
+**Phase 4 | Launch.** Webai Finance launched in production.
+
+**Phase 5 | Operate.** The next step is to measure the effect after launch.
 
 ## Next steps
 

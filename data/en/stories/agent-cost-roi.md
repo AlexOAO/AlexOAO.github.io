@@ -20,14 +20,17 @@ I led the cost model and the 3-year TCO / ROI. Business units supplied volumes a
 
 ## What I did
 
-**Phase 1: split GPUs into space and time.** I explain the GPU pool as a building: floor area decides how many AI models can move in; operating hours decide how many Agents can be served. Space is GPU memory: it holds models, is never given back, and is a fixed cost. Time is GPU compute: it runs requests, is reused, and is a variable cost. The bank's pool is 5 RTX PRO 6000 cards at 96 GB each: 480 GB and 432,000 card-seconds per day.
+**Phase 1 | Problem definition.** Some of the four Agents use on-premises GPUs, some use cloud tokens, one uses only CPUs. To compare them in one table, the first step is a shared unit of measure.
 
-**Phase 2: three cost models and one benefit model.** The capacity model gives the memory and card-seconds each Agent's on-premises parts need. The amortization model counts a shared part once and splits it by time share. The cloud token model is volume × tokens per journey × unit price. The benefit model is volume × improvement per unit × value per unit. One key point in the space model: KV cache memory depends on how many requests run at the same time, not on how many run in a day. So whether to buy more GPUs depends on peak concurrent use.
+**Phase 2 | Framework design.** I explain the GPU pool as a building: floor area decides how many AI models can move in; operating hours decide how many Agents can be served. Space is GPU memory: it holds models, is never given back, and is a fixed cost. Time is GPU compute: it runs requests, is reused, and is a variable cost. On this framework I built three cost models and one benefit model: a capacity model, an on-premises amortization model (a shared part counts once and is split by time share), a cloud token model (volume × tokens per journey × unit price), and a benefit model (volume × improvement per unit × value per unit). One key point in the space model: KV cache memory depends on how many requests run at the same time, not on how many run in a day.
 
-**Phase 3: GPU pool and peak estimate.** I placed the four Agents' parts in the 5-card pool and estimated peak use. I also designed a vendor form that asks only for on-premises specs (model size, quantization, memory per token, concurrent requests) plus representative test samples.
+**Phase 3 | Data collection.** I designed a vendor form that asks the four vendors only for on-premises specs (model size, quantization, memory per token, concurrent requests) plus representative test samples. Business units supply volumes and benefits. Collection is in progress.
 
-**Phase 4: AI Agent compute estimate.** In progress; it closes when the vendors return their specs.
+**Phase 4 | Estimate.** I placed the four Agents' parts in the bank's pool (5 RTX PRO 6000 cards at 96 GB each: 480 GB and 432,000 card-seconds per day) and estimated peak use. The AI Agent compute estimate is in progress.
+
+**Phase 5 | Institutionalize.** When the estimates settle, deliver the final 3-year TCO / ROI and GPU quotas as the basis for resource allocation.
 
 ## Next steps
 
-When the four vendors' forms and the business units' benefit data arrive, deliver the final 3-year TCO / ROI and GPU quotas as the basis for resource allocation.
+- Collect the four vendors' forms and the business units' benefit data.
+- Finish the AI Agent compute estimate, then deliver the final TCO / ROI and GPU quotas.

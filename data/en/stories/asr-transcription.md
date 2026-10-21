@@ -16,11 +16,13 @@ Contributor. I built the automated processing and summary flow with Whisper.
 
 ## What I did
 
-**Phase 1: speech recognition with Whisper.** Turn earnings call audio into transcripts.
+**Phase 1 | Requirements.** The research team needed more than transcripts: key points they could compare and quote directly.
 
-**Phase 2: automate video processing.** There are many calls, so the file processing runs automatically instead of one by one.
+**Phase 2 | PoC.** Whisper turns earnings call audio into transcripts.
 
-**Phase 3: structured summary tables.** Summarize each transcript into a table, so researchers can compare companies and quarters and quote directly.
+**Phase 3 | Build.** There are many calls, so the file processing runs automatically instead of one by one.
+
+**Phase 4 | Launch.** Each transcript is summarized into a structured table, so researchers can compare companies and quarters.
 
 ## Next steps
 

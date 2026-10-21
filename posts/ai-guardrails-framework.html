@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>銀行的 AI 安全護欄怎麼做：從金管會原則到 3,600 題實測 | Alex Li</title>
+  <meta name="description" content="Alex Li（李翔緯）整理銀行導入 AI 安全護欄的完整框架：AI 治理三層、護欄四層防禦、政策順序、題庫設計、漏放率與誤擋率，以及護欄與紅隊驗證的分工。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/post.css">
+</head>
+<body>
+  <nav class="post-nav">
+    <a href="../index.html" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Back
+    </a>
+  </nav>
+
+  <article class="post">
+    <header class="post-header">
+      <div class="post-meta">
+        <time>2026-10-21</time>
+        <div class="post-tags">
+          <span>AI Safety</span><span>Guardrails</span><span>AI Governance</span>
+        </div>
+      </div>
+      <h1>銀行的 AI 安全護欄怎麼做：從金管會原則到 3,600 題實測</h1>
+    </header>
+
+    <div class="post-body">
+      <p>銀行要把 AI Agent 推上線，遲早會被問到一個問題：「你怎麼證明這個 AI 是安全的？」制度文件可以證明流程有走，卻證明不了 AI 實際說出口的話是安全的。這篇整理我在銀行跟進金控 AI 安全護欄 PoC 時，建立起來的整套思考框架。</p>
+
+      <h2>一、先分清楚：AI 治理管三層，護欄只管其中一層</h2>
+      <p>金管會的「金融業運用 AI 指引」有六大核心原則：治理與問責、公平性與以人為本、隱私與客戶權益、系統穩健與安全、透明與可解釋、永續發展。原則是監理的語言，要落地，得先拆成可以檢查的對象。我把它拆成三層：</p>
+      <ul>
+        <li><strong>文件層</strong>：制度與紀錄。流程有沒有走、誰批准的。</li>
+        <li><strong>產出層</strong>：AI 說了什麼。準不準、公不公平、會不會洩漏個資。</li>
+        <li><strong>行為層</strong>：AI 做了什麼。查了哪些資料、呼叫了哪些工具、有沒有越權。</li>
+      </ul>
+      <p>這個拆法讓我釐清一件事：<strong>AI 安全護欄（Guardrails）負責的是產出層。</strong>它管得住 AI「說了什麼」，管不住 AI「做了什麼」。很多人期待護欄解決所有 AI 風險，但它只是三層中的一層。</p>
+
+      <h2>二、護欄的四層防禦</h2>
+      <p>一個完整的護欄，會在 AI 工作流程的不同位置設關卡：</p>
+      <ul>
+        <li><strong>第一層：敏感資料保護</strong>。在輸入送進模型前、輸出回到使用者前，先做個資快篩：身分證字號、電話、帳號、信用卡號這類格式明確的資料，用規則就能快速攔下。</li>
+        <li><strong>第二層：提示詞攻擊防護</strong>。偵測 Prompt Injection、Prompt Extraction 與各種繞過手法，避免攻擊者覆寫模型行為或竊取系統指令。</li>
+        <li><strong>第三層：業務範圍控制</strong>。確認請求落在這個 AI 的工作範圍內。理財助理不該回答醫療診斷，也不該替客戶決定要不要申請破產。</li>
+        <li><strong>第四層：回應安全與合規</strong>。檢查最終輸出有沒有有害內容、偏見、幻覺，或「保證獲利」這類違規用語。</li>
+      </ul>
+      <p>這四層剛好對應 OWASP 在 2025 年版 LLM 應用十大風險中的幾項：LLM01 提示詞注入、LLM02 敏感資訊揭露、LLM07 系統提示詞外洩、LLM09 錯誤資訊。</p>
+
+      <h2>三、政策有順序：先內建，再情境，最後才客製</h2>
+      <p>護欄的規則可以分成三種，而且要依序處理：</p>
+      <ul>
+        <li><strong>內建政策</strong>：廠商預設的通用大原則。</li>
+        <li><strong>任務情境護欄</strong>：用系統提示詞定義這個 AI 應該做什麼。</li>
+        <li><strong>客製化政策</strong>：針對特定業務，寫下不該做什麼。</li>
+      </ul>
+      <p>遇到漏放時，先檢查內建政策選得對不對；超出內建範圍，再補系統提示詞；超出任務情境，才寫客製化政策。每改一次，就在同一組題目上重測一次。</p>
+
+      <h2>四、怎麼測：題庫比產品更重要</h2>
+      <p>廠商的測試報告測的是廠商選的題目。要證明護欄在<strong>自己的業務</strong>上有效，就要自己出題。這次 PoC 的 R1，我們建了三組共 3,600 題：</p>
+      <ul>
+        <li><strong>通用型對話 AI：1,000 題</strong>。依護欄的六大模組各 100 題，加上對應金管會原則的 400 題。</li>
+        <li><strong>特定業務場景：1,500 題</strong>。第三方紅隊演練的 1,330 題，加上自建的 170 題。</li>
+        <li><strong>業務領域：1,100 題</strong>。涵蓋理財 App 的 10 個業務領域，逐題對應實際的 API 欄位。</li>
+      </ul>
+      <p>攻擊題（UNSAFE）和正常題（SAFE）的比例是 4：1，每一題都標上風險等級。正常題很關鍵：少了它們，就量不出護欄「擋錯」了多少。</p>
+
+      <h2>五、兩個指標要一起看：漏放率與誤擋率</h2>
+      <p>評估護欄最常見的錯誤，是只看攔截率。護欄可以犯兩種錯：放過攻擊（漏放），或擋下正常的提問（誤擋）。學界早就注意到後者，XSTest 這類測試集，就是專門找出模型對正常提問「過度拒答」的問題。</p>
+      <p>實測給了很清楚的例子：外掛護欄擋下 98.3% 的紅隊攻擊題，但 30 題正常提問中，也擋下了 20 題，每次判斷還多約 0.8 秒。另一個常被忽略的事實是：護欄疊越多層，誤擋會越疊越高。每一層都有自己的誤判率，一個正常請求只要被其中一層擋下，對使用者來說就是被拒絕了。</p>
+      <p>客製化政策也不是萬靈丹。在特定業務場景的 1,500 題上，加入客製化政策後，漏放率從 10.2% 降到 2.2%；但在通用的 1,000 題上，補上治理原則後，漏放率只從 21.1% 降到 20.0%。<strong>規則要為特定業務而寫才有效，通用的規則加再多也幫不上忙。</strong></p>
+
+      <h2>六、護欄與紅隊驗證，是兩件不同的事</h2>
+      <p>金控這次的 PoC 評估了兩家廠商，它們剛好代表兩種角色：</p>
+      <ul>
+        <li><strong>XecGuard（奧義）</strong>：即時護欄。裝在模型前後，當下攔截攻擊。</li>
+        <li><strong>Vulcan</strong>：AI 安全平台。公開資料顯示它有兩個模組：模擬紅隊攻擊、在上線前找出弱點的 Vulcan Attack，以及持續監控輸入與輸出的 Vulcan Protect。這次 PoC 用的 1,330 題紅隊基準，就來自 Vulcan。</li>
+      </ul>
+      <p>紅隊驗證負責「發現問題」，護欄負責「擋下問題」。兩者是互補的，不能互相取代。用同一套題庫當比較基準，兩種方案才能放在同一把尺上評估。</p>
+
+      <h2>七、護欄管不到的：Agent 的行為</h2>
+      <p>漏放案例裡，最值得注意的不是被騙說出什麼話，而是 Agent 被誘導去「做」什麼：MCP 工具描述欄位藏了隱藏指令、RAG 文件裡夾帶刪除資料的工具呼叫、要求 Agent 用客服名義寄出釣魚信。這些都屬於行為層，也對應 OWASP 的 LLM06「過度授權」。</p>
+      <p>內容護欄管不到這些，所以下一步要在 AI Gateway 這一層建立控制平面：每一次工具呼叫，都經過身分、意圖、權限、情境、預算、風險、稽核七道檢查，再決定放行、拒絕、限縮、改道，或轉人工。</p>
+
+      <h2>學到的事</h2>
+      <p>這次 PoC 最後的建議，不是「買哪一套護欄」，而是「現階段先用平台既有的防護機制」。平台內建的防護已經擋下全部攻擊題，再加一層護欄，攔截率沒有提升空間，誤擋卻只會增加。誤擋要靠調整設定解決，不是靠多加一層。</p>
+      <p>這個 PoC 真正留下來的，是一套可以重複使用的版本化題庫。之後每一個 AI Agent 上線，都能用同一把尺驗收；廠商換了、模型換了，題庫還在。</p>
+
+      <h2>參考資料</h2>
+      <ul>
+        <li><a href="https://genai.owasp.org/llm-top-10/">OWASP Top 10 for LLM Applications 2025</a></li>
+        <li><a href="https://www.leeandli.com/TW/NewslettersDetail/7287.htm">理律法律事務所：金管會「金融業運用人工智慧（AI）指引」介紹</a></li>
+        <li><a href="https://arxiv.org/abs/2308.01263">XSTest：找出大型語言模型過度安全行為的測試集（arXiv）</a></li>
+        <li><a href="https://tianpan.co/blog/2025-10-22-llm-guardrails-production-guide">LLM Guardrails in Production: What Actually Works</a></li>
+        <li><a href="https://www.ithome.com.tw/pr/177617">iThome：亞利安科技正式代理 AIFT 旗下 Vulcan AI 安全平台</a></li>
+        <li><a href="https://technews.tw/2026/01/09/xecguard-ai/">TechNews：防堵 AI 提示詞竊取，奧義賽博的 XecGuard</a></li>
+      </ul>
+    </div>
+  </article>
+
+  <footer class="post-footer">
+    <a href="../index.html#blog" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      All Posts
+    </a>
+  </footer>
+</body>
+</html>

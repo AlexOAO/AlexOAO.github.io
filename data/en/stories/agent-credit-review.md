@@ -19,11 +19,13 @@ I estimate Credit Review's cost and GPU allocation.
 
 ## What I did
 
-**Phase 1: the token cost estimate.** I split the flow in two: on premises, two OCR models read the documents and an SLM checks inconsistencies; a cloud LLM processes the results. OCR work is measured in pages, not tokens: a dense table page and a one-line title differ ten times in tokens but take similar scan time. In the cloud, each case uses 11,250 input and 2,500 output tokens. With a GPT5.5 price assumption ($2.5 input / $15 output), that is about NT$1.92 per case. Multiplied by the growing volume (14,999, 16,649, and 18,480 cases per month in years 1 to 3), it gives the 3-year token cost.
+**Phase 1 | Framework design.** I split the flow in two: on premises, two OCR models read the documents and an SLM checks inconsistencies; a cloud LLM processes the results. OCR work is measured in pages, not tokens: a dense table page and a one-line title differ ten times in tokens but take similar scan time. The on-premises parts run as off-peak batches and take no peak business-hour compute.
 
-**Phase 2: confirm the production GPU.** The on-premises parts run off-peak; production uses 1 GPU.
+**Phase 2 | Data collection.** From 13,513 cases per month today, the business unit forecasts 14,999, 16,649, and 18,480 in years 1 to 3.
 
-**Phase 3: deliver the final TCO / ROI.** Not started yet.
+**Phase 3 | Estimate.** Each case uses 11,250 input and 2,500 output tokens. With a GPT5.5 price assumption ($2.5 input / $15 output), that is about NT$1.92 per case; multiplied by the growing volume, it gives the 3-year token cost. Production GPU allocation was also confirmed at 1.
+
+**Phase 4 | Institutionalize.** Add build and maintenance costs, then deliver the full 3-year TCO and ROI.
 
 ## Next steps
 

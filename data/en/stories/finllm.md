@@ -16,14 +16,16 @@ Contributor. I clean data and score regulatory interpretation.
 
 ## What I did
 
-**Phase 1: clean data batch 2-1.** Clean, proofread, and correct each item. The holding company sends one batch per week.
+**Phase 1 | Cleaning standard.** Clean, proofread, and correct the raw data item by item, and turn the method into a structured standard process to extend to more items.
 
-**Phase 2: score regulatory batch 4.** Check whether the model reads regulatory questions correctly.
+**Phase 2 | Data cleaning.** The holding company sends one batch per week. Batch 2-1 is done; 9 batches remain, with all cleaning targeted before January 2027.
 
-**Phase 3: score regulatory batch 5.** In progress.
+**Phase 3 | Regulatory scoring.** Check whether the model reads regulatory questions correctly. Batch 4 is done; batch 5 is in progress.
 
-**Phases 4 and 5: finish all data cleaning and the model evaluation.** On the holding company's schedule.
+**Phase 4 | Model evaluation.** After all cleaning and scoring, evaluate the model.
+
+**Phase 5 | Delivery.** Deliver on the holding company's schedule.
 
 ## Next steps
 
-Turn the item-by-item cleaning into a structured standard process and extend it to more items.
+- Finish the remaining batches on the holding company's schedule.

@@ -73,6 +73,7 @@ collections:
                     widget: list
                     summary: "{{fields.date}} · {{fields.text}}"
                     fields:
+                      - { name: track, label: "分列名稱（同一專案有多條進度時填，例如廠商名）", widget: string, required: false }
                       - { name: date, label: "日期", widget: string }
                       - { name: text, label: "內容（≤ 20 字）", widget: string }
                       - { name: status, label: "狀態", widget: select, options: [{ label: "完成", value: done }, { label: "進行中", value: doing }, { label: "待辦", value: todo }] }

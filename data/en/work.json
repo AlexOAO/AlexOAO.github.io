@@ -11,24 +11,27 @@
       {
         "short": "AI guardrails: Guardrails PoC",
         "slug": "guardrails-poc",
-        "title": "Guardrails PoC (CyCraft)",
-        "summary": "Built the bank's own Guardrails verification method for AI safety.",
+        "title": "AI Guardrails PoC with the Holding Company (XecGuard / Vulcan)",
+        "summary": "Followed the holding company's PoC of two AI guardrail vendors and built the bank's own verification method.",
         "sdlc": ["tune"],
         "ownership": "Lead",
         "period": "2026/08 ~ 2026/10",
         "milestones": [
-          {"date": "2026/08/24", "text": "PoC starts", "status": "done"},
-          {"date": "2026/08/31", "text": "R1: 240-case baseline", "status": "done"},
-          {"date": "2026/09/16", "text": "R2: 600 cases", "status": "done"},
-          {"date": "2026/09/21", "text": "Final: 3,600 cases", "status": "done"},
-          {"date": "2026/09/29", "text": "Adoption proposal", "status": "done"},
-          {"date": "2026/10/12", "text": "CyCraft completes PoC", "status": "done"}
+          {"track": "XecGuard", "date": "2026/08", "text": "Problem: PoC kickoff", "status": "done"},
+          {"track": "XecGuard", "date": "2026/09", "text": "Test design: 3,600 cases", "status": "done"},
+          {"track": "XecGuard", "date": "2026/09", "text": "Testing: R1 and R2", "status": "done"},
+          {"track": "XecGuard", "date": "2026/09", "text": "Comparison: 9 dimensions", "status": "done"},
+          {"track": "XecGuard", "date": "2026/09", "text": "Decision: proposal", "status": "done"},
+          {"track": "Vulcan", "date": "2026/09", "text": "Test design: 1,330-case base", "status": "done"},
+          {"track": "Vulcan", "date": "2026/09", "text": "Comparison: score 73.4", "status": "done"},
+          {"track": "Vulcan", "date": "2026/10", "text": "Testing: Vulcan PoC", "status": "doing"},
+          {"track": "Vulcan", "date": "TBD", "text": "Adoption decision", "status": "todo"}
         ],
-        "tags": ["Guardrails", "OWASP LLM Top 10", "Red Team", "Prompt Engineering"],
-        "source": "S2,S3,S4, XecGuard_簡報_final (2026/09/22), XecGuard_vs_Vulcan_回饋 (2026/09/29)"
+        "tags": ["Guardrails", "Red Team", "OWASP LLM Top 10", "XecGuard", "Vulcan"],
+        "source": "S2,S3,S4, XecGuard_簡報_final, XecGuard_vs_Vulcan_回饋, 使用者說明（R1 定義、Vulcan 進行中）"
       },
       {
-        "short": "AI operations performance: Agatha / Dify",
+        "short": "AI agent platform: Platform PoC",
         "slug": "agentic-platform-eval",
         "title": "Enterprise Agentic Platform Evaluation (Agatha / Dify)",
         "summary": "Ran 60 tests on 2 platforms and found 12 issues before selection.",
@@ -36,9 +39,11 @@
         "ownership": "Lead",
         "period": "2026/07 ~ 2026/09",
         "milestones": [
-          {"date": "2026 Q3", "text": "Run 26 Agatha tests", "status": "done"},
-          {"date": "2026 Q3", "text": "Run 34 Dify tests", "status": "done"},
-          {"date": "2026 Q3", "text": "Submit 42-item scorecard", "status": "done"}
+          {"date": "2026 Q3", "text": "Problem: selection risk", "status": "done"},
+          {"date": "2026 Q3", "text": "Test design: 5 modules", "status": "done"},
+          {"date": "2026 Q3", "text": "Testing: 60 tests", "status": "done"},
+          {"date": "2026 Q3", "text": "Comparison: 42-item scorecard", "status": "done"},
+          {"date": "TBD", "text": "Adoption decision", "status": "todo"}
         ],
         "tags": ["Agatha", "Dify", "Vendor Evaluation", "PoC"],
         "source": "S2,S3"
@@ -52,10 +57,11 @@
         "ownership": "Lead",
         "period": "2026/07 ~ Now",
         "milestones": [
-          {"date": "2026 Q3", "text": "Build 3 cost models", "status": "done"},
-          {"date": "2026 Q3", "text": "Model GPU pool & peak load", "status": "done"},
-          {"date": "2026/10/30", "text": "Finish compute estimate", "status": "doing"},
-          {"date": "TBD", "text": "Deliver final TCO / ROI", "status": "todo"}
+          {"date": "2026 Q3", "text": "Problem: 4 cost structures", "status": "done"},
+          {"date": "2026 Q3", "text": "Framework: space × time", "status": "done"},
+          {"date": "2026/10", "text": "Data: vendors and BUs", "status": "doing"},
+          {"date": "2026/10/30", "text": "Estimate: Agent compute", "status": "doing"},
+          {"date": "TBD", "text": "Institutionalize: quotas", "status": "todo"}
         ],
         "tags": ["TCO", "ROI", "GPU Capacity", "Token Cost", "Cost Model"],
         "source": "S2,S4,S5"
@@ -70,9 +76,10 @@
         "ownership": "Lead",
         "period": "2026/07 ~ Now",
         "milestones": [
-          {"date": "2026 Q3", "text": "Confirm on-prem parts", "status": "done"},
-          {"date": "TBD", "text": "Get BU volume", "status": "todo"},
-          {"date": "TBD", "text": "Deliver TCO / ROI", "status": "todo"}
+          {"date": "2026 Q3", "text": "Framework: list the parts", "status": "done"},
+          {"date": "2026/10", "text": "Data: BU volume", "status": "doing"},
+          {"date": "TBD", "text": "Estimate: token cost", "status": "todo"},
+          {"date": "TBD", "text": "Institutionalize: TCO / ROI", "status": "todo"}
         ],
         "tags": ["Sales Agent", "Cost Model", "Loan"],
         "source": "S5"
@@ -87,9 +94,11 @@
         "ownership": "Lead",
         "period": "2026/07 ~ Now",
         "milestones": [
-          {"date": "2026 Q3", "text": "Token cost estimate", "status": "done"},
-          {"date": "2026/10", "text": "Confirm production GPU", "status": "done"},
-          {"date": "TBD", "text": "Deliver final TCO / ROI", "status": "todo"}
+          {"date": "2026 Q3", "text": "Framework: OCR flow", "status": "done"},
+          {"date": "2026 Q3", "text": "Data: monthly cases", "status": "done"},
+          {"date": "2026 Q3", "text": "Estimate: token cost per case", "status": "done"},
+          {"date": "2026/10", "text": "Estimate: 1 production GPU", "status": "done"},
+          {"date": "TBD", "text": "Institutionalize: TCO / ROI", "status": "todo"}
         ],
         "tags": ["Credit Agent", "OCR", "Token Cost"],
         "source": "S4,S5"
@@ -104,9 +113,11 @@
         "ownership": "Contributor",
         "period": "2026/07 ~ Now",
         "milestones": [
-          {"date": "2026 Q3", "text": "Call volume & hours model", "status": "done"},
-          {"date": "2026/10/16", "text": "First vendor compute meeting", "status": "done"},
-          {"date": "2026/10/23", "text": "Vendor updates estimate", "status": "todo"}
+          {"date": "2026 Q3", "text": "Framework: minutes + tokens", "status": "done"},
+          {"date": "2026 Q3", "text": "Data: monthly calls", "status": "done"},
+          {"date": "2026/10/16", "text": "Estimate: vendor meeting", "status": "done"},
+          {"date": "2026/10/23", "text": "Estimate: vendor update", "status": "todo"},
+          {"date": "TBD", "text": "Institutionalize: TCO / ROI", "status": "todo"}
         ],
         "tags": ["Service Agent", "STT", "GPU Capacity"],
         "source": "S4,S5"
@@ -121,10 +132,10 @@
         "ownership": "Lead",
         "period": "2026/07 ~ Now",
         "milestones": [
-          {"date": "2026 Q3", "text": "Test the Q&A function", "status": "done"},
-          {"date": "2026 Q3", "text": "Draw the architecture", "status": "done"},
-          {"date": "2026 Q3", "text": "Hand over to senior dev", "status": "done"},
-          {"date": "2026/10", "text": "Confirm GPU allocation", "status": "done"}
+          {"date": "2026 Q3", "text": "PoC: Q&A testing", "status": "done"},
+          {"date": "2026 Q3", "text": "Build: architecture, handover", "status": "done"},
+          {"date": "2026/10", "text": "Launch readiness: GPUs", "status": "done"},
+          {"date": "TBD", "text": "Launch", "status": "todo"}
         ],
         "tags": ["App 2.0", "PoC", "Wealth Management"],
         "source": "S2,S4,S5"
@@ -138,14 +149,17 @@
         "ownership": "Lead",
         "period": "2026/07 ~ Now",
         "milestones": [
-          {"date": "2026 Q3", "text": "Survey pre-launch checks", "status": "done"},
-          {"date": "TBD", "text": "Map to 6 FSC principles", "status": "doing"}
+          {"date": "2026 Q3", "text": "Problem: how to check", "status": "done"},
+          {"date": "2026 Q3", "text": "Framework: 3 layers × 3", "status": "done"},
+          {"date": "2026/10", "text": "Data: the 4 Agents", "status": "doing"},
+          {"date": "TBD", "text": "Pilot: Loan Assistant", "status": "todo"},
+          {"date": "TBD", "text": "Institutionalize: AI rules", "status": "todo"}
         ],
         "tags": ["AI Governance", "Compliance", "FSC"],
         "source": "S2,S3"
       },
       {
-        "short": "Model management: FSC FinLLM",
+        "short": "AI model management: FSC FinLLM",
         "slug": "finllm",
         "title": "FSC FinLLM Data Cleaning & Model Evaluation",
         "summary": "Clean FinLLM training data item by item and score regulatory answers.",
@@ -153,17 +167,17 @@
         "ownership": "Contributor",
         "period": "2026/07 ~ 2027/03",
         "milestones": [
-          {"date": "2026/10/12", "text": "Clean data batch 2-1", "status": "done"},
-          {"date": "2026/10/13", "text": "Score regulatory batch 4", "status": "done"},
-          {"date": "2026/10/27 ~ 11/12", "text": "Score regulatory batch 5", "status": "doing"},
-          {"date": "2027/01/08", "text": "Finish all data cleaning", "status": "todo"},
-          {"date": "2027/03/06", "text": "Finish model evaluation", "status": "todo"}
+          {"date": "2026/10", "text": "Standard: item-by-item", "status": "doing"},
+          {"date": "2026/10", "text": "Cleaning: batch 2-1", "status": "done"},
+          {"date": "2026/10", "text": "Scoring: batch 4", "status": "done"},
+          {"date": "2027/03/06", "text": "Model evaluation", "status": "todo"},
+          {"date": "2027/03", "text": "Delivery", "status": "todo"}
         ],
         "tags": ["FinLLM", "Data Cleaning", "LLM Evaluation"],
         "source": "S2,S4"
       },
       {
-        "short": "Enablement: Gemini training",
+        "short": "AI enablement: Gemini training",
         "slug": "gemini-training",
         "title": "Gemini Training Program",
         "summary": "Designed a Gemini course with hands-on business use cases.",
@@ -171,28 +185,49 @@
         "ownership": "Lead",
         "period": "2026/10 ~ 2026/11",
         "milestones": [
-          {"date": "2026/10", "text": "Confirm course outline", "status": "done"},
-          {"date": "2026/10 ~ 11", "text": "Collect use cases", "status": "doing"},
-          {"date": "2026/11/12", "text": "Deliver the course", "status": "todo"}
+          {"date": "2026/10", "text": "Design: course outline", "status": "done"},
+          {"date": "2026/10", "text": "Needs: business use cases", "status": "doing"},
+          {"date": "2026/11/12", "text": "Delivery: the course", "status": "todo"},
+          {"date": "TBD", "text": "Follow-up", "status": "todo"}
         ],
         "tags": ["Gemini", "AI Training", "Enablement"],
         "source": "S4"
       },
       {
-        "short": "Tech research: A2UI",
+        "short": "AI operations performance: Dashboard",
+        "slug": "ai-ops-dashboard",
+        "title": "AI Operations Performance Dashboard (Internal: Copilot / Gemini / Ella; External: 4 Agents)",
+        "summary": "One set of metrics to measure internal AI tools and the four external Agents.",
+        "sdlc": ["ops"],
+        "ownership": "Contributor",
+        "period": "2026/10 ~ Now",
+        "milestones": [
+          {"date": "2026/10", "text": "Problem: is AI worth it", "status": "done"},
+          {"date": "2026/10", "text": "Framework: five parts", "status": "doing"},
+          {"date": "2026/10", "text": "Data: Copilot / Ella", "status": "doing"},
+          {"date": "2026/10/30", "text": "Pilot: Copilot report", "status": "todo"},
+          {"date": "2026/11/30", "text": "Institutionalize: Agent Ops", "status": "todo"}
+        ],
+        "tags": ["Dashboard", "AI ROI", "Copilot", "Gemini", "LLMOps"],
+        "source": "ttt.pptx (2026/10/19 management meeting); metric framework is a design proposal"
+      },
+      {
+        "short": "AI technology: A2UI",
         "slug": "a2ui-research",
-        "title": "A2UI Technical Research",
-        "summary": "Evaluate Agent-generated UI for wealth management use cases.",
+        "title": "A2UI Research: From Technology to Product",
+        "summary": "Evaluating A2UI along a product journey: use cases first, then resources, value, and launch.",
         "sdlc": ["plan"],
         "ownership": "Lead",
         "period": "2026/10 ~ Now",
         "milestones": [
-          {"date": "2026/10", "text": "Confirm PoC environment", "status": "doing"},
-          {"date": "2026/11/12", "text": "Checkpoint: business value", "status": "todo"},
-          {"date": "TBD", "text": "Connect test env & use case", "status": "todo"}
+          {"date": "2026/10", "text": "Use cases: Wealth Assistant", "status": "doing"},
+          {"date": "2026/10", "text": "Resources: env and tokens", "status": "doing"},
+          {"date": "2026/11/12", "text": "Value check: checkpoint", "status": "todo"},
+          {"date": "TBD", "text": "PoC", "status": "todo"},
+          {"date": "TBD", "text": "Productize", "status": "todo"}
         ],
-        "tags": ["A2UI", "Azure AI Foundry", "Agent UI"],
-        "source": "S4"
+        "tags": ["A2UI", "Generative UI", "Azure AI Foundry", "Productization"],
+        "source": "S4; Google Developers Blog (2025/12/15)；候選場景為分析提案"
       }
     ]
   },
@@ -216,9 +251,11 @@
         "ownership": "Lead",
         "period": "2026/02 ~ 2026/06",
         "milestones": [
-          {"date": "2026/02 ~ 06", "text": "Requirements", "status": "done"},
-          {"date": "2026/02 ~ 06", "text": "PoC", "status": "done"},
-          {"date": "2026/02 ~ 06", "text": "Production launch", "status": "done"}
+          {"date": "2026/02 ~ 06", "text": "Requirements: access design", "status": "done"},
+          {"date": "2026/02 ~ 06", "text": "PoC: 3 data sources", "status": "done"},
+          {"date": "2026/02 ~ 06", "text": "Build: UI / UX integration", "status": "done"},
+          {"date": "2026/02 ~ 06", "text": "Launch", "status": "done"},
+          {"date": "TBD", "text": "Operate: measure value", "status": "todo"}
         ],
         "tags": ["n8n", "AI Agent", "Azure OpenAI", "SFTP"],
         "source": "S1"
@@ -232,9 +269,11 @@
         "ownership": "Lead",
         "period": "2026/02 ~ 2026/06",
         "milestones": [
-          {"date": "2026/02 ~ 06", "text": "Connect SharePoint intake", "status": "done"},
-          {"date": "2026/02 ~ 06", "text": "Content check & risk grading", "status": "done"},
-          {"date": "2026/02 ~ 06", "text": "Deploy to ACA with CI/CD", "status": "done"}
+          {"date": "2026/02 ~ 06", "text": "Requirements: manual review", "status": "done"},
+          {"date": "2026/02 ~ 06", "text": "Build: SharePoint intake", "status": "done"},
+          {"date": "2026/02 ~ 06", "text": "Build: checks and recalculation", "status": "done"},
+          {"date": "2026/02 ~ 06", "text": "Launch: CI/CD to ACA", "status": "done"},
+          {"date": "TBD", "text": "Operate: review time", "status": "todo"}
         ],
         "tags": ["Azure OpenAI", "SharePoint", "Azure DevOps", "ACA"],
         "source": "S1"
@@ -259,15 +298,17 @@
         "ownership": "Lead",
         "period": "2025/07 ~ 2025/12",
         "milestones": [
-          {"date": "Phase 1", "text": "Build Qdrant vector DB", "status": "done"},
-          {"date": "Phase 2", "text": "RAG Q&A & chunk tuning", "status": "done"},
-          {"date": "Phase 3", "text": "Launch front end & admin", "status": "done"}
+          {"date": "Phase 1", "text": "Requirements: hard-to-search manuals", "status": "done"},
+          {"date": "Phase 2", "text": "PoC: RAG + Qdrant", "status": "done"},
+          {"date": "Phase 3", "text": "Build: chunking change", "status": "done"},
+          {"date": "Phase 4", "text": "Launch: front end and admin", "status": "done"},
+          {"date": "Phase 5", "text": "Operate: admin-run knowledge base", "status": "done"}
         ],
         "tags": ["RAG", "Qdrant", "LangExtract", "Docker"],
         "source": "S1, posts/rag-smart-customer-service.html"
       },
       {
-        "short": "AI advisory: Multi-Agent decisions",
+        "short": "AI advisory: Multi-Agent",
         "slug": "multi-agent-advisory",
         "title": "Multi-Agent Investment Advisory Architecture",
         "summary": "Let AI work like a fund team to produce signals that can be backtested.",
@@ -275,15 +316,16 @@
         "ownership": "Contributor",
         "period": "2025/07 ~ 2025/12",
         "milestones": [
-          {"date": "Phase 1", "text": "Design 5 Agent roles", "status": "done"},
-          {"date": "Phase 2", "text": "Connect TEJ data via MCP", "status": "done"},
-          {"date": "Phase 3", "text": "Integrate Zipline backtest", "status": "done"}
+          {"date": "Phase 1", "text": "Requirements: one LLM's blind spots", "status": "done"},
+          {"date": "Phase 2", "text": "Design: 5 Agent roles", "status": "done"},
+          {"date": "Phase 3", "text": "Build: MCP to TEJ data", "status": "done"},
+          {"date": "Phase 4", "text": "Validation: Zipline backtest", "status": "done"}
         ],
         "tags": ["LangGraph", "Multi-Agent", "MCP", "Zipline"],
         "source": "S1"
       },
       {
-        "short": "Earnings calls: ASR transcripts",
+        "short": "AI speech recognition: earnings call transcripts",
         "slug": "asr-transcription",
         "title": "ASR Earnings Call Transcription",
         "summary": "Cut the time the research team spends on earnings call notes.",
@@ -291,9 +333,10 @@
         "ownership": "Contributor",
         "period": "2025/07 ~ 2025/12",
         "milestones": [
-          {"date": "Phase 1", "text": "Whisper speech-to-text", "status": "done"},
-          {"date": "Phase 2", "text": "Automate video processing", "status": "done"},
-          {"date": "Phase 3", "text": "Deliver summary tables", "status": "done"}
+          {"date": "Phase 1", "text": "Requirements: manual transcripts", "status": "done"},
+          {"date": "Phase 2", "text": "PoC: Whisper", "status": "done"},
+          {"date": "Phase 3", "text": "Build: automation", "status": "done"},
+          {"date": "Phase 4", "text": "Launch: summary tables", "status": "done"}
         ],
         "tags": ["Whisper", "ASR", "Summarization"],
         "source": "S1"
@@ -318,9 +361,10 @@
         "ownership": "Contributor",
         "period": "2025/09 ~ 2025/12",
         "milestones": [
-          {"date": "2025/09", "text": "Join 6th T-Ambassadors", "status": "done"},
-          {"date": "2025/09 ~ 12", "text": "Policy outreach", "status": "done"},
-          {"date": "2025/09 ~ 12", "text": "Help firms adopt GenAI", "status": "done"}
+          {"date": "2025/09", "text": "Needs: local problems", "status": "done"},
+          {"date": "2025/09 ~ 12", "text": "Design: solutions", "status": "done"},
+          {"date": "2025/09 ~ 12", "text": "Delivery: AI adoption", "status": "done"},
+          {"date": "TBD", "text": "Follow-up", "status": "todo"}
         ],
         "tags": ["Generative AI", "Digital Transformation", "SME", "AIoT"],
         "source": "resume.pdf, moda.gov.tw"
@@ -346,9 +390,10 @@
         "ownership": "Lead",
         "period": "2025/07 ~ 2025/12",
         "milestones": [
-          {"date": "Phase 1", "text": "Build backtest framework", "status": "done"},
-          {"date": "Phase 2", "text": "Optimize parameters", "status": "done"},
-          {"date": "2025/12", "text": "3rd place at showcase", "status": "done"}
+          {"date": "2025/07", "text": "Hypothesis: TAIEX CTA", "status": "done"},
+          {"date": "2025/07 ~ 12", "text": "Backtest: framework", "status": "done"},
+          {"date": "2025/07 ~ 12", "text": "Optimization: parameters", "status": "done"},
+          {"date": "2025/12", "text": "Result: 3rd place", "status": "done"}
         ],
         "tags": ["TAIEX Futures", "CTA", "Backtesting", "Python"],
         "source": "resume.pdf"
@@ -364,7 +409,9 @@
         "ownership": "Lead",
         "period": "2025/07 ~ 2025/12",
         "milestones": [
-          {"date": "2025/07 ~ 12", "text": "Develop event strategy", "status": "done"}
+          {"date": "2025/07", "text": "Hypothesis: earnings calls", "status": "done"},
+          {"date": "2025/07 ~ 12", "text": "Backtest: return and risk", "status": "done"},
+          {"date": "TBD", "text": "Result: to be added", "status": "todo"}
         ],
         "tags": ["Event Trading", "Earnings Call"],
         "source": "TMBA experience (details pending from user)"
@@ -389,9 +436,11 @@
         "ownership": "Lead",
         "period": "2024/09 ~ 2026",
         "milestones": [
-          {"date": "Phase 1", "text": "Build RAG-LLM scoring", "status": "done"},
-          {"date": "Phase 2", "text": "Panel data analysis", "status": "done"},
-          {"date": "2026", "text": "Thesis done; degree earned", "status": "done"}
+          {"date": "2024/09 ~", "text": "Question: signals in statements", "status": "done"},
+          {"date": "Phase 2", "text": "Data: 37,888 firm-quarters", "status": "done"},
+          {"date": "Phase 3", "text": "Method: RAG-LLM + panel", "status": "done"},
+          {"date": "Phase 4", "text": "Evidence: 6 of 6 significant", "status": "done"},
+          {"date": "2026", "text": "Conclusion: degree earned", "status": "done"}
         ],
         "tags": ["RAG-LLM", "Panel Data", "Fixed Effects", "Financial Statements"],
         "source": "etheses.lib.ntust.edu.tw"
@@ -406,9 +455,11 @@
         "ownership": "Contributor",
         "period": "2024/09 ~ 2024/11",
         "milestones": [
-          {"date": "2024/09", "text": "Join the program", "status": "done"},
-          {"date": "2024/09 ~ 11", "text": "Team assignments & talks", "status": "done"},
-          {"date": "2024/11", "text": "Finish ESG final project", "status": "done"}
+          {"date": "2024/09", "text": "Question: does ESG add value", "status": "done"},
+          {"date": "2024/09 ~ 11", "text": "Data: Taiwan stock picks", "status": "done"},
+          {"date": "2024/09 ~ 11", "text": "Method: ESG allocation", "status": "done"},
+          {"date": "2024/11", "text": "Evidence: final report", "status": "done"},
+          {"date": "TBD", "text": "Conclusion: results pending", "status": "todo"}
         ],
         "tags": ["ESG", "Portfolio", "Taiwan Stocks", "Asset Management"],
         "source": "resume.pdf; Money Weekly 2024/12/25"
@@ -433,8 +484,9 @@
         "ownership": "Lead",
         "period": "2023/09 ~ 2024/06",
         "milestones": [
-          {"date": "2023/09", "text": "Start Tunghai GMBA", "status": "done"},
-          {"date": "2024/06", "text": "Thesis done; degree earned", "status": "done"}
+          {"date": "2023/09", "text": "Question: ESG and capital", "status": "done"},
+          {"date": "2023/09 ~ 2024/06", "text": "Data and method: to be added", "status": "done"},
+          {"date": "2024/06", "text": "Conclusion: degree earned", "status": "done"}
         ],
         "tags": ["ESG", "Capital Structure", "Corporate Finance", "Taiwan"],
         "source": "title from user; abstract pending"

@@ -16,7 +16,11 @@ I led this strategy.
 
 ## What I did
 
-**Phase 1: develop the event strategy.** Designed a Taiwan stock event trading strategy around earnings calls, and evaluated its return and risk with a backtest.
+**Phase 1 | Hypothesis.** Earnings calls release information about operations and outlook, which may give a tradable signal.
+
+**Phase 2 | Backtest.** Design a Taiwan stock strategy around earnings calls, and evaluate its return and risk with a backtest.
+
+**Phase 3 | Result.** Entry and exit rules, backtest period, and results: to be added.
 
 ## Next steps
 

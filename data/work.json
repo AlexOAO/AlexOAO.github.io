@@ -11,24 +11,27 @@
       {
         "short": "AI 安全護欄：Guardrails PoC",
         "slug": "guardrails-poc",
-        "title": "Guardrails PoC（奧義科技）",
-        "summary": "建立行內 Guardrails 驗證方法，確立 AI 防護規格。",
+        "title": "金控 AI 安全護欄 PoC（XecGuard／Vulcan）",
+        "summary": "跟進金控 PoC，評估兩家 AI 安全護欄，建立行內驗證方法。",
         "sdlc": ["tune"],
         "ownership": "主責",
         "period": "2026/08 ~ 2026/10",
         "milestones": [
-          {"date": "2026/08/24", "text": "PoC 開始", "status": "done"},
-          {"date": "2026/08/31", "text": "R1：240 題基線", "status": "done"},
-          {"date": "2026/09/16", "text": "R2：600 題", "status": "done"},
-          {"date": "2026/09/21", "text": "Final：3,600 題", "status": "done"},
-          {"date": "2026/09/29", "text": "提出導入建議", "status": "done"},
-          {"date": "2026/10/12", "text": "奧義完成 PoC", "status": "done"}
+          {"track": "XecGuard", "date": "2026/08", "text": "問題定義：PoC 啟動", "status": "done"},
+          {"track": "XecGuard", "date": "2026/09", "text": "測試設計：3,600 題", "status": "done"},
+          {"track": "XecGuard", "date": "2026/09", "text": "實測：R1 與 R2", "status": "done"},
+          {"track": "XecGuard", "date": "2026/09", "text": "比較：9 構面評估", "status": "done"},
+          {"track": "XecGuard", "date": "2026/09", "text": "導入決策：提出建議", "status": "done"},
+          {"track": "Vulcan", "date": "2026/09", "text": "測試設計：1,330 題基準", "status": "done"},
+          {"track": "Vulcan", "date": "2026/09", "text": "比較：驗證評估 73.4", "status": "done"},
+          {"track": "Vulcan", "date": "2026/10", "text": "實測：Vulcan PoC", "status": "doing"},
+          {"track": "Vulcan", "date": "TBD", "text": "導入決策", "status": "todo"}
         ],
-        "tags": ["Guardrails", "OWASP LLM Top 10", "Red Team", "Prompt Engineering"],
-        "source": "S2,S3,S4, XecGuard_簡報_final (2026/09/22), XecGuard_vs_Vulcan_回饋 (2026/09/29)"
+        "tags": ["Guardrails", "Red Team", "OWASP LLM Top 10", "XecGuard", "Vulcan"],
+        "source": "S2,S3,S4, XecGuard_簡報_final, XecGuard_vs_Vulcan_回饋, 使用者說明（R1 定義、Vulcan 進行中）"
       },
       {
-        "short": "AI 營運成效：Agatha／Dify",
+        "short": "AI 代理平台：Platform PoC",
         "slug": "agentic-platform-eval",
         "title": "企業 Agentic 平台選型評測（Agatha／Dify）",
         "summary": "以 60 項測試評測 2 個平台，提前發現 12 項問題。",
@@ -36,9 +39,11 @@
         "ownership": "主責",
         "period": "2026/07 ~ 2026/09",
         "milestones": [
-          {"date": "2026 Q3", "text": "完成 Agatha 26 項實測", "status": "done"},
-          {"date": "2026 Q3", "text": "完成 Dify 34 項測試", "status": "done"},
-          {"date": "2026 Q3", "text": "提交 42 項評分表", "status": "done"}
+          {"date": "2026 Q3", "text": "問題定義：選型風險", "status": "done"},
+          {"date": "2026 Q3", "text": "測試設計：拆 5 大模組", "status": "done"},
+          {"date": "2026 Q3", "text": "實測：60 項測試", "status": "done"},
+          {"date": "2026 Q3", "text": "比較：42 項評分表", "status": "done"},
+          {"date": "TBD", "text": "導入決策", "status": "todo"}
         ],
         "tags": ["Agatha", "Dify", "Vendor Evaluation", "PoC"],
         "source": "S2,S3"
@@ -52,10 +57,11 @@
         "ownership": "主責",
         "period": "2026/07 ~ Now",
         "milestones": [
-          {"date": "2026 Q3", "text": "完成 3 套成本模型", "status": "done"},
-          {"date": "2026 Q3", "text": "完成算力池與尖峰估算", "status": "done"},
-          {"date": "2026/10/30", "text": "完成 Agent 算力估算", "status": "doing"},
-          {"date": "TBD", "text": "產出正式 TCO／ROI", "status": "todo"}
+          {"date": "2026 Q3", "text": "問題定義：4 種成本結構", "status": "done"},
+          {"date": "2026 Q3", "text": "框架設計：空間 × 時間", "status": "done"},
+          {"date": "2026/10", "text": "資料蒐集：廠商與 BU", "status": "doing"},
+          {"date": "2026/10/30", "text": "試算：Agent 算力估算", "status": "doing"},
+          {"date": "TBD", "text": "制度化：TCO／ROI 配額", "status": "todo"}
         ],
         "tags": ["TCO", "ROI", "GPU Capacity", "Token Cost", "Cost Model"],
         "source": "S2,S4,S5"
@@ -70,9 +76,10 @@
         "ownership": "主責",
         "period": "2026/07 ~ Now",
         "milestones": [
-          {"date": "2026 Q3", "text": "確認地端元件", "status": "done"},
-          {"date": "TBD", "text": "收回 BU 業務量", "status": "todo"},
-          {"date": "TBD", "text": "產出 TCO／ROI", "status": "todo"}
+          {"date": "2026 Q3", "text": "框架設計：拆解元件", "status": "done"},
+          {"date": "2026/10", "text": "資料蒐集：BU 業務量", "status": "doing"},
+          {"date": "TBD", "text": "試算：Token 成本", "status": "todo"},
+          {"date": "TBD", "text": "制度化：TCO／ROI", "status": "todo"}
         ],
         "tags": ["Sales Agent", "Cost Model", "Loan"],
         "source": "S5"
@@ -87,9 +94,11 @@
         "ownership": "主責",
         "period": "2026/07 ~ Now",
         "milestones": [
-          {"date": "2026 Q3", "text": "完成 Token 成本試算", "status": "done"},
-          {"date": "2026/10", "text": "確認正式環境 GPU", "status": "done"},
-          {"date": "TBD", "text": "產出正式 TCO／ROI", "status": "todo"}
+          {"date": "2026 Q3", "text": "框架設計：拆解 OCR 流程", "status": "done"},
+          {"date": "2026 Q3", "text": "資料蒐集：月案件量", "status": "done"},
+          {"date": "2026 Q3", "text": "試算：每件 Token 成本", "status": "done"},
+          {"date": "2026/10", "text": "試算：正式 GPU 1 張", "status": "done"},
+          {"date": "TBD", "text": "制度化：TCO／ROI", "status": "todo"}
         ],
         "tags": ["Credit Agent", "OCR", "Token Cost"],
         "source": "S4,S5"
@@ -104,9 +113,11 @@
         "ownership": "協作",
         "period": "2026/07 ~ Now",
         "milestones": [
-          {"date": "2026 Q3", "text": "建立通話量與時段假設", "status": "done"},
-          {"date": "2026/10/16", "text": "廠商第一次算力會議", "status": "done"},
-          {"date": "2026/10/23", "text": "廠商更新算力評估", "status": "todo"}
+          {"date": "2026 Q3", "text": "框架設計：分鐘＋Token", "status": "done"},
+          {"date": "2026 Q3", "text": "資料蒐集：月通話量", "status": "done"},
+          {"date": "2026/10/16", "text": "試算：廠商算力會議", "status": "done"},
+          {"date": "2026/10/23", "text": "試算：廠商更新評估", "status": "todo"},
+          {"date": "TBD", "text": "制度化：TCO／ROI", "status": "todo"}
         ],
         "tags": ["Service Agent", "STT", "GPU Capacity"],
         "source": "S4,S5"
@@ -121,10 +132,10 @@
         "ownership": "主責",
         "period": "2026/07 ~ Now",
         "milestones": [
-          {"date": "2026 Q3", "text": "完成問答功能測試", "status": "done"},
-          {"date": "2026 Q3", "text": "完成架構圖初稿", "status": "done"},
-          {"date": "2026 Q3", "text": "移交資深同仁", "status": "done"},
-          {"date": "2026/10", "text": "確認 GPU 配置", "status": "done"}
+          {"date": "2026 Q3", "text": "PoC：問答功能測試", "status": "done"},
+          {"date": "2026 Q3", "text": "開發：架構圖與移交", "status": "done"},
+          {"date": "2026/10", "text": "上線準備：GPU 配置", "status": "done"},
+          {"date": "TBD", "text": "上線", "status": "todo"}
         ],
         "tags": ["App 2.0", "PoC", "Wealth Management"],
         "source": "S2,S4,S5"
@@ -138,14 +149,17 @@
         "ownership": "主責",
         "period": "2026/07 ~ Now",
         "milestones": [
-          {"date": "2026 Q3", "text": "完成上線前檢核 Survey", "status": "done"},
-          {"date": "TBD", "text": "對應金管會 6 大規範", "status": "doing"}
+          {"date": "2026 Q3", "text": "問題定義：怎麼檢查原則", "status": "done"},
+          {"date": "2026 Q3", "text": "框架設計：三層 × 三問", "status": "done"},
+          {"date": "2026/10", "text": "資料蒐集：四大 Agent", "status": "doing"},
+          {"date": "TBD", "text": "試行：貸款助理", "status": "todo"},
+          {"date": "TBD", "text": "制度化：寫入管理要點", "status": "todo"}
         ],
         "tags": ["AI Governance", "Compliance", "金管會規範"],
         "source": "S2,S3"
       },
       {
-        "short": "模型管理：金管會 FinLLM",
+        "short": "AI 模型管理：金管會 FinLLM",
         "slug": "finllm",
         "title": "金管會 FinLLM 資料清洗與模型評測",
         "summary": "逐題清洗金融 LLM 訓練資料，並評分法規判讀。",
@@ -153,17 +167,17 @@
         "ownership": "協作",
         "period": "2026/07 ~ 2027/03",
         "milestones": [
-          {"date": "2026/10/12", "text": "完成第 2-1 批清洗", "status": "done"},
-          {"date": "2026/10/13", "text": "完成第 4 批法規評分", "status": "done"},
-          {"date": "2026/10/27 ~ 11/12", "text": "執行第 5 批法規評分", "status": "doing"},
-          {"date": "2027/01/08", "text": "完成全部資料清洗", "status": "todo"},
-          {"date": "2027/03/06", "text": "完成模型評測", "status": "todo"}
+          {"date": "2026/10", "text": "清洗標準：逐題校對", "status": "doing"},
+          {"date": "2026/10", "text": "資料清洗：第 2-1 批", "status": "done"},
+          {"date": "2026/10", "text": "法規評分：第 4 批", "status": "done"},
+          {"date": "2027/03/06", "text": "模型評測", "status": "todo"},
+          {"date": "2027/03", "text": "交付", "status": "todo"}
         ],
         "tags": ["FinLLM", "Data Cleaning", "LLM Evaluation"],
         "source": "S2,S4"
       },
       {
-        "short": "員工賦能：Gemini 教育訓練",
+        "short": "AI 員工賦能：Gemini 教育訓練",
         "slug": "gemini-training",
         "title": "Gemini 教育訓練",
         "summary": "設計以業務場景實作的 Gemini 課程。",
@@ -171,28 +185,49 @@
         "ownership": "主責",
         "period": "2026/10 ~ 2026/11",
         "milestones": [
-          {"date": "2026/10", "text": "確認課程大綱", "status": "done"},
-          {"date": "2026/10 ~ 11", "text": "收集業務場景", "status": "doing"},
-          {"date": "2026/11/12", "text": "開課", "status": "todo"}
+          {"date": "2026/10", "text": "設計：課程大綱", "status": "done"},
+          {"date": "2026/10", "text": "需求盤點：業務場景", "status": "doing"},
+          {"date": "2026/11/12", "text": "執行：開課", "status": "todo"},
+          {"date": "TBD", "text": "成效追蹤", "status": "todo"}
         ],
         "tags": ["Gemini", "AI Training", "Enablement"],
         "source": "S4"
       },
       {
-        "short": "技術研究：A2UI",
+        "short": "AI 營運成效：Dashboard",
+        "slug": "ai-ops-dashboard",
+        "title": "AI 營運成效 Dashboard（對內 Copilot／Gemini／艾拉，對外四大 Agent）",
+        "summary": "用同一套指標，衡量對內 AI 工具與對外四大 Agent 的成效。",
+        "sdlc": ["ops"],
+        "ownership": "協作",
+        "period": "2026/10 ~ Now",
+        "milestones": [
+          {"date": "2026/10", "text": "問題定義：AI 值不值得", "status": "done"},
+          {"date": "2026/10", "text": "框架設計：五個面向", "status": "doing"},
+          {"date": "2026/10", "text": "資料蒐集：Copilot／艾拉", "status": "doing"},
+          {"date": "2026/10/30", "text": "試行：Copilot 月報", "status": "todo"},
+          {"date": "2026/11/30", "text": "制度化：Agent Ops", "status": "todo"}
+        ],
+        "tags": ["Dashboard", "AI ROI", "Copilot", "Gemini", "LLMOps"],
+        "source": "ttt.pptx（2026/10/19 主管會議）；指標框架為設計提案"
+      },
+      {
+        "short": "AI 技術：A2UI",
         "slug": "a2ui-research",
-        "title": "A2UI 技研",
-        "summary": "評估讓 Agent 直接生成介面的技術，用於理財場景。",
+        "title": "A2UI 技術研究：從技術到產品",
+        "summary": "依產品化旅程評估 A2UI：先找場景，再備資源、驗證價值、上線。",
         "sdlc": ["plan"],
         "ownership": "主責",
         "period": "2026/10 ~ Now",
         "milestones": [
-          {"date": "2026/10", "text": "確認 PoC 環境規格", "status": "doing"},
-          {"date": "2026/11/12", "text": "Checkpoint：業務價值", "status": "todo"},
-          {"date": "TBD", "text": "對接測試環境與場景", "status": "todo"}
+          {"date": "2026/10", "text": "商用場景：智富管家", "status": "doing"},
+          {"date": "2026/10", "text": "所需資源：環境與 Token", "status": "doing"},
+          {"date": "2026/11/12", "text": "價值驗證：Checkpoint", "status": "todo"},
+          {"date": "TBD", "text": "PoC", "status": "todo"},
+          {"date": "TBD", "text": "產品化", "status": "todo"}
         ],
-        "tags": ["A2UI", "Azure AI Foundry", "Agent UI"],
-        "source": "S4"
+        "tags": ["A2UI", "Generative UI", "Azure AI Foundry", "Productization"],
+        "source": "S4; Google Developers Blog (2025/12/15)；候選場景為分析提案"
       }
     ]
   },
@@ -213,9 +248,11 @@
         "ownership": "主責",
         "period": "2026/02 ~ 2026/06",
         "milestones": [
-          {"date": "2026/02 ~ 06", "text": "需求分析", "status": "done"},
-          {"date": "2026/02 ~ 06", "text": "PoC 驗證", "status": "done"},
-          {"date": "2026/02 ~ 06", "text": "正式上線", "status": "done"}
+          {"date": "2026/02 ~ 06", "text": "需求分析：權限設計", "status": "done"},
+          {"date": "2026/02 ~ 06", "text": "PoC：整合三類資料", "status": "done"},
+          {"date": "2026/02 ~ 06", "text": "開發：整合 UI／UX", "status": "done"},
+          {"date": "2026/02 ~ 06", "text": "上線", "status": "done"},
+          {"date": "TBD", "text": "營運：量化效益", "status": "todo"}
         ],
         "tags": ["n8n", "AI Agent", "Azure OpenAI", "SFTP"],
         "source": "S1"
@@ -229,9 +266,11 @@
         "ownership": "主責",
         "period": "2026/02 ~ 2026/06",
         "milestones": [
-          {"date": "2026/02 ~ 06", "text": "串接 SharePoint 上傳", "status": "done"},
-          {"date": "2026/02 ~ 06", "text": "語義判定與風險分級", "status": "done"},
-          {"date": "2026/02 ~ 06", "text": "CI/CD 部署至 ACA", "status": "done"}
+          {"date": "2026/02 ~ 06", "text": "需求分析：人工審查", "status": "done"},
+          {"date": "2026/02 ~ 06", "text": "開發：SharePoint 串接", "status": "done"},
+          {"date": "2026/02 ~ 06", "text": "開發：語義判定與驗算", "status": "done"},
+          {"date": "2026/02 ~ 06", "text": "上線：CI/CD 至 ACA", "status": "done"},
+          {"date": "TBD", "text": "營運：量測審查時間", "status": "todo"}
         ],
         "tags": ["Azure OpenAI", "SharePoint", "Azure DevOps", "ACA"],
         "source": "S1"
@@ -248,7 +287,7 @@
     "other": [],
     "projects": [
       {
-        "short": "智能客服：RAG 小t寶",
+        "short": "AI 智能客服：RAG 小t寶",
         "slug": "rag-support-bot",
         "title": "AI 智能客服「小t寶」",
         "summary": "以 RAG 讓會員用自然語言查詢技術手冊。",
@@ -256,15 +295,17 @@
         "ownership": "主責",
         "period": "2025/07 ~ 2025/12",
         "milestones": [
-          {"date": "Phase 1", "text": "建置 Qdrant 向量庫", "status": "done"},
-          {"date": "Phase 2", "text": "RAG 問答與 chunk 調整", "status": "done"},
-          {"date": "Phase 3", "text": "前後台完成並上線", "status": "done"}
+          {"date": "Phase 1", "text": "需求分析：手冊難查", "status": "done"},
+          {"date": "Phase 2", "text": "PoC：RAG＋Qdrant", "status": "done"},
+          {"date": "Phase 3", "text": "開發：調整 chunk 策略", "status": "done"},
+          {"date": "Phase 4", "text": "上線：前後台", "status": "done"},
+          {"date": "Phase 5", "text": "營運：後台維護知識庫", "status": "done"}
         ],
         "tags": ["RAG", "Qdrant", "LangExtract", "Docker"],
         "source": "S1, posts/rag-smart-customer-service.html"
       },
       {
-        "short": "智能投顧：Multi-Agent 決策",
+        "short": "AI 智能投顧：Multi-Agent",
         "slug": "multi-agent-advisory",
         "title": "Multi-Agent 智能投顧決策架構",
         "summary": "讓 AI 像基金團隊一樣分工討論，產生可回測的投資訊號。",
@@ -272,15 +313,16 @@
         "ownership": "協作",
         "period": "2025/07 ~ 2025/12",
         "milestones": [
-          {"date": "Phase 1", "text": "設計 5 個 Agent 分工", "status": "done"},
-          {"date": "Phase 2", "text": "MCP 串接 TEJ 數據", "status": "done"},
-          {"date": "Phase 3", "text": "整合 Zipline 回測", "status": "done"}
+          {"date": "Phase 1", "text": "需求分析：單一 LLM 盲點", "status": "done"},
+          {"date": "Phase 2", "text": "設計：5 個 Agent 分工", "status": "done"},
+          {"date": "Phase 3", "text": "開發：MCP 串接 TEJ", "status": "done"},
+          {"date": "Phase 4", "text": "驗證：Zipline 回測", "status": "done"}
         ],
         "tags": ["LangGraph", "Multi-Agent", "MCP", "Zipline"],
         "source": "S1"
       },
       {
-        "short": "法說會：ASR 逐字稿",
+        "short": "AI 語音辨識：法說會逐字稿",
         "slug": "asr-transcription",
         "title": "ASR 法說會逐字稿自動化",
         "summary": "縮短研究團隊整理法說會內容的時間。",
@@ -288,9 +330,10 @@
         "ownership": "協作",
         "period": "2025/07 ~ 2025/12",
         "milestones": [
-          {"date": "Phase 1", "text": "Whisper 語音辨識", "status": "done"},
-          {"date": "Phase 2", "text": "自動化影音處理", "status": "done"},
-          {"date": "Phase 3", "text": "產出結構化摘要表", "status": "done"}
+          {"date": "Phase 1", "text": "需求分析：人工聽打", "status": "done"},
+          {"date": "Phase 2", "text": "PoC：Whisper 辨識", "status": "done"},
+          {"date": "Phase 3", "text": "開發：自動化處理", "status": "done"},
+          {"date": "Phase 4", "text": "上線：結構化摘要表", "status": "done"}
         ],
         "tags": ["Whisper", "ASR", "Summarization"],
         "source": "S1"
@@ -315,9 +358,10 @@
         "ownership": "協作",
         "period": "2025/09 ~ 2025/12",
         "milestones": [
-          {"date": "2025/09", "text": "加入第六屆 T 大使", "status": "done"},
-          {"date": "2025/09 ~ 12", "text": "政策宣導與社群溝通", "status": "done"},
-          {"date": "2025/09 ~ 12", "text": "協助企業導入生成式 AI", "status": "done"}
+          {"date": "2025/09", "text": "需求盤點：地方出題", "status": "done"},
+          {"date": "2025/09 ~ 12", "text": "設計：研擬解決方案", "status": "done"},
+          {"date": "2025/09 ~ 12", "text": "執行：協助導入 AI", "status": "done"},
+          {"date": "TBD", "text": "成效追蹤", "status": "todo"}
         ],
         "tags": ["Generative AI", "Digital Transformation", "SME", "AIoT"],
         "source": "resume.pdf, moda.gov.tw"
@@ -343,9 +387,10 @@
         "ownership": "主責",
         "period": "2025/07 ~ 2025/12",
         "milestones": [
-          {"date": "Phase 1", "text": "建立回測框架", "status": "done"},
-          {"date": "Phase 2", "text": "最佳化策略參數", "status": "done"},
-          {"date": "2025/12", "text": "成果發表第三名", "status": "done"}
+          {"date": "2025/07", "text": "假設：台指期 CTA", "status": "done"},
+          {"date": "2025/07 ~ 12", "text": "回測：建立框架", "status": "done"},
+          {"date": "2025/07 ~ 12", "text": "最佳化：策略參數", "status": "done"},
+          {"date": "2025/12", "text": "成果：成果發表第三名", "status": "done"}
         ],
         "tags": ["TAIEX Futures", "CTA", "Backtesting", "Python"],
         "source": "resume.pdf"
@@ -361,7 +406,9 @@
         "ownership": "主責",
         "period": "2025/07 ~ 2025/12",
         "milestones": [
-          {"date": "2025/07 ~ 12", "text": "開發事件交易策略", "status": "done"}
+          {"date": "2025/07", "text": "假設：法說會事件", "status": "done"},
+          {"date": "2025/07 ~ 12", "text": "回測：報酬與風險", "status": "done"},
+          {"date": "TBD", "text": "成果：待補充", "status": "todo"}
         ],
         "tags": ["Event Trading", "Earnings Call"],
         "source": "TMBA 經歷（細節待使用者提供）"
@@ -386,9 +433,11 @@
         "ownership": "主責",
         "period": "2024/09 ~ 2026",
         "milestones": [
-          {"date": "Phase 1", "text": "建立 RAG-LLM 財報評分", "status": "done"},
-          {"date": "Phase 2", "text": "縱橫資料模型實證", "status": "done"},
-          {"date": "2026", "text": "完成論文，取得碩士", "status": "done"}
+          {"date": "2024/09 ~", "text": "問題：財報文字的訊號", "status": "done"},
+          {"date": "Phase 2", "text": "資料：37,888 筆公司季資料", "status": "done"},
+          {"date": "Phase 3", "text": "方法：RAG-LLM＋縱橫資料", "status": "done"},
+          {"date": "Phase 4", "text": "實證：6 構面皆顯著", "status": "done"},
+          {"date": "2026", "text": "結論：取得碩士", "status": "done"}
         ],
         "tags": ["RAG-LLM", "Panel Data", "Fixed Effects", "Financial Statements"],
         "source": "etheses.lib.ntust.edu.tw"
@@ -403,9 +452,11 @@
         "ownership": "協作",
         "period": "2024/09 ~ 2024/11",
         "milestones": [
-          {"date": "2024/09", "text": "加入培育計畫", "status": "done"},
-          {"date": "2024/09 ~ 11", "text": "小組作業與課堂報告", "status": "done"},
-          {"date": "2024/11", "text": "完成 ESG 期末專案", "status": "done"}
+          {"date": "2024/09", "text": "問題：ESG 有沒有效益", "status": "done"},
+          {"date": "2024/09 ~ 11", "text": "資料：自選台股標的", "status": "done"},
+          {"date": "2024/09 ~ 11", "text": "方法：ESG 因子配置", "status": "done"},
+          {"date": "2024/11", "text": "實證：期末專案報告", "status": "done"},
+          {"date": "TBD", "text": "結論：績效待補充", "status": "todo"}
         ],
         "tags": ["ESG", "Portfolio", "Taiwan Stocks", "Asset Management"],
         "source": "resume.pdf；財訊 2024/12/25 報導"
@@ -430,8 +481,9 @@
         "ownership": "主責",
         "period": "2023/09 ~ 2024/06",
         "milestones": [
-          {"date": "2023/09", "text": "進入東海 GMBA", "status": "done"},
-          {"date": "2024/06", "text": "完成論文，取得碩士", "status": "done"}
+          {"date": "2023/09", "text": "問題：ESG 與財務結構", "status": "done"},
+          {"date": "2023/09 ~ 2024/06", "text": "資料與方法：待補充", "status": "done"},
+          {"date": "2024/06", "text": "結論：取得碩士", "status": "done"}
         ],
         "tags": ["ESG", "Capital Structure", "Corporate Finance", "Taiwan"],
         "source": "使用者提供題目；摘要待補"

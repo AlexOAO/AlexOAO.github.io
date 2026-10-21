@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 營運成效怎麼看：一張 Dashboard 回答「AI 值不值得」 | Alex Li</title>
+  <meta name="description" content="Alex Li（李翔緯）整理 AI 營運成效 Dashboard 的指標框架：採用、品質、效益、成本、風險五個面向，以及對內 Copilot、Gemini 與對外 AI Agent 的資料來源。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/post.css">
+</head>
+<body>
+  <nav class="post-nav">
+    <a href="../index.html" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Back
+    </a>
+  </nav>
+
+  <article class="post">
+    <header class="post-header">
+      <div class="post-meta">
+        <time>2026-10-21</time>
+        <div class="post-tags">
+          <span>AI ROI</span><span>Dashboard</span><span>LLMOps</span>
+        </div>
+      </div>
+      <h1>AI 營運成效怎麼看：一張 Dashboard 回答「AI 值不值得」</h1>
+    </header>
+
+    <div class="post-body">
+      <p>銀行導入 AI 的第一年，大家問的是「上線了沒」；到了第二年，問題會變成「值不值得」。這時候才發現，手上有一堆數字：授權數、登入次數、Token 帳單，卻沒有一張表能回答這個問題。這篇整理我參與設計 AI 營運成效 Dashboard 時，用的指標框架。</p>
+
+      <h2>一、先問 Dashboard 要回答什麼</h2>
+      <p>設計 Dashboard 最常見的錯誤，是先把拿得到的數字都放上去。數字越多，越看不出重點。我的做法是反過來：先定一個問題，再找能回答它的數字。</p>
+      <p>AI 營運成效 Dashboard 只要回答一個問題：<strong>這筆 AI 投資，值不值得？</strong></p>
+
+      <h2>二、五個面向</h2>
+      <p>要回答「值不值得」，需要五個面向的數字：</p>
+      <ul>
+        <li><strong>採用</strong>：有沒有人在用？授權數、啟用率、活躍使用者、部門覆蓋率。</li>
+        <li><strong>品質</strong>：用得好不好？回答正確率、轉人工率、使用者回饋。</li>
+        <li><strong>效益</strong>：省了什麼、多了什麼？節省工時，以及處理量、轉換率這類業務指標。</li>
+        <li><strong>成本</strong>：花了多少？授權費、Token 用量、GPU 算力。</li>
+        <li><strong>風險</strong>：安不安全？護欄的漏放率與誤擋率、異常事件。</li>
+      </ul>
+      <p>效益減去成本，再扣掉風險，才是 AI 的真實成效。少了任何一個面向，結論都會偏掉。</p>
+
+      <h2>三、採用不等於成效</h2>
+      <p>採用率是最容易拿到、也最容易誤導的數字。「25 個處室全數申請、共 771 套」聽起來很好，但它只說明了「有人拿到、有人打開」，沒說明「有人因此把工作做得更好」。</p>
+      <p>所以我把五個面向分成兩段：採用與品質，回答的是「有沒有在用」；效益、成本與風險，才回答「值不值得」。Dashboard 的第一頁應該放後者，前者是用來解釋原因的。</p>
+
+      <h2>四、對內工具：先用原廠報表</h2>
+      <p>對內的 AI 工具，例如 Copilot 和 Gemini，採用數據不需要自己蒐集，原廠的管理報表就有：</p>
+      <ul>
+        <li><strong>Microsoft Copilot Dashboard</strong>：分成準備度、採用、影響、使用者感受四類指標，可以看到授權與啟用狀態，以及各應用程式的使用情形。</li>
+        <li><strong>Gemini 報表（Google Workspace 管理控制台）</strong>：提供已指派的授權數、活躍使用者，以及使用人數隨時間的變化。</li>
+      </ul>
+      <p>原廠報表的限制是：它看得到「用了多少」，看不到「業務因此改善了多少」。效益的部分，還是要從業務端補上，例如抽樣訪談或任務計時，估算節省的工時。</p>
+      <p>行內自建的工具（例如艾拉小幫手）沒有原廠報表，第一步是取得後台權限與原始資料，才能開始算任何指標。</p>
+
+      <h2>五、對外 Agent：指標要接到業務成果</h2>
+      <p>對外的 AI Agent 是業務服務，效益要用業務的語言衡量。我們的效益公式是：月效益＝業務量 × 單位效益 × 價值單價。套到四個 Agent：</p>
+      <ul>
+        <li>貸款助理：提升轉換率。</li>
+        <li>智能徵審：提升處理量、節省工時。</li>
+        <li>客服助理：減少人工處理、降低服務成本。</li>
+        <li>智富管家：提升活躍度與 AUM。</li>
+      </ul>
+      <p>成本與品質，則來自 Agent 的運行數據。常見的觀測指標包括每次請求的 Token 成本、回應延遲、錯誤率，以及自動化的品質評分。這些數據最好從 AI Gateway 或觀測平台統一收集，而不是每個 Agent 各算各的。</p>
+
+      <h2>六、風險也是成效的一部分</h2>
+      <p>一個效益很高、但會洩漏個資的 Agent，不能算成功。所以風險要和效益放在同一張表上：護欄的漏放率與誤擋率、被攔下的攻擊數、轉人工的比率、異常事件數。誤擋率尤其重要：它代表正常的客戶被拒絕了多少次，直接影響使用體驗。</p>
+
+      <h2>七、從數字到決策</h2>
+      <p>最後一步，是讓每個指標都有兩樣東西：目標值與負責人。沒有目標值，Dashboard 只能顯示數字，不能顯示「達標了沒」；沒有負責人，數字變差了也不會有人處理。</p>
+
+      <h2>學到的事</h2>
+      <p>設計這套框架時，最重要的決定不是選哪個圖表工具，而是先定義問題。只要問題定清楚，「要放哪些數字」就有了取捨的標準：回答不了「值不值得」的數字，就不放在第一頁。</p>
+
+      <h2>參考資料</h2>
+      <ul>
+        <li><a href="https://learn.microsoft.com/en-us/viva/insights/org-team-insights/copilot-dashboard">Microsoft Learn：Connect to the Microsoft Copilot Dashboard</a></li>
+        <li><a href="https://workspaceupdates.googleblog.com/2026/02/view-gemini-feature-usage-and-threshold.html">Google Workspace Updates：View Gemini feature usage and threshold reports in the Admin console</a></li>
+        <li><a href="https://docs.datadoghq.com/llm_observability/">Datadog：LLM Observability</a></li>
+        <li><a href="https://www.worklytics.co/resources/measuring-roi-generative-ai-formulas-benchmarks-2025-survey">Worklytics：How to Measure AI ROI</a></li>
+      </ul>
+    </div>
+  </article>
+
+  <footer class="post-footer">
+    <a href="../index.html#blog" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      All Posts
+    </a>
+  </footer>
+</body>
+</html>

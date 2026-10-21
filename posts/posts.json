@@ -1,5 +1,33 @@
 [
   {
+    "id": "ai-ops-dashboard",
+    "title": "AI 營運成效怎麼看：一張 Dashboard 回答「AI 值不值得」",
+    "date": "2026-10-21",
+    "summary": "整理 AI 營運成效 Dashboard 的指標框架：採用、品質、效益、成本、風險五個面向，以及對內 Copilot、Gemini 與對外 AI Agent 各自的資料來源。",
+    "tags": [
+      "AI ROI",
+      "Dashboard",
+      "LLMOps"
+    ],
+    "file": "posts/ai-ops-dashboard.html",
+    "title_en": "How to read AI operations performance: one dashboard that answers \"is AI worth it?\"",
+    "summary_en": "The metric framework for an AI operations dashboard: adoption, quality, value, cost, and risk, and where the data comes from for internal tools such as Copilot and Gemini and for external AI Agents."
+  },
+  {
+    "id": "ai-guardrails-framework",
+    "title": "銀行的 AI 安全護欄怎麼做：從金管會原則到 3,600 題實測",
+    "date": "2026-10-21",
+    "summary": "整理我在銀行跟進金控 AI 安全護欄 PoC 時建立的框架：AI 治理三層、護欄四層防禦、政策順序、題庫設計、漏放率與誤擋率，以及護欄與紅隊驗證的分工。",
+    "tags": [
+      "AI Safety",
+      "Guardrails",
+      "AI Governance"
+    ],
+    "file": "posts/ai-guardrails-framework.html",
+    "title_en": "How a bank builds AI guardrails: from FSC principles to a 3,600-case test",
+    "summary_en": "The framework I built while following the holding company's AI guardrails PoC: three layers of AI governance, four guardrail layers, policy order, test-set design, miss rate versus false blocks, and how guardrails and red-team validation split the work."
+  },
+  {
     "id": "rag-smart-customer-service",
     "title": "用 RAG 打造金融智能客服的踩坑紀錄",
     "date": "2025-12-15",

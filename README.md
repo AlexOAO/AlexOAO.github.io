@@ -215,6 +215,23 @@ Emoji reference for `icon`: use any emoji character or unicode escape.
 
 ---
 
+## Project journeys
+
+Every card tells its project as a journey. Pick the journey for the project type, use its stations as milestone labels on the card (`站點：重點`, for example `測試設計：3,600 題`), and use the same stations as the phases in the story (`**第一階段｜測試設計。**`).
+
+| Type | Stations |
+|---|---|
+| Vendor / platform PoC | 問題定義 → 測試設計 → 實測 → 比較 → 導入決策 |
+| Planning and governance | 問題定義 → 框架設計 → 資料蒐集 → 試算 / 試行 → 制度化 |
+| Build and launch | 需求分析 → PoC → 開發 → 上線 → 營運 |
+| Technology research | 商用場景 → 所需資源 → 價值驗證 → PoC → 產品化 |
+| Enablement and training | 需求盤點 → 設計 → 執行 → 成效追蹤 |
+| Research | 問題 → 資料 → 方法 → 實證 → 結論 |
+| Quant strategy | 假設 → 回測 → 最佳化 → 成果 |
+| Data and evaluation | 清洗標準 → 資料清洗 → 法規評分 → 模型評測 → 交付 |
+
+Skip a station when the source has nothing for it; never fill it with guesses. Mark unknown status as `todo`.
+
 ## Writing rules (ASD-STE100, Chinese adaptation)
 
 Every claim on the site must trace to a source document. Write only numbers that the source contains.

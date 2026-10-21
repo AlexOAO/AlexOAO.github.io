@@ -30,18 +30,26 @@ POSTS = os.path.join(ROOT, 'posts', 'posts.json')                             # 
 CJK = re.compile(r'[㐀-鿿＀-￯]')
 
 # Values that are codes, paths, or dates: copied as they are.
-KEEP_KEYS = {'slug', 'parent', 'sdlc', 'layers', 'status', 'url', 'file', 'id', 'icon', 'lane', 'key', 'period'}
+KEEP_KEYS = {'track', 'slug', 'parent', 'sdlc', 'layers', 'status', 'url', 'file', 'id', 'icon', 'lane', 'key', 'period'}
 
 # Fixed wording, used before any machine translation.
 GLOSSARY = {
     '結果': 'Results', '為什麼要做': 'Why this project', '我的角色': 'My role', '我怎麼做': 'What I did',
-    '下一步': 'Next steps', '我學到的事': 'What I learned', '子專案': 'Sub-projects',
+    '下一步': 'Next steps', '我學到的事': 'What I learned', '子專案': 'Sub-projects', '延伸閱讀': 'Further reading',
     '主責': 'Lead', '協作': 'Contributor', '現職': 'Current', '在學': 'Enrolled',
     '量化策略': 'Quant strategy', '學術研究': 'Research', '投資實務': 'Investment practice', '教學': 'Teaching',
     '待補充': 'To be added', '待量測': 'To be measured',
+    '問題定義': 'Problem definition', '測試設計': 'Test design', '實測': 'Testing', '比較': 'Comparison', '導入決策': 'Adoption decision',
+    '框架設計': 'Framework design', '資料蒐集': 'Data collection', '試算': 'Estimate', '試行': 'Pilot', '制度化': 'Institutionalize',
+    '需求分析': 'Requirements', '開發': 'Build', '上線': 'Launch', '營運': 'Operate', '上線準備': 'Launch readiness',
+    '商用場景': 'Business use cases', '所需資源': 'Resources', '價值驗證': 'Value check', '產品化': 'Productize',
+    '需求盤點': 'Needs', '設計': 'Design', '執行': 'Delivery', '成效追蹤': 'Follow-up',
+    '問題': 'Question', '資料': 'Data', '方法': 'Method', '實證': 'Evidence', '結論': 'Conclusion',
+    '假設': 'Hypothesis', '回測': 'Backtest', '最佳化': 'Optimization', '成果': 'Result',
+    '驗證': 'Validation', '資料與方法': 'Data and method', '清洗標準': 'Cleaning standard', '資料清洗': 'Data cleaning', '法規評分': 'Regulatory scoring', '模型評測': 'Model evaluation', '交付': 'Delivery to FSC',
 }
 NUM = {'一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '十': 10}
-PHASE = re.compile(r'^第([一二三四五六七八九十、]+)階段[：:]\s*')
+PHASE = re.compile(r'^第([一二三四五六七八九十、]+)階段([｜|：:])\s*')
 INLINE = re.compile(r'(\*\*.+?\*\*|!\[[^\]]*\]\([^)]*\)|\[[^\]]+\]\([^)]*\)|`[^`]*`)')
 
 
@@ -135,12 +143,15 @@ class Translator:
         lead, core, trail = re.match(r'^(\s*)(.*?)(\s*)$', s, re.S).groups()
         if core in GLOSSARY:
             return lead + GLOSSARY[core] + trail
+        if core.rstrip('。.') in GLOSSARY:                # same word with a full stop
+            return lead + GLOSSARY[core.rstrip('。.')] + '.' + trail
         if core in self.c['strings']:
             return lead + self.c['strings'][core] + trail
         m = PHASE.match(core)
         if m:
             nums = [NUM[n] for n in m.group(1).split('、') if n in NUM]
-            label = f'Phase {nums[0]}: ' if len(nums) == 1 else 'Phases ' + ' and '.join(map(str, nums)) + ': '
+            sep = ' | ' if m.group(2) in '｜|' else ': '
+            label = f'Phase {nums[0]}{sep}' if len(nums) == 1 else 'Phases ' + ' and '.join(map(str, nums)) + sep
             rest = core[m.end():]
             en = label + (self.text(rest) if rest else '').lstrip()
         else:

@@ -16,12 +16,14 @@ I lead the course design.
 
 ## What I did
 
-**Phase 1: confirm the outline.** Agreed the outline with the consultant: safety, tools, prompts.
+**Phase 1 | Design.** Agreed the course outline with the consultant on three topics: safety, tools, and prompts.
 
-**Phase 2: collect business use cases.** Collecting the use cases each business unit wants, for hands-on practice in class instead of generic examples. In progress.
+**Phase 2 | Needs.** Collect the use cases each business unit wants, for hands-on practice in class instead of generic examples. In progress.
 
-**Phase 3: deliver the course.**
+**Phase 3 | Delivery.** Run the course with the business units' own use cases.
+
+**Phase 4 | Follow-up.** After the course, count two numbers: attendees, and AI use cases proposed after class. The second shows whether the course reached people's work.
 
 ## Next steps
 
-After the course, count two numbers: attendees, and AI use cases proposed after class.
+- Finish collecting use cases and prepare the course.

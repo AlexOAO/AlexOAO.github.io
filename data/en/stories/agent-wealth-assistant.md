@@ -19,13 +19,13 @@ I led the PoC tests and the compute planning.
 
 ## What I did
 
-**Phase 1: test the Q&A function.** Confirm that the AI wealth assistant's Q&A works.
+**Phase 1 | PoC.** Confirm that the AI wealth assistant's Q&A works.
 
-**Phase 2: draw the first architecture.** Map the system as the base for later development.
+**Phase 2 | Build.** Draw the first system architecture, document the results, and hand over to a senior colleague for development.
 
-**Phase 3: hand over to a senior colleague.** Document the results and hand over for development.
+**Phase 3 | Launch readiness.** I forecast usage for years 1 to 3 from monthly logins. Its SLM runs all day, so its card-seconds fall in both the peak and off-peak windows. The GPU allocation was confirmed at 2 production GPUs and 1 test GPU.
 
-**Phase 4: confirm the GPU allocation.** I forecast usage for years 1 to 3 from monthly logins. Its SLM runs all day, so its card-seconds fall in both the peak and off-peak windows. The allocation was confirmed at 2 production GPUs and 1 test GPU.
+**Phase 4 | Launch.** Driven by the receiving team.
 
 ## Next steps
 

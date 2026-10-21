@@ -196,14 +196,15 @@
     }
     .sdlc-name { font-size: 1rem; font-weight: 700; color: #e2e8f0; }
     .sdlc-desc { font-size: 0.8rem; color: #94a3b8; line-height: 1.6; margin-top: 0.4rem; }
+    .sdlc-desc .why { display: block; color: #cbd5e1; }
     .sdlc-gov {
       position: relative; border-radius: 12px; padding: 0.85rem 1rem;
       background: linear-gradient(90deg, rgba(245,158,11,0.14), rgba(245,158,11,0.05));
       border: 1px solid rgba(245,158,11,0.35);
     }
     .sdlc-gov::before {
-      content: ''; position: absolute; left: 1rem; right: 1rem; top: -0.45rem; height: 0.45rem;
-      border: 2px solid rgba(245,158,11,0.45); border-bottom: none; border-radius: 6px 6px 0 0;
+      content: ''; position: absolute; left: 1rem; right: 1rem; bottom: -0.45rem; height: 0.45rem;
+      border: 2px solid rgba(245,158,11,0.45); border-top: none; border-radius: 0 0 6px 6px;
     }
     .gov-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.75rem; margin-bottom: 0.6rem; }
     .gov-name { font-size: 0.95rem; font-weight: 700; color: #fbbf24; }
@@ -295,7 +296,9 @@
       margin-left: 2rem; padding-left: 1.25rem; border-left: 2px solid rgba(59,130,246,0.4);
     }
     .pcard.child h3::before { content: '↳ '; color: #3b82f6; }
-    .ms-track { list-style: none; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); margin-top: auto; }
+    .ms-rows { margin-top: auto; display: grid; gap: 0.9rem; }
+    .ms-track-label { font-family: 'Inter', sans-serif; font-size: 0.72rem; font-weight: 700; letter-spacing: 1px; color: #94a3b8; margin-bottom: -0.4rem; }
+    .ms-track { list-style: none; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); }
     .ms-step { position: relative; padding-top: 1.35rem; padding-right: 0.4rem; }
     .ms-step::before {
       content: ''; position: absolute; top: 0.35rem; left: 0; right: 0; height: 2px; background: rgba(148,163,184,0.2);
@@ -484,7 +487,7 @@
       .card-family .kids { grid-template-columns: 1fr; margin-left: 0.75rem; padding-left: 0.75rem; }
       .sdlc-grid { display: flex; flex-direction: column; gap: 0.6rem; }
       .sdlc-stage::after, .sdlc-loop { display: none; }
-      .sdlc-gov { margin: 0.6rem 0 0.4rem; }
+      .sdlc-gov { margin: 0 0 0.6rem; }
       .sdlc-lane { flex-direction: row; flex-wrap: wrap; justify-content: flex-start; gap: 0.25rem 1rem; margin-top: 0.75rem; }
       .sdlc-track { grid-template-columns: 1fr; padding-top: 0.5rem; }
       .sdlc-track > *, .sdlc-family > * { grid-column: 1 / -1 !important; }
@@ -778,20 +781,23 @@
     // Generic phase map: stages are columns, an optional band sits under them,
     // each lane is one row, and each item is a bar that spans its stages.
     function renderPhaseMap({ title, note, stages, band, lanes, loop }) {
-      const n = stages.length;
-      const parts = stages.map((st, si) => `
-        <div class="sdlc-stage ${si === n - 1 ? 'last' : ''}" style="grid-row:1;grid-column:${si + 2};--c:${st.color}">
-          <div><span class="sdlc-num">${si + 1}</span><span class="sdlc-name">${esc(st.name)}</span></div>
-          <div class="sdlc-desc">${esc(st.desc)}</div>
-        </div>`);
+      const n = stages.length, parts = [];
+      // A description "what: why" shows the part after the colon on its own line.
+      const desc = d => { const m = d.match(/^(.+?)[：:]\s*(.+)$/); return m ? `${esc(m[1])}<span class="why">${esc(m[2])}</span>` : esc(d); };
+      const stageRow = band ? 2 : 1;
       if (band) {
         const chips = band.items.map(x => `
           <a class="sdlc-chip" href="#${x.target}" data-target="${x.target}" style="--c:${band.color}" title="${esc(x.title)}">
             ${esc(x.label)} ${x.tag ? `<span class="org-tag">${esc(x.tag)}</span>` : ''}</a>`).join('');
-        parts.push(`<div class="sdlc-gov" style="grid-row:2;grid-column:2 / -1">
+        parts.push(`<div class="sdlc-gov" style="grid-row:1;grid-column:2 / -1">
           <div class="gov-head"><span class="gov-name">${esc(band.name)}</span><span class="gov-desc">${esc(band.desc)}</span></div>
           <div class="gov-chips">${chips}</div></div>`);
       }
+      stages.forEach((st, si) => parts.push(`
+        <div class="sdlc-stage ${si === n - 1 ? 'last' : ''}" style="grid-row:${stageRow};grid-column:${si + 2};--c:${st.color}">
+          <div><span class="sdlc-num">${si + 1}</span><span class="sdlc-name">${esc(st.name)}</span></div>
+          <div class="sdlc-desc">${desc(st.desc)}</div>
+        </div>`));
       const row0 = band ? 3 : 2;
       lanes.forEach((lane, li) => {
         const shared = lane.labels.length > 1;
@@ -888,15 +894,21 @@
 
     function renderCard(p, id, names) {
       const pills = stagePills(p, names);
-      const ms = (p.milestones || []).slice(0, 5);
-      const steps = ms.map(m => `
-        <li class="ms-step ${esc(m.status)}"><span class="d">${esc(m.date)}</span><span class="t">${esc(m.text)}</span></li>`).join('');
+      // One progress row per milestone track (e.g. two vendors); up to 5 steps per row.
+      const all = p.milestones || [];
+      const tracks = [...new Set(all.map(m => m.track || ''))];
+      const rows = tracks.map(t => {
+        const ms = all.filter(m => (m.track || '') === t).slice(0, 5);
+        const steps = ms.map(m => `
+          <li class="ms-step ${esc(m.status)}"><span class="d">${esc(m.date)}</span><span class="t">${esc(m.text)}</span></li>`).join('');
+        return `${t ? `<div class="ms-track-label">${esc(t)}</div>` : ''}<ol class="ms-track" style="--n:${ms.length}">${steps}</ol>`;
+      }).join('');
       return `
         <a class="pcard ${p.parent ? 'child' : ''}" id="${id}" href="project.html?id=${encodeURIComponent(p.slug)}">
           <div class="pcard-top">${pills}<span class="pcard-own">${esc(p.ownership)}</span></div>
           <h3>${esc((p.sdlc || []).length ? (p.short || p.title) : p.title)}</h3>
           <p class="pcard-sum">${esc(p.summary)}</p>
-          <ol class="ms-track" style="--n:${ms.length}">${steps}</ol>
+          <div class="ms-rows">${rows}</div>
           <span class="pcard-more">${esc(T('readCase'))} ${arrowSvg}</span>
         </a>`;
     }

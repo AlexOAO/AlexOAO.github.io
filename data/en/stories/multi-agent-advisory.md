@@ -16,11 +16,13 @@ Architecture contributor: Agent roles, and MCP tools to connect TEJ data.
 
 ## What I did
 
-**Phase 1: design the roles of 5 Agents.** A technical analyst reads indicators and trends; a news sentiment analyst scores market sentiment; a fundamental analyst values the company from its statements; a bull-bear debater argues both sides; a trader turns the debate into a buy or sell signal. We compared CrewAI, AutoGen, and LangGraph, and chose LangGraph: data passing, branches, and error handling between Agents are all defined clearly as a graph. In finance, control matters more than autonomy.
+**Phase 1 | Requirements.** A single LLM struggles to handle technicals, news sentiment, and fundamentals at once, and its advice has no reasoning trail to check.
 
-**Phase 2: connect TEJ data through MCP.** Each Agent calls the TEJ API directly. The system does not just chat; it decides from data.
+**Phase 2 | Design.** Five Agents, five jobs: a technical analyst reads indicators and trends; a news sentiment analyst scores market sentiment; a fundamental analyst values the company from its statements; a bull-bear debater argues both sides; a trader turns the debate into a buy or sell signal. We compared CrewAI, AutoGen, and LangGraph, and chose LangGraph: data passing, branches, and error handling between Agents are all defined clearly as a graph. In finance, control matters more than autonomy.
 
-**Phase 3: integrate Zipline backtests.** The signals went into the backtest engine and were tested over 3 years of Taiwan stock history.
+**Phase 3 | Build.** With MCP, each Agent calls the TEJ API directly. The system does not just chat; it decides from data.
+
+**Phase 4 | Validation.** The signals went into the Zipline backtest engine and were tested over 3 years of Taiwan stock history.
 
 ## What I learned
 
