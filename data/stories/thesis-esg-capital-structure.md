@@ -1,3 +1,7 @@
+---
+title: thesis-esg-capital-structure
+---
+
 ## 結果
 
 **我完成了東海大學 GMBA 的碩士論文，研究 ESG 風險評分和台灣公司財務結構之間的關係。** 研究結論待補充。

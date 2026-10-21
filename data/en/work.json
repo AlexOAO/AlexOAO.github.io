@@ -16,20 +16,6 @@
         "sdlc": ["tune"],
         "ownership": "Lead",
         "period": "2026/08 ~ 2026/10",
-        "background": "The bank plans to deploy 4 AI Agents. Before launch, the bank must verify the AI protection controls.",
-        "problem": "The bank had no in-house method to verify Guardrails. Vendor test results did not prove safety for the bank's own use cases.",
-        "goal": {
-          "category": "AI projects & technical support",
-          "weight": "40%",
-          "target": "Complete the Guardrails PoC. Set the bank's AI protection specification."
-        },
-        "approach": [
-          "Map the 6 XecGuard Policies to FSC principles 2, 3, 4, and 5.",
-          "Build 3 labeled test sets (3,600 cases) based on the OWASP AI Testing Guide.",
-          "Send each case and record each Policy's verdict and response time.",
-          "Compare two settings: the 6 Policies, and the 6 Policies plus custom Policies.",
-          "Score XecGuard against the vendor's built-in guardrail on a 9-dimension AI Safety scorecard."
-        ],
         "milestones": [
           {"date": "2026/08/24", "text": "PoC starts", "status": "done"},
           {"date": "2026/08/31", "text": "R1: 240-case baseline", "status": "done"},
@@ -37,19 +23,6 @@
           {"date": "2026/09/21", "text": "Final: 3,600 cases", "status": "done"},
           {"date": "2026/09/29", "text": "Adoption proposal", "status": "done"},
           {"date": "2026/10/12", "text": "CyCraft completes PoC", "status": "done"}
-        ],
-        "result": [
-          "Business-specific 1,500 cases: custom Policies cut the miss rate from 10.2% to 2.2%.",
-          "General 1,000 cases: extra governance rules moved the miss rate only from 21.1% to 20.0%.",
-          "1,330 attack cases: 98.3% blocked, but 20 of 30 normal questions were also blocked.",
-          "Scorecard total: 62.5 / 100. Recommendation: use the vendor's built-in guardrail for now."
-        ],
-        "kpis": [
-          {"name": "Test cases", "value": "3,600 (3 sets)"},
-          {"name": "Miss rate (business-specific)", "value": "10.2% → 2.2%"},
-          {"name": "Attack block rate (1,330)", "value": "98.3%"},
-          {"name": "Normal questions blocked", "value": "20 / 30"},
-          {"name": "Scorecard total", "value": "62.5 / 100"}
         ],
         "tags": ["Guardrails", "OWASP LLM Top 10", "Red Team", "Prompt Engineering"],
         "source": "S2,S3,S4, XecGuard_簡報_final (2026/09/22), XecGuard_vs_Vulcan_回饋 (2026/09/29)"
@@ -62,30 +35,10 @@
         "sdlc": ["ops", "build"],
         "ownership": "Lead",
         "period": "2026/07 ~ 2026/09",
-        "background": "The bank needs an enterprise Agentic platform to build and manage AI Agents.",
-        "problem": "The features and risks of each candidate were not clear. The bank had no common scoring standard.",
-        "goal": {"category": "AI projects & technical support", "weight": "40%", "target": "Complete the enterprise Agentic platform evaluation."},
-        "approach": [
-          "Design and run 26 hands-on tests on Agatha.",
-          "Design and run 34 functional tests on Dify.",
-          "Record the severity of each issue: blocking, security, or general.",
-          "Complete the department scorecard and the holding company's 42-item scorecard (9 categories)."
-        ],
         "milestones": [
           {"date": "2026 Q3", "text": "Run 26 Agatha tests", "status": "done"},
           {"date": "2026 Q3", "text": "Run 34 Dify tests", "status": "done"},
           {"date": "2026 Q3", "text": "Submit 42-item scorecard", "status": "done"}
-        ],
-        "result": [
-          "Found 12 issues in Agatha: 4 blocking and 1 security.",
-          "Delivered PoC reports and scorecards for Agatha and Dify.",
-          "Gave the selection decision a quantitative basis."
-        ],
-        "kpis": [
-          {"name": "Agatha tests", "value": "26"},
-          {"name": "Issues found", "value": "12 (4 blocking, 1 security)"},
-          {"name": "Dify tests", "value": "34"},
-          {"name": "Scorecard", "value": "42 items in 9 categories"}
         ],
         "tags": ["Agatha", "Dify", "Vendor Evaluation", "PoC"],
         "source": "S2,S3"
@@ -98,37 +51,11 @@
         "sdlc": ["plan"],
         "ownership": "Lead",
         "period": "2026/07 ~ Now",
-        "background": "The bank plans 4 AI Agents: Sales, Credit, Service, and Wealth Assistant. Resource allocation needs a cost and benefit basis.",
-        "problem": "Each Agent has a different cost structure: on-premises GPU, cloud tokens, and software. The bank had no single model to compare them.",
-        "goal": {
-          "category": "AI projects & technical support / AI business enablement",
-          "weight": "40% / 20%",
-          "target": "Complete token cost, compute estimate, and 3-year TCO / ROI for the 4 Agents."
-        },
-        "approach": [
-          "Define the resource formula: AI Agent demand = space (GPU memory) × time (GPU compute).",
-          "Build the capacity model: 5 RTX PRO 6000 cards (96 GB each), 480 GB and 432,000 card-seconds per day.",
-          "Build the on-premises amortization model: memory is a fixed cost, compute is a variable cost.",
-          "Build the cloud token model: monthly cost = volume × tokens in/out per journey × unit price.",
-          "Build the benefit model: monthly benefit = volume × unit improvement × unit value.",
-          "Create a data request form to collect model specifications from 4 vendors."
-        ],
         "milestones": [
           {"date": "2026 Q3", "text": "Build 3 cost models", "status": "done"},
           {"date": "2026 Q3", "text": "Model GPU pool & peak load", "status": "done"},
           {"date": "2026/10/30", "text": "Finish compute estimate", "status": "doing"},
           {"date": "TBD", "text": "Deliver final TCO / ROI", "status": "todo"}
-        ],
-        "result": [
-          "Delivered 3 cost models (capacity, on-premises amortization, cloud tokens) and the vendor data request form.",
-          "Collected business volume and cost estimates for the 4 Agents (see sub-projects).",
-          "Built a 3-year TCO, TBE, and ROI comparison format for the 4 Agents."
-        ],
-        "kpis": [
-          {"name": "Cost models", "value": "3"},
-          {"name": "Agents covered", "value": "4"},
-          {"name": "GPU pool capacity", "value": "480 GB / 432,000 card-sec/day"},
-          {"name": "3-year ROI of 4 Agents", "value": "To be measured", "note": "Waits for BU benefit data and vendor quotes"}
         ],
         "tags": ["TCO", "ROI", "GPU Capacity", "Token Cost", "Cost Model"],
         "source": "S2,S4,S5"
@@ -142,23 +69,10 @@
         "sdlc": ["plan"],
         "ownership": "Lead",
         "period": "2026/07 ~ Now",
-        "background": "The Loan Assistant (Sales Agent) supports loan applications. It is one of the 4 business AI Agents.",
-        "problem": "The business volume of the Loan Assistant is not set yet, so cost and benefit cannot be calculated.",
-        "goal": {"category": "AI projects & technical support", "weight": "40%", "target": "Add the Loan Assistant to the 3-year TCO / ROI comparison."},
-        "approach": [
-          "Confirm the on-premises parts: CPU only, for data masking.",
-          "Estimate cost with the cloud token model: volume × tokens per journey × unit price.",
-          "Request the business volume from the business unit."
-        ],
         "milestones": [
           {"date": "2026 Q3", "text": "Confirm on-prem parts", "status": "done"},
           {"date": "TBD", "text": "Get BU volume", "status": "todo"},
           {"date": "TBD", "text": "Deliver TCO / ROI", "status": "todo"}
-        ],
-        "result": ["Confirmed that the Loan Assistant needs no GPU; it uses CPU only for data masking."],
-        "kpis": [
-          {"name": "GPU need", "value": "0 (CPU only)"},
-          {"name": "Monthly volume", "value": "To be added", "note": "Waiting for the business unit"}
         ],
         "tags": ["Sales Agent", "Cost Model", "Loan"],
         "source": "S5"
@@ -172,34 +86,10 @@
         "sdlc": ["plan"],
         "ownership": "Lead",
         "period": "2026/07 ~ Now",
-        "background": "Credit Review (Credit Agent) handles credit review documents. On premises, OCR reads the documents; a cloud LLM processes the results.",
-        "problem": "Credit case volume grows each year. The bank needs the cost per case and the 3-year total.",
-        "goal": {
-          "category": "AI projects & technical support",
-          "weight": "40%",
-          "target": "Complete the cloud token cost and GPU allocation for Credit Review."
-        },
-        "approach": [
-          "Use the monthly case volume as the base and forecast years 1–3.",
-          "Tokens per journey: 11,250 input, 2,500 output.",
-          "Estimate with the GPT5.5 price assumption ($2.5 input / $15 output).",
-          "Run OCR ×2 and SLM review on premises as off-peak batch jobs."
-        ],
         "milestones": [
           {"date": "2026 Q3", "text": "Token cost estimate", "status": "done"},
           {"date": "2026/10", "text": "Confirm production GPU", "status": "done"},
           {"date": "TBD", "text": "Deliver final TCO / ROI", "status": "todo"}
-        ],
-        "result": [
-          "Cloud token cost is about NT$1.92 per case.",
-          "Token cost for years 1–3 is about NT$346,591 / 384,717 / 427,034.",
-          "Production uses 1 GPU."
-        ],
-        "kpis": [
-          {"name": "Monthly cases", "value": "13,513"},
-          {"name": "Monthly cases, year 3", "value": "18,480"},
-          {"name": "Cost per case", "value": "≈ NT$1.92", "note": "Estimate"},
-          {"name": "Production GPUs", "value": "1"}
         ],
         "tags": ["Credit Agent", "OCR", "Token Cost"],
         "source": "S4,S5"
@@ -213,31 +103,10 @@
         "sdlc": ["plan"],
         "ownership": "Contributor",
         "period": "2026/07 ~ Now",
-        "background": "The Customer Service Agent handles service calls. On premises, STT turns speech into text; an SLM processes the text.",
-        "problem": "Speech recognition needs GPU compute. The bank needs the peak demand during business hours.",
-        "goal": {
-          "category": "AI projects & technical support",
-          "weight": "40%",
-          "target": "Estimate on-premises compute and cost for the Customer Service Agent."
-        },
-        "approach": [
-          "Use the monthly call volume as the base.",
-          "Measure STT work in minutes: GPU time is similar for fast and slow speakers in the same call.",
-          "Place customer service in the business-hours peak when counting card-seconds."
-        ],
         "milestones": [
           {"date": "2026 Q3", "text": "Call volume & hours model", "status": "done"},
           {"date": "2026/10/16", "text": "First vendor compute meeting", "status": "done"},
           {"date": "2026/10/23", "text": "Vendor updates estimate", "status": "todo"}
-        ],
-        "result": [
-          "Confirmed that STT is measured in minutes, not tokens.",
-          "Customer Service is the only Agent measured in both minutes and tokens."
-        ],
-        "kpis": [
-          {"name": "Monthly calls", "value": "43,000"},
-          {"name": "Work unit", "value": "Minutes + tokens"},
-          {"name": "GPU allocation", "value": "To be added", "note": "Waiting for the vendor's updated estimate"}
         ],
         "tags": ["Service Agent", "STT", "GPU Capacity"],
         "source": "S4,S5"
@@ -251,33 +120,11 @@
         "sdlc": ["plan"],
         "ownership": "Lead",
         "period": "2026/07 ~ Now",
-        "background": "The Wealth Assistant is the bank's AI wealth management app (App 2.0). It is one of the 4 business AI Agents.",
-        "problem": "The PoC had to confirm that Q&A works. Before launch, the bank needs the GPU allocation and usage growth.",
-        "goal": {
-          "category": "AI projects & technical support",
-          "weight": "40%",
-          "target": "Complete the Q&A PoC and confirm the GPU allocation for launch."
-        },
-        "approach": [
-          "Test the Q&A function.",
-          "Draw the first system architecture.",
-          "Forecast usage for years 1–3 from monthly logins.",
-          "Count the all-day SLM in the GPU pool."
-        ],
         "milestones": [
           {"date": "2026 Q3", "text": "Test the Q&A function", "status": "done"},
           {"date": "2026 Q3", "text": "Draw the architecture", "status": "done"},
           {"date": "2026 Q3", "text": "Hand over to senior dev", "status": "done"},
           {"date": "2026/10", "text": "Confirm GPU allocation", "status": "done"}
-        ],
-        "result": [
-          "Completed Q&A testing and the first architecture; handed over to a senior colleague.",
-          "Confirmed GPUs: 2 in production, 1 in test."
-        ],
-        "kpis": [
-          {"name": "Monthly logins", "value": "324,959"},
-          {"name": "Monthly logins, year 3", "value": "495,000"},
-          {"name": "GPUs", "value": "2 production / 1 test"}
         ],
         "tags": ["App 2.0", "PoC", "Wealth Management"],
         "source": "S2,S4,S5"
@@ -290,30 +137,9 @@
         "sdlc": ["plan", "gov"],
         "ownership": "Lead",
         "period": "2026/07 ~ Now",
-        "background": "Taiwan's Financial Supervisory Commission (FSC) issued 6 principles for AI use. The 4 Agents must meet them before launch.",
-        "problem": "The bank had no check process that maps Agent use cases to the FSC principles.",
-        "goal": {
-          "category": "AI business enablement",
-          "weight": "20%",
-          "target": "Set technical specifications and interface standards for the 4 Agents. Complete the in-house check process."
-        },
-        "approach": [
-          "Survey pre-launch check methods for AI Agents.",
-          "Map the use cases of the 4 Agents to the 6 FSC principles.",
-          "Plan an in-house Agent check process and interface standards."
-        ],
         "milestones": [
           {"date": "2026 Q3", "text": "Survey pre-launch checks", "status": "done"},
           {"date": "TBD", "text": "Map to 6 FSC principles", "status": "doing"}
-        ],
-        "result": [
-          "Completed the survey of pre-launch AI Agent checks.",
-          "The in-house check process is in planning."
-        ],
-        "kpis": [
-          {"name": "Principles covered", "value": "6 FSC principles"},
-          {"name": "Agents covered", "value": "4"},
-          {"name": "Pre-launch pass rate", "value": "To be measured", "note": "Measured after the process is in place"}
         ],
         "tags": ["AI Governance", "Compliance", "FSC"],
         "source": "S2,S3"
@@ -326,30 +152,12 @@
         "sdlc": ["tune"],
         "ownership": "Contributor",
         "period": "2026/07 ~ 2027/03",
-        "background": "The FSC leads FinLLM, a large language model for Taiwan's financial industry. The bank takes part in data cleaning and model evaluation.",
-        "problem": "Training data must be correct and compliant. The raw questions contain errors, so each item needs review.",
-        "goal": {
-          "category": "AI projects & technical support",
-          "weight": "40%",
-          "target": "Complete data cleaning by 2027/01/08 and model evaluation by 2027/03/06."
-        },
-        "approach": [
-          "Clean, proofread, and correct each item.",
-          "Process 1 data batch per week, on the holding company's schedule.",
-          "Score the model's regulatory interpretation."
-        ],
         "milestones": [
           {"date": "2026/10/12", "text": "Clean data batch 2-1", "status": "done"},
           {"date": "2026/10/13", "text": "Score regulatory batch 4", "status": "done"},
           {"date": "2026/10/27 ~ 11/12", "text": "Score regulatory batch 5", "status": "doing"},
           {"date": "2027/01/08", "text": "Finish all data cleaning", "status": "todo"},
           {"date": "2027/03/06", "text": "Finish model evaluation", "status": "todo"}
-        ],
-        "result": ["Completed data batch 2-1 on 2026/10/12.", "Completed regulatory scoring batch 4 on 2026/10/13."],
-        "kpis": [
-          {"name": "Data batches done", "value": "Batch 2-1"},
-          {"name": "Data batches left", "value": "9"},
-          {"name": "Scoring batches done", "value": "Batch 4"}
         ],
         "tags": ["FinLLM", "Data Cleaning", "LLM Evaluation"],
         "source": "S2,S4"
@@ -362,28 +170,10 @@
         "sdlc": ["ops"],
         "ownership": "Lead",
         "period": "2026/10 ~ 2026/11",
-        "background": "The bank encourages employees to use generative AI tools.",
-        "problem": "Employees do not know which tasks suit AI, or how to use AI safely.",
-        "goal": {
-          "category": "AI operations: employee enablement",
-          "weight": "—",
-          "target": "Deliver Gemini training on 2026/11/12 with real business cases."
-        },
-        "approach": [
-          "Confirm the course outline with the consultant: safety, tools, and prompts.",
-          "Collect use cases from each business unit.",
-          "Use these cases for hands-on practice in class."
-        ],
         "milestones": [
           {"date": "2026/10", "text": "Confirm course outline", "status": "done"},
           {"date": "2026/10 ~ 11", "text": "Collect use cases", "status": "doing"},
           {"date": "2026/11/12", "text": "Deliver the course", "status": "todo"}
-        ],
-        "result": ["The course outline is confirmed."],
-        "kpis": [
-          {"name": "Course date", "value": "2026/11/12"},
-          {"name": "Attendees", "value": "To be measured"},
-          {"name": "Use-case proposals after class", "value": "To be measured"}
         ],
         "tags": ["Gemini", "AI Training", "Enablement"],
         "source": "S4"
@@ -396,24 +186,10 @@
         "sdlc": ["plan"],
         "ownership": "Lead",
         "period": "2026/10 ~ Now",
-        "background": "A2UI lets an Agent generate the user interface. The bank evaluates it for use cases such as Wealth Assistant.",
-        "problem": "The bank has no A2UI PoC environment yet. The business value is not confirmed.",
-        "goal": {"category": "Bank technical research", "weight": "—", "target": "Confirm the PoC environment and business value by 2026/11/12."},
-        "approach": [
-          "Confirm the PoC environment requirements and technical specifications.",
-          "Apply for Azure AI Foundry and tokens.",
-          "Connect to the IT test environment.",
-          "Align use cases with the Wealth Assistant team."
-        ],
         "milestones": [
           {"date": "2026/10", "text": "Confirm PoC environment", "status": "doing"},
           {"date": "2026/11/12", "text": "Checkpoint: business value", "status": "todo"},
           {"date": "TBD", "text": "Connect test env & use case", "status": "todo"}
-        ],
-        "result": ["PoC environment requirements are in review."],
-        "kpis": [
-          {"name": "Checkpoint", "value": "2026/11/12: business value"},
-          {"name": "Use cases", "value": "To be measured"}
         ],
         "tags": ["A2UI", "Azure AI Foundry", "Agent UI"],
         "source": "S4"
@@ -439,28 +215,10 @@
         "sdlc": ["build", "plan"],
         "ownership": "Lead",
         "period": "2026/02 ~ 2026/06",
-        "background": "The Kinance AI Market Assistant and AI Stock Assistant answer user questions about markets and stocks.",
-        "problem": "Researchers collected and organized broker reports, macro data, and news by hand. This took time.",
-        "goal": {"category": "Module owner", "weight": "—", "target": "Lead Webai Finance from requirements to production launch."},
-        "approach": [
-          "Lead the full cycle from requirements and PoC to production launch.",
-          "Orchestrate the AI Agent flow. Integrate broker reports, macro data, and news through SFTP.",
-          "Design access control: open to the whole group, with investment-trust data kept separate.",
-          "Integrate with the existing UI / UX."
-        ],
         "milestones": [
           {"date": "2026/02 ~ 06", "text": "Requirements", "status": "done"},
           {"date": "2026/02 ~ 06", "text": "PoC", "status": "done"},
           {"date": "2026/02 ~ 06", "text": "Production launch", "status": "done"}
-        ],
-        "result": [
-          "Launched Webai Finance in production.",
-          "Reduced the time researchers spend to collect and organize data."
-        ],
-        "kpis": [
-          {"name": "Launch status", "value": "In production"},
-          {"name": "Data sources", "value": "3 (broker reports, macro, news)"},
-          {"name": "Researcher data-prep time", "value": "To be measured"}
         ],
         "tags": ["n8n", "AI Agent", "Azure OpenAI", "SFTP"],
         "source": "S1"
@@ -473,28 +231,10 @@
         "sdlc": ["ops", "gov"],
         "ownership": "Lead",
         "period": "2026/02 ~ 2026/06",
-        "background": "The group AI committee reviews AI usage reports from subsidiaries.",
-        "problem": "Manual review of report content, risk levels, and the asset register took time. Reviewers did not use the same standard.",
-        "goal": {"category": "AI governance system", "weight": "—", "target": "Automate the AI governance review process."},
-        "approach": [
-          "Connect SharePoint so subsidiaries can upload reports.",
-          "Use Azure OpenAI to check if the report content is reasonable.",
-          "Recalculate risk levels and cross-check the asset register automatically.",
-          "Deploy to Azure Container Apps with Azure DevOps CI/CD."
-        ],
         "milestones": [
           {"date": "2026/02 ~ 06", "text": "Connect SharePoint intake", "status": "done"},
           {"date": "2026/02 ~ 06", "text": "Content check & risk grading", "status": "done"},
           {"date": "2026/02 ~ 06", "text": "Deploy to ACA with CI/CD", "status": "done"}
-        ],
-        "result": [
-          "The system completes risk grading, asset register checks, and residual risk assessment automatically.",
-          "CI/CD deploys automatically and removes manual deployment steps."
-        ],
-        "kpis": [
-          {"name": "Automated steps", "value": "3 (risk grading, register check, residual risk)"},
-          {"name": "Deployment", "value": "CI/CD → ACA"},
-          {"name": "Review time per report", "value": "To be measured"}
         ],
         "tags": ["Azure OpenAI", "SharePoint", "Azure DevOps", "ACA"],
         "source": "S1"
@@ -518,32 +258,12 @@
         "sdlc": ["build", "tune"],
         "ownership": "Lead",
         "period": "2025/07 ~ 2025/12",
-        "background": "TEJ members need to look up technical manuals and database usage.",
-        "problem": "Answers were spread across technical manuals. When members could not find an answer, they waited for support.",
-        "goal": {"category": "AI customer service", "weight": "—", "target": "Own the RAG architecture, vector database, and front / back end."},
-        "approach": [
-          "Process the technical manuals with LangExtract.",
-          "Build a Qdrant vector database and answer questions with RAG.",
-          "Adjust the chunking strategy to improve retrieval.",
-          "Build an HTML front end and an admin console. Deploy on Docker."
-        ],
         "milestones": [
           {"date": "Phase 1", "text": "Build Qdrant vector DB", "status": "done"},
           {"date": "Phase 2", "text": "RAG Q&A & chunk tuning", "status": "done"},
           {"date": "Phase 3", "text": "Launch front end & admin", "status": "done"}
         ],
-        "result": [
-          "Launched the system. Members can search technical manuals in natural language.",
-          "Admins maintain the knowledge base in the console."
-        ],
-        "kpis": [
-          {"name": "Accuracy", "value": "60% → 85%", "note": "After the chunking change"},
-          {"name": "Response time", "value": "About 2–3 seconds"},
-          {"name": "Status", "value": "Launched"}
-        ],
         "tags": ["RAG", "Qdrant", "LangExtract", "Docker"],
-        "link": "posts/rag-smart-customer-service.html",
-        "linkLabel": "Read the lessons learned (Chinese)",
         "source": "S1, posts/rag-smart-customer-service.html"
       },
       {
@@ -554,30 +274,12 @@
         "sdlc": ["build"],
         "ownership": "Contributor",
         "period": "2025/07 ~ 2025/12",
-        "background": "TEJ evaluated AI for investment recommendations.",
-        "problem": "One LLM cannot handle technicals, news sentiment, and fundamentals at the same time. Its recommendations also lack a reasoning trail that people can check.",
-        "goal": {"category": "AI investment advisory", "weight": "—", "target": "Design the Multi-Agent architecture and integrate MCP with TEJ data."},
-        "approach": [
-          "Build 5 Agents with LangGraph: technical analysis, news sentiment, fundamentals, bull-bear debate, and trader.",
-          "Connect TEJ data through MCP.",
-          "Integrate the Zipline backtest engine."
-        ],
         "milestones": [
           {"date": "Phase 1", "text": "Design 5 Agent roles", "status": "done"},
           {"date": "Phase 2", "text": "Connect TEJ data via MCP", "status": "done"},
           {"date": "Phase 3", "text": "Integrate Zipline backtest", "status": "done"}
         ],
-        "result": [
-          "Delivered the Multi-Agent advisory architecture.",
-          "Verified strategy performance with Zipline backtests."
-        ],
-        "kpis": [
-          {"name": "Agents", "value": "5"},
-          {"name": "Backtest engine", "value": "Zipline"}
-        ],
         "tags": ["LangGraph", "Multi-Agent", "MCP", "Zipline"],
-        "link": "posts/multi-agent-investment.html",
-        "linkLabel": "Read the architecture notes (Chinese)",
         "source": "S1"
       },
       {
@@ -588,23 +290,10 @@
         "sdlc": ["build"],
         "ownership": "Contributor",
         "period": "2025/07 ~ 2025/12",
-        "background": "The research team needs the text and key points of earnings calls.",
-        "problem": "Manual transcription and summary of earnings call videos took time.",
-        "goal": {"category": "ASR transcription", "weight": "—", "target": "Build an automated video processing and summary pipeline."},
-        "approach": [
-          "Transcribe speech with Whisper.",
-          "Automate the video file processing.",
-          "Summarize the transcript into structured tables."
-        ],
         "milestones": [
           {"date": "Phase 1", "text": "Whisper speech-to-text", "status": "done"},
           {"date": "Phase 2", "text": "Automate video processing", "status": "done"},
           {"date": "Phase 3", "text": "Deliver summary tables", "status": "done"}
-        ],
-        "result": ["Reduced the time to prepare earnings call transcripts.", "Delivered structured summary tables."],
-        "kpis": [
-          {"name": "Output", "value": "Transcript + structured summary"},
-          {"name": "Prep time per call", "value": "To be measured"}
         ],
         "tags": ["Whisper", "ASR", "Summarization"],
         "source": "S1"
@@ -628,27 +317,12 @@
         "sdlc": ["plan"],
         "ownership": "Contributor",
         "period": "2025/09 ~ 2025/12",
-        "background": "The Ministry of Digital Affairs runs the Digital Youth T-Ambassador program. The program promotes digital inclusion and fills talent gaps in industry.",
-        "problem": "Rural organizations and SMEs lack digital and AI talent. They cannot adopt generative AI on their own.",
-        "goal": {"category": "Digital transformation", "weight": "—", "target": "Help companies adopt generative AI and AIoT."},
-        "approach": [
-          "Develop digital solutions with companies through the \"local problems, talent solutions\" model.",
-          "Promote digital transformation policy and community communication with the government.",
-          "Help companies adopt generative AI and AIoT."
-        ],
         "milestones": [
           {"date": "2025/09", "text": "Join 6th T-Ambassadors", "status": "done"},
           {"date": "2025/09 ~ 12", "text": "Policy outreach", "status": "done"},
           {"date": "2025/09 ~ 12", "text": "Help firms adopt GenAI", "status": "done"}
         ],
-        "result": ["Completed the 6th T-Ambassador program.", "Helped companies adopt generative AI and AIoT."],
-        "kpis": [
-          {"name": "Program", "value": "6th Digital Youth T-Ambassador"},
-          {"name": "Technologies", "value": "Generative AI, AIoT"}
-        ],
         "tags": ["Generative AI", "Digital Transformation", "SME", "AIoT"],
-        "link": "https://moda.gov.tw/ADI/industry-counseling/digital-service/4093",
-        "linkLabel": "Program page (Chinese)",
         "source": "resume.pdf, moda.gov.tw"
       }
     ]
@@ -671,23 +345,10 @@
         "sdlc": [],
         "ownership": "Lead",
         "period": "2025/07 ~ 2025/12",
-        "background": "Each TMBA algorithmic trading cohort develops trading strategies and presents them at a final showcase.",
-        "problem": "A TAIEX futures strategy needs a repeatable backtest and consistent risk and return metrics.",
-        "goal": {"category": "Showcase", "weight": "—", "target": "Develop a TAIEX futures CTA strategy that can be backtested and measured."},
-        "approach": [
-          "Develop a TAIEX futures CTA strategy.",
-          "Build a strategy backtest framework.",
-          "Optimize the strategy parameters.",
-          "Evaluate return, Sharpe ratio, and maximum drawdown."
-        ],
         "milestones": [
           {"date": "Phase 1", "text": "Build backtest framework", "status": "done"},
           {"date": "Phase 2", "text": "Optimize parameters", "status": "done"},
           {"date": "2025/12", "text": "3rd place at showcase", "status": "done"}
-        ],
-        "result": ["Won 3rd place at the showcase."],
-        "kpis": [
-          {"name": "Showcase rank", "value": "3rd place"}
         ],
         "tags": ["TAIEX Futures", "CTA", "Backtesting", "Python"],
         "source": "resume.pdf"
@@ -702,19 +363,8 @@
         "sdlc": [],
         "ownership": "Lead",
         "period": "2025/07 ~ 2025/12",
-        "background": "Each TMBA algorithmic trading cohort develops trading strategies and presents them at a final showcase.",
-        "problem": "Earnings calls release information about operations and outlook. The strategy must find out if this event gives a tradable signal.",
-        "goal": {"category": "Showcase", "weight": "—", "target": "Develop a trading strategy that uses earnings calls as the event."},
-        "approach": [
-          "Design an event trading strategy around earnings calls.",
-          "Evaluate return and risk with a backtest."
-        ],
         "milestones": [
           {"date": "2025/07 ~ 12", "text": "Develop event strategy", "status": "done"}
-        ],
-        "result": ["Strategy details and backtest results: to be added."],
-        "kpis": [
-          {"name": "Backtest results", "value": "To be added", "note": "Return, Sharpe ratio, max drawdown"}
         ],
         "tags": ["Event Trading", "Earnings Call"],
         "source": "TMBA experience (details pending from user)"
@@ -738,40 +388,12 @@
         "sdlc": [],
         "ownership": "Lead",
         "period": "2024/09 ~ 2026",
-        "background": "Financial statements contain a large amount of text and numbers. Traditional financial ratios explain only a small part of stock return variance.",
-        "problem": "Traditional financial variables have low explanatory power for stock returns of Taiwan electronics firms. Research question: can an LLM extract stronger signals from financial statements?",
-        "goal": {
-          "category": "Master's thesis",
-          "weight": "—",
-          "target": "Test whether RAG-LLM scores of financial statements improve the explanatory power of stock return models."
-        },
-        "approach": [
-          "Build a RAG-LLM system that analyzes 101 financial variables.",
-          "Generate LLM scores on 6 dimensions.",
-          "Compare a baseline model with a model that adds LLM scores, using fixed-effects panel data models.",
-          "Sample: 592 listed electronics firms, 64 quarters (2009Q3–2025Q2), 37,888 firm-quarter observations.",
-          "Assess score reliability with a pilot ICC test."
-        ],
         "milestones": [
           {"date": "Phase 1", "text": "Build RAG-LLM scoring", "status": "done"},
           {"date": "Phase 2", "text": "Panel data analysis", "status": "done"},
           {"date": "2026", "text": "Thesis done; degree earned", "status": "done"}
         ],
-        "result": [
-          "Adding the 6 LLM dimension scores raised within R² from 5.14% to 63.73%.",
-          "All 6 dimension scores are significant at the 1% level.",
-          "Pilot reliability assessment: ICC = 0.759."
-        ],
-        "kpis": [
-          {"name": "within R² (traditional)", "value": "5.14%"},
-          {"name": "within R² (with LLM scores)", "value": "63.73%"},
-          {"name": "Significant dimensions", "value": "6 / 6 (1% level)"},
-          {"name": "Reliability ICC (pilot)", "value": "0.759"},
-          {"name": "Sample", "value": "37,888 firm-quarters"}
-        ],
         "tags": ["RAG-LLM", "Panel Data", "Fixed Effects", "Financial Statements"],
-        "link": "https://etheses.lib.ntust.edu.tw/detail/27b99ae63b98c427ee18434207d7cdc4/?seq=18",
-        "linkLabel": "NTUST thesis record",
         "source": "etheses.lib.ntust.edu.tw"
       },
       {
@@ -783,30 +405,12 @@
         "sdlc": [],
         "ownership": "Contributor",
         "period": "2024/09 ~ 2024/11",
-        "background": "Fubon Asset Management trains asset management talent with 5 universities. NTUST joined for the first time in 2024; that cohort had 113 students.",
-        "problem": "Does ESG add value in stock investing? The final project had to answer this question.",
-        "goal": {"category": "Final project", "weight": "—", "target": "Complete the final project report on integrating ESG into investment practice."},
-        "approach": [
-          "Select investment targets, mainly Taiwan stocks.",
-          "Integrate the ESG factors from class into the portfolio allocation.",
-          "Collect and combine data as a team, and write the report.",
-          "Present in class and get feedback from fund managers."
-        ],
         "milestones": [
           {"date": "2024/09", "text": "Join the program", "status": "done"},
           {"date": "2024/09 ~ 11", "text": "Team assignments & talks", "status": "done"},
           {"date": "2024/11", "text": "Finish ESG final project", "status": "done"}
         ],
-        "result": ["Completed the final project report on integrating ESG into investment practice."],
-        "kpis": [
-          {"name": "Cohort", "value": "2024 (first NTUST cohort)"},
-          {"name": "Students", "value": "113 (5 universities)"},
-          {"name": "Program length", "value": "3 months"},
-          {"name": "Portfolio results", "value": "To be added"}
-        ],
         "tags": ["ESG", "Portfolio", "Taiwan Stocks", "Asset Management"],
-        "link": "https://www.moneyweekly.com.tw/_Article?AID=161517",
-        "linkLabel": "Money Weekly article (Chinese)",
         "source": "resume.pdf; Money Weekly 2024/12/25"
       }
     ]
@@ -828,25 +432,11 @@
         "sdlc": [],
         "ownership": "Lead",
         "period": "2023/09 ~ 2024/06",
-        "background": "Investors use ESG risk scores as one measure to evaluate companies.",
-        "problem": "Research question: do ESG risk scores affect the capital structure of Taiwanese companies?",
-        "goal": {
-          "category": "Master's thesis",
-          "weight": "—",
-          "target": "Test the effect of ESG risk scores on the capital structure of Taiwanese companies."
-        },
-        "approach": ["Research design, sample, and method: to be added."],
         "milestones": [
           {"date": "2023/09", "text": "Start Tunghai GMBA", "status": "done"},
           {"date": "2024/06", "text": "Thesis done; degree earned", "status": "done"}
         ],
-        "result": ["Findings: to be added."],
-        "kpis": [
-          {"name": "Findings", "value": "To be added"}
-        ],
         "tags": ["ESG", "Capital Structure", "Corporate Finance", "Taiwan"],
-        "link": "https://hdl.handle.net/11296/us53cs",
-        "linkLabel": "National Digital Library of Theses (Chinese)",
         "source": "title from user; abstract pending"
       },
       {
@@ -858,24 +448,10 @@
         "sdlc": [],
         "ownership": "Contributor",
         "period": "2023/09 ~ 2024/06",
-        "background": "Tunghai University offers core business courses taught in English.",
-        "problem": "Students learn statistics, economics, and financial management in English and need a teaching assistant.",
-        "goal": {"category": "Teaching assistant", "weight": "—", "target": "Support the teaching of 3 English-taught courses."},
-        "approach": [
-          "Serve as TA for Statistics (taught in English).",
-          "Serve as TA for Economics (taught in English).",
-          "Serve as TA for Financial Management (taught in English).",
-          "Duties: to be added."
-        ],
         "milestones": [
           {"date": "2023/09 ~ 2024/06", "text": "Statistics TA", "status": "done"},
           {"date": "2023/09 ~ 2024/06", "text": "Economics TA", "status": "done"},
           {"date": "2023/09 ~ 2024/06", "text": "Financial Management TA", "status": "done"}
-        ],
-        "result": ["Completed the TA role for 3 English-taught courses."],
-        "kpis": [
-          {"name": "English-taught courses", "value": "3"},
-          {"name": "Language", "value": "English"}
         ],
         "tags": ["Teaching Assistant", "Statistics", "Economics", "Financial Management"],
         "source": "resume.pdf; period assumed from GMBA dates"

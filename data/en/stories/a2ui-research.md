@@ -1,3 +1,7 @@
+---
+title: a2ui-research
+---
+
 ## Results
 
 **The PoC environment requirements and specifications are in review; the next checkpoint must show where A2UI's business value is.**

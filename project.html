@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Project | Alex Li (李翔緯)</title>
-  <meta name="description" content="Project story by Alex Li (李翔緯): context, problem, goal, approach, milestones, results, and KPIs.">
+  <meta name="description" content="Project story by Alex Li (李翔緯): results, why the project mattered, my role, and how I did it.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -26,33 +26,12 @@
       border: 1px solid color-mix(in srgb, var(--c) 50%, transparent);
     }
     .own { font-size: 0.8rem; color: #a78bfa; }
-    .step-label {
-      display: inline-block; font-family: 'Inter', sans-serif; font-size: 0.72rem; font-weight: 700;
-      letter-spacing: 1.5px; text-transform: uppercase; color: #64748b; margin-right: 0.5rem;
-    }
-    .goal-meta { font-size: 0.85rem; color: #64748b; margin-bottom: 0.5rem; }
-    .bar { height: 8px; border-radius: 4px; background: rgba(148,163,184,0.15); overflow: hidden; margin: 0.75rem 0 0.4rem; }
-    .bar span { display: block; height: 100%; background: linear-gradient(90deg, #10b981, #06b6d4); }
-    .bar-label { font-size: 0.85rem; color: #94a3b8; }
-    .ms-list { position: relative; padding-left: 1.5rem; margin: 0.5rem 0 1.5rem; }
-    .ms-list::before { content: ''; position: absolute; left: 5px; top: 0.6rem; bottom: 0.6rem; width: 2px; background: rgba(148,163,184,0.2); }
-    .ms { position: relative; margin-bottom: 1rem; line-height: 1.6; }
-    .ms::before { content: ''; position: absolute; left: -1.5rem; top: 0.45rem; width: 12px; height: 12px; border-radius: 50%; box-sizing: border-box; }
-    .ms.done::before { background: #10b981; }
-    .ms.doing::before { background: #3b82f6; box-shadow: 0 0 0 4px rgba(59,130,246,0.25); }
-    .ms.todo::before { background: #0f172a; border: 2px solid #475569; }
-    .ms .d { display: block; font-size: 0.8rem; color: #64748b; }
-    .ms .t { color: #e2e8f0; }
-    .ms.todo .t { color: #94a3b8; }
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 0.75rem; margin: 1rem 0 1.5rem; }
-    .kpi { background: rgba(30,41,59,0.7); border: 1px solid rgba(59,130,246,0.12); border-radius: 10px; padding: 0.75rem 0.9rem; line-height: 1.5; }
-    .kpi .n { font-size: 0.78rem; color: #64748b; }
-    .kpi .v { font-size: 1rem; font-weight: 700; color: #e2e8f0; }
-    .kpi .note { font-size: 0.75rem; color: #64748b; }
-    .kpi.pending .v { color: #64748b; font-weight: 500; }
     .story h2 { border-left-color: #8b5cf6; }
     .story h3 { font-size: 1.1rem; font-weight: 700; color: #e2e8f0; margin: 1.75rem 0 0.5rem; }
     .story a { color: #3b82f6; }
+    .story figure { margin: 1.75rem 0; }
+    .story figure img { margin: 0; width: 100%; }
+    .story figcaption { font-size: 0.85rem; color: #64748b; text-align: center; margin-top: 0.5rem; }
     .story > p:first-child { font-size: 1.15rem; color: #e2e8f0; line-height: 1.9; }
     .kids { display: grid; gap: 0.75rem; margin: 0.5rem 0 1.5rem; }
     .kid { display: block; background: rgba(30,41,59,0.7); border-left: 3px solid #3b82f6; border-radius: 8px; padding: 0.75rem 1rem; transition: background 0.2s; }
@@ -85,33 +64,24 @@
 
   <script src="assets/js/common.js"></script>
   <script>
-    const { esc, dataPath, getJSON, stageNames, stagePills, progressOf, visibleGroups, PENDING } = Site;
+    const { esc, dataPath, getJSON, stageNames, stagePills, visibleGroups } = Site;
     const I18N = {
       en: {
-        back: 'Back to Alex Li', toggle: '中文', lead: 'Lead', context: 'Context', problem: 'Problem', goal: 'Goal',
-        approach: 'Approach', milestones: 'Milestones', results: 'Results & KPIs', progress: 'Key Progress', more: 'Further reading', kids: 'Sub-projects', partOf: 'Part of: ',
-        weight: 'Weight', doneOf: (d, t) => `${d} of ${t} milestones complete`,
-        allDone: t => `All ${t} milestones are complete.`, now: 'Now', next: 'Next',
-        prev: 'Previous', nextProj: 'Next',
+        back: 'Back to Alex Li', toggle: '中文', kids: 'Sub-projects', partOf: 'Part of: ',
+        prev: 'Previous', nextProj: 'Next', noStory: 'The story for this project is not written yet.',
         notFound: 'This project does not exist.', home: 'Back to the homepage',
         loadError: 'Content failed to load. A network filter may block this site.',
       },
       zh: {
-        back: '回到首頁', toggle: 'EN', lead: '主責', context: '背景', problem: '問題', goal: '目標',
-        approach: '方法', milestones: 'Milestone', results: '結果與 KPI', progress: 'Key Progress', more: '延伸閱讀', kids: '子專案', partOf: '上層專案：',
-        weight: '權重', doneOf: (d, t) => `已完成 ${d}／${t} 個 Milestone`,
-        allDone: t => `${t} 個 Milestone 全部完成。`, now: '目前', next: '下一步',
-        prev: '上一個專案', nextProj: '下一個專案',
+        back: '回到首頁', toggle: 'EN', kids: '子專案', partOf: '上層專案：',
+        prev: '上一個專案', nextProj: '下一個專案', noStory: '這個專案的文章還沒寫。',
         notFound: '找不到這個專案。', home: '回到首頁',
         loadError: '內容載入失敗。可能是網路過濾設備封鎖了本站。',
       },
     };
     const T = k => I18N[Site.getLang()][k];
     const slug = new URLSearchParams(location.search).get('id');
-    const h2 = (n, label) => `<h2><span class="step-label">${String(n).padStart(2, '0')}</span>${esc(label)}</h2>`;
     const colon = () => Site.getLang() === 'en' ? ': ' : '：';
-    const paren = t => Site.getLang() === 'en' ? ` (${t})` : `（${t}）`;
-    const ul = items => `<ul>${(items || []).map(i => `<li>${esc(i)}</li>`).join('')}</ul>`;
 
     function inline(t) {
       return esc(t)
@@ -125,11 +95,13 @@
         if (para.length) { out.push(`<p>${inline(para.join(' '))}</p>`); para = []; }
         if (list) { out.push(`<ul>${list.map(li => `<li>${inline(li)}</li>`).join('')}</ul>`); list = null; }
       };
-      md.replace(/\r/g, '').split('\n').forEach(line => {
+      // Skip the front matter block that the admin (Sveltia CMS) keeps at the top of each file.
+      md.replace(/\r/g, '').replace(/^---\n[\s\S]*?\n---\n/, '').split('\n').forEach(line => {
         const l = line.trim();
         if (!l) return flush();
         let m;
-        if ((m = l.match(/^(#{2,3}) (.+)/))) { flush(); out.push(m[1].length === 2 ? `<h2>${inline(m[2])}</h2>` : `<h3>${inline(m[2])}</h3>`); }
+        if ((m = l.match(/^!\[(.*?)\]\(([^\s)]+)\)$/))) { flush(); out.push(`<figure><img src="${esc(m[2])}" alt="${esc(m[1])}" loading="lazy">${m[1] ? `<figcaption>${inline(m[1])}</figcaption>` : ''}</figure>`); }
+        else if ((m = l.match(/^(#{2,3}) (.+)/))) { flush(); out.push(m[1].length === 2 ? `<h2>${inline(m[2])}</h2>` : `<h3>${inline(m[2])}</h3>`); }
         else if ((m = l.match(/^[-*] (.+)/))) { if (para.length) flush(); (list = list || []).push(m[1]); }
         else if ((m = l.match(/^> (.+)/))) { flush(); out.push(`<blockquote>${inline(m[1])}</blockquote>`); }
         else { if (list) flush(); para.push(l); }
@@ -137,7 +109,7 @@
       flush();
       return out.join('');
     }
-    // The story is optional: data/stories/<slug>.md (English: data/en/stories/<slug>.md).
+    // Each project's story: data/stories/<slug>.md (English: data/en/stories/<slug>.md).
     const getStory = () => slug ? fetch(dataPath(`stories/${slug}.md`)).then(r => r.ok ? r.text() : null).catch(() => null) : Promise.resolve(null);
 
     function render() {
@@ -159,31 +131,11 @@
         const kids = all.filter(x => x.p.parent === p.slug);
         const parent = p.parent && all.find(x => x.p.slug === p.parent);
         const names = stageNames(about.sdlc);
-        const pr = progressOf(p.milestones);
-        const pct = pr.total ? Math.round(pr.done / pr.total * 100) : 0;
         document.title = `${p.title} | Alex Li (李翔緯)`;
 
         const pills = stagePills(p, names);
-        const ms = (p.milestones || []).map(m =>
-          `<div class="ms ${esc(m.status)}"><span class="d">${esc(m.date)}</span><span class="t">${esc(m.text)}</span></div>`).join('');
-        const kpis = (p.kpis || []).map(k => `
-          <div class="kpi ${PENDING.includes(k.value) ? 'pending' : ''}">
-            <div class="n">${esc(k.name)}</div><div class="v">${esc(k.value)}</div>
-            ${k.note ? `<div class="note">${esc(k.note)}</div>` : ''}
-          </div>`).join('');
-        const goal = p.goal || {};
-        const goalMeta = [goal.category, goal.weight && goal.weight !== '—' ? `${T('weight')} ${goal.weight}` : ''].filter(Boolean).join(' · ');
-        const progress = pr.done === pr.total
-          ? `<p>${esc(T('allDone')(pr.total))}</p>`
-          : `<ul>
-              <li>${esc(T('doneOf')(pr.done, pr.total))}</li>
-              ${pr.current ? `<li><strong>${esc(T('now'))}${colon()}</strong>${esc(pr.current.text)}${esc(paren(pr.current.date))}</li>` : ''}
-              ${pr.next ? `<li><strong>${esc(T('next'))}${colon()}</strong>${esc(pr.next.text)}${esc(paren(pr.next.date))}</li>` : ''}
-            </ul>`;
-
         const kidLinks = kids.map(x =>
           `<a class="kid" href="project.html?id=${encodeURIComponent(x.p.slug)}"><div class="kid-name">↳ ${esc(x.p.title)}</div><p>${esc(x.p.summary)}</p></a>`).join('');
-        let n = 0;
         root.innerHTML = `
           <header class="post-header">
             <p class="eyebrow">${esc(g.org)} · ${esc(g.role)} · ${esc(p.period)}</p>
@@ -193,23 +145,10 @@
             <div class="meta-row">${pills}<span class="own">${esc(p.ownership)}</span></div>
             <div class="meta-row post-tags">${(p.tags || []).map(t => `<span>${esc(t)}</span>`).join('')}</div>
           </header>
-          ${story ? `<div class="post-body story">${markdown(story)}
-            ${kids.length ? `<h2>${esc(T('kids'))}</h2><div class="kids">${kidLinks}</div>` : ''}</div>` : `
-          <div class="post-body">
-            ${h2(++n, T('context'))}<p>${esc(p.background)}</p>
-            ${h2(++n, T('problem'))}<p>${esc(p.problem)}</p>
-            ${h2(++n, T('goal'))}
-              ${goalMeta ? `<p class="goal-meta">${esc(goalMeta)}</p>` : ''}
-              <p>${esc(goal.target || '')}</p>
-              <div class="bar"><span style="width:${pct}%"></span></div>
-              <p class="bar-label">${esc(T('doneOf')(pr.done, pr.total))}</p>
-            ${h2(++n, T('approach'))}${ul(p.approach)}
-            ${h2(++n, T('milestones'))}<div class="ms-list">${ms}</div>
-            ${h2(++n, T('results'))}${ul(p.result)}${kpis ? `<div class="kpi-grid">${kpis}</div>` : ''}
-            ${kids.length ? `${h2(++n, T('kids'))}<div class="kids">${kidLinks}</div>` : ''}
-            ${h2(++n, T('progress'))}${progress}
-            ${p.link ? `${h2(++n, T('more'))}<p><a href="${esc(p.link)}" style="color:#3b82f6">${esc(p.linkLabel || p.link)} →</a></p>` : ''}
-          </div>`}`;
+          <div class="post-body story">
+            ${story ? markdown(story) : `<p class="error">${esc(T('noStory'))}</p>`}
+            ${kids.length ? `<h2>${esc(T('kids'))}</h2><div class="kids">${kidLinks}</div>` : ''}
+          </div>`;
 
         const prev = all[i - 1], next = all[i + 1];
         const link = (x, cls, label) => x ? `<a class="${cls}" href="project.html?id=${encodeURIComponent(x.p.slug)}">${cls === 'prev' ? '← ' : ''}${esc(label)}${colon()}${esc(x.p.short || x.p.title)}${cls === 'next' ? ' →' : ''}</a>` : '';

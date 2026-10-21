@@ -1,3 +1,7 @@
+---
+title: guardrails-poc
+---
+
 ## Results
 
 **I recommended that the bank not buy an add-on AI guardrail for now, and use the platform's built-in protection instead.** The recommendation rests on 3,600 test cases:

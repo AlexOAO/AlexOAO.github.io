@@ -1,3 +1,7 @@
+---
+title: tunghai-english-ta
+---
+
 ## 結果
 
 **我在東海 GMBA 期間，完成三門全英課程的教學助理工作：Statistics、Economics、Financial Management。**

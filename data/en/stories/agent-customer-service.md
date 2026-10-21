@@ -1,3 +1,7 @@
+---
+title: agent-customer-service
+---
+
 ## Results
 
 **Customer Service is the only one of the four Agents measured in two units: minutes for speech, tokens for text.** Its workload is counted in the business-hour peak from 43,000 calls per month; the GPU allocation follows the vendor's updated estimate.

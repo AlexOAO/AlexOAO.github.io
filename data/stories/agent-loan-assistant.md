@@ -1,3 +1,7 @@
+---
+title: agent-loan-assistant
+---
+
 ## 結果
 
 **貸款助理不需要任何 GPU：它在地端只用 CPU 做資料脫敏，成本會全部落在雲端 Token。** 業務量還在等 BU 提供，所以目前還算不出 TCO 與 ROI。

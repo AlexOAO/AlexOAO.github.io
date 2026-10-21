@@ -1,3 +1,7 @@
+---
+title: agent-loan-assistant
+---
+
 ## Results
 
 **The Loan Assistant needs no GPU: on premises it uses only CPUs for data masking, so all of its cost is in cloud tokens.** The monthly volume is still pending from the business unit, so TCO and ROI cannot be calculated yet.

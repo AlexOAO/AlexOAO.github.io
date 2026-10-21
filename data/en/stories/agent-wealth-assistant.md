@@ -1,3 +1,7 @@
+---
+title: agent-wealth-assistant
+---
+
 ## Results
 
 **The Wealth Assistant PoC is done and handed over, and the launch GPUs are confirmed: 2 in production, 1 in test.**

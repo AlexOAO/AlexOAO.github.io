@@ -51,23 +51,12 @@ const Site = (() => {
     return out.join('');
   }
 
-  // Key Progress is derived from milestones, so it is never written by hand.
-  function progressOf(milestones = []) {
-    return {
-      done: milestones.filter(m => m.status === 'done').length,
-      total: milestones.length,
-      current: milestones.find(m => m.status === 'doing') || null,
-      next: milestones.find(m => m.status === 'todo') || null,
-    };
-  }
-
   // Drop draft projects, then companies left with no projects.
   const visibleGroups = groups => groups
     .map(g => ({ ...g, projects: g.projects.filter(p => !p.draft) }))
     .filter(g => g.projects.length);
 
-  const PENDING = ['待量測', 'To be measured', '待補充', 'To be added'];
   const arrowSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
 
-  return { esc, getLang, toggleLang, dataPath, getJSON, STAGE_COLOR, STAGE_ORDER, stageNames, stageSpan, isGov, stagePills, progressOf, visibleGroups, PENDING, arrowSvg };
+  return { esc, getLang, toggleLang, dataPath, getJSON, STAGE_COLOR, STAGE_ORDER, stageNames, stageSpan, isGov, stagePills, visibleGroups, arrowSvg };
 })();

@@ -1,3 +1,7 @@
+---
+title: agent-credit-review
+---
+
 ## Results
 
 **Credit Review costs about NT$1.92 in cloud tokens per case; over three years, the annual token cost grows from about NT$346,591 to NT$427,034.**

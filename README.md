@@ -12,6 +12,7 @@ Alex Li's portfolio & blog.
 .
 ├── index.html                  # One-page resume (layout only, content from JSON)
 ├── project.html                # Project story page: project.html?id=<slug>
+├── admin/                      # Sveltia CMS admin (index.html + config.yml)
 ├── data/
 │   ├── about.json              # 01. Proof (AI SDLC chart text)
 │   ├── work.json               # 02. Experience: companies and projects
@@ -39,6 +40,25 @@ GitHub Pages via GitHub Actions stays as a backup (**Settings > Pages > Source >
 
 ---
 
+## Admin (後台)
+
+Open **https://xiang-wei-li.com/admin/** (Sveltia CMS). It edits the same files listed below, uploads images, and commits each save to `main`; Cloudflare Pages then redeploys in about a minute.
+
+Sign in once with a GitHub token:
+
+1. GitHub → Settings → Developer settings → Personal access tokens → **Fine-grained tokens** → Generate new token.
+2. Repository access: **Only select repositories** → `AlexOAO/AlexOAO.github.io`.
+3. Permissions → Repository → **Contents: Read and write**.
+4. On the admin page choose **使用存取權杖登入** (Sign in with token) and paste the token.
+
+The token stays in your browser. Treat it like a password; revoke it on GitHub if a device is lost.
+
+Local editing without a token: run a local server in the repo, open `/admin/` in Chrome or Edge, and choose **使用本機倉庫** (Work with Local Repository). Commit and push with git yourself.
+
+What you can edit: project stories (Chinese / English), experience and project cards, Side Projects, chart text, other experience, and the blog list. Blog posts themselves are HTML files in `posts/` and are not edited in the admin. The admin config is `admin/config.yml`.
+
+Images: in a story, use the editor's image button. Files go to `assets/images/uploads/` and appear as `![caption](/assets/images/uploads/name.jpg)` on their own line.
+
 ## Editing Guide
 
 All content lives in JSON files. Edit JSON, push, done.
@@ -58,9 +78,9 @@ Write each fact once. The homepage shows a summary; the project page shows the d
 |---|---|---|
 | 01. Proof | AI SDLC chart: where each project sits | `about.json` → `sdlc`; `work.json` → `short`, `sdlc` |
 | 02. Experience card | Title, 1-line summary, up to 5 milestones | `title`, `summary`, `milestones` |
-| Project page | Context, problem, goal, approach, milestones, results & KPIs, key progress | all project fields |
+| Project page | The story: results → why → my role → what I did (by phase) → next steps | `data/stories/<slug>.md` |
 
-Key Progress and goal completion are calculated from `milestones`. Do not write them by hand.
+The story file is the only source for the project page. `work.json` holds only what the homepage needs.
 
 ### 01. Proof (`data/about.json`)
 
@@ -98,15 +118,8 @@ Companies, newest first. Each company has its projects:
         "sdlc": ["build", "ops"],
         "ownership": "主責",
         "period": "2026/07 ~ Now",
-        "background": "One or two sentences.",
-        "problem": "One or two sentences.",
-        "goal": { "category": "Goal category", "weight": "40%", "target": "Target." },
-        "approach": ["Verb-first step."],
         "milestones": [{ "date": "2026/10/12", "text": "≤ 20 characters", "status": "done" }],
-        "result": ["Verb-first result."],
-        "kpis": [{ "name": "題庫規模", "value": "600 題" }, { "name": "攔截率", "value": "待量測", "note": "How it will be measured" }],
         "tags": ["Tag1"],
-        "link": "posts/some-post.html", "linkLabel": "Read more",
         "source": "S2,S3"
       }
     ]
@@ -123,19 +136,20 @@ Companies, newest first. Each company has its projects:
 - `layers`: optional quant pipeline layers (`data`, `research`, `test`, `alloc`, `trade`). The project then also shows as a bar on the quant chart, from the earliest to the latest layer.
 - `draft`: `true` hides the project everywhere (card, chart, project page). Use it while the content is not ready.
 - `milestones[].status`: `done`, `doing`, `todo`. The card shows the first 5.
-- A KPI with value `待量測` (English: `To be measured`) shows in gray.
-- `link`, `linkLabel`, `weight` (use `—` to hide), `other` are optional. `source` is not displayed; it records which document supports the claim.
+- `other` is optional. `source` is not displayed; it records which document supports the claim.
+- `milestones` feed the progress bar on the homepage card only. In the story, describe them as phases (第一階段, 第二階段…) without dates.
 - Add a new project to `sitemap.xml` as `https://xiang-wei-li.com/project?id=<slug>`.
 
 ### Project stories (`data/stories/<slug>.md`)
 
-Each project page shows a blog-style story, then a facts panel (goal, milestones, KPIs, key progress).
+Each project page shows a blog-style story, plus links to sub-projects if it has any.
 
 - Chinese: `data/stories/<slug>.md`. English: `data/en/stories/<slug>.md`. The file name is the project's `slug`.
-- Supported Markdown: `## ` and `### ` headings, paragraphs, `- ` lists, `> ` quotes, `**bold**`, `` `code` ``, `[text](url)`.
-- Suggested outline: why this project → my role → what I did (and why) → results → next steps.
+- Supported Markdown: `## ` and `### ` headings, paragraphs, `- ` lists, `> ` quotes, `**bold**`, `` `code` ``, `[text](url)`, and images `![caption](path)` on their own line.
+- Outline: `## 結果` first, then 為什麼要做 → 我的角色 → 我怎麼做 (phases, no dates) → 下一步. English: Results → Why this project → My role → What I did → Next steps.
 - Write only what a source supports. Mark missing facts as 待補充 / to be added.
-- No story file: the page falls back to the structured fields (background, problem, approach, result).
+- Every project needs a story file. Without one, the page shows "the story is not written yet".
+- Images: put the file in `assets/images/`, then write `![caption](assets/images/name.jpg)` on its own line.
 
 ### 02. Experience: other (`data/experience.json`)
 

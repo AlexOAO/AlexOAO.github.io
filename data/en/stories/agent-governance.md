@@ -1,3 +1,7 @@
+---
+title: agent-governance
+---
+
 ## Results
 
 **I turned the FSC's six AI principles into a nine-cell table: before any AI launches, fill all nine cells and keep the evidence, and it passes the check.**

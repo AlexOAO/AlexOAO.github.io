@@ -1,3 +1,7 @@
+---
+title: asr-transcription
+---
+
 ## Results
 
 **Earnings call videos now become transcripts automatically, and then a structured summary table.** This cut the time to prepare earnings call notes.

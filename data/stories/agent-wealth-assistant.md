@@ -1,3 +1,7 @@
+---
+title: agent-wealth-assistant
+---
+
 ## 結果
 
 **智富管家的 PoC 已完成並移交，上線的 GPU 配置也已確認：正式環境 2 張、測試環境 1 張。**

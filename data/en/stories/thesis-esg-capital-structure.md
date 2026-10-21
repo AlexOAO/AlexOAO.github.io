@@ -1,3 +1,7 @@
+---
+title: thesis-esg-capital-structure
+---
+
 ## Results
 
 **I completed my Tunghai GMBA thesis on how ESG risk scores relate to the capital structure of Taiwanese companies.** Findings: to be added.

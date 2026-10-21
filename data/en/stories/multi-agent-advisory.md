@@ -1,3 +1,7 @@
+---
+title: multi-agent-advisory
+---
+
 ## Results
 
 **We had five AI Agents split the work and debate like a fund team, then ran a 3-year backtest on Taiwan stock history with Zipline.** The numbers cannot be published, but the results gave the team confidence in the architecture.

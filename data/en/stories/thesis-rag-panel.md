@@ -1,3 +1,7 @@
+---
+title: thesis-rag-panel
+---
+
 ## Results
 
 **Adding 6 scores that an LLM produced from financial statements raised the within R² of the stock return model from 5.14% to 63.73%.**

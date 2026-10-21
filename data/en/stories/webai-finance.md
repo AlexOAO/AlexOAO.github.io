@@ -1,3 +1,7 @@
+---
+title: webai-finance
+---
+
 ## Results
 
 **Webai Finance launched in production and cut the time researchers spend collecting and organizing data.** I led the module alone, from requirements to launch, during my internship at KGI Financial Holding.

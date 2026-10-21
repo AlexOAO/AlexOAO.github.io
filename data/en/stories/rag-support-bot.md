@@ -1,3 +1,7 @@
+---
+title: rag-support-bot
+---
+
 ## Results
 
 **After a chunking change, the accuracy of "Little t" rose from 60% to 85%, with answers in about 2 to 3 seconds.** Little t is the AI support bot on TEJ's website: members search technical manuals in natural language, and admins maintain the knowledge base in a console.

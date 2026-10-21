@@ -1,3 +1,7 @@
+---
+title: tunghai-english-ta
+---
+
 ## Results
 
 **During the Tunghai GMBA, I completed the TA role for three English-taught courses: Statistics, Economics, and Financial Management.**

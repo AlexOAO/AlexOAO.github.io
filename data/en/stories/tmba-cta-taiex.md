@@ -1,3 +1,7 @@
+---
+title: tmba-cta-taiex
+---
+
 ## Results
 
 **My TAIEX futures CTA strategy won 3rd place at the TMBA 26th algorithmic trading showcase.**

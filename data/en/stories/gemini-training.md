@@ -1,3 +1,7 @@
+---
+title: gemini-training
+---
+
 ## Results
 
 **The Gemini training outline is confirmed: three topics (safety, tools, prompts), with hands-on practice on use cases that each business unit brings.**

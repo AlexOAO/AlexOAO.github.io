@@ -1,3 +1,7 @@
+---
+title: agentic-platform-eval
+---
+
 ## 結果
 
 **在 Agatha 的 26 項實測裡，我找出 12 個問題，其中 4 個會讓 Agent 無法上線、1 個是資安漏洞。** 這些問題是在採購前找到的，而不是在 Agent 上線之後。

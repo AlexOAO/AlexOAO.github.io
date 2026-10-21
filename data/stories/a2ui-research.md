@@ -1,3 +1,7 @@
+---
+title: a2ui-research
+---
+
 ## 結果
 
 **PoC 的環境需求與技術規格正在確認中；下一個 Checkpoint 要回答 A2UI 的業務價值在哪裡。**

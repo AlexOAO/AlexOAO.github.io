@@ -1,3 +1,7 @@
+---
+title: agent-cost-roi
+---
+
 ## Results
 
 **I put four Agents with completely different cost structures into one formula: number of events × resources per event × unit price.** For the first time, the Loan Assistant, Credit Review, Customer Service, and Wealth Assistant can be compared in one table.

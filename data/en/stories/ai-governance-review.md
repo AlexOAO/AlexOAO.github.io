@@ -1,3 +1,7 @@
+---
+title: ai-governance-review
+---
+
 ## Results
 
 **Review of group AI governance reports moved from reading each report by hand to the system checking, recalculating, and cross-checking first, then passing results to a reviewer.** CI/CD deployment made development faster and the system more stable.

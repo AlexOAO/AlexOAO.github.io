@@ -1,3 +1,7 @@
+---
+title: agentic-platform-eval
+---
+
 ## Results
 
 **In 26 hands-on tests on Agatha, I found 12 issues: 4 would block launch, and 1 is a security issue.** They were found before purchase, not after an Agent went live.

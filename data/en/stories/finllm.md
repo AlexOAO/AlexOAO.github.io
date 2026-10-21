@@ -1,3 +1,7 @@
+---
+title: finllm
+---
+
 ## Results
 
 **I finished data cleaning for FinLLM batch 2-1 and regulatory scoring for batch 4.** Batch 5 scoring is in progress, and 9 data batches are waiting for the holding company.
