@@ -1,22 +1,25 @@
+## Results
+
+**I completed the final project, "Integrating ESG into investment practice", of Fubon Asset Management's Campus Talent Program.** I was in NTUST's first cohort, one of 113 students that year. Portfolio results: to be added.
+
 ## Why this project
 
-ESG is now a shared language in investing, but does ESG actually add value in stock investing? That was the question for the final project of Fubon Asset Management's 2024 Campus Talent Program.
-
-Fubon has run the program with 5 universities for 7 years. NTUST joined for the first time in 2024; that cohort had 113 students.
+ESG is now a shared language in investing, but does ESG add value in stock investing? That was the question for that year's final project. Fubon has run the program with 5 universities for 7 years; NTUST joined for the first time.
 
 ## My role
 
-I was in NTUST's first cohort and completed the final project as part of a team.
+Team member; we completed the final project together.
 
 ## What I did
 
-- Selected investment targets, mainly Taiwan stocks.
-- Integrated the ESG factors from class into the portfolio allocation.
-- Collected and combined data as a team, and wrote the report.
-- Presented in class and got feedback from fund managers.
+**Phase 1: join the program.** In the 3-month program, every class had an assignment and a team presentation, to show what researchers and fund managers do.
 
-In the 3-month program, every class had an assignment and a team presentation, to show what researchers and fund managers actually do.
+**Phase 2: team assignments and class presentations.** Collect information, combine data, write it up, and present.
 
-## Results
+**Phase 3: the ESG final project.** Our team selected investment targets, mainly Taiwan stocks, and integrated the ESG factors from class into the portfolio allocation. We wrote the report and presented it to fund managers for feedback.
 
-Completed the final project report on integrating ESG into investment practice. Portfolio results: to be added.
+About the program (in Chinese): [Money Weekly article](https://www.moneyweekly.com.tw/_Article?AID=161517).
+
+## Next steps
+
+The portfolio allocation logic and results: to be added.

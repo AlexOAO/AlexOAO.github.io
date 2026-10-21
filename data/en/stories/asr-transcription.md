@@ -1,21 +1,22 @@
+## Results
+
+**Earnings call videos now become transcripts automatically, and then a structured summary table.** This cut the time to prepare earnings call notes.
+
 ## Why this project
 
-The research team needs the text and key points of earnings calls. Transcribing videos by hand and then summarizing them took a long time.
+The research team needs the text and key points of earnings calls. Someone used to transcribe each video by hand and then summarize it, which took a long time.
 
 ## My role
 
-Contributor. I built the automated video processing and summary flow with Whisper.
+Contributor. I built the automated processing and summary flow with Whisper.
 
 ## What I did
 
-- Used Whisper to turn earnings call audio into transcripts.
-- Automated the video file processing, so a large number of calls need no manual handling one by one.
-- Summarized each transcript into a structured table that researchers can compare and quote directly.
+**Phase 1: speech recognition with Whisper.** Turn earnings call audio into transcripts.
 
-## Results
+**Phase 2: automate video processing.** There are many calls, so the file processing runs automatically instead of one by one.
 
-- Less time to prepare earnings call transcripts.
-- Structured summary tables.
+**Phase 3: structured summary tables.** Summarize each transcript into a table, so researchers can compare companies and quarters and quote directly.
 
 ## Next steps
 

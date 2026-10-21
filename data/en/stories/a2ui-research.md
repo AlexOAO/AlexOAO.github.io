@@ -1,22 +1,23 @@
+## Results
+
+**The PoC environment requirements and specifications are in review; the next checkpoint must show where A2UI's business value is.**
+
 ## Why this project
 
 A2UI lets an Agent generate the user interface: it does not only answer in text, it builds a screen for the situation. The bank wants to know if this works for wealth management, for example in the Wealth Assistant.
 
 ## My role
 
-I lead this research: confirm the PoC environment and the business value.
+I lead this research.
 
 ## What I did
 
-- Confirm the PoC environment requirements and technical specifications.
-- Apply for Azure AI Foundry and tokens.
-- Connect to the IT test environment.
-- Align business scenarios with the Wealth Assistant team.
+**Phase 1: confirm the PoC environment.** Confirm requirements and specifications, and apply for Azure AI Foundry and tokens. In progress.
 
-## Progress
+**Phase 2: checkpoint on business value.** Technical feasibility is only the first gate; the real question is business value.
 
-Environment requirements and specifications are in review. The first checkpoint, on 2026/11/12, must answer one question: where is the business value?
+**Phase 3: connect the test environment and business scenarios.** Connect the IT test environment and align real scenarios with the Wealth Assistant.
 
 ## Next steps
 
-After the checkpoint confirms the value, connect the IT test environment and the Wealth Assistant scenarios.
+After the checkpoint, start with the Wealth Assistant's scenarios.

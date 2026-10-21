@@ -1,19 +1,25 @@
+## Results
+
+**During the Tunghai GMBA, I completed the TA role for three English-taught courses: Statistics, Economics, and Financial Management.**
+
 ## Why this project
 
 Tunghai University teaches core business courses in English. Students learning statistics, economics, and financial management in English need a teaching assistant.
 
 ## My role
 
-I was the teaching assistant for three English-taught courses:
+Teaching assistant for three English-taught courses.
+
+## What I did
+
+I was the teaching assistant for:
 
 - Statistics
 - Economics
 - Financial Management
 
-## What I did
-
 Duties: to be added.
 
-## Results
+## Next steps
 
-Completed the TA role for three English-taught courses.
+Add the duties and results for each course.

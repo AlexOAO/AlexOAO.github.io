@@ -1,11 +1,21 @@
+## Results
+
+**I completed my Tunghai GMBA thesis on how ESG risk scores relate to the capital structure of Taiwanese companies.** Findings: to be added.
+
 ## Why this project
 
-Investors use ESG risk scores as one measure of a company. My research question: **do ESG risk scores affect the capital structure of Taiwanese companies?**
+Investors use ESG risk scores as one measure of a company. My question: **do ESG risk scores affect the capital structure of Taiwanese companies?**
 
 ## My role
 
-This is my master's thesis in Tunghai University's Global MBA (GMBA) program.
+Author.
 
-## Research
+## What I did
 
-Design, sample, method, and findings: to be added. The full thesis is under further reading.
+**Phase 1: start the Tunghai GMBA.**
+
+**Phase 2: thesis done, degree earned.** The full thesis is in the [National Digital Library of Theses](https://hdl.handle.net/11296/us53cs) (Chinese).
+
+## Next steps
+
+Research design, sample, method, and findings: to be added.

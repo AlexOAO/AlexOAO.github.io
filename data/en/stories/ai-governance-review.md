@@ -1,6 +1,10 @@
+## Results
+
+**Review of group AI governance reports moved from reading each report by hand to the system checking, recalculating, and cross-checking first, then passing results to a reviewer.** CI/CD deployment made development faster and the system more stable.
+
 ## Why this project
 
-The holding company's group AI committee reviews AI usage reports from every subsidiary: is the content reasonable, is the risk level right, does it match the asset register? Manual review of each report was slow, and reviewers did not apply the same standard.
+The group AI committee reviews AI usage reports from every subsidiary: is the content reasonable, is the risk level right, does it match the asset register? Manual review of each report was slow, and reviewers did not apply the same standard.
 
 ## My role
 
@@ -8,14 +12,11 @@ I developed the AI governance automated review system.
 
 ## What I did
 
-- **SharePoint integration**: subsidiaries upload reports to SharePoint and get results back in the same place.
-- **Content check**: Azure OpenAI judges whether the "current controls" and "risk treatment plan" are reasonable.
-- **Automatic recalculation and cross-checks**: the system recalculates risk levels, cross-checks the asset register, assesses residual risk, and writes a review report with fixes ranked by severity.
-- **Automatic deployment**: Azure DevOps CI/CD deploys to Azure Container Apps.
+**Phase 1: SharePoint intake.** Subsidiaries upload reports to SharePoint and get results back in the same place, instead of by email.
 
-## Results
+**Phase 2: content check and risk recalculation.** Azure OpenAI judges whether the "current controls" and "risk treatment plan" are reasonable, which used to take the most effort. The system then recalculates risk levels, cross-checks the asset register, assesses residual risk, and writes a review report with fixes ranked by severity.
 
-The system completes the content check, risk recalculation, and register check before a reviewer sees the report. CI/CD made development faster and the system more stable.
+**Phase 3: deploy to ACA with CI/CD.** Azure DevOps CI/CD deploys the system to Azure Container Apps; every change goes through the same automated pipeline.
 
 ## Next steps
 
