@@ -7,17 +7,17 @@
   <meta name="description" content="Project story by Alex Li (李翔緯): results, why the project mattered, my role, and how I did it.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/post.css">
   <style>
     .post-nav { display: flex; justify-content: space-between; align-items: center; }
     .lang-toggle {
-      font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: #e2e8f0;
+      font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--text);
       background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.3);
       border-radius: 20px; padding: 0.3rem 0.8rem; cursor: pointer;
     }
-    .eyebrow { font-size: 0.9rem; color: #3b82f6; font-weight: 500; margin-bottom: 0.75rem; }
-    .lead { font-size: 1.1rem; color: #94a3b8; line-height: 1.8; margin-top: 1rem; }
+    .eyebrow { font-family: var(--display); font-size: 0.8rem; letter-spacing: 0.06em; color: var(--accent-2); font-weight: 500; margin-bottom: 1rem; }
+    .lead { font-size: 1.15rem; color: var(--muted); line-height: 1.8; margin-top: 1.1rem; }
     .post-tags { flex-wrap: wrap; }
     .meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 1.25rem; }
     .stage-pill {
@@ -25,24 +25,29 @@
       background: linear-gradient(90deg, color-mix(in srgb, var(--c) 24%, transparent), color-mix(in srgb, var(--c2) 24%, transparent));
       border: 1px solid color-mix(in srgb, var(--c) 50%, transparent);
     }
-    .own { font-size: 0.8rem; color: #a78bfa; }
-    .story h2 { border-left-color: #8b5cf6; }
-    .story h3 { font-size: 1.1rem; font-weight: 700; color: #e2e8f0; margin: 1.75rem 0 0.5rem; }
-    .story a { color: #3b82f6; }
+    .own { font-size: 0.8rem; color: #c4b5fd; }
+    .story h3 { font-size: 1.1rem; font-weight: 700; color: var(--text); margin: 1.75rem 0 0.5rem; }
     .story figure { margin: 1.75rem 0; }
     .story figure img { margin: 0; width: 100%; }
-    .story figcaption { font-size: 0.85rem; color: #64748b; text-align: center; margin-top: 0.5rem; }
-    .story > p:first-child { font-size: 1.15rem; color: #e2e8f0; line-height: 1.9; }
+    .story figcaption { font-size: 0.85rem; color: var(--dim); text-align: center; margin-top: 0.5rem; }
+    /* The first paragraph after "Results" is the headline result: give it a highlighted panel. */
+    .story h2:first-child + p {
+      font-size: 1.12rem; color: var(--text); line-height: 1.9; padding: 1.25rem 1.4rem; border-radius: 16px;
+      background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.06)); border: 1px solid rgba(96,165,250,0.22);
+    }
     .kids { display: grid; gap: 0.75rem; margin: 0.5rem 0 1.5rem; }
-    .kid { display: block; background: rgba(30,41,59,0.7); border-left: 3px solid #3b82f6; border-radius: 8px; padding: 0.75rem 1rem; transition: background 0.2s; }
-    .kid:hover { background: rgba(59,130,246,0.15); }
-    .parent-link { font-size: 0.85rem; color: #64748b; margin: -0.25rem 0 0.75rem; }
-    .parent-link a { color: #3b82f6; }
-    .kid-name { font-weight: 700; color: #e2e8f0; }
-    .kid p { margin: 0.25rem 0 0; font-size: 0.95rem; line-height: 1.7; color: #94a3b8; }
+    .kid { display: block; background: rgba(30,41,59,0.5); border: 1px solid var(--line); border-radius: 14px; padding: 0.9rem 1.1rem; transition: background 0.3s, border-color 0.3s, transform 0.4s var(--ease); text-decoration: none !important; }
+    .kid:hover { background: rgba(59,130,246,0.1); border-color: rgba(96,165,250,0.4); transform: translateX(4px); }
+    .parent-link { font-size: 0.85rem; color: var(--dim); margin: -0.25rem 0 0.75rem; }
+    .parent-link a { color: #93c5fd; }
+    .kid-name { font-weight: 700; color: var(--text); }
+    .kid p { margin: 0.25rem 0 0; font-size: 0.95rem; line-height: 1.7; color: var(--muted); }
     .pager { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
-    .pager a { color: #3b82f6; font-size: 0.9rem; max-width: 48%; }
-    .pager a:hover { color: #60a5fa; }
+    .pager a {
+      color: var(--muted); font-size: 0.9rem; max-width: 48%; padding: 0.9rem 1.1rem; border-radius: 14px; border: 1px solid var(--line);
+      transition: color 0.3s, border-color 0.3s, background 0.3s;
+    }
+    .pager a:hover { color: var(--text); border-color: rgba(96,165,250,0.4); background: rgba(59,130,246,0.06); }
     .pager .next { margin-left: auto; text-align: right; }
     .error { color: #f59e0b; }
     .error a { color: #3b82f6; }
