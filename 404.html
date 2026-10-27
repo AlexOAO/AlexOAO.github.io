@@ -3,22 +3,53 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
   <title>Page not found | Alex Li (李翔緯)</title>
   <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0b1120">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
-    body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
-      font-family: 'Noto Sans TC', 'Inter', sans-serif; background: #0f172a; color: #e2e8f0; text-align: center; padding: 0 16px; }
-    h1 { font-size: 4rem; margin: 0; background: linear-gradient(135deg, #3b82f6, #06b6d4);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    p { color: #94a3b8; }
-    a { color: #3b82f6; text-decoration: none; }
+    :root { --text: #e6edf6; --muted: #a3b1c6; --line: rgba(148,163,184,0.14); --ease: cubic-bezier(0.22, 1, 0.36, 1); }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh; min-height: 100svh; display: grid; place-items: center; padding: 2rem 1.25rem; overflow: hidden;
+      font-family: 'Noto Sans TC', 'Inter', sans-serif; background: #0b1120; color: var(--text); text-align: center;
+      -webkit-font-smoothing: antialiased;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: -1;
+      background: radial-gradient(ellipse 50% 40% at 30% 30%, rgba(59,130,246,0.22), transparent 70%),
+                  radial-gradient(ellipse 45% 40% at 75% 70%, rgba(139,92,246,0.18), transparent 70%);
+      animation: drift 18s ease-in-out infinite alternate;
+    }
+    @keyframes drift { to { transform: translate3d(3vw, 2vh, 0) scale(1.05); } }
+    main { animation: rise 1s var(--ease) both; }
+    @keyframes rise { from { opacity: 0; transform: translateY(20px); } }
+    .code {
+      font-family: 'Inter', sans-serif; font-weight: 800; letter-spacing: -0.06em; line-height: 0.9;
+      font-size: clamp(7rem, 28vw, 15rem);
+      background: linear-gradient(110deg, #60a5fa, #22d3ee 45%, #a78bfa); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    h1 { font-size: 1.35rem; font-weight: 700; margin: 1.25rem 0 0.5rem; }
+    p { color: var(--muted); }
+    a {
+      display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 2rem; padding: 0.8rem 1.4rem; border-radius: 999px;
+      color: var(--text); text-decoration: none; border: 1px solid rgba(148,163,184,0.25); background: rgba(255,255,255,0.03);
+      transition: border-color 0.3s, background 0.3s, transform 0.4s var(--ease);
+    }
+    a:hover { border-color: rgba(96,165,250,0.7); background: rgba(59,130,246,0.1); transform: translateY(-2px); }
+    a:focus-visible { outline: 2px solid #60a5fa; outline-offset: 3px; }
+    @media (prefers-reduced-motion: reduce) { body::before, main { animation: none; } }
   </style>
 </head>
 <body>
   <main>
-    <h1>404</h1>
-    <p>This page does not exist. 找不到這個頁面。</p>
-    <p><a href="/">← Back to Alex Li's personal website</a></p>
+    <div class="code" aria-hidden="true">404</div>
+    <h1>This page does not exist.</h1>
+    <p>找不到這個頁面。連結可能已經更改。</p>
+    <a href="/">← Back to Alex Li · 回到首頁</a>
   </main>
 </body>
 </html>

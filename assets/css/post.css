@@ -31,6 +31,13 @@ body::before {
 }
 a { text-decoration: none; color: inherit; }
 ::selection { background: rgba(59,130,246,0.35); color: #fff; }
+h1, h2, h3 { text-wrap: balance; }
+p, li { text-wrap: pretty; }
+@view-transition { navigation: auto; }
+::view-transition-old(root) { animation: 0.35s var(--ease) both vt-out; }
+::view-transition-new(root) { animation: 0.5s var(--ease) both vt-in; }
+@keyframes vt-out { to { opacity: 0; transform: translateY(-12px); } }
+@keyframes vt-in { from { opacity: 0; transform: translateY(16px); } }
 :focus-visible { outline: 2px solid #60a5fa; outline-offset: 3px; border-radius: 6px; }
 
 /* ── Post Nav ── */

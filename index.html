@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
   <title>Alex Li (李翔緯) | Personal Portfolio &amp; Blog</title>
   <meta name="description" content="Personal website of Alex Li (李翔緯), PM and System Analyst at KGI Bank. Portfolio of AI Agent projects in finance, with case studies, experience, and a blog. 李翔緯的個人網站與作品集。">
   <meta name="author" content="Alex Li (李翔緯)">
@@ -15,6 +16,10 @@
   <meta property="og:description" content="Personal portfolio of Alex Li, PM and System Analyst for AI Agents in finance.">
   <meta property="og:url" content="https://xiang-wei-li.com/">
   <meta property="og:image" content="https://xiang-wei-li.com/assets/images/profile.jpg">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Alex Li (李翔緯) | Personal Portfolio">
+  <meta name="twitter:description" content="PM and System Analyst for AI Agents in finance: from governance to production.">
+  <meta name="twitter:image" content="https://xiang-wei-li.com/assets/images/profile.jpg">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -63,6 +68,14 @@
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     }
     ::selection { background: rgba(59,130,246,0.35); color: #fff; }
+    h1, h2, h3, .hero-role { text-wrap: balance; }
+    p, li { text-wrap: pretty; }
+    /* Cross-page transitions (Chrome, Safari 18+); other browsers navigate normally. */
+    @view-transition { navigation: auto; }
+    ::view-transition-old(root) { animation: 0.35s var(--ease) both vt-out; }
+    ::view-transition-new(root) { animation: 0.5s var(--ease) both vt-in; }
+    @keyframes vt-out { to { opacity: 0; transform: translateY(-12px); } }
+    @keyframes vt-in { from { opacity: 0; transform: translateY(16px); } }
     :focus-visible { outline: 2px solid #60a5fa; outline-offset: 3px; border-radius: 6px; }
     .skip-link {
       position: fixed; left: 1rem; top: -3rem; z-index: 3000; padding: 0.5rem 1rem; border-radius: 8px;
@@ -165,7 +178,7 @@
 
     /* ── Hero ── */
     .hero {
-      min-height: 100vh; min-height: 100svh; display: flex; align-items: center; padding: 7rem 2rem 6rem;
+      min-height: 100vh; min-height: 100svh; display: flex; align-items: center; padding: 7rem 2rem 8rem;
       position: relative; overflow: hidden; isolation: isolate;
     }
     .hero-bg { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
@@ -245,14 +258,26 @@
     }
     .hero-badge .k { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); font-family: var(--display); }
     .hero-badge .v { font-size: 0.92rem; font-weight: 700; color: var(--text); }
-    .scroll-cue {
-      position: absolute; left: 50%; bottom: 2rem; transform: translateX(-50%);
-      display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
-      font-family: var(--display); font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--dim);
+    /* Lifecycle rail: the site's thesis (plan → tune → build → ops) as a live line along the hero's foot.
+       A light travels the line; each stage lights up as it passes. Clicking jumps to the Proof chart. */
+    .rail {
+      position: absolute; left: 0; right: 0; bottom: 2.25rem; margin: 0 auto; width: min(1100px, calc(100% - 4rem));
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; padding-top: 1.1rem; color: var(--dim);
+      font-size: 0.8rem; text-decoration: none;
     }
-    .scroll-cue i { display: block; width: 1px; height: 44px; background: linear-gradient(var(--dim), transparent); position: relative; overflow: hidden; }
-    .scroll-cue i::after { content: ''; position: absolute; left: 0; top: -40%; width: 1px; height: 40%; background: #fff; animation: cue 2.2s var(--ease) infinite; }
-    @keyframes cue { to { top: 100%; } }
+    .rail::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--line) 8%, var(--line) 92%, transparent); }
+    .rail::after {
+      content: ''; position: absolute; top: -1px; left: -18%; width: 18%; height: 3px; border-radius: 3px; filter: blur(0.5px);
+      background: linear-gradient(90deg, transparent, #60a5fa, #22d3ee, transparent);
+      animation: travel 8s linear infinite;
+    }
+    @keyframes travel { to { left: 100%; } }
+    .rail span { position: relative; display: flex; align-items: center; gap: 0.55rem; animation: lit 8s linear infinite; animation-delay: calc(var(--k) * 2s - 0.6s); }
+    .rail span::before { content: ''; position: absolute; left: 0; top: -1.1rem; width: 7px; height: 7px; border-radius: 50%; transform: translateY(-3px); background: var(--c); box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 18%, transparent); }
+    .rail b { font-family: var(--display); font-weight: 600; font-size: 0.72rem; color: var(--c); letter-spacing: 0.08em; }
+    @keyframes lit { 0%, 30%, 100% { color: var(--dim); } 8%, 22% { color: var(--text); } }
+    .rail:hover span { color: var(--muted); }
+    .rail em { font-style: normal; }
     /* Hero entrance: each line rises in turn. */
     .rise { opacity: 0; transform: translateY(24px); animation: rise 1s var(--ease) forwards; animation-delay: calc(var(--i, 0) * 90ms + 100ms); }
     @keyframes rise { to { opacity: 1; transform: none; } }
@@ -321,6 +346,10 @@
       transition: transform 0.2s, filter 0.2s;
     }
     .sdlc-bar:hover { transform: translateY(-2px); filter: brightness(1.25); }
+    .js .sdlc.rv .sdlc-bar, .js .sdlc.rv .sdlc-chip { clip-path: inset(0 100% 0 0 round 8px); transition: clip-path 0.9s var(--ease), transform 0.2s, filter 0.2s, background 0.2s; transition-delay: calc(0.3s + var(--k, 0) * 0.05s), 0s, 0s, 0s; }
+    .js .sdlc.rv.in .sdlc-bar, .js .sdlc.rv.in .sdlc-chip { clip-path: inset(0 0 0 0 round 8px); }
+    .js .sdlc.rv .sdlc-stage { opacity: 0; transform: translateY(12px); transition: opacity 0.7s var(--ease), transform 0.7s var(--ease); transition-delay: calc(var(--k, 0) * 0.1s); }
+    .js .sdlc.rv.in .sdlc-stage { opacity: 1; transform: none; }
     .sdlc-bar .org-tag, .sdlc-chip .org-tag { font-size: 0.7rem; color: #94a3b8; white-space: nowrap; }
     .sdlc-bar .range { display: none; font-size: 0.7rem; color: #94a3b8; }
     .sdlc-loop {
@@ -399,6 +428,10 @@
       content: ''; position: absolute; top: 0.35rem; left: 0; right: 0; height: 2px; background: rgba(148,163,184,0.2);
     }
     .ms-step.done::before { background: #10b981; }
+    .js .pcard.rv .ms-step::before { transform-origin: 0 50%; transform: scaleX(0); transition: transform 0.7s var(--ease); transition-delay: calc(0.25s + var(--k, 0) * 0.12s); }
+    .js .pcard.rv .ms-step::after { transform: scale(0); transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); transition-delay: calc(0.2s + var(--k, 0) * 0.12s); }
+    .js .pcard.rv.in .ms-step::before { transform: none; }
+    .js .pcard.rv.in .ms-step::after { transform: none; }
     .ms-step:last-child::before { right: auto; width: 12px; }
     .ms-step::after {
       content: ''; position: absolute; top: 0; left: 0; width: 12px; height: 12px; border-radius: 50%; box-sizing: border-box;
@@ -471,6 +504,14 @@
       padding: 0.5rem 0 1.25rem; scrollbar-width: none;
     }
     .blog-grid::-webkit-scrollbar { display: none; }
+    .blog-slider::after {
+      content: ''; position: absolute; top: 0; bottom: 1.25rem; right: 0; width: 72px; pointer-events: none;
+      background: linear-gradient(90deg, transparent, var(--bg)); transition: opacity 0.3s;
+    }
+    .blog-slider.at-end::after { opacity: 0; }
+    .blog-grid.dragging { scroll-snap-type: none; scroll-behavior: auto; cursor: grabbing; }
+    .blog-grid.dragging .blog-card { pointer-events: none; }
+    @media (pointer: fine) { .blog-grid { cursor: grab; } }
     .blog-grid > .blog-card { scroll-snap-align: start; }
     .blog-grid > .blog-empty { grid-column: 1 / -1; }
     .blog-nav { display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
@@ -563,6 +604,9 @@
     .js .rv { opacity: 0; transform: translateY(28px); transition: opacity 0.9s var(--ease), transform 0.9s var(--ease); transition-delay: calc(var(--d, 0) * 70ms); }
     .js .rv.in { opacity: 1; transform: none; }
     @media (prefers-reduced-motion: reduce) {
+      .js .sdlc.rv .sdlc-bar, .js .sdlc.rv .sdlc-chip { clip-path: none; }
+      .js .pcard.rv .ms-step::before, .js .pcard.rv .ms-step::after, .js .sdlc.rv .sdlc-stage { transform: none; opacity: 1; }
+      .rail::after { display: none; }
       *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
       .js .rv { opacity: 1; transform: none; }
       .rise { opacity: 1; transform: none; }
@@ -576,7 +620,7 @@
       .hero-photo-wrapper { width: 200px; transform: none; border-radius: 22px; }
       .hero-photo, .hero-photo-wrapper::after { border-radius: 21px; }
       .hero-badge { left: auto; right: -9rem; bottom: 1rem; }
-      .scroll-cue { display: none; }
+      .rail { display: none; }
       .sec-head { grid-template-columns: 1fr; }
       .section-subtitle { justify-self: start; }
       .card-grid { grid-template-columns: 1fr; }
@@ -600,7 +644,8 @@
       .hero-photo-wrapper { width: 96px; border-radius: 20px; }
       .hero-photo, .hero-photo-wrapper::after { border-radius: 19px; }
       .hero-badge { display: none; }
-      .hero-buttons .btn { padding: 0.7rem 1.1rem; font-size: 0.9rem; }
+      .hero-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+      .hero-buttons .btn { padding: 0.75rem 1rem; font-size: 0.9rem; justify-content: center; }
       .sec-head { margin-bottom: 2.5rem; }
       footer { padding: 4.5rem 1.25rem 2rem; }
       .nav-container { padding: 0.75rem 1.25rem; }
@@ -684,7 +729,12 @@
         </div>
       </div>
     </div>
-    <a href="#about" class="scroll-cue" aria-label="Scroll to content"><span>Scroll</span><i></i></a>
+    <a href="#about" class="rail rise" style="--i:6" aria-label="AI lifecycle: see the Proof chart">
+      <span style="--k:0;--c:#3b82f6"><b>01</b><em data-i18n="st1">Business Planning</em></span>
+      <span style="--k:1;--c:#8b5cf6"><b>02</b><em data-i18n="st2">Model Tuning</em></span>
+      <span style="--k:2;--c:#06b6d4"><b>03</b><em data-i18n="st3">Development &amp; Deployment</em></span>
+      <span style="--k:3;--c:#10b981"><b>04</b><em data-i18n="st4">Operations &amp; Monitoring</em></span>
+    </a>
   </header>
 
   <main id="main">
@@ -825,6 +875,14 @@
         hero.style.setProperty('--mx', `${x * 100}%`); hero.style.setProperty('--my', `${y * 100}%`);
         photo.style.setProperty('--ry', `${(x - 0.5) * 12}deg`); photo.style.setProperty('--rx', `${(0.5 - y) * 8}deg`);
       });
+      // Magnetic buttons: the hero buttons lean a few pixels toward the pointer.
+      document.querySelectorAll('.hero-buttons .btn').forEach(b => {
+        b.addEventListener('pointermove', e => {
+          const r = b.getBoundingClientRect();
+          b.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * 0.18}px, ${(e.clientY - r.top - r.height / 2) * 0.3 - 2}px)`;
+        });
+        b.addEventListener('pointerleave', () => { b.style.transform = ''; });
+      });
       document.addEventListener('pointermove', e => {
         const c = e.target.closest?.('.spot-card');
         if (!c) return;
@@ -847,7 +905,7 @@
       en: {
         heroDesc: 'PM and System Analyst at KGI Bank. I define the problem of each AI project, verify the solution, measure cost and benefit, and take it to production.',
         eyebrow: 'PM & System Analyst · KGI Bank', heroRole: 'Taking AI in finance from <em>governance</em> to <em>production</em>.',
-        nowK: 'Now', nowV: 'KGI Bank · Tech Innovation', t01: 'Proof', t02: 'Experience', t03: 'Side Projects', t04: 'Blog',
+        nowK: 'Now', nowV: 'KGI Bank · Tech Innovation', st1: 'Business Planning', st2: 'Model Tuning', st3: 'Development & Deployment', st4: 'Operations & Monitoring', t01: 'Proof', t02: 'Experience', t03: 'Side Projects', t04: 'Blog',
         sign: 'Let\'s take AI <span class="grad">to production.</span>', toTop: 'Back to top',
         readBlog: 'Blog',
         expSub: 'Each card shows the milestones. Open a card for the full project story.',
@@ -863,7 +921,7 @@
       zh: {
         heroDesc: '凱基銀行科技創新部 PM 兼 SA。我定義 AI 專案的問題、驗證方案、量化成本與效益，再把它推到上線。',
         eyebrow: 'PM 兼 SA · 凱基銀行', heroRole: '把金融業的 AI，從<em>治理</em>一路推到<em>上線</em>。',
-        nowK: '現職', nowV: '凱基銀行 科技創新部', t01: 'Proof', t02: 'Experience', t03: 'Side Projects', t04: 'Blog',
+        nowK: '現職', nowV: '凱基銀行 科技創新部', st1: '業務規劃', st2: '模型調教', st3: '開發部署', st4: '營運監控', t01: 'Proof', t02: 'Experience', t03: 'Side Projects', t04: 'Blog',
         sign: '一起把 AI<br><span class="grad">推到上線。</span>', toTop: '回到頂端',
         readBlog: 'Blog',
         expSub: '卡片顯示專案的 Milestone。點卡片看完整的專案說明。',
@@ -884,6 +942,7 @@
     // each lane is one row, and each item is a bar that spans its stages.
     function renderPhaseMap({ title, note, stages, band, lanes, loop }) {
       const n = stages.length, parts = [];
+      let barK = 0;
       // A description "what: why" shows the part after the colon on its own line.
       const desc = d => { const m = d.match(/^(.+?)[：:]\s*(.+)$/); return m ? `${esc(m[1])}<span class="why">${esc(m[2])}</span>` : esc(d); };
       const stageRow = band ? 2 : 1;
@@ -896,7 +955,7 @@
           <div class="gov-chips">${chips}</div></div>`);
       }
       stages.forEach((st, si) => parts.push(`
-        <div class="sdlc-stage ${si === n - 1 ? 'last' : ''}" style="grid-row:${stageRow};grid-column:${si + 2};--c:${st.color}">
+        <div class="sdlc-stage ${si === n - 1 ? 'last' : ''}" style="grid-row:${stageRow};grid-column:${si + 2};--c:${st.color};--k:${si}">
           <div><span class="sdlc-num">${si + 1}</span><span class="sdlc-name">${esc(st.name)}</span></div>
           <div class="sdlc-desc">${desc(st.desc)}</div>
         </div>`));
@@ -910,7 +969,7 @@
         const bar = (x, off = 0) => {
           const [a, b] = x.span;
           return `<a class="sdlc-bar ${x.child ? 'child' : ''}" href="#${x.target}" data-target="${x.target}" title="${esc(x.title)}"
-              style="grid-column:${a + 1 - off} / ${b + 2 - off};--c:${stages[a].color};--c2:${stages[b].color}">
+              style="grid-column:${a + 1 - off} / ${b + 2 - off};--c:${stages[a].color};--c2:${stages[b].color};--k:${barK++}">
               <span>${x.child ? '↳ ' : ''}${esc(x.label)}</span>
               ${shared && x.tag ? `<span class="org-tag">${esc(x.tag)}</span>` : ''}
               <span class="range">${esc(stages[a].name)}${a !== b ? ` → ${esc(stages[b].name)}` : ''}</span></a>`;
@@ -1003,8 +1062,8 @@
       const tracks = [...new Set(all.map(m => m.track || ''))];
       const rows = tracks.map(t => {
         const ms = all.filter(m => (m.track || '') === t).slice(0, 5);
-        const steps = ms.map(m => `
-          <li class="ms-step ${esc(m.status)}"><span class="d">${esc(m.date)}</span><span class="t">${msText(m.text)}</span></li>`).join('');
+        const steps = ms.map((m, k) => `
+          <li class="ms-step ${esc(m.status)}" style="--k:${k}"><span class="d">${esc(m.date)}</span><span class="t">${msText(m.text)}</span></li>`).join('');
         return `${t ? `<div class="ms-track-label">${esc(t)}</div>` : ''}<ol class="ms-track" style="--n:${ms.length}">${steps}</ol>`;
       }).join('');
       return `
@@ -1094,10 +1153,28 @@
     const blogNav = () => {
       const max = blogGrid.scrollWidth - blogGrid.clientWidth - 2;
       blogPrev.disabled = blogGrid.scrollLeft <= 2; blogNext.disabled = blogGrid.scrollLeft >= max;
+      blogGrid.parentElement.classList.toggle('at-end', blogGrid.scrollLeft >= max);
     };
     blogPrev.onclick = () => blogGrid.scrollBy({ left: -blogStep() });
     blogNext.onclick = () => blogGrid.scrollBy({ left: blogStep() });
     blogGrid.addEventListener('scroll', blogNav, { passive: true });
+    // Mouse drag to scroll (touch already swipes natively). A drag of more than 6px cancels the click.
+    let drag = null;
+    blogGrid.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && e.button === 0) drag = { x: e.clientX, left: blogGrid.scrollLeft, moved: false }; });
+    window.addEventListener('pointermove', e => {
+      if (!drag) return;
+      const dx = e.clientX - drag.x;
+      if (!drag.moved && Math.abs(dx) > 6) { drag.moved = true; blogGrid.classList.add('dragging'); }
+      if (drag.moved) blogGrid.scrollLeft = drag.left - dx;
+    });
+    window.addEventListener('pointerup', () => {
+      if (!drag) return;
+      const moved = drag.moved; drag = null;
+      if (moved) {
+        blogGrid.classList.remove('dragging');
+        const step = blogStep(); blogGrid.scrollTo({ left: Math.round(blogGrid.scrollLeft / step) * step, behavior: 'smooth' });
+      }
+    });
     window.addEventListener('resize', blogNav);
     const en = Site.getLang() === 'en';
     getJSON('posts/posts.json').then(posts => {
