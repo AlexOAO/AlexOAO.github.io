@@ -291,10 +291,27 @@
       column-gap: 0.75rem; row-gap: 0.75rem;
     }
     .sdlc-stage {
-      position: relative; border-radius: 12px; padding: 1rem 1rem 0.9rem;
-      background: rgba(30,41,59,0.8); border: 1px solid rgba(59,130,246,0.2);
-      border-top: 3px solid var(--c);
+      position: relative; z-index: 1; border-radius: 14px; padding: 1rem 1rem 0.95rem;
+      background: linear-gradient(180deg, color-mix(in srgb, var(--c) 12%, rgba(15,23,42,0.95)), rgba(15,23,42,0.9));
+      border: 1px solid color-mix(in srgb, var(--c) 28%, transparent); border-top: 3px solid var(--c);
+      transition: border-color 0.3s, box-shadow 0.3s, transform 0.4s var(--ease);
     }
+    .sdlc-stage.hot { border-color: color-mix(in srgb, var(--c) 70%, transparent); box-shadow: 0 18px 40px -22px var(--c); transform: translateY(-2px); }
+    .sdlc-stage-top { display: flex; align-items: center; }
+    .sdlc-legend { display: contents; }
+    .sdlc-count {
+      margin-left: auto; font-family: var(--display); font-size: 1.35rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1;
+      color: color-mix(in srgb, var(--c) 70%, #fff); font-variant-numeric: tabular-nums;
+      display: inline-flex; align-items: baseline; gap: 0.25rem;
+    }
+    .sdlc-count small { font-family: 'Noto Sans TC', sans-serif; font-size: 0.68rem; font-weight: 500; letter-spacing: 0; color: var(--dim); }
+    .sdlc-col {
+      position: relative; z-index: 0; margin: 0 -0.375rem; border-radius: 0 0 12px 12px; pointer-events: none;
+      background: linear-gradient(180deg, color-mix(in srgb, var(--c) 6%, transparent), transparent 85%);
+      border-left: 1px dashed rgba(148,163,184,0.09); border-right: 1px dashed rgba(148,163,184,0.09);
+      transition: background 0.35s;
+    }
+    .sdlc-col.hot { background: linear-gradient(180deg, color-mix(in srgb, var(--c) 16%, transparent), color-mix(in srgb, var(--c) 4%, transparent)); }
     .sdlc-stage:not(.last)::after {
       content: ''; position: absolute; right: -0.75rem; top: 50%; transform: translate(50%, -50%);
       width: 0; height: 0; z-index: 2;
@@ -310,25 +327,22 @@
     .sdlc-desc { font-size: 0.8rem; color: #94a3b8; line-height: 1.6; margin-top: 0.4rem; }
     .sdlc-desc .why { display: block; color: #cbd5e1; }
     .sdlc-gov {
-      position: relative; border-radius: 12px; padding: 0.85rem 1rem;
+      position: relative; z-index: 1; border-radius: 14px; padding: 0.85rem 1rem;
       background: linear-gradient(90deg, rgba(245,158,11,0.14), rgba(245,158,11,0.05));
       border: 1px solid rgba(245,158,11,0.35);
     }
-    .sdlc-gov::before {
-      content: ''; position: absolute; left: 1rem; right: 1rem; bottom: -0.45rem; height: 0.45rem;
-      border: 2px solid rgba(245,158,11,0.45); border-top: none; border-radius: 0 0 6px 6px;
-    }
+
     .gov-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.75rem; margin-bottom: 0.6rem; }
     .gov-name { font-size: 0.95rem; font-weight: 700; color: #fbbf24; }
     .gov-desc { font-size: 0.8rem; color: #94a3b8; }
     .gov-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-    .sdlc-lane { display: flex; flex-direction: column; justify-content: center; gap: 0.35rem; padding-right: 0.25rem; }
+    .sdlc-lane { display: flex; flex-direction: column; justify-content: flex-start; gap: 0.35rem; padding: 0.9rem 0.25rem 0 0; position: relative; z-index: 1; }
     .sdlc-lane .org { display: block; font-size: 0.92rem; font-weight: 700; color: #e2e8f0; line-height: 1.3; }
     .sdlc-lane .period { display: block; font-size: 0.75rem; color: var(--dim); }
     .sdlc-track {
       display: grid; grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); column-gap: 0.75rem; row-gap: 0.5rem;
       grid-auto-flow: row dense; align-content: start;
-      padding: 0.75rem 0; border-top: 1px solid rgba(148,163,184,0.15);
+      padding: 0.75rem 0; border-top: 1px solid rgba(148,163,184,0.15); position: relative; z-index: 1;
     }
     .sdlc-chip {
       display: inline-flex; align-items: center; gap: 0.4rem;
@@ -339,30 +353,38 @@
     }
     .sdlc-chip:hover { transform: translateY(-2px); background: color-mix(in srgb, var(--c) 30%, transparent); }
     .sdlc-bar {
-      display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
-      font-size: 0.82rem; line-height: 1.35; padding: 0.45rem 0.75rem; border-radius: 8px; color: #e2e8f0;
-      background: linear-gradient(90deg, color-mix(in srgb, var(--c) 24%, transparent), color-mix(in srgb, var(--c2) 24%, transparent));
-      border: 1px solid color-mix(in srgb, var(--c) 50%, transparent);
-      transition: transform 0.2s, filter 0.2s;
+      position: relative; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+      font-size: 0.82rem; line-height: 1.35; padding: 0.5rem 0.75rem 0.5rem 0.95rem; border-radius: 8px; color: #eef3fa;
+      background: linear-gradient(90deg, color-mix(in srgb, var(--c) 30%, rgba(15,23,42,0.9)), color-mix(in srgb, var(--c2) 22%, rgba(15,23,42,0.9)));
+      border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
+      transition: transform 0.25s var(--ease), filter 0.25s, opacity 0.3s, box-shadow 0.3s;
     }
-    .sdlc-bar:hover { transform: translateY(-2px); filter: brightness(1.25); }
+    .sdlc-bar::before { content: ''; position: absolute; left: 5px; top: 7px; bottom: 7px; width: 2px; border-radius: 2px; background: linear-gradient(var(--c), var(--c2)); }
+    .sdlc-bar:hover { transform: translateY(-2px); filter: brightness(1.2); }
+    .sdlc-bar.hot { box-shadow: 0 10px 26px -12px var(--c), 0 0 0 1px color-mix(in srgb, var(--c) 70%, transparent); }
+    .sdlc-grid.focus .sdlc-bar:not(.hot) { opacity: 0.32; }
+    .js .sdlc .sdlc-grid.focus .sdlc-stage:not(.hot), .sdlc-grid.focus .sdlc-stage:not(.hot) { opacity: 0.55; }
+    .sdlc-bar .cov { display: none; }
+    .cov { font-style: normal; display: inline-flex; gap: 3px; margin-right: 0.45rem; vertical-align: middle; }
+    .cov b { width: 14px; height: 4px; border-radius: 2px; background: rgba(148,163,184,0.2); }
+    .cov b.on { background: var(--c); }
     .js .sdlc.rv .sdlc-bar, .js .sdlc.rv .sdlc-chip { clip-path: inset(0 100% 0 0 round 8px); transition: clip-path 0.9s var(--ease), transform 0.2s, filter 0.2s, background 0.2s; transition-delay: calc(0.3s + var(--k, 0) * 0.05s), 0s, 0s, 0s; }
     .js .sdlc.rv.in .sdlc-bar, .js .sdlc.rv.in .sdlc-chip { clip-path: inset(0 0 0 0 round 8px); }
     .js .sdlc.rv .sdlc-stage { opacity: 0; transform: translateY(12px); transition: opacity 0.7s var(--ease), transform 0.7s var(--ease); transition-delay: calc(var(--k, 0) * 0.1s); }
     .js .sdlc.rv.in .sdlc-stage { opacity: 1; transform: none; }
     .sdlc-bar .org-tag, .sdlc-chip .org-tag { font-size: 0.7rem; color: #94a3b8; white-space: nowrap; }
     .sdlc-bar .range { display: none; font-size: 0.7rem; color: #94a3b8; }
-    .sdlc-loop {
-      grid-column: 2 / -1; position: relative; height: 34px; margin: 0 10% 0 10%;
-      border: 2px solid #475569; border-top: none; border-radius: 0 0 14px 14px;
+    .sdlc-loop { grid-column: 2 / -1; position: relative; height: 44px; margin: 0 12.5% 0 12.5%; }
+    .sdlc-loop svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+    .sdlc-loop path {
+      fill: none; stroke: rgba(148,163,184,0.45); stroke-width: 1.5; vector-effect: non-scaling-stroke;
+      stroke-dasharray: 6 6; animation: flow 1.6s linear infinite;
     }
-    .sdlc-loop::before {
-      content: ''; position: absolute; left: -7px; top: -2px;
-      border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 9px solid #475569;
-    }
+    @keyframes flow { to { stroke-dashoffset: 12; } }
+    .loop-head { position: absolute; left: -5px; top: -2px; border-left: 5.5px solid transparent; border-right: 5.5px solid transparent; border-bottom: 8px solid rgba(148,163,184,0.7); }
     .sdlc-loop span {
-      position: absolute; left: 50%; bottom: -0.65rem; transform: translateX(-50%);
-      font-size: 0.75rem; color: #94a3b8; background: #0f172a; padding: 0 0.6rem; white-space: nowrap;
+      position: absolute; left: 50%; bottom: -0.15rem; transform: translate(-50%, 50%);
+      font-size: 0.75rem; color: var(--muted); background: var(--bg); padding: 0.1rem 0.75rem; white-space: nowrap; border-radius: 999px; border: 1px solid var(--line);
     }
 
     /* ── Experience: company timeline with project cards ── */
@@ -655,7 +677,17 @@
       .card-grid { grid-template-columns: 1fr; }
       .card-family .kids { grid-template-columns: 1fr; margin-left: 0.75rem; padding-left: 0.75rem; }
       .sdlc-grid { display: flex; flex-direction: column; gap: 0.6rem; }
-      .sdlc-stage::after, .sdlc-loop { display: none; }
+      .sdlc-stage::after, .sdlc-loop, .sdlc-col { display: none; }
+      /* Phone: stages become a compact 2-column legend; bars show coverage as small segments. */
+      .sdlc-legend { display: grid !important; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+      .sdlc-legend .sdlc-stage { padding: 0.75rem 0.8rem; grid-column: auto !important; grid-row: auto !important; }
+      .sdlc-legend .sdlc-stage-top { flex-wrap: wrap; row-gap: 0.35rem; }
+      .sdlc-legend .sdlc-count { width: 100%; margin-left: 0; }
+      .sdlc-legend .sdlc-desc { display: none; }
+      .sdlc-legend .sdlc-name { font-size: 0.9rem; }
+      .sdlc-legend .sdlc-count { font-size: 1.1rem; }
+      .sdlc-bar .cov { display: inline-flex; }
+      .sdlc-lane { padding-top: 0; }
       .sdlc-gov { margin: 0 0 0.6rem; }
       .sdlc-lane { flex-direction: row; flex-wrap: wrap; justify-content: flex-start; gap: 0.25rem 1rem; margin-top: 0.75rem; }
       .sdlc-track { grid-template-columns: 1fr; padding-top: 0.5rem; }
@@ -938,7 +970,7 @@
       en: {
         heroDesc: 'PM and System Analyst at KGI Bank. I define the problem of each AI project, verify the solution, measure cost and benefit, and take it to production.',
         eyebrow: 'PM & System Analyst · KGI Bank', heroRole: 'Taking AI in finance from <em>governance</em> to <em>production</em>.',
-        nowK: 'Now', nowV: 'KGI Bank · Tech Innovation', st1: 'Business Planning', st2: 'Model Tuning', st3: 'Development & Deployment', st4: 'Operations & Monitoring', t01: 'Proof', t02: 'Experience', t03: 'Side Projects', t04: 'Blog',
+        nItems: '{n} projects', unit: 'projects', nowK: 'Now', nowV: 'KGI Bank · Tech Innovation', st1: 'Business Planning', st2: 'Model Tuning', st3: 'Development & Deployment', st4: 'Operations & Monitoring', t01: 'Proof', t02: 'Experience', t03: 'Side Projects', t04: 'Blog',
         sign: 'Let\'s take AI <span class="grad">to production.</span>', toTop: 'Back to top',
         readBlog: 'Blog',
         expSub: 'Each card shows the milestones. Open a card for the full project story.',
@@ -954,7 +986,7 @@
       zh: {
         heroDesc: '凱基銀行科技創新部 PM 兼 SA。我定義 AI 專案的問題、驗證方案、量化成本與效益，再把它推到上線。',
         eyebrow: 'PM 兼 SA · 凱基銀行', heroRole: '把金融業的 AI，從<em>治理</em>一路推到<em>上線</em>。',
-        nowK: '現職', nowV: '凱基銀行 科技創新部', st1: '業務規劃', st2: '模型調教', st3: '開發部署', st4: '營運監控', t01: 'Proof', t02: 'Experience', t03: 'Side Projects', t04: 'Blog',
+        nItems: '{n} 個專案', unit: '個專案', nowK: '現職', nowV: '凱基銀行 科技創新部', st1: '業務規劃', st2: '模型調教', st3: '開發部署', st4: '營運監控', t01: 'Proof', t02: 'Experience', t03: 'Side Projects', t04: 'Blog',
         sign: '一起把 AI<br><span class="grad">推到上線。</span>', toTop: '回到頂端',
         readBlog: 'Blog',
         expSub: '卡片顯示專案的 Milestone。點卡片看完整的專案說明。',
@@ -976,6 +1008,10 @@
     function renderPhaseMap({ title, note, stages, band, lanes, loop }) {
       const n = stages.length, parts = [];
       let barK = 0;
+      // How many items touch each stage (band items count for every stage they sit over: none here).
+      const all = lanes.flatMap(l => l.items);
+      const counts = stages.map((_, si) => all.filter(x => x.span[0] <= si && si <= x.span[1]).length);
+      const dots = (a, b) => `<i class="cov" aria-hidden="true">${stages.map((st, i) => `<b style="--c:${st.color}" class="${i >= a && i <= b ? 'on' : ''}"></b>`).join('')}</i>`;
       // A description "what: why" shows the part after the colon on its own line.
       const desc = d => { const m = d.match(/^(.+?)[：:]\s*(.+)$/); return m ? `${esc(m[1])}<span class="why">${esc(m[2])}</span>` : esc(d); };
       const stageRow = band ? 2 : 1;
@@ -987,11 +1023,16 @@
           <div class="gov-head"><span class="gov-name">${esc(band.name)}</span><span class="gov-desc">${esc(band.desc)}</span></div>
           <div class="gov-chips">${chips}</div></div>`);
       }
+      parts.push('<div class="sdlc-legend">');
       stages.forEach((st, si) => parts.push(`
-        <div class="sdlc-stage ${si === n - 1 ? 'last' : ''}" style="grid-row:${stageRow};grid-column:${si + 2};--c:${st.color};--k:${si}">
-          <div><span class="sdlc-num">${si + 1}</span><span class="sdlc-name">${esc(st.name)}</span></div>
+        <div class="sdlc-stage ${si === n - 1 ? 'last' : ''}" data-si="${si}" style="grid-row:${stageRow};grid-column:${si + 2};--c:${st.color};--k:${si}">
+          <div class="sdlc-stage-top"><span class="sdlc-num">${si + 1}</span><span class="sdlc-name">${esc(st.name)}</span><span class="sdlc-count" title="${esc(T('nItems').replace('{n}', counts[si]))}">${counts[si]}<small>${esc(T('unit'))}</small></span></div>
           <div class="sdlc-desc">${desc(st.desc)}</div>
         </div>`));
+      parts.push('</div>');
+      // Column guides: one tinted band per stage behind all lanes, so every bar lines up with its stage.
+      const lastRow = (band ? 3 : 2) + lanes.length;
+      stages.forEach((st, si) => parts.push(`<div class="sdlc-col" data-si="${si}" aria-hidden="true" style="grid-row:${stageRow + 1} / ${lastRow};grid-column:${si + 2};--c:${st.color}"></div>`));
       const row0 = band ? 3 : 2;
       lanes.forEach((lane, li) => {
         const shared = lane.labels.length > 1;
@@ -1001,11 +1042,11 @@
         const cmp = (a, b) => { const ra = rank(a), rb = rank(b); for (let i = 0; i < ra.length; i++) if (ra[i] !== rb[i]) return ra[i] - rb[i]; return 0; };
         const bar = (x, off = 0) => {
           const [a, b] = x.span;
-          return `<a class="sdlc-bar ${x.child ? 'child' : ''}" href="#${x.target}" data-target="${x.target}" title="${esc(x.title)}"
+          return `<a class="sdlc-bar ${x.child ? 'child' : ''}" href="#${x.target}" data-target="${x.target}" data-a="${a}" data-b="${b}" title="${esc(x.title)}"
               style="grid-column:${a + 1 - off} / ${b + 2 - off};--c:${stages[a].color};--c2:${stages[b].color};--k:${barK++}">
-              <span>${x.child ? '↳ ' : ''}${esc(x.label)}</span>
+              <span class="lbl">${x.child ? '↳ ' : ''}${esc(x.label)}</span>
               ${shared && x.tag ? `<span class="org-tag">${esc(x.tag)}</span>` : ''}
-              <span class="range">${esc(stages[a].name)}${a !== b ? ` → ${esc(stages[b].name)}` : ''}</span></a>`;
+              <span class="range">${dots(a, b)}${esc(stages[a].name)}${a !== b ? ` → ${esc(stages[b].name)}` : ''}</span></a>`;
         };
         // A family (an item and its children) is one frame over its own columns, one row per member.
         // Other bars can still sit beside it in the remaining columns.
@@ -1020,7 +1061,10 @@
         });
         parts.push(`<div class="sdlc-track" style="grid-row:${li + row0};grid-column:2 / -1">${bars}</div>`);
       });
-      if (loop) parts.push(`<div class="sdlc-loop" style="grid-row:${lanes.length + row0}"><span>↺ ${esc(loop)}</span></div>`);
+      // Loop: operations feed the next round of planning. A curved path with a flowing dash.
+      if (loop) parts.push(`<div class="sdlc-loop" style="grid-row:${lanes.length + row0}">
+        <svg viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path d="M99.5 0 V18 Q99.5 34 90 34 H10 Q0.5 34 0.5 18 V6" /></svg>
+        <i class="loop-head" aria-hidden="true"></i><span>↺ ${esc(loop)}</span></div>`);
       return `
         <div class="sdlc-title">${esc(title)}</div>
         <div class="sdlc-note">${esc(note)}</div>
@@ -1256,6 +1300,33 @@
       blogNav();
     }).catch(() => { blogGrid.innerHTML = `<div class="blog-empty">${esc(T('soon'))}</div>`; });
     }
+
+    // Linked highlighting: hover (or keyboard-focus) a bar to light the stages it spans;
+    // hover a stage to light the projects that touch it.
+    ['sdlcMap', 'quantMap'].forEach(id => {
+      const map = document.getElementById(id);
+      const grid = () => map.querySelector('.sdlc-grid');
+      const clear = () => { const g = grid(); if (!g) return; g.classList.remove('focus'); g.querySelectorAll('.hot').forEach(x => x.classList.remove('hot')); };
+      const light = target => {
+        const g = grid(); if (!g) return;
+        const bar = target.closest('.sdlc-bar'), st = target.closest('.sdlc-stage');
+        clear();
+        if (!bar && !st) return;
+        g.classList.add('focus');
+        if (bar) {
+          bar.classList.add('hot');
+          for (let i = +bar.dataset.a; i <= +bar.dataset.b; i++) g.querySelectorAll(`[data-si="${i}"]`).forEach(x => x.classList.add('hot'));
+        } else {
+          const si = +st.dataset.si;
+          g.querySelectorAll(`[data-si="${si}"]`).forEach(x => x.classList.add('hot'));
+          g.querySelectorAll('.sdlc-bar').forEach(b => { if (+b.dataset.a <= si && si <= +b.dataset.b) b.classList.add('hot'); });
+        }
+      };
+      map.addEventListener('pointerover', e => { if (e.pointerType !== 'touch') light(e.target); });
+      map.addEventListener('pointerleave', clear);
+      map.addEventListener('focusin', e => light(e.target));
+      map.addEventListener('focusout', clear);
+    });
 
     // Map bars and chips: jump to the project card or side project and highlight it
     ['sdlcMap', 'quantMap'].forEach(id => document.getElementById(id).addEventListener('click', e => {
