@@ -18,6 +18,9 @@ Alex Li's portfolio & blog.
 │   ├── work.json               # 02. Experience: companies and projects
 │   ├── experience.json         # 02. Experience: other experience & education
 │   └── projects.json           # 03. Side Projects
+├── ascii/
+│   ├── index.html              # ASCII gallery (cards from the PIECES array in its script)
+│   └── christmas-tree.html     # Spinning 3D ASCII Christmas tree
 ├── posts/
 │   ├── posts.json              # 04. Blog index
 │   └── *.html                  # Individual blog posts
@@ -203,6 +206,16 @@ Emoji reference for `icon`: use any emoji character or unicode escape.
 ```
 
 **Step 3:** Push.
+
+### ASCII gallery (`ascii/`)
+
+To add a piece: put a self-contained HTML file in `ascii/`, then add one entry to the `PIECES` array at the top of the script in `ascii/index.html`:
+
+```js
+{ href: 'your-piece.html', title: { zh: '標題', en: 'Title' }, desc: { zh: '一句話。', en: 'One line.' }, preview: Site.esc('small ASCII text') }
+```
+
+Add the page to `sitemap.xml` as `https://xiang-wei-li.com/ascii/your-piece`.
 
 ### Other
 

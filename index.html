@@ -748,6 +748,7 @@
         <a href="#experience">Experience</a>
         <a href="#projects">Side Projects</a>
         <a href="#blog">Blog</a>
+        <a href="ascii/">ASCII</a>
       </div>
       <div class="nav-right">
         <button class="lang-toggle" id="langToggle" aria-label="Switch language">中文</button>
@@ -916,7 +917,7 @@
 
     // ── Progress bar, active nav link, pointer light ──
     const progress = document.getElementById('progress');
-    const navMap = [...document.querySelectorAll('.nav-links a')].map(a => ({ a, sec: document.querySelector(a.getAttribute('href')) }));
+    const navMap = [...document.querySelectorAll('.nav-links a[href^="#"]')].map(a => ({ a, sec: document.querySelector(a.getAttribute('href')) }));
     let coLinks = [];
     // Runs on every scroll event: a few rect reads, cheap enough without frame batching.
     function onScroll() {

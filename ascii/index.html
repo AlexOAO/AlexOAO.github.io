@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <title>ASCII | Alex Li (李翔緯)</title>
+  <meta name="description" content="ASCII by Alex Li (李翔緯): small things drawn with characters, like a spinning 3D ASCII Christmas tree. 用字元畫出來的小作品。">
+  <link rel="canonical" href="https://xiang-wei-li.com/ascii/">
+  <meta name="theme-color" content="#0b1120">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --text: #e6edf6; --muted: #a3b1c6; --dim: #8291a7; --line: rgba(148,163,184,0.14);
+      --accent: #3b82f6; --accent-2: #06b6d4; --accent-3: #8b5cf6;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+      --display: 'Inter', 'Noto Sans TC', sans-serif;
+      --mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+    }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      min-height: 100vh; min-height: 100svh; overflow-x: hidden;
+      font-family: 'Noto Sans TC', 'Inter', sans-serif; background: #0b1120; color: var(--text); line-height: 1.7;
+      -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      background: radial-gradient(ellipse 50% 40% at 25% 20%, rgba(59,130,246,0.2), transparent 70%),
+                  radial-gradient(ellipse 45% 40% at 80% 75%, rgba(139,92,246,0.16), transparent 70%);
+      animation: drift 18s ease-in-out infinite alternate;
+    }
+    @keyframes drift { to { transform: translate3d(3vw, 2vh, 0) scale(1.05); } }
+    ::selection { background: rgba(59,130,246,0.35); color: #fff; }
+    :focus-visible { outline: 2px solid #60a5fa; outline-offset: 3px; border-radius: 6px; }
+    @view-transition { navigation: auto; }
+
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 1.5rem 1.25rem 4rem; }
+    .top { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+    .back { font-family: var(--display); font-size: 0.92rem; font-weight: 600; color: var(--muted); text-decoration: none; transition: color 0.3s; }
+    .back:hover { color: var(--text); }
+    .lang-toggle {
+      font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--text);
+      background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.3);
+      border-radius: 20px; padding: 0.3rem 0.8rem; cursor: pointer; transition: background 0.3s;
+    }
+    .lang-toggle:hover { background: rgba(59,130,246,0.25); }
+
+    header.intro { margin: 4.5rem 0 3rem; animation: rise 1s var(--ease) both; }
+    @keyframes rise { from { opacity: 0; transform: translateY(20px); } }
+    h1 {
+      font-family: var(--mono); font-weight: 700; letter-spacing: 0.04em; line-height: 1;
+      font-size: clamp(3.5rem, 14vw, 6.5rem);
+      background: linear-gradient(110deg, #60a5fa, #22d3ee 45%, #a78bfa); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    h1 .cur { -webkit-text-fill-color: #22d3ee; animation: blink 1.1s steps(1) infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+    .lead { color: var(--muted); font-size: 1.1rem; margin-top: 1rem; text-wrap: pretty; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 1.5rem; }
+    .card {
+      display: flex; flex-direction: column; text-decoration: none; color: inherit; overflow: hidden;
+      background: linear-gradient(180deg, rgba(30,41,59,0.62), rgba(30,41,59,0.38)); border: 1px solid var(--line); border-radius: 20px;
+      transition: border-color 0.4s, transform 0.5s var(--ease), box-shadow 0.5s var(--ease);
+      animation: rise 1s var(--ease) both; animation-delay: calc(0.15s + var(--i, 0) * 0.08s);
+    }
+    .card:hover { transform: translateY(-4px); border-color: rgba(96,165,250,0.4); box-shadow: 0 30px 60px -30px rgba(37,99,235,0.5); }
+    .preview {
+      background: #05070d; border-bottom: 1px solid var(--line); display: grid; place-items: center; padding: 1.25rem 0.5rem; overflow: hidden;
+    }
+    .preview pre {
+      font-family: var(--mono); font-size: 13px; line-height: 1.15; color: #22c55e; white-space: pre;
+      transition: transform 1.2s var(--ease);
+    }
+    .card:hover .preview pre { transform: scale(1.06); }
+    .body { padding: 1.4rem 1.5rem 1.6rem; display: flex; flex-direction: column; flex: 1; }
+    .card h2 { font-size: 1.15rem; font-weight: 700; color: #e2e8f0; line-height: 1.4; transition: color 0.3s; }
+    .card:hover h2 { color: #60a5fa; }
+    .card p { color: var(--muted); font-size: 0.92rem; margin-top: 0.5rem; flex: 1; }
+    .more { display: inline-flex; align-items: center; gap: 0.45rem; margin-top: 1.1rem; font-family: var(--display); font-size: 0.85rem; font-weight: 600; color: #60a5fa; transition: gap 0.3s var(--ease); }
+    .card:hover .more { gap: 0.7rem; }
+
+    /* Tree preview colours */
+    .t-star { color: #facc15; text-shadow: 0 0 8px rgba(250,204,21,0.8); }
+    .t-trunk { color: #a16207; }
+    .t-red { color: #ef4444; }
+    .t-blue { color: #3b82f6; }
+    .t-bow { color: #facc15; }
+    .t-ball { color: #ef4444; }
+    .t-light { color: #fde047; animation: twinkle 1.6s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.37s); }
+    .t-star { animation: twinkle 2.4s ease-in-out infinite; }
+    @keyframes twinkle { 50% { opacity: 0.25; } }
+
+    /* Rose preview colours (reuses .t-red for roses, .t-bow for the bow) */
+    .r-pink { color: #f472b6; }
+    .r-rose { color: #fb7185; }
+    .r-wrap { color: #94a3b8; }
+    .r-bloom { color: #f43f5e; animation: bloom 2.8s ease-in-out infinite; }
+    @keyframes bloom { 50% { color: #fda4af; text-shadow: 0 0 8px rgba(244,63,94,0.85); } }
+    .r-petal { display: inline-block; color: #f9a8d4; animation: petal 4.5s ease-in infinite; }
+    @keyframes petal { 0% { transform: translate(0, 0) rotate(0); opacity: 0; } 15% { opacity: 1; } 100% { transform: translate(-0.6em, 6.5em) rotate(160deg); opacity: 0; } }
+
+    footer { color: var(--dim); font-size: 0.82rem; margin-top: 4rem; }
+
+    @media (max-width: 600px) {
+      header.intro { margin: 3rem 0 2.25rem; }
+      .grid { grid-template-columns: 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      body::before, header.intro, .card, .t-light, .t-star, .r-bloom, .r-petal, h1 .cur { animation: none; }
+      .r-petal { opacity: 0; }
+      .card, .preview pre { transition: none; }
+      .card:hover { transform: none; }
+      .card:hover .preview pre { transform: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <nav class="top">
+      <a class="back" href="/">← Alex Li</a>
+      <button class="lang-toggle" id="langToggle" aria-label="Switch language">中文</button>
+    </nav>
+    <header class="intro">
+      <h1>ASCII<span class="cur" aria-hidden="true">_</span></h1>
+      <p class="lead" id="lead">Small things drawn with characters.</p>
+    </header>
+    <main class="grid" id="grid"></main>
+    <footer>&copy; 2026 Alex Li (李翔緯)</footer>
+  </div>
+
+  <script src="/assets/js/common.js"></script>
+  <script>
+    // To add a piece: put a self-contained HTML file in ascii/ and add one entry here.
+    // preview: HTML for the <pre> panel; wrap plain text in Site.esc().
+    const PIECES = [
+      {
+        href: 'christmas-tree.html',
+        title: { zh: 'ASCII 聖誕樹', en: 'ASCII Christmas Tree' },
+        desc: {
+          zh: '會旋轉的 3D 字元聖誕樹：長出枝葉、彩帶、彩球、燈光、星星和禮物。',
+          en: 'A spinning 3D Christmas tree made of characters: needles, garland, baubles, lights, a star and gifts.'
+        },
+        preview: treePreview()
+      },
+      {
+        href: 'rose-bouquet.html',
+        title: { zh: 'ASCII 玫瑰花束', en: 'ASCII Rose Bouquet' },
+        desc: {
+          zh: '一束用字元長出來的 3D 玫瑰：花莖、葉子、包裝紙、金色蝴蝶結，玫瑰一朵朵綻放，花瓣緩緩飄落。',
+          en: 'A 3D bouquet grown from characters: stems, leaves, wrapping paper and a gold bow, with roses blooming one by one and petals drifting down.'
+        },
+        preview: rosePreview()
+      }
+    ];
+
+    const I18N = {
+      en: { lead: 'Small things drawn with characters.', open: 'Open', toggle: '中文' },
+      zh: { lead: '用字元畫出來的小作品。', open: '打開看看', toggle: 'EN' }
+    };
+
+    // Small coloured tree: * star, o baubles, + twinkling lights, # gifts.
+    function treePreview() {
+      const rows = [
+        '        *        ',
+        '       /^\\       ',
+        '      /o^+\\      ',
+        '     /^^+^o\\     ',
+        '    /+^o^^^+\\    ',
+        '   /^^^+^o^^^\\   ',
+        '  /o^+^^^^+^o^\\  ',
+        ' /^^^o^+^^^o^+^\\ ',
+        '       |||       ',
+        '  [#]  |||  [#]  '
+      ];
+      let k = 0;
+      return rows.map((r, y) => [...r].map((c, x) => {
+        if (c === '*') return `<span class="t-star">*</span>`;
+        if (c === 'o') return `<span class="t-ball">o</span>`;
+        if (c === '+') return `<span class="t-light" style="--k:${k++}">+</span>`;
+        if (y === rows.length - 1 && c === '#') return `<span class="${x < 8 ? 't-red' : 't-blue'}">#</span>`;
+        if (y === rows.length - 1 && (c === '[' || c === ']')) return `<span class="t-bow">${c}</span>`;
+        if (c === '|') return `<span class="t-trunk">|</span>`;
+        return Site.esc(c);
+      }).join('')).join('\n');
+    }
+
+    // Small coloured bouquet: @ % o rose heads, ~ leaves, \/ wrapping paper, }>8<{ bow, | stems.
+    function rosePreview() {
+      const rows = [
+        '     %  @  %     ',
+        '   @  @ o @  @  \'',
+        '  ~  %  @  %  ~  ',
+        '  \\/\\/\\/V\\/\\/\\/  ',
+        '   \\/\\/\\V/\\/\\/   ',
+        '    \\/\\/V\\/\\/    ',
+        '     \\/\\V/\\/     ',
+        '      }>8<{      ',
+        '      /|||\\      ',
+        '       |||       '
+      ];
+      return rows.map((r, y) => [...r].map((c, x) => {
+        if (c === "'") return `<span class="r-petal">'</span>`;
+        if (c === '@') return `<span class="${y === 0 ? 'r-bloom' : 't-red'}">@</span>`;
+        if (c === '%') return `<span class="r-pink">%</span>`;
+        if (c === 'o') return `<span class="r-rose">o</span>`;
+        if (y >= 3 && y <= 6) return `<span class="r-wrap">${Site.esc(c)}</span>`;
+        if (y === 7 || (y === 8 && (c === '/' || c === '\\'))) return `<span class="t-bow">${Site.esc(c)}</span>`;
+        return Site.esc(c);
+      }).join('')).join('\n');
+    }
+
+    function render() {
+      const lang = Site.getLang(), T = I18N[lang];
+      document.documentElement.lang = lang === 'en' ? 'en' : 'zh-Hant';
+      document.getElementById('lead').textContent = T.lead;
+      document.getElementById('langToggle').textContent = T.toggle;
+      document.getElementById('grid').innerHTML = PIECES.map((p, i) => `
+        <a class="card" href="${Site.esc(p.href)}" style="--i:${i}">
+          <div class="preview" aria-hidden="true"><pre>${p.preview}</pre></div>
+          <div class="body">
+            <h2>${Site.esc(p.title[lang])}</h2>
+            <p>${Site.esc(p.desc[lang])}</p>
+            <span class="more">${Site.esc(T.open)} ${Site.arrowSvg}</span>
+          </div>
+        </a>`).join('');
+    }
+
+    render();
+    document.getElementById('langToggle').addEventListener('click', () => { Site.toggleLang(); render(); });
+  </script>
+</body>
+</html>

@@ -1,0 +1,948 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ASCII Rose Bouquet | Alex Li (李翔緯)</title>
+  <meta name="description" content="A swaying 3D bouquet of nineteen roses drawn entirely with ASCII characters: stems grow, leaves unfold, wrapping paper and a gold bow appear, roses bloom and petals fall under a sparkling night sky. Vanilla JS on a single canvas.">
+  <meta name="theme-color" content="#030408">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;600;800&display=swap">
+  <style>
+    :root {
+      --sky: #030408;
+      --text: #e6edf6;
+      --muted: #a3b1c6;
+      --accent: #3b82f6;
+      --mono: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--sky);
+      color: var(--text);
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    canvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100svh;
+      display: block;
+      touch-action: manipulation; /* no double-tap zoom: double-tap means replay */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .back {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(59, 130, 246, 0.45);
+      background: rgba(59, 130, 246, 0.12);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .back:hover, .back:focus-visible {
+      background: rgba(59, 130, 246, 0.28);
+      border-color: var(--accent);
+      outline: none;
+    }
+    .hud, .hint {
+      position: fixed;
+      z-index: 1;
+      bottom: 12px;
+      color: var(--muted);
+      opacity: 0.75;
+      font: 11px/1.4 var(--mono);
+      white-space: pre;
+      pointer-events: none;
+      max-width: calc(100% - 24px);
+      overflow: hidden;
+    }
+    .hud { left: 12px; }
+    .hint {
+      right: 12px;
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    @media (max-width: 640px) {
+      .hud, .hint { font-size: 10px; }
+      .hint { bottom: 30px; } /* stack above the HUD on narrow screens */
+    }
+  </style>
+</head>
+<body>
+  <h1 class="sr-only">ASCII Rose Bouquet</h1>
+  <a class="back" href="./">← ASCII</a>
+  <canvas id="c" role="img" aria-label="Animated 3D bouquet of nineteen roses drawn with ASCII characters, wrapped in paper with a gold bow, blooming and shedding petals under a starry sky, with the words For You"></canvas>
+  <div class="hud" id="hud" aria-hidden="true"></div>
+  <div class="hint" id="hint"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ---------- Timeline (seconds of scene time) ----------
+  const T = {
+    SEED: 0.9,
+    STEM: 1.5, STEM_DUR: 4.5, HANDLE_DUR: 1.6, // stems reach the heads at 6.0
+    LEAF: 4.0, LEAF_DUR: 3.0,
+    PAPER: 4.2, PAPER_DUR: 2.6,
+    RIBBON: 5.6, RIBBON_DUR: 1.4,
+    BUD: 6.0, BUD_DUR: 2.0,
+    BLOOM: 8.0, BLOOM_GAP: 0.2, BLOOM_DUR: 1.4, // 19 roses, last one open at 13.0
+    MSG: 13.5, LETTER: 0.15,
+    FALL: 15.0, FALL_END: 20.0,
+    FADE: 20.0, FADE_DUR: 2.0, END: 22.0
+  };
+
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T_START = reduced ? 15.0 : 0;     // reduced motion: open on the finished bouquet
+  const SWAY_A = reduced ? 0.3 : 0.45;    // rad, sway around Y (never a full spin)
+  const SWAY_W = reduced ? 0.25 : 0.55;   // rad/s of the sway phase
+
+  // ---------- Camera / world ----------
+  const CAM_D = 3;          // camera distance (world units)
+  const PIVOT = 0.38;       // tilt pivot height
+  const TILT = 0.3;         // look a little from above
+  const ct = Math.cos(TILT), st = Math.sin(TILT);
+  const HANDLE_Y = -0.16;   // bottom of the short stem bundle below the tie (tie is y = 0)
+  // Rose heads sit on a squashed dome (wider than tall) leaning toward us.
+  const DOME_Y = 0.5, DOME_R = 0.4, DOME_TILT = 0.5, DOME_SX = 1.3, DOME_SY = 0.82;
+  const PAPER_TOP = 0.44, PAPER_R0 = 0.045, PAPER_R1 = 0.56, PAPER_SLOPE = (PAPER_R1 - PAPER_R0) / PAPER_TOP;
+  const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
+  // Light from upper-left-front, in view space.
+  const LX0 = -0.45, LY0 = 0.6, LZ0 = 0.66;
+  const LN = Math.hypot(LX0, LY0, LZ0);
+  const LX = LX0 / LN, LY = LY0 / LN, LZ = LZ0 / LN;
+  const TAU = Math.PI * 2;
+
+  // Seeded RNG so the bouquet is identical on every load.
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  const rng = mulberry32(20260214);
+
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const smooth = v => { v = clamp(v, 0, 1); return v * v * (3 - 2 * v); };
+  const coneR = y => PAPER_R0 + (PAPER_R1 - PAPER_R0) * clamp(y / PAPER_TOP, 0, 1.2);
+  const tri = v => { const f = v - Math.floor(v); return f < 0.5 ? 2 * f : 2 - 2 * f; };
+  // Scalloped top edge; the front is cut down to the neck so roses, leaves and stems show.
+  const paperTop = th => PAPER_TOP + 0.05 * tri(th * 7 / TAU) - 0.38 * Math.pow(Math.max(0, Math.sin(th)), 1.2);
+
+  // ---------- Characters & colours ----------
+  const CH = [];
+  const ci = s => { let i = CH.indexOf(s); if (i < 0) { CH.push(s); i = CH.length - 1; } return i; };
+  const C_RAMP = [...'.:-=+*#%@'].map(ci);
+  const C_BAR = ci('|'), C_SL = ci('/'), C_BS = ci('\\'), C_DASH = ci('-'), C_STAR = ci('*');
+  const C_FALL = [ci('o'), ci('*'), ci(','), ci("'")];
+  // Petal ramp: grooves are '.' ':', faces are dense letters rather than '+' / '*' noise.
+  const C_PET = [...'.::=oO%#&@'].map(ci);
+  const C_DOT = ci('.'), C_COLON = ci(':');
+
+  const LEVELS = 16;
+  const PAL = [];
+  const pal = (r, g, b) => { PAL.push([r, g, b]); return PAL.length - 1; };
+  const P_STEM = [pal(52, 160, 66), pal(38, 132, 58), pal(84, 186, 78)];
+  const P_LEAF = [pal(28, 110, 50), pal(46, 142, 64), pal(70, 168, 78)];
+  const P_TIP = pal(170, 255, 160);
+  const P_PAPER = pal(150, 155, 168), P_PAPER2 = pal(118, 124, 138), P_RIM = pal(205, 209, 220);
+  const P_GOLD = pal(255, 196, 64), P_GOLD2 = pal(214, 150, 40);
+  // Rose base colours; each rose gets its own jittered [groove, face, rim] triple (consecutive palette
+  // indices, so the splat can step from face to groove/rim with p - 1 / p + 1).
+  const FAMS = [[220, 30, 60], [170, 20, 45], [235, 110, 150], [225, 70, 110]];
+  function roseFam(q) {
+    const [r0, g0, b0] = FAMS[q < 0.34 ? 0 : q < 0.55 ? 1 : q < 0.78 ? 2 : 3], j = 0.9 + 0.2 * rng();
+    const r = Math.min(255, r0 * j), g = g0 * (0.85 + 0.3 * rng()), b = b0 * (0.85 + 0.3 * rng());
+    pal(r * 0.42 + 20, g * 0.22, b * 0.3 + 8);                                  // crimson groove
+    const face = pal(r, g, b);
+    pal(r + (255 - r) * 0.35, g + (200 - g) * 0.3, b + (215 - b) * 0.3);        // brighter rim
+    return face;
+  }
+
+  // Kinds of points
+  const K_STEM = 0, K_LEAF = 1, K_PAPER = 2, K_EDGE = 3, K_RIBBON = 4, K_PETAL = 5, K_FALL = 6, K_TIP = 7;
+
+  // ---------- Build the static scene ----------
+  const B = { x: [], y: [], z: [], nx: [], ny: [], nz: [], k: [], p: [], t0: [], aux: [] };
+  function add(x, y, z, nx, ny, nz, k, p, t0, aux) {
+    const l = Math.hypot(nx, ny, nz) || 1;
+    B.x.push(x); B.y.push(y); B.z.push(z);
+    B.nx.push(nx / l); B.ny.push(ny / l); B.nz.push(nz / l);
+    B.k.push(k); B.p.push(p); B.t0.push(t0); B.aux.push(aux);
+  }
+
+  // Rose heads: a Fibonacci spiral over a spherical cap whose axis leans toward the viewer,
+  // so the heads are evenly spaced and the front of the bouquet is full.
+  const roses = [];
+  const cDT = Math.cos(DOME_TILT), sDT = Math.sin(DOME_TILT);
+  const ROSE_N = 19, CAP = 1 - Math.cos(1.45);
+  for (let k = 0; k < ROSE_N; k++) {
+    const h = 1 - (k + 0.5) / ROSE_N * CAP, rr = Math.sqrt(1 - h * h), az = k * 2.39996 + 0.4 + (rng() - 0.5) * 0.15;
+    const dx = rr * Math.cos(az), dy0 = h, dz0 = rr * Math.sin(az);
+    const dy = dy0 * cDT - dz0 * sDT, dz = dy0 * sDT + dz0 * cDT;
+    // Basis around the head axis w: e1, e2 span the petal plane.
+    const ax = Math.abs(dy) < 0.95 ? 0 : 1, ay = 1 - ax;
+    let e1x = ay * dz, e1y = -ax * dz, e1z = ax * dy - ay * dx;
+    const el = Math.hypot(e1x, e1y, e1z); e1x /= el; e1y /= el; e1z /= el;
+    roses.push({
+      hx: dx * DOME_R * DOME_SX, hy: DOME_Y + dy * DOME_R * DOME_SY, hz: dz * DOME_R, wx: dx, wy: dy, wz: dz,
+      e1x, e1y, e1z, e2x: dy * e1z - dz * e1y, e2y: dz * e1x - dx * e1z, e2z: dx * e1y - dy * e1x,
+      face: roseFam(rng()), spin: rng() * TAU
+    });
+  }
+  const NR = roses.length;
+
+  // Stems: quadratic Beziers from a tight bundle at the tie, fanning out to each head.
+  // Stored flat (p0, p1, p2) so the growing tips can be evaluated per frame without allocating.
+  const stemDefs = [];
+  function addStemDef(x2, y2, z2) {
+    const a = rng() * TAU, r = 0.02 * Math.sqrt(rng());
+    const bx = Math.cos(a) * r, bz = Math.sin(a) * r;
+    stemDefs.push(bx, 0, bz, bx + x2 * 0.3, y2 * 0.45, bz + z2 * 0.3, x2, y2, z2);
+  }
+  roses.forEach(R => addStemDef(R.hx - R.wx * 0.01, R.hy - R.wy * 0.01, R.hz - R.wz * 0.01));
+  const fillerTips = [];
+  for (let i = 0; i < 7; i++) {
+    const a = rng() * TAU, y = 0.3 + rng() * 0.14, r = coneR(y) * (0.4 + 0.4 * rng());
+    fillerTips.push([Math.cos(a) * r, y, Math.sin(a) * r]);
+    addStemDef(Math.cos(a) * r, y, Math.sin(a) * r);
+  }
+  const NSTEM = stemDefs.length / 9;
+  const STEMS = Float32Array.from(stemDefs);
+  let bx = 0, by = 0, bz = 0, btx = 0, bty = 0, btz = 0;
+  function bez(j, s) {
+    const o = j * 9, u = 1 - s, a = u * u, b = 2 * u * s, c = s * s;
+    bx = a * STEMS[o] + b * STEMS[o + 3] + c * STEMS[o + 6];
+    by = a * STEMS[o + 1] + b * STEMS[o + 4] + c * STEMS[o + 7];
+    bz = a * STEMS[o + 2] + b * STEMS[o + 5] + c * STEMS[o + 8];
+    btx = u * (STEMS[o + 3] - STEMS[o]) + s * (STEMS[o + 6] - STEMS[o + 3]);
+    bty = u * (STEMS[o + 4] - STEMS[o + 1]) + s * (STEMS[o + 7] - STEMS[o + 4]);
+    btz = u * (STEMS[o + 5] - STEMS[o + 2]) + s * (STEMS[o + 8] - STEMS[o + 5]);
+  }
+  const stemT = s => T.STEM + s * T.STEM_DUR;
+  // Stems store their tangent in the normal slot: the character follows the on-screen slope.
+  for (let j = 0; j < NSTEM; j++) {
+    const n = 100;
+    for (let i = 0; i <= n; i++) {
+      const s = i / n;
+      bez(j, s);
+      add(bx, by, bz, btx, bty, btz, K_STEM, P_STEM[(rng() * 3) | 0], stemT(s) + rng() * 0.04, s > 0.8 ? -0.6 : rng());
+    }
+    // Handle: the same stem continues straight down below the tie.
+    const o = j * 9, hx = STEMS[o], hz = STEMS[o + 2];
+    for (let i = 1; i <= 24; i++) {
+      const f = i / 24;
+      add(hx * (1 - 0.25 * f), HANDLE_Y * f, hz * (1 - 0.25 * f), -hx * 0.25, HANDLE_Y, -hz * 0.25,
+          K_STEM, P_STEM[(rng() * 3) | 0], T.STEM + f * T.HANDLE_DUR, rng());
+    }
+  }
+
+  // Leaves: bent, V-folded ellipses. aux = 1 on the midrib.
+  function addLeaf(x0, y0, z0, dx, dy, dz, len, wid, t0) {
+    const dl = Math.hypot(dx, dy, dz); dx /= dl; dy /= dl; dz /= dl;
+    let sx = -dz, sz = dx; const sl = Math.hypot(sx, sz) || 1; sx /= sl; sz /= sl; // side, horizontal
+    let nx = -dy * sz, ny = dx * sz - dz * sx, nz = dy * sx;                         // side x dir
+    if (ny < 0) { nx = -nx; ny = -ny; nz = -nz; }
+    const p = P_LEAF[(rng() * 3) | 0], na = Math.max(6, Math.round(len / 0.01)), nb = Math.max(4, Math.round(2 * wid / 0.01));
+    for (let a = 0; a <= na; a++) {
+      const f = a / na, wa = wid * Math.pow(Math.sin(Math.PI * f), 0.75), droop = 0.28 * len * f * f;
+      for (let b = 0; b <= nb; b++) {
+        const u = -1 + 2 * b / nb, off = u * wa, fold = Math.abs(u) * wa * 0.35;
+        add(x0 + dx * f * len + sx * off + nx * fold, y0 + dy * f * len + ny * fold - droop, z0 + dz * f * len + sz * off + nz * fold,
+            nx - sx * u * 0.5, ny, nz - sz * u * 0.5, K_LEAF, p, t0 + f * 0.6, Math.abs(u) < 0.2 ? 1 : 0);
+      }
+    }
+  }
+  for (let i = 0; i < 16; i++) {
+    const j = (rng() * NR) | 0, s = 0.5 + rng() * 0.35;
+    bez(j, s);
+    const ol = Math.hypot(bx, bz) || 1;
+    addLeaf(bx, by, bz, bx / ol + (rng() - 0.5) * 0.6, 0.6 + rng() * 0.4, bz / ol + (rng() - 0.5) * 0.6,
+            0.07 + rng() * 0.04, 0.024 + rng() * 0.012, Math.max(T.LEAF + rng() * 1.6, stemT(s) + 0.2));
+  }
+  fillerTips.forEach(([x, y, z]) => {
+    const ol = Math.hypot(x, z) || 1;
+    addLeaf(x, y, z, x / ol, 0.9, z / ol, 0.08 + rng() * 0.03, 0.03, T.LEAF + 1 + rng() * 1.2);
+  });
+  // Big leaves poking out sideways from under the heads (mostly left and right).
+  [0.1, -0.25, 0.45, Math.PI - 0.1, Math.PI + 0.25, Math.PI - 0.45, -1.3, -1.85].forEach(az => {
+    const r = 0.36, y = 0.3 + rng() * 0.06;
+    addLeaf(Math.cos(az) * r, y, Math.sin(az) * r, Math.cos(az), 0.25 + rng() * 0.2, Math.sin(az),
+            0.26 + rng() * 0.07, 0.06 + rng() * 0.012, T.LEAF + 0.6 + rng() * 1.4);
+  });
+
+  // Wrapping paper: a dim, sparse, pleated cone that frames the roses from the sides and behind.
+  // aux = 1 on pleat crests, drawn as '/' '\' fold lines; the rest is '.' ':' dots.
+  for (let y = 0.006; y < PAPER_TOP + 0.05; y += 0.016) {
+    const r = coneR(y), n = Math.ceil(TAU * r / 0.019);
+    for (let i = 0; i < n; i++) {
+      const th = (i + (y * 97 % 1)) / n * TAU;
+      if (y > paperTop(th)) continue;
+      const pl = Math.sin(th * 9), rr = r * (1 + 0.035 * pl * pl), tp = th + 0.35 * Math.cos(th * 9);
+      add(Math.cos(th) * rr, y, Math.sin(th) * rr, Math.cos(tp), -0.5, Math.sin(tp), K_PAPER,
+          rng() < 0.3 ? P_PAPER2 : P_PAPER, T.PAPER + y / PAPER_TOP * T.PAPER_DUR, pl * pl > 0.93 ? 1 : 0);
+    }
+  }
+  {
+    const n = Math.ceil(TAU * PAPER_R1 / 0.006), eps = 1e-3;
+    for (let i = 0; i < n; i++) {
+      const th = i / n * TAU, h = paperTop(th), r = coneR(h);
+      const h2 = paperTop(th + eps), r2 = coneR(h2);
+      // Tangent of the rim curve -> '/' and '\' zigzag on screen.
+      add(Math.cos(th) * r, h, Math.sin(th) * r, Math.cos(th + eps) * r2 - Math.cos(th) * r, h2 - h,
+          Math.sin(th + eps) * r2 - Math.sin(th) * r, K_EDGE, P_RIM, T.PAPER + h / PAPER_TOP * T.PAPER_DUR, 0);
+    }
+  }
+
+  // Ribbon: a thin band round the neck, a small two-loop bow and two thin tails at the front.
+  for (let y = 0.0; y <= 0.025; y += 0.006) {
+    const r = coneR(y) + 0.006, n = Math.ceil(TAU * r / 0.006);
+    for (let i = 0; i < n; i++) {
+      const th = i / n * TAU;
+      add(Math.cos(th) * r, y, Math.sin(th) * r, Math.cos(th), 0, Math.sin(th), K_RIBBON,
+          i % 3 ? P_GOLD : P_GOLD2, T.RIBBON + Math.abs(Math.sin((th - Math.PI / 2) / 2)) * 0.6, 0);
+    }
+  }
+  // Bow sits on the front of the cone; its depth follows the paper so it never sinks into it.
+  const KY = 0.012, KZ = coneR(KY) + 0.014, bowZ = y => coneR(clamp(y, 0, 1)) + 0.014;
+  for (let s = -1; s <= 1; s += 2) {
+    const lean = 0.3; // both loops lift at their outer ends (x is mirrored afterwards)
+    for (let j = 0; j < 64; j++) {
+      const a = j / 64 * TAU;
+      for (let w = 0; w < 2; w++) {
+        const f = 0.8 + 0.18 * w, lx = 0.06 * (1 - Math.cos(a)) * 0.5 * f + 0.005, ly = 0.032 * Math.sin(a) * f;
+        const qx = lx * Math.cos(lean) - ly * Math.sin(lean), qy = lx * Math.sin(lean) + ly * Math.cos(lean);
+        add(s * qx, KY + qy, bowZ(KY + qy) + 0.006 * Math.sin(a * 0.5), s * (0.5 - 0.5 * Math.cos(a)), Math.sin(a), 0.7, K_RIBBON,
+            w ? P_GOLD2 : P_GOLD, T.RIBBON + 0.5 + j / 64 * 0.6, 0);
+      }
+    }
+    // Tail: a thin strip hanging down beside the handle.
+    for (let i = 0; i <= 24; i++) {
+      const u = i / 24;
+      for (let w = 0; w < 2; w++) {
+        const x = s * (0.008 + 0.04 * u) + 0.005 * Math.sin(u * 8) + s * w * 0.004;
+        add(x, KY - 0.13 * u, KZ + 0.003 + 0.008 * Math.sin(u * 4), s * 0.3, 0.2, 1, K_RIBBON,
+            w ? P_GOLD2 : P_GOLD, T.RIBBON + 0.8 + u * 0.6, 0);
+      }
+    }
+  }
+  for (let j = 0; j < 30; j++) { // knot
+    const zz = 1 - 2 * (j + 0.5) / 30, rr = Math.sqrt(1 - zz * zz), phi = j * 2.39996, R = 0.01;
+    add(rr * Math.cos(phi) * R, KY + zz * R, KZ + 0.004 + rr * Math.sin(phi) * R * 0.6,
+        rr * Math.cos(phi), zz, rr * Math.sin(phi) + 0.5, K_RIBBON, P_GOLD, T.RIBBON + 0.5, 0);
+  }
+
+  // Greenery core under the heads: hides the stem tops and gives dark gaps that separate the roses.
+  for (let i = 0; i < 900; i++) {
+    const zz = 1 - 1.15 * (i + 0.5) / 900, rr = Math.sqrt(Math.max(0, 1 - zz * zz)), phi = i * 2.39996;
+    let dx = rr * Math.cos(phi), dy = zz, dz = rr * Math.sin(phi);
+    const ty = dy * cDT - dz * sDT; dz = dy * sDT + dz * cDT; dy = ty;
+    const R = DOME_R * (0.88 + 0.06 * rng());
+    add(dx * R * DOME_SX, DOME_Y + dy * R * DOME_SY, dz * R, dx + (rng() - 0.5), dy, dz + (rng() - 0.5), K_LEAF, P_LEAF[(rng() * 2) | 0],
+        T.LEAF + 1.2 + rng() * 1.6, -2.4); // dim: reads as shadow between heads
+  }
+
+  const N = B.x.length;
+  const PX = Float32Array.from(B.x), PY = Float32Array.from(B.y), PZ = Float32Array.from(B.z);
+  const NX = Float32Array.from(B.nx), NY = Float32Array.from(B.ny), NZ = Float32Array.from(B.nz);
+  const KD = Uint8Array.from(B.k), PP = Uint16Array.from(B.p);
+  const T0 = Float32Array.from(B.t0), AUX = Float32Array.from(B.aux);
+
+  // Rose petals: spiral layers [count, length, base radius, base height,
+  // closed angle, closed curl, open angle, open curl, half width, rows, cols, dim].
+  // Each petal is a strip whose profile is a circular arc: angle a(s) = a0 + k*s from the head axis.
+  const LAY = [
+    [3, 0.086, 0.006, 0.026, 0.18, -1.3, 0.30, -0.5, 1.15, 10, 7, 1.0],
+    [5, 0.109, 0.021, 0.008, 0.28, -1.1, 0.72, 0.35, 0.78, 11, 8, 1.0],
+    [7, 0.122, 0.038, -0.013, 0.38, -1.0, 1.15, 1.0, 0.6, 12, 8, 1.0]
+  ];
+  const LAG = [0.3, 0.15, 0]; // outer petals open first
+  const RBf = { r: [], l: [], s: [], cp: [], sp: [], j: [], f: [], p: [] };
+  const rStart = new Int32Array(NR + 1);
+  roses.forEach((R, r) => {
+    rStart[r] = RBf.r.length;
+    LAY.forEach((Ly, L) => {
+      const n = Ly[0], hw = Ly[8], nS = Ly[9], nU = Ly[10], dim = Ly[11];
+      for (let i = 0; i < n; i++) {
+        const pc = R.spin + L * 0.9 + i * TAU / n + (rng() - 0.5) * 0.2, jit = (rng() - 0.5) * 0.12, alt = i % 2 ? 0.86 : 1;
+        for (let a = 0; a < nS; a++) {
+          const s = (a + 0.5) / nS, shape = 0.5 + 0.5 * Math.sin(Math.PI * (0.15 + 0.75 * s));
+          for (let b = 0; b < nU; b++) {
+            const u = -1 + 2 * (b + 0.5) / nU;
+            if (s > 0.45 && u * u + ((s - 0.45) / 0.6) ** 2 > 1) continue; // rounded tip
+            // Rim factor: dark toward the petal base (the groove), bright toward its edge, so the
+            // overlapping petals draw concentric rings across the head.
+            const ph = pc + u * hw * shape;
+            RBf.r.push(r); RBf.l.push(L); RBf.s.push(s); RBf.cp.push(Math.cos(ph)); RBf.sp.push(Math.sin(ph));
+            RBf.j.push(jit);
+            // Outer petals curl back at the tip into shadow: a dark border that separates the heads.
+            const curl = L === 2 && s > 0.72 ? 1 - (s - 0.72) * 2.4 : 1;
+            RBf.f.push(dim * alt * (0.28 + 0.72 * Math.pow(s, 1.6)) * (1 - 0.3 * u * u) * curl);
+            RBf.p.push(R.face);
+          }
+        }
+      }
+    });
+  });
+  rStart[NR] = RBf.r.length;
+  const NRP = RBf.r.length;
+  const RL = Uint8Array.from(RBf.l), RS = Float32Array.from(RBf.s), RCP = Float32Array.from(RBf.cp),
+        RSP = Float32Array.from(RBf.sp), RJ = Float32Array.from(RBf.j), RF = Float32Array.from(RBf.f),
+        RP = Uint16Array.from(RBf.p);
+  const LP = new Float32Array(15); // per-frame layer params: a0, k, len, r0, h0
+  // Buds pop in at random; blooming follows a shuffled order so it ripples across the dome.
+  const budT0 = new Float32Array(NR), bloomT0 = new Float32Array(NR), roseOpen = new Float32Array(NR);
+  const perm = [...Array(NR).keys()];
+  for (let i = NR - 1; i > 0; i--) { const j = (rng() * (i + 1)) | 0; [perm[i], perm[j]] = [perm[j], perm[i]]; }
+  for (let r = 0; r < NR; r++) {
+    budT0[r] = T.BUD + rng() * (T.BUD_DUR - 0.45);
+    bloomT0[r] = T.BLOOM + perm[r] * T.BLOOM_GAP;
+  }
+
+  // Falling petals: a fixed pool, no per-frame allocation.
+  const FMAX = 48;
+  const FX0 = new Float32Array(FMAX), FY = new Float32Array(FMAX), FZ0 = new Float32Array(FMAX),
+        FVY = new Float32Array(FMAX), FAMP = new Float32Array(FMAX), FFRQ = new Float32Array(FMAX),
+        FPH = new Float32Array(FMAX), FPAL = new Uint16Array(FMAX), FON = new Uint8Array(FMAX);
+  let fallAcc = 0, nFall = 0;
+
+  // Colour strings cached per (palette entry, brightness level).
+  const NCOLOR = PAL.length * LEVELS;
+  const COLSTR = new Array(NCOLOR);
+  PAL.forEach(([r, g, b], p) => {
+    for (let l = 0; l < LEVELS; l++) {
+      // Top levels overshoot 1 and wash toward white, so lit characters read as glowing.
+      const m = 0.3 + 1.05 * l / (LEVELS - 1), w = Math.max(0, m - 1) * 160;
+      const lift = v => Math.min(255, v * m + w) | 0;
+      COLSTR[p * LEVELS + l] = `rgb(${lift(r)},${lift(g)},${lift(b)})`;
+    }
+  });
+  const STAR_COLS = [];
+  for (let l = 0; l < 8; l++) STAR_COLS.push(`rgba(175,190,225,${(0.06 + 0.4 * l / 7).toFixed(3)})`);
+
+  // ---------- Message (?msg= customises it; drawn with fillText, so no HTML) ----------
+  let rawMsg = null;
+  try { rawMsg = new URLSearchParams(location.search).get('msg'); } catch (e) {}
+  let txt = rawMsg ? Array.from(String(rawMsg).replace(/[\u0000-\u001f\u007f-\u009f]/g, ' ').trim()).slice(0, 24).join('').trim() : '';
+  if (!txt) txt = 'FOR YOU <3';
+  const MSG_CH = [], MSG_RED = [];
+  txt.split(/\s+/).forEach((w, wi) => {
+    if (wi) { MSG_CH.push(' ', ' ', ' '); MSG_RED.push(0, 0, 0); }
+    (w.match(/<3|[\s\S]/gu) || []).forEach((tk, ti) => {
+      if (ti) { MSG_CH.push(' '); MSG_RED.push(0); }
+      const red = tk === '<3' || tk === '♥' || tk === '❤' ? 1 : 0;
+      for (const c of tk) { MSG_CH.push(c); MSG_RED.push(red); }
+    });
+  });
+  const MSG_LEN = MSG_CH.length;
+  const LETTERS = MSG_CH.filter(c => c !== ' ').length;
+
+  // ---------- Canvas, grid, layout ----------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const hudEl = document.getElementById('hud');
+  const hintEl = document.getElementById('hint');
+
+  let W = 0, H = 0, fs = 10, cw = 6, ch = 11, cols = 0, rows = 0;
+  let S = 300, ox = 0, oy = 0, msgY = 0, msgFs = 12, msgCw = 7;
+  let cellFont = '', msgFont = '', bgGrad = null;
+  let zbuf, stampA, cchar, ccol, ckind, clb, touched, order, nT = 0, stamp = 0;
+  const counts = new Uint32Array(NCOLOR);
+  let skyStars = [], sparks = null;
+  let needResize = true, dirty = true;
+
+  function resize() {
+    needResize = false;
+    W = canvas.clientWidth || innerWidth;
+    H = canvas.clientHeight || innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    fs = clamp(Math.round(Math.min(W, H * 0.8) / 80), 7, 14);
+    cellFont = `${fs}px ${MONO}`;
+    ctx.font = cellFont;
+    cw = ctx.measureText('M').width || fs * 0.6;
+    ch = fs * 1.1;
+    cols = Math.ceil(W / cw);
+    rows = Math.ceil(H / ch);
+    const n = cols * rows;
+    zbuf = new Float32Array(n); stampA = new Uint32Array(n);
+    cchar = new Uint8Array(n); ccol = new Uint16Array(n); ckind = new Uint8Array(n); clb = new Float32Array(n);
+    makeHalos();
+    touched = new Int32Array(n); order = new Int32Array(n); stamp = 0;
+
+    msgFs = Math.max(8, Math.min(fs * 1.8, (W - 32) / (MSG_LEN * 0.62)));
+    msgFont = `700 ${msgFs.toFixed(1)}px ${MONO}`;
+    ctx.font = msgFont;
+    msgCw = ctx.measureText('M').width;
+
+    // Fit bouquet + bow tails + message: ~0.66 S above pivot, ~0.56 S below, half width ~0.8 S while swaying.
+    const TOP = 48, BOT = 56, msgH = msgFs * 2.4, UP = 0.66, DOWN = 0.56;
+    S = Math.max(40, Math.min(H * 0.7, (W / 2 - 14) / 0.8, (H - TOP - BOT - msgH) / (UP + DOWN)));
+    const top = TOP + Math.max(0, (H - TOP - BOT - (UP + DOWN) * S - msgH) / 2);
+    ox = W / 2;
+    oy = top + UP * S;
+    msgY = oy + DOWN * S + msgFs * 1.0;
+
+    bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, '#030408');
+    bgGrad.addColorStop(1, '#060810');
+
+    // Sky dots and sparkle stars (seeded per resize so layout is stable).
+    const r2 = mulberry32(7);
+    const nStars = Math.round(cols * rows * 0.016);
+    const SCH = ['.', '.', '·', '+'];
+    skyStars = [];
+    for (let i = 0; i < nStars; i++) {
+      skyStars.push({
+        x: ((r2() * cols) | 0) * cw, y: ((r2() * rows) | 0) * ch,
+        c: SCH[(r2() * r2() * 4) | 0], ph: r2() * 6.283, sp: 0.4 + r2() * 1.8
+      });
+    }
+    // Sparkles: [x, y, period, phase, ray length (cells)], kept off the bouquet itself.
+    const ns = clamp(Math.round(W * H / 110000), 4, 12);
+    sparks = new Float32Array(ns * 5);
+    for (let i = 0, tries = 0; i < ns && tries < 500; tries++) {
+      const x = r2() * W, y = 40 + r2() * (H - 90);
+      const ex = (x - ox) / (0.85 * S), ey = (y - (oy - 0.05 * S)) / (0.75 * S);
+      if (ex * ex + ey * ey < 1) continue;
+      const o = i * 5;
+      sparks[o] = Math.floor(x / cw) * cw; sparks[o + 1] = Math.floor(y / ch) * ch;
+      sparks[o + 2] = 4.5 + r2() * 5; sparks[o + 3] = r2() * 10; sparks[o + 4] = 6 + r2() * 10;
+      i++;
+    }
+    dirty = true;
+  }
+
+  // ---------- Projection + z-buffered splat ----------
+  let cr = 1, sr = 0, t = T_START, rot = 0, skyT = 0;
+  let projX = 0, projY = 0;
+
+  function project(x, y, z) {
+    const rz = z * cr - x * sr, rx = x * cr + z * sr, yy = y - PIVOT;
+    const y2 = yy * ct - rz * st, z2 = yy * st + rz * ct;
+    const f = CAM_D / (CAM_D - z2);
+    projX = ox + rx * S * f; projY = oy - y2 * S * f;
+  }
+
+  // Character for a line whose on-screen direction is (tx, ty), y up.
+  function dirChar(tx, ty) {
+    const ax = tx < 0 ? -tx : tx, ay = ty < 0 ? -ty : ty;
+    if (ay > 2.2 * ax) return C_BAR;
+    if (ax > 2.2 * ay) return C_DASH;
+    return tx * ty > 0 ? C_SL : C_BS;
+  }
+
+  function splat(x, y, z, nx, ny, nz, k, p, ph, aux) {
+    // rotate around Y, then tilt around X, then perspective
+    const rx = x * cr + z * sr, rz = z * cr - x * sr, yy = y - PIVOT;
+    const y2 = yy * ct - rz * st, z2 = yy * st + rz * ct;
+    const f = CAM_D / (CAM_D - z2);
+    const px = ox + rx * S * f, py = oy - y2 * S * f;
+    if (px < 0 || py < 0) return;
+    const col = (px / cw) | 0, row = (py / ch) | 0;
+    if (col >= cols || row >= rows) return;
+    const c = row * cols + col;
+    const fresh = stampA[c] !== stamp;
+    if (!fresh && zbuf[c] >= z2) return; // keep nearest (larger z2 = closer)
+
+    const rnx = nx * cr + nz * sr, rnz = nz * cr - nx * sr;
+    const ny2 = ny * ct - rnz * st, nz2 = ny * st + rnz * ct;
+    let lam = rnx * LX + ny2 * LY + nz2 * LZ;
+    const lam2 = lam < 0 ? -lam : lam; // two-sided, for thin sheets
+    if (lam < 0) lam = 0;
+    let dd = (z2 + 0.6) / 1.2;
+    dd = 0.6 + 0.4 * (dd < 0 ? 0 : dd > 1 ? 1 : dd); // far side slightly dimmer
+
+    let b, cc;
+    switch (k) {
+      case K_STEM:
+        b = clamp((0.42 + 0.3 * aux) * dd + 0.12, 0, 1); cc = dirChar(rnx, ny2); break;
+      case K_LEAF:
+        b = clamp((0.22 + 0.62 * lam2) * dd + aux * 0.15, 0, 1); cc = C_RAMP[1 + ((b * 7.99) | 0)]; break;
+      case K_PAPER:
+        b = clamp((0.1 + 0.3 * lam2) * dd, 0, 1);
+        if (aux) { // pleat crest: follow the cone's generator line on screen
+          const g = PAPER_SLOPE / (Math.hypot(x, z) || 1), tx = x * g, tz = z * g;
+          cc = dirChar(tx * cr + tz * sr, ct - (tz * cr - tx * sr) * st); b += 0.08;
+        } else cc = b < 0.2 ? C_DOT : C_COLON;
+        break;
+      case K_EDGE:
+        b = clamp(0.42 * dd + 0.08, 0, 1); cc = dirChar(rnx, ny2); break;
+      case K_RIBBON:
+        b = clamp((0.3 + 0.7 * lam) * dd + 0.08, 0, 1); cc = C_RAMP[3 + ((b * 5.99) | 0)]; break;
+      case K_PETAL:
+        // Grooves take the crimson shade, rims the bright one; capped below the white wash.
+        b = clamp((0.6 + 0.6 * lam2) * dd * aux * 1.35, 0, 0.999); cc = C_PET[(b * 10) | 0];
+        if (b < 0.36) p -= 1; else if (b > 0.8) p += 1;
+        if (b > 0.72) b = 0.72;
+        break;
+      case K_FALL:
+        b = aux; cc = ph; break;
+      default: // growing stem tip
+        b = 1; cc = C_STAR;
+    }
+    if (fresh) { stampA[c] = stamp; touched[nT++] = c; }
+    zbuf[c] = z2; cchar[c] = cc; ccol[c] = p * LEVELS + ((b * 15.99) | 0); ckind[c] = k; clb[c] = b;
+  }
+
+  const popBud = p => p < 0.7 ? 1.15 * p / 0.7 : 1.15 - 0.15 * (p - 0.7) / 0.3;
+  let nOpen = 0;
+
+  function buildScene() {
+    cr = Math.cos(rot); sr = Math.sin(rot);
+    stamp++; nT = 0;
+
+    for (let i = 0; i < N; i++) {
+      if (t < T0[i]) continue;
+      splat(PX[i], PY[i], PZ[i], NX[i], NY[i], NZ[i], KD[i], PP[i], 0, AUX[i]);
+    }
+
+    // Glowing tips while the stems are still growing.
+    const sf = (t - T.STEM) / T.STEM_DUR;
+    if (sf > 0 && sf < 1) for (let j = 0; j < NSTEM; j++) { bez(j, sf); splat(bx, by, bz, 0, 1, 0, K_TIP, P_TIP, 0, 0); }
+
+    // Roses: petal profiles are re-evaluated every frame from the bloom amount.
+    nOpen = 0;
+    for (let r = 0; r < NR; r++) {
+      const tb = t - budT0[r];
+      if (tb < 0) { roseOpen[r] = 0; continue; }
+      const R = roses[r];
+      const op = smooth((t - bloomT0[r]) / T.BLOOM_DUR);
+      roseOpen[r] = op;
+      if (op >= 1) nOpen++;
+      const sc = popBud(Math.min(1, tb / 0.45)) * (0.66 + 0.34 * op);
+      for (let L = 0; L < 3; L++) {
+        const ly = LAY[L], o = smooth((op - LAG[L]) / 0.7), q = L * 5;
+        LP[q] = ly[4] + (ly[6] - ly[4]) * o; LP[q + 1] = ly[5] + (ly[7] - ly[5]) * o;
+        LP[q + 2] = ly[1] * sc; LP[q + 3] = ly[2] * sc; LP[q + 4] = ly[3] * sc;
+      }
+      const { hx, hy, hz, wx, wy, wz, e1x, e1y, e1z, e2x, e2y, e2z } = R;
+      for (let i = rStart[r], e = rStart[r + 1]; i < e; i++) {
+        const q = RL[i] * 5, a0 = LP[q] + RJ[i], kk = LP[q + 1], len = LP[q + 2], s = RS[i];
+        const a = a0 + kk * s, ca = Math.cos(a), sa = Math.sin(a), ca0 = Math.cos(a0), sa0 = Math.sin(a0);
+        let rad, ax;
+        if (kk > -1e-3 && kk < 1e-3) { rad = len * s * sa0; ax = len * s * ca0; }
+        else { rad = len * (ca0 - ca) / kk; ax = len * (sa - sa0) / kk; }
+        rad += LP[q + 3]; ax += LP[q + 4];
+        const cp = RCP[i], sp = RSP[i];
+        const ux = e1x * cp + e2x * sp, uy = e1y * cp + e2y * sp, uz = e1z * cp + e2z * sp;
+        splat(hx + ux * rad + wx * ax, hy + uy * rad + wy * ax, hz + uz * rad + wz * ax,
+              ux * ca - wx * sa, uy * ca - wy * sa, uz * ca - wz * sa, K_PETAL, RP[i], 0, RF[i]);
+      }
+    }
+
+    // Falling petals.
+    for (let i = 0; i < FMAX; i++) {
+      if (!FON[i]) continue;
+      const w = FPH[i] * FFRQ[i];
+      splat(FX0[i] + FAMP[i] * Math.sin(w), FY[i], FZ0[i] + FAMP[i] * 0.5 * Math.cos(w * 0.7), 0, 0, 1,
+            K_FALL, FPAL[i], C_FALL[((FPH[i] * 3 + i) | 0) & 3], 0.72 + 0.25 * Math.sin(FPH[i] * 5 + i));
+    }
+  }
+
+  function updateFall(dt) {
+    if (t >= T.FALL && t < T.FALL_END) {
+      fallAcc += dt * 2.6;
+      while (fallAcc >= 1) {
+        fallAcc -= 1;
+        const r = (Math.random() * NR) | 0, R = roses[r];
+        if (roseOpen[r] < 0.9) continue;
+        for (let i = 0; i < FMAX; i++) {
+          if (FON[i]) continue;
+          FON[i] = 1;
+          FX0[i] = R.hx + R.wx * 0.03 + (Math.random() - 0.5) * 0.06;
+          FY[i] = R.hy + R.wy * 0.03;
+          FZ0[i] = R.hz + 0.06 + Math.random() * 0.05; // in front of the bouquet
+          FVY[i] = -(0.09 + 0.07 * Math.random());
+          FAMP[i] = 0.03 + 0.05 * Math.random(); FFRQ[i] = 1.4 + 1.4 * Math.random();
+          FPH[i] = Math.random() * 6; FPAL[i] = R.face + (Math.random() < 0.5 ? 0 : 1);
+          break;
+        }
+      }
+    }
+    nFall = 0;
+    for (let i = 0; i < FMAX; i++) {
+      if (!FON[i]) continue;
+      FY[i] += FVY[i] * dt; FPH[i] += dt;
+      if (FY[i] < 0) FON[i] = 0; else nFall++; // gone by the neck, before reaching the message
+    }
+  }
+  function clearFall() { FON.fill(0); fallAcc = 0; nFall = 0; }
+
+  // Bucket by colour so fillStyle changes once per colour, not once per cell.
+  function drawCells() {
+    counts.fill(0);
+    for (let i = 0; i < nT; i++) counts[ccol[touched[i]]]++;
+    let acc = 0;
+    for (let c = 0; c < NCOLOR; c++) { const n = counts[c]; counts[c] = acc; acc += n; }
+    for (let i = 0; i < nT; i++) { const c = touched[i]; order[counts[ccol[c]]++] = c; }
+    let cur = -1;
+    for (let i = 0; i < nT; i++) {
+      const c = order[i], cc = ccol[c];
+      if (cc !== cur) { cur = cc; ctx.fillStyle = COLSTR[cc]; }
+      const row = (c / cols) | 0;
+      ctx.fillText(CH[cchar[c]], (c - row * cols) * cw, row * ch);
+    }
+  }
+
+  // ---------- Sky, sparkles, seed, message ----------
+  function drawSky() {
+    for (let i = 0; i < skyStars.length; i++) {
+      const s = skyStars[i];
+      ctx.fillStyle = STAR_COLS[((0.5 + 0.5 * Math.sin(skyT * s.sp + s.ph)) * 7.99) | 0];
+      ctx.fillText(s.c, s.x, s.y);
+    }
+  }
+
+  // Pre-rendered radial sprites: green for the seed / stem tips, white for sparkles.
+  let tipHalo = null, sparkHalo = null;
+  function sprite(R, r, g, b) {
+    const c = document.createElement('canvas');
+    c.width = c.height = Math.ceil(R * 2);
+    const x = c.getContext('2d'), gr = x.createRadialGradient(R, R, 0, R, R, R);
+    gr.addColorStop(0, 'rgba(255,255,255,0.95)');
+    gr.addColorStop(0.18, `rgba(${r},${g},${b},0.8)`);
+    gr.addColorStop(0.5, `rgba(${r},${g},${b},0.2)`);
+    gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
+    x.fillStyle = gr; x.fillRect(0, 0, c.width, c.height);
+    return c;
+  }
+  function makeHalos() {
+    tipHalo = sprite(Math.max(6, cw * 2.2), 120, 255, 130);
+    sparkHalo = sprite(Math.max(8, cw * 3), 190, 210, 255);
+  }
+  function drawHalos() {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 0.6;
+    for (let i = 0; i < nT; i++) {
+      const c = touched[i];
+      if (ckind[c] !== K_TIP) continue;
+      const row = (c / cols) | 0;
+      ctx.drawImage(tipHalo, (c - row * cols + 0.5) * cw - tipHalo.width / 2, (row + 0.5) * ch - tipHalo.height / 2);
+    }
+    ctx.restore();
+  }
+
+  // 4-point sparkles: long thin '-' and '|' rays, faint diagonals, flaring once per period.
+  const FLARE = 1.6;
+  function drawSparkles() {
+    ctx.fillStyle = '#e4ecff';
+    for (let o = 0; o < sparks.length; o += 5) {
+      const x = sparks[o], y = sparks[o + 1], cyc = (skyT + sparks[o + 3]) % sparks[o + 2];
+      const p = cyc / FLARE, e = p < 1 ? Math.pow(Math.sin(Math.PI * p), 2) : 0;
+      ctx.globalAlpha = 0.3 + 0.7 * e;
+      ctx.fillText(e > 0.35 ? '*' : '+', x, y);
+      if (e < 0.02) continue;
+      const nh = Math.round(sparks[o + 4] * e), nv = Math.round(nh * 0.55), nd = Math.round(nh * 0.22);
+      for (let j = 1; j <= nh; j++) {
+        ctx.globalAlpha = e * Math.pow(1 - j / (nh + 1), 1.3);
+        ctx.fillText('-', x + j * cw, y); ctx.fillText('-', x - j * cw, y);
+      }
+      for (let j = 1; j <= nv; j++) {
+        ctx.globalAlpha = e * Math.pow(1 - j / (nv + 1), 1.3);
+        ctx.fillText('|', x, y + j * ch); ctx.fillText('|', x, y - j * ch);
+      }
+      for (let j = 1; j <= nd; j++) {
+        ctx.globalAlpha = 0.35 * e * (1 - j / (nd + 1));
+        ctx.fillText('/', x + j * cw, y - j * ch); ctx.fillText('/', x - j * cw, y + j * ch);
+        ctx.fillText('\\', x - j * cw, y - j * ch); ctx.fillText('\\', x + j * cw, y + j * ch);
+      }
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = e * 0.8;
+      ctx.drawImage(sparkHalo, x + cw / 2 - sparkHalo.width / 2, y + ch / 2 - sparkHalo.height / 2);
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // The seed: a green spark at the tie point before anything grows.
+  function drawSeed() {
+    const a = smooth((t - T.SEED) / 0.4) * (1 - smooth((t - T.STEM - 1) / 1));
+    if (a <= 0) return;
+    project(0, 0, 0);
+    const pulse = 0.8 + 0.2 * Math.sin(skyT * 6);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = a * pulse;
+    const k = 1.8;
+    ctx.drawImage(tipHalo, projX - tipHalo.width * k / 2, projY - tipHalo.height * k / 2, tipHalo.width * k, tipHalo.height * k);
+    ctx.restore();
+    ctx.globalAlpha = a;
+    ctx.fillStyle = '#d9ffd4';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('*', projX - cw / 2, projY);
+    ctx.textBaseline = 'top';
+    ctx.globalAlpha = 1;
+  }
+
+  let lettersShown = 0;
+  function drawMessage(fade) {
+    lettersShown = 0;
+    if (t < T.MSG) return;
+    const n = Math.min(LETTERS, Math.floor((t - T.MSG) / T.LETTER) + 1);
+    ctx.font = msgFont;
+    ctx.textBaseline = 'middle';
+    const x0 = W / 2 - MSG_LEN * msgCw / 2;
+    let li = 0, i = 0;
+    for (; i < MSG_LEN; i++) {
+      const c = MSG_CH[i];
+      if (c === ' ') continue;
+      if (li >= n) break;
+      const age = t - (T.MSG + li * T.LETTER);
+      if (MSG_RED[i]) {
+        ctx.globalAlpha = fade * (0.8 + 0.2 * Math.sin(skyT * 4));
+        ctx.fillStyle = age < 0.15 ? '#ffffff' : Math.sin(skyT * 2) > 0 ? '#ff3d6e' : '#ff8fb5';
+      } else {
+        ctx.globalAlpha = fade * (0.82 + 0.12 * Math.sin(skyT * 2.5 + li * 1.3));
+        ctx.fillStyle = age < 0.15 ? '#ffffff' : '#f3e9ee';
+      }
+      ctx.fillText(c, x0 + i * msgCw, msgY);
+      li++;
+    }
+    // Blinking cursor while typing.
+    if (n < LETTERS && (skyT * 3 | 0) % 2 === 0) {
+      ctx.globalAlpha = 0.8 * fade; ctx.fillStyle = '#f3e9ee';
+      ctx.fillText('_', x0 + i * msgCw, msgY);
+    }
+    ctx.globalAlpha = 1;
+    ctx.textBaseline = 'top';
+    lettersShown = n;
+  }
+
+  // Bloom: shrink the frame, remove the background with 'difference', blur, and add it back on top.
+  const glow = document.createElement('canvas'), gctx = glow.getContext('2d');
+  const GLOW_DIV = 5, GLOW_A = 0.85;
+  function drawGlow() {
+    const gw = Math.ceil(W / GLOW_DIV), gh = Math.ceil(H / GLOW_DIV);
+    if (glow.width !== gw || glow.height !== gh) { glow.width = gw; glow.height = gh; }
+    gctx.setTransform(1, 0, 0, 1, 0, 0);
+    gctx.globalCompositeOperation = 'copy';
+    gctx.filter = 'blur(2px)';
+    gctx.drawImage(canvas, 0, 0, gw, gh);
+    gctx.filter = 'none';
+    gctx.globalCompositeOperation = 'difference';
+    gctx.setTransform(gw / W, 0, 0, gh / H, 0, 0);
+    gctx.fillStyle = bgGrad;
+    gctx.fillRect(0, 0, W, H);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = GLOW_A;
+    ctx.drawImage(glow, 0, 0, W, H);
+    ctx.restore();
+  }
+
+  function render() {
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+    ctx.textBaseline = 'top';
+    ctx.font = cellFont;
+    drawSky();
+    drawSparkles();
+    buildScene();
+    // Whole bouquet fades back to the starry sky before the loop restarts.
+    const fade = reduced ? 1 : 1 - smooth((t - T.FADE) / T.FADE_DUR);
+    ctx.globalAlpha = fade;
+    drawCells();
+    ctx.globalAlpha = 1;
+    drawHalos();
+    drawSeed();
+    drawMessage(fade);
+    drawGlow();
+  }
+
+  // ---------- Loop, HUD, controls ----------
+  let paused = false, last = performance.now();
+  let frames = 0, fpsT = last, fps = 0, hudT = 0;
+
+  function updateHud(now) {
+    const g = clamp((t - T.STEM) / T.STEM_DUR, 0, 1) * 100;
+    const tail = paused ? 'paused' : `${fps} fps`;
+    // Narrow screens get a short line so nothing is clipped.
+    hudEl.textContent = W < 640 ? `roses ${nOpen}/${NR}  petals ${nFall}  ${tail}`
+      : `growing ${g.toFixed(1)}%  roses open ${nOpen}/${NR}  petals falling ${nFall}  ` +
+        `letters ${nT.toLocaleString('en-US')}  ${tail}`;
+    hudT = now;
+  }
+
+  function frame(now) {
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); // no jumps after a hidden tab
+    last = now;
+    if (needResize) resize();
+    if (!paused) {
+      t += dt; skyT += dt;
+      if (reduced) { if (t > T.FADE) t = T.FADE; }   // reduced motion: hold the bouquet, no loop
+      else if (t >= T.END) { t = 0; clearFall(); }     // stars keep twinkling across the loop
+      rot = SWAY_A * Math.sin(skyT * SWAY_W);
+      updateFall(dt);
+    }
+    if (!paused || dirty) { render(); dirty = false; frames++; }
+    if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
+    if (now - hudT >= 250) updateHud(now);
+    requestAnimationFrame(frame);
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); }
+  function replay() { t = 0; clearFall(); paused = false; dirty = true; }
+
+  addEventListener('resize', () => { needResize = true; });
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return; // leave Cmd/Ctrl+R alone
+    if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
+    else if (e.key === 'r' || e.key === 'R') replay();
+  });
+  // Single tap = pause (decided after 280 ms), two quick taps = replay.
+  let tapTimer = 0;
+  canvas.addEventListener('pointerup', e => {
+    if (e.button > 0) return;
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; replay(); }
+    else tapTimer = setTimeout(() => { tapTimer = 0; togglePause(); }, 280);
+  });
+
+  // Hint language: ?lang= wins, then saved site preference, then browser.
+  let pref = null;
+  try { pref = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (!pref) { try { pref = localStorage.getItem('lang'); } catch (e) {} }
+  if (!pref) pref = navigator.language || 'en';
+  const zh = String(pref).toLowerCase().startsWith('zh');
+  document.documentElement.lang = zh ? 'zh-Hant' : 'en';
+  // Touch screens have no keyboard, and the full hint would not fit on a phone.
+  const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  hintEl.textContent = touch ? (zh ? '點擊暫停 · 雙擊重播' : 'tap to pause · double-tap to replay')
+                             : (zh ? '空白鍵 暫停 · R 重播 · 點擊暫停 · 雙擊重播'
+                                   : 'Space pause · R replay · click to pause · double-click to replay');
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
