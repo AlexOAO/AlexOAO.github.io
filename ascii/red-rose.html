@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ASCII Red Rose | Alex Li (李翔緯)</title>
+  <meta name="description" content="A single long-stemmed red rose drawn entirely with ASCII characters: a sprout rises into a thorny stem, two serrated leaves unfold, a bud forms and blooms into a lush crimson rose that sways in the breeze under twinkling stars. Vanilla JS on a single canvas.">
+  <meta name="theme-color" content="#030408">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;600;800&display=swap">
+  <style>
+    :root {
+      --sky: #030408;
+      --text: #e6edf6;
+      --muted: #a3b1c6;
+      --accent: #3b82f6;
+      --mono: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--sky);
+      color: var(--text);
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    canvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100svh;
+      display: block;
+      touch-action: manipulation; /* no double-tap zoom: double-tap means replay */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .back {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(59, 130, 246, 0.45);
+      background: rgba(59, 130, 246, 0.12);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .back:hover, .back:focus-visible {
+      background: rgba(59, 130, 246, 0.28);
+      border-color: var(--accent);
+      outline: none;
+    }
+    .hud, .hint {
+      position: fixed;
+      z-index: 1;
+      bottom: 12px;
+      color: var(--muted);
+      opacity: 0.75;
+      font: 11px/1.4 var(--mono);
+      white-space: pre;
+      pointer-events: none;
+      max-width: calc(100% - 24px);
+      overflow: hidden;
+    }
+    .hud { left: 12px; }
+    .hint {
+      right: 12px;
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    @media (max-width: 640px) {
+      .hud, .hint { font-size: 10px; }
+      .hint { bottom: 30px; } /* stack above the HUD on narrow screens */
+    }
+  </style>
+</head>
+<body>
+  <h1 class="sr-only">ASCII Red Rose</h1>
+  <a class="back" href="./">← ASCII</a>
+  <canvas id="c" role="img" aria-label="Animated 3D long-stemmed red rose drawn with ASCII characters: the stem grows, leaves unfold and a bud blooms into a large crimson rose that sways gently among twinkling stars"></canvas>
+  <div class="hud" id="hud" aria-hidden="true"></div>
+  <div class="hint" id="hint"></div>
+
+
+<script>
+(() => {
+  'use strict';
+
+  // ---------- Timeline (seconds of scene time) ----------
+  const T = {
+    SPROUT: 0.3,
+    STEM: 1.6, STEM_DUR: 4.4,           // stem reaches the head at 6.0
+    LEAF: 4.0, LEAF_GAP: 0.9, LEAF_DUR: 1.9,
+    BUD: 6.0, BUD_POP: 0.6,
+    BLOOM: 8.0, BLOOM_DUR: 5.0,         // fully open at 13.0
+    SWAY: 13.0, SWAY_IN: 1.2,
+    FADE: 19.0, FADE_DUR: 3.0, END: 22.0
+  };
+
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T_START = reduced ? 15.0 : 0;      // reduced motion: open on the full bloom and hold it
+  const SWAY_A = reduced ? 0 : 3.4 * Math.PI / 180;   // roll about the base (rad)
+  const TURN_A = reduced ? 0 : 0.16;                   // slight turn about the stem (rad)
+  const SWAY_W = 1.15;                                 // rad/s
+
+  // ---------- Camera / world ----------
+  const CAM_D = 3;
+  const PIVOT = 0.72;       // tilt pivot height
+  const TILT = 0.2;         // look a little from above, into the cup
+  const ct = Math.cos(TILT), st = Math.sin(TILT);
+  const STEM_TOP = 1.0;     // y of the receptacle; the stem base is y = 0
+  const HEAD_Y = STEM_TOP + 0.03;
+  const HSX = 1.25;          // the head flares wider left-right than front-back
+  const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
+  const LX0 = -0.45, LY0 = 0.6, LZ0 = 0.66;
+  const LN = Math.hypot(LX0, LY0, LZ0);
+  const LX = LX0 / LN, LY = LY0 / LN, LZ = LZ0 / LN;
+  const TAU = Math.PI * 2;
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  const rng = mulberry32(20260520);
+
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const smooth = v => { v = clamp(v, 0, 1); return v * v * (3 - 2 * v); };
+  const tri = v => { const f = v - Math.floor(v); return f < 0.5 ? 2 * f : 2 - 2 * f; };
+  // A gentle S-bend so the stem is not a ruler line.
+  const stemX = y => 0.022 * Math.sin(y * 3.4 + 0.4) - 0.022 * Math.sin(0.4);
+  const HEAD_X = stemX(STEM_TOP);
+  const stemT = y => T.STEM + y / STEM_TOP * T.STEM_DUR;
+
+  // ---------- Characters & colours ----------
+  const CH = [];
+  const ci = s => { let i = CH.indexOf(s); if (i < 0) { CH.push(s); i = CH.length - 1; } return i; };
+  const C_RAMP = [...'.:-=+*#%@'].map(ci);
+  const C_BAR = ci('|'), C_SL = ci('/'), C_BS = ci('\\'), C_DASH = ci('-'), C_STAR = ci('*');
+  const C_COLON = ci(':'), C_EXCL = ci('!'), C_HASH = ci('#'), C_EQ = ci('=');
+  const C_PET = [...'.::=oO%#&@'].map(ci);
+  const C_LEAF = [...':=+*#%@'].map(ci);
+
+  const LEVELS = 16;
+  const PAL = [];
+  const pal = (r, g, b) => { PAL.push([r, g, b]); return PAL.length - 1; };
+  const P_STEM = pal(64, 200, 84), P_STEM_D = pal(28, 116, 50), P_STEM_L = pal(110, 240, 110);
+  const P_THORN = pal(120, 170, 70);
+  const P_LEAF = [pal(40, 168, 70), pal(56, 190, 80)], P_VEIN = pal(150, 240, 140);
+  const P_SEPAL = pal(60, 176, 76);
+  const P_TIP = pal(170, 255, 160);
+  // Petal families: [groove, face, rim] at consecutive indices (the splat steps p - 1 / p + 1).
+  function fam(r, g, b) {
+    pal(r * 0.4 + 18, g * 0.2, b * 0.3 + 6);                               // crimson groove
+    const face = pal(r, g, b);
+    pal(r + (255 - r) * 0.32, g + (190 - g) * 0.3, b + (210 - b) * 0.3);    // pink rim
+    return face;
+  }
+  const P_ROSE = [fam(222, 26, 54), fam(196, 18, 46), fam(232, 50, 78)];
+
+  // Kinds of points
+  const K_TUBE = 0, K_LINE = 1, K_LEAF = 2, K_VEIN = 3, K_PETAL = 4, K_TIP = 5, K_BULB = 6;
+
+  // ---------- Static points: stem tube, thorns ----------
+  const B = { x: [], y: [], z: [], nx: [], ny: [], nz: [], k: [], p: [], t0: [] };
+  function add(x, y, z, nx, ny, nz, k, p, t0) {
+    const l = Math.hypot(nx, ny, nz) || 1;
+    B.x.push(x); B.y.push(y); B.z.push(z);
+    B.nx.push(nx / l); B.ny.push(ny / l); B.nz.push(nz / l);
+    B.k.push(k); B.p.push(p); B.t0.push(t0);
+  }
+  for (let y = 0; y <= STEM_TOP + 1e-6; y += 0.0045) {
+    const R = 0.02 * (1 - 0.2 * y / STEM_TOP), cx = stemX(y), n = 22;
+    for (let i = 0; i < n; i++) {
+      const a = (i + (y * 311 % 1)) / n * TAU;
+      add(cx + Math.cos(a) * R, y, Math.sin(a) * R, Math.cos(a), 0, Math.sin(a), K_TUBE, P_STEM, stemT(y));
+    }
+  }
+  // Thorns: short hooked spikes, stored with their tangent so the glyph follows the slope.
+  [[0.16, -1, 0.3], [0.37, 1, -0.2], [0.6, -1, 0.5], [0.78, 1, 0.2], [0.9, -1, -0.4]].forEach(([y0, s, az]) => {
+    const R = 0.02, dx = s * Math.cos(az), dz = Math.sin(az), cx = stemX(y0);
+    for (let i = 0; i <= 12; i++) {
+      const f = i / 12, L = 0.034 * f, up = 0.45 * L + 0.5 * L * f;
+      for (let w = -1; w <= 1; w++) {
+        const ww = w * 0.006 * (1 - f);
+        add(cx + dx * (R + L), y0 + up + ww, dz * (R + L), dx, 0.45 + f, dz, K_LINE, P_THORN, stemT(y0) + 0.25 + f * 0.3);
+      }
+    }
+  });
+  const N = B.x.length;
+  const PX = Float32Array.from(B.x), PY = Float32Array.from(B.y), PZ = Float32Array.from(B.z);
+  const NX = Float32Array.from(B.nx), NY = Float32Array.from(B.ny), NZ = Float32Array.from(B.nz);
+  const KD = Uint8Array.from(B.k), PP = Uint16Array.from(B.p), T0 = Float32Array.from(B.t0);
+
+  // ---------- Leaves (re-posed every frame while they unfold) ----------
+  // [attach y, side, length, half width, out, up, forward, start time]
+  const LEAVES = [
+    [0.3, -1, 0.33, 0.1, 1, 0.42, 0.3, T.LEAF],
+    [0.5, 1, 0.29, 0.088, 1, 0.5, 0.22, T.LEAF + T.LEAF_GAP]
+  ];
+  const lfF = [], lfU = [], lfL = [], lfP = [];
+  LEAVES.forEach((Lf, li) => {
+    const na = 46, nb = 26;
+    for (let a = 0; a <= na; a++) {
+      const f = a / na;
+      // Serrated outline: a sawtooth bite along the ellipse edge.
+      const wa = Math.pow(Math.sin(Math.PI * Math.min(1, f * 1.04)), 0.72) * (1 - 0.16 * tri(f * 10));
+      for (let b = 0; b <= nb; b++) {
+        const u = -1 + 2 * b / nb;
+        lfF.push(f); lfU.push(u * wa); lfL.push(li); lfP.push(P_LEAF[(rng() * 2) | 0]);
+      }
+    }
+  });
+  const NLF = lfF.length;
+  const LF_F = Float32Array.from(lfF), LF_U = Float32Array.from(lfU), LF_L = Uint8Array.from(lfL), LF_P = Uint16Array.from(lfP);
+  const LB = new Float32Array(LEAVES.length * 13); // per-frame leaf frame: origin, dir, side, normal, len
+
+  // ---------- Petals ----------
+  // Each petal is a strip whose side profile is two circular arcs: a gently leaning wall
+  // (angle a0 from the head axis, curl k1, for the first sb of its length) and then a lip that
+  // curls outward and down (curl k2). Layers [count, length, base radius, base height,
+  // closed a0, closed curl, open a0, open k1, open k2, sb, half width, dim].
+  // Inner layers stay a tight swirl; the middle ones form the cup; the outer ones flare and roll.
+  const LAY = [
+    [3, 0.26, 0.01, 0.16, 0.05, -1.3, 0.06, -0.9, -0.9, 0.7, 1.25, 1.0],
+    [4, 0.3, 0.03, 0.12, 0.1, -1.1, 0.1, -0.25, 0.9, 0.7, 1.0, 1.0],
+    [5, 0.35, 0.05, 0.08, 0.15, -1.0, 0.15, 0.1, 1.7, 0.64, 0.85, 1.0],
+    [6, 0.38, 0.07, 0.03, 0.2, -0.95, 0.24, 0.16, 2.3, 0.6, 0.74, 1.0],
+    [7, 0.38, 0.09, -0.02, 0.26, -0.9, 0.44, 0.2, 2.4, 0.55, 0.64, 0.96],
+    [8, 0.37, 0.11, -0.07, 0.32, -0.85, 0.62, 0.35, 2.6, 0.46, 0.56, 0.92]
+  ];
+  const NL = LAY.length;
+  const LAG = [0.42, 0.33, 0.24, 0.15, 0.07, 0]; // outer petals open first
+  // Arc of length len*ds starting at angle a with curl k (per unit s): adds (rad, ax).
+  let arR = 0, arA = 0;
+  function arc(a, k, len, ds) {
+    if (k > -1e-3 && k < 1e-3) { arR = len * ds * Math.sin(a); arA = len * ds * Math.cos(a); }
+    else { arR = len * (Math.cos(a) - Math.cos(a + k * ds)) / k; arA = len * (Math.sin(a + k * ds) - Math.sin(a)) / k; }
+  }
+  function openRad(Ly, s) {
+    const sb = Ly[9];
+    arc(Ly[6], Ly[7], Ly[1], Math.min(s, sb));
+    let r = arR;
+    if (s > sb) { arc(Ly[6] + Ly[7] * sb, Ly[8], Ly[1], s - sb); r += arR; }
+    return Ly[2] + Math.abs(r);
+  }
+  const petL = [], petJ = [], petLJ = [];
+  const RBf = { q: [], s: [], cp: [], sp: [], f: [], p: [] };
+  LAY.forEach((Ly, L) => {
+    const n = Ly[0], len = Ly[1], hw = Ly[10], dim = Ly[11], nS = Math.ceil(len / 0.0095);
+    for (let i = 0; i < n; i++) {
+      const pc = L * 0.9 + i * TAU / n + (rng() - 0.5) * 0.25, alt = i % 2 ? 0.88 : 1, p = P_ROSE[(rng() * 3) | 0];
+      const q = petL.length;
+      petL.push(L); petJ.push((rng() - 0.5) * 0.12); petLJ.push(0.92 + 0.16 * rng());
+      for (let a = 0; a < nS; a++) {
+        const s = (a + 0.5) / nS, shape = 0.5 + 0.5 * Math.sin(Math.PI * (0.15 + 0.75 * s));
+        // Columns follow the open petal's width at this row, so wide outer petals have no gaps.
+        const nU = Math.max(4, Math.ceil(2 * hw * shape * openRad(Ly, s) * 1.08 * HSX / 0.0075));
+        for (let b = 0; b < nU; b++) {
+          const u = -1 + 2 * (b + 0.5) / nU;
+          if (s > 0.45 && u * u + ((s - 0.45) / 0.6) ** 2 > 1) continue; // rounded tip
+          const ph = pc + u * hw * shape;
+          RBf.q.push(q); RBf.s.push(s); RBf.cp.push(Math.cos(ph)); RBf.sp.push(Math.sin(ph));
+          // Dark toward the base (the groove), bright at the rim: concentric rings across the head.
+          RBf.f.push(dim * alt * (0.42 + 0.58 * Math.pow(s, 1.4)) * (1 - 0.25 * u * u));
+          RBf.p.push(p);
+        }
+      }
+    }
+  });
+  const NPET = petL.length, NRP = RBf.q.length;
+  const RQ = Uint8Array.from(RBf.q), RS = Float32Array.from(RBf.s), RCP = Float32Array.from(RBf.cp),
+        RSP = Float32Array.from(RBf.sp), RF = Float32Array.from(RBf.f), RP = Uint16Array.from(RBf.p);
+  // Per-frame petal params: a0, k1, k2, sb, len, r0, h0, cos a0, sin a0,
+  // wall-top angle a1, cos a1, sin a1, wall-top rad, wall-top ax.
+  const PQN = 14, PQ = new Float32Array(NPET * PQN);
+
+  // Sepals: five narrow green strips that hug the bud, then fold down under the open head.
+  const SEP_N = 5, SEP_S = 30, SEP_U = 7;
+  const SP_S = new Float32Array(SEP_N * SEP_S * SEP_U), SP_C = new Float32Array(SP_S.length), SP_N = new Float32Array(SP_S.length);
+  for (let i = 0, o = 0; i < SEP_N; i++) {
+    const pc = 0.5 + i * TAU / SEP_N;
+    for (let a = 0; a < SEP_S; a++) {
+      const s = (a + 0.5) / SEP_S;
+      for (let b = 0; b < SEP_U; b++, o++) {
+        const u = -1 + 2 * (b + 0.5) / SEP_U, ph = pc + u * 0.3 * (1 - s * 0.9);
+        SP_S[o] = s; SP_C[o] = Math.cos(ph); SP_N[o] = Math.sin(ph);
+      }
+    }
+  }
+  // Receptacle: the small green hip under the head.
+  const BULB_N = 160;
+  const BU_X = new Float32Array(BULB_N), BU_Y = new Float32Array(BULB_N), BU_Z = new Float32Array(BULB_N);
+  for (let j = 0; j < BULB_N; j++) {
+    const zz = 1 - 2 * (j + 0.5) / BULB_N, rr = Math.sqrt(1 - zz * zz), phi = j * 2.39996;
+    BU_X[j] = rr * Math.cos(phi); BU_Y[j] = zz; BU_Z[j] = rr * Math.sin(phi);
+  }
+
+  // Colour strings cached per (palette entry, brightness level).
+  const NCOLOR = PAL.length * LEVELS;
+  const COLSTR = new Array(NCOLOR);
+  PAL.forEach(([r, g, b], p) => {
+    for (let l = 0; l < LEVELS; l++) {
+      // Top levels overshoot 1 and wash toward white, so lit characters read as glowing.
+      const m = 0.3 + 1.05 * l / (LEVELS - 1), w = Math.max(0, m - 1) * 160;
+      const lift = v => Math.min(255, v * m + w) | 0;
+      COLSTR[p * LEVELS + l] = `rgb(${lift(r)},${lift(g)},${lift(b)})`;
+    }
+  });
+  const STAR_COLS = [];
+  for (let l = 0; l < 8; l++) STAR_COLS.push(`rgba(175,190,225,${(0.04 + 0.42 * l / 7).toFixed(3)})`);
+
+  // ---------- Canvas, grid, layout ----------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const hudEl = document.getElementById('hud');
+  const hintEl = document.getElementById('hint');
+
+  let W = 0, H = 0, fs = 10, cw = 6, ch = 11, cols = 0, rows = 0;
+  let S = 300, ox = 0, oy = 0;
+  let cellFont = '', bgGrad = null;
+  let zbuf, stampA, cchar, ccol, ckind, touched, order, nT = 0, stamp = 0;
+  const counts = new Uint32Array(NCOLOR);
+  let stars = null, sparks = null;
+  let needResize = true, dirty = true;
+  // Specks that twinkle around the growing tip: [dx cells, dy cells, period, phase].
+  const SPECK_N = 9, specks = new Float32Array(SPECK_N * 4);
+  {
+    const r3 = mulberry32(11);
+    for (let i = 0; i < SPECK_N; i++) {
+      const a = r3() * TAU, d = 2.5 + r3() * 7;
+      specks[i * 4] = Math.cos(a) * d * 1.6; specks[i * 4 + 1] = Math.sin(a) * d - 1.5;
+      specks[i * 4 + 2] = 0.6 + r3() * 0.9; specks[i * 4 + 3] = r3() * 3;
+    }
+  }
+
+  // Extents of the rose (world units around the pivot), with room for the sway.
+  const UP = 0.76, DOWN = 0.74, HALF = 0.64;
+
+  function resize() {
+    needResize = false;
+    W = canvas.clientWidth || innerWidth;
+    H = canvas.clientHeight || innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    fs = clamp(Math.round(Math.min(W, H * 0.8) / 72), 7, 14);
+    cellFont = `${fs}px ${MONO}`;
+    ctx.font = cellFont;
+    cw = ctx.measureText('M').width || fs * 0.6;
+    ch = fs * 1.1;
+    cols = Math.ceil(W / cw);
+    rows = Math.ceil(H / ch);
+    const n = cols * rows;
+    zbuf = new Float32Array(n); stampA = new Uint32Array(n);
+    cchar = new Uint8Array(n); ccol = new Uint16Array(n); ckind = new Uint8Array(n);
+    touched = new Int32Array(n); order = new Int32Array(n); stamp = 0;
+    makeHalos();
+
+    const TOP = 52, BOT = 60;
+    S = Math.max(40, Math.min((W / 2 - 12) / HALF, (H - TOP - BOT) / (UP + DOWN)));
+    ox = W / 2;
+    oy = TOP + Math.max(0, (H - TOP - BOT - (UP + DOWN) * S) / 2) + UP * S;
+
+    bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, '#020305');
+    bgGrad.addColorStop(1, '#05070c');
+
+    // Dim star dots: [x, y, char, phase, speed, appear time].
+    const r2 = mulberry32(7);
+    const nStars = Math.round(cols * rows * 0.014);
+    stars = new Float32Array(nStars * 6);
+    for (let i = 0; i < nStars; i++) {
+      const o = i * 6;
+      stars[o] = ((r2() * cols) | 0) * cw; stars[o + 1] = ((r2() * rows) | 0) * ch;
+      stars[o + 2] = r2() < 0.8 ? 0 : 1; stars[o + 3] = r2() * TAU; stars[o + 4] = 0.4 + r2() * 1.8;
+      stars[o + 5] = 0.2 + 9 * r2() * r2();
+    }
+    // Sparkles: [x, y, period, phase, ray length (cells), appear time], kept off the rose.
+    const ns = clamp(Math.round(W * H / 55000), 7, 22);
+    const hy = oy - (HEAD_Y + 0.08 - PIVOT) * S;
+    sparks = new Float32Array(ns * 6);
+    for (let i = 0, tries = 0; i < ns && tries < 800; tries++) {
+      const x = r2() * W, y = 44 + r2() * (H - 110);
+      const ex = (x - ox) / (0.62 * S), ey = (y - hy) / (0.36 * S);
+      if (ex * ex + ey * ey < 1) continue;
+      if (y > hy && y < oy + DOWN * S && Math.abs(x - ox) < 0.36 * S) continue;
+      const o = i * 6;
+      sparks[o] = Math.floor(x / cw) * cw; sparks[o + 1] = Math.floor(y / ch) * ch;
+      sparks[o + 2] = 2.6 + r2() * 3; sparks[o + 3] = r2() * 10; sparks[o + 4] = 5 + r2() * 9;
+      sparks[o + 5] = 0.6 + 12 * i / ns;
+      i++;
+    }
+    dirty = true;
+  }
+
+  // ---------- Projection + z-buffered splat ----------
+  // Pose: turn about the stem axis (Y), then roll about the stem base (Z), then camera tilt.
+  let cr = 1, sr = 0, cf = 1, sf = 0, t = T_START, turn = 0, roll = 0, skyT = 0;
+  let projX = 0, projY = 0;
+
+  function project(x, y, z) {
+    const x1 = x * cr + z * sr, z1 = z * cr - x * sr;
+    const x2 = x1 * cf - y * sf, yy = x1 * sf + y * cf - PIVOT;
+    const y2 = yy * ct - z1 * st, z2 = yy * st + z1 * ct;
+    const f = CAM_D / (CAM_D - z2);
+    projX = ox + x2 * S * f; projY = oy - y2 * S * f;
+  }
+
+  function dirChar(tx, ty) {
+    const ax = tx < 0 ? -tx : tx, ay = ty < 0 ? -ty : ty;
+    if (ay > 2.2 * ax) return C_BAR;
+    if (ax > 2.2 * ay) return C_DASH;
+    return tx * ty > 0 ? C_SL : C_BS;
+  }
+
+  function splat(x, y, z, nx, ny, nz, k, p, aux) {
+    const x1 = x * cr + z * sr, z1 = z * cr - x * sr;
+    const x2 = x1 * cf - y * sf, yy = x1 * sf + y * cf - PIVOT;
+    const y2 = yy * ct - z1 * st, z2 = yy * st + z1 * ct;
+    const f = CAM_D / (CAM_D - z2);
+    const px = ox + x2 * S * f, py = oy - y2 * S * f;
+    if (px < 0 || py < 0) return;
+    const col = (px / cw) | 0, row = (py / ch) | 0;
+    if (col >= cols || row >= rows) return;
+    const c = row * cols + col;
+    const fresh = stampA[c] !== stamp;
+    if (!fresh && zbuf[c] >= z2) return; // keep nearest (larger z2 = closer)
+
+    const n1x = nx * cr + nz * sr, n1z = nz * cr - nx * sr;
+    const rnx = n1x * cf - ny * sf, rny = n1x * sf + ny * cf;
+    const ny2 = rny * ct - n1z * st, nz2 = rny * st + n1z * ct;
+    let lam = rnx * LX + ny2 * LY + nz2 * LZ;
+    const lam2 = lam < 0 ? -lam : lam; // two-sided, for thin sheets
+    if (lam < 0) lam = 0;
+    let dd = (z2 + 0.6) / 1.2;
+    dd = 0.62 + 0.38 * (dd < 0 ? 0 : dd > 1 ? 1 : dd);
+
+    let b, cc;
+    switch (k) {
+      case K_TUBE: {
+        // Facing the camera -> bright core; grazing -> dark green edges.
+        const face = nz2 < 0 ? 0 : nz2;
+        b = clamp((0.3 + 0.45 * lam + 0.35 * face) * dd, 0, 1);
+        if (face < 0.45) { p = P_STEM_D; cc = C_COLON; b = 0.55 + 0.3 * face; }
+        else if (b > 0.8) { p = P_STEM_L; cc = C_HASH; b = 0.8; }
+        else cc = face > 0.85 ? C_EXCL : C_BAR;
+        break;
+      }
+      case K_LINE:
+        b = clamp(0.7 * dd + 0.14, 0, 1); cc = dirChar(rnx, ny2); break;
+      case K_LEAF:
+        b = clamp((0.42 + 0.6 * lam2) * dd * aux, 0, 1); cc = C_LEAF[(b * 6.99) | 0]; break;
+      case K_VEIN:
+        b = clamp(0.62 * dd + 0.12, 0, 1); cc = dirChar(rnx, ny2); break;
+      case K_BULB:
+        b = clamp((0.35 + 0.6 * lam) * dd, 0, 1); cc = C_LEAF[(b * 6.99) | 0]; break;
+      case K_PETAL:
+        // Grooves take the crimson shade, rims the pink one; capped below the white wash.
+        b = clamp((0.74 + 0.5 * lam2) * dd * aux * 1.3, 0, 0.999); cc = C_PET[(b * 10) | 0];
+        if (b < 0.36) p -= 1; else if (b > 0.86) p += 1;
+        if (b > 0.74) b = 0.74;
+        break;
+      default: // growing tip
+        b = 1; cc = C_STAR;
+    }
+    if (fresh) { stampA[c] = stamp; touched[nT++] = c; }
+    zbuf[c] = z2; cchar[c] = cc; ccol[c] = p * LEVELS + ((b * 15.99) | 0); ckind[c] = k;
+  }
+
+  const popBud = p => p < 0.7 ? 1.15 * p / 0.7 : 1.15 - 0.15 * (p - 0.7) / 0.3;
+  let bloom = 0;
+
+  function poseLeaves() {
+    for (let li = 0; li < LEAVES.length; li++) {
+      const [y0, side, len, , ox0, oy0, oz0, ts] = LEAVES[li], o = li * 13;
+      const u = smooth((t - ts) / T.LEAF_DUR);
+      // Direction swings from hugging the stem (up) out to its final pose.
+      let dx = side * ox0 * u, dy = oy0 * u + (1 - u), dz = oz0 * u;
+      const dl = Math.hypot(dx, dy, dz); dx /= dl; dy /= dl; dz /= dl;
+      // Side vector: perpendicular to dir and to a view-ish normal, so the blade faces us.
+      let sx = dy * 1 - dz * 0.45, sy = dz * 0 - dx * 1, sz = dx * 0.45 - dy * 0;
+      const sl = Math.hypot(sx, sy, sz) || 1; sx /= sl; sy /= sl; sz /= sl;
+      let nx = sy * dz - sz * dy, ny = sz * dx - sx * dz, nz = sx * dy - sy * dx;
+      if (nz < 0) { nx = -nx; ny = -ny; nz = -nz; }
+      const ax = stemX(y0) + dx * 0.014, ay = y0;
+      LB[o] = ax; LB[o + 1] = ay; LB[o + 2] = dz * 0.014;
+      LB[o + 3] = dx; LB[o + 4] = dy; LB[o + 5] = dz;
+      LB[o + 6] = sx; LB[o + 7] = sy; LB[o + 8] = sz;
+      LB[o + 9] = nx; LB[o + 10] = ny; LB[o + 11] = nz;
+      LB[o + 12] = u;
+    }
+  }
+
+  function buildScene() {
+    cr = Math.cos(turn); sr = Math.sin(turn); cf = Math.cos(roll); sf = Math.sin(roll);
+    stamp++; nT = 0;
+
+    for (let i = 0; i < N; i++) {
+      if (t < T0[i]) continue;
+      splat(PX[i], PY[i], PZ[i], NX[i], NY[i], NZ[i], KD[i], PP[i], 0);
+    }
+
+    // Growing tip.
+    const sfr = (t - T.STEM) / T.STEM_DUR;
+    if (sfr > 0 && sfr < 1) {
+      const y = sfr * STEM_TOP;
+      splat(stemX(y), y + 0.006, 0.021, 0, 1, 0, K_TIP, P_TIP, 0);
+    }
+
+    // Leaves.
+    poseLeaves();
+    for (let i = 0; i < NLF; i++) {
+      const li = LF_L[i], o = li * 13, u = LB[o + 12];
+      if (u <= 0) continue;
+      const Lf = LEAVES[li], len = Lf[2] * (0.25 + 0.75 * u), wid = Lf[3] * (0.2 + 0.8 * u);
+      const f = LF_F[i], v = LF_U[i], fold = (1 - u) * 1.35 + 0.22; // V-fold along the midrib
+      const off = v * wid * Math.cos(fold), up = Math.abs(v) * wid * Math.sin(fold), droop = 0.22 * len * f * f;
+      const al = f * len;
+      const x = LB[o] + LB[o + 3] * al + LB[o + 6] * off + LB[o + 9] * up;
+      const y = LB[o + 1] + LB[o + 4] * al + LB[o + 7] * off + LB[o + 10] * up - droop;
+      const z = LB[o + 2] + LB[o + 5] * al + LB[o + 8] * off + LB[o + 11] * up;
+      if (Math.abs(v) < 0.07 && f < 0.94)
+        splat(x, y + 0.002, z + 0.004, LB[o + 3], LB[o + 4] - 0.44 * f, LB[o + 5], K_VEIN, P_VEIN, 0);
+      else {
+        const sv = v < 0 ? -1 : 1, sn = Math.sin(fold) * sv;
+        // Lighter toward the midrib and along the side veins, darker toward the serrated edge.
+        const av = v < 0 ? -v : v, lat = (f * 7 + av * 2.2) % 1;
+        splat(x, y, z, LB[o + 9] - LB[o + 6] * sn, LB[o + 10] - LB[o + 7] * sn, LB[o + 11] - LB[o + 8] * sn, K_LEAF, LF_P[i],
+              (lat < 0.16 && av < 0.75 ? 1.18 : 1) * (1.05 - 0.4 * av));
+      }
+    }
+
+    // Head: bud pops in at T.BUD, blooms from T.BLOOM.
+    const tb = t - T.BUD;
+    bloom = 0;
+    if (tb < 0) return;
+    const op = smooth((t - T.BLOOM) / T.BLOOM_DUR);
+    bloom = op;
+    const pop = popBud(Math.min(1, tb / T.BUD_POP));
+    const sc = pop * (0.52 + 0.08 * smooth((t - T.BUD - T.BUD_POP) / 1.4) + 0.4 * op);
+    const hy = HEAD_Y + 0.03 * (1 - op);
+
+    // Receptacle.
+    const br = 0.034 * pop;
+    for (let j = 0; j < BULB_N; j++)
+      splat(HEAD_X + BU_X[j] * br, STEM_TOP + 0.01 + BU_Y[j] * br * 0.9, BU_Z[j] * br, BU_X[j], BU_Y[j], BU_Z[j], K_BULB, P_SEPAL, 0);
+
+    // Sepals: hug the bud, then fold down and curl as the head opens.
+    {
+      const so = smooth(op / 0.5), a0 = 0.75 + (1.35 - 0.75) * so, kk = -0.9 + (1.0 + 0.9) * so;
+      const len = 0.2 * pop * (0.62 + 0.38 * op), r0 = (0.03 + 0.03 * (1 - so)) * pop, h0 = STEM_TOP + 0.02;
+      for (let i = 0; i < SP_S.length; i++) {
+        const s = SP_S[i], a = a0 + kk * s, ca = Math.cos(a), sa = Math.sin(a), ca0 = Math.cos(a0), sa0 = Math.sin(a0);
+        const rad = r0 + len * (ca0 - ca) / kk, ax = len * (sa - sa0) / kk;
+        const ux = SP_C[i], uz = SP_N[i];
+        // Tangent in the normal slot: the glyph follows the sepal on screen.
+        splat(HEAD_X + ux * rad * HSX, h0 + ax, uz * rad, ux * sa, ca, uz * sa, K_LINE, P_SEPAL, 0);
+      }
+    }
+
+    for (let q = 0; q < NPET; q++) {
+      const L = petL[q], ly = LAY[L], o = smooth((op - LAG[L]) / (1 - LAG[L])), m = q * PQN;
+      const a0 = ly[4] + (ly[6] - ly[4]) * o + petJ[q], k1 = ly[5] + (ly[7] - ly[5]) * o,
+            k2 = ly[5] + (ly[8] - ly[5]) * o, sb = ly[9], len = ly[1] * sc * petLJ[q], a1 = a0 + k1 * sb;
+      arc(a0, k1, len, sb);
+      PQ[m] = a0; PQ[m + 1] = k1; PQ[m + 2] = k2; PQ[m + 3] = sb; PQ[m + 4] = len;
+      PQ[m + 5] = ly[2] * sc; PQ[m + 6] = ly[3] * sc; PQ[m + 7] = Math.cos(a0); PQ[m + 8] = Math.sin(a0);
+      PQ[m + 9] = a1; PQ[m + 10] = Math.cos(a1); PQ[m + 11] = Math.sin(a1); PQ[m + 12] = arR; PQ[m + 13] = arA;
+    }
+    for (let i = 0; i < NRP; i++) {
+      const m = RQ[i] * PQN, s = RS[i], len = PQ[m + 4], sb = PQ[m + 3];
+      let a, k, ca0, sa0, ds, rad = PQ[m + 5], ax = PQ[m + 6];
+      if (s <= sb) { a = PQ[m]; k = PQ[m + 1]; ca0 = PQ[m + 7]; sa0 = PQ[m + 8]; ds = s; }
+      else { a = PQ[m + 9]; k = PQ[m + 2]; ca0 = PQ[m + 10]; sa0 = PQ[m + 11]; ds = s - sb; rad += PQ[m + 12]; ax += PQ[m + 13]; }
+      const ae = a + k * ds, ca = Math.cos(ae), sa = Math.sin(ae);
+      if (k > -1e-3 && k < 1e-3) { rad += len * ds * sa0; ax += len * ds * ca0; }
+      else { rad += len * (ca0 - ca) / k; ax += len * (sa - sa0) / k; }
+      const ux = RCP[i], uz = RSP[i];
+      splat(HEAD_X + ux * rad * HSX, hy + ax, uz * rad, ux * ca, -sa, uz * ca, K_PETAL, RP[i], RF[i]);
+    }
+  }
+
+  // Bucket by colour so fillStyle changes once per colour, not once per cell.
+  function drawCells() {
+    counts.fill(0);
+    for (let i = 0; i < nT; i++) counts[ccol[touched[i]]]++;
+    let acc = 0;
+    for (let c = 0; c < NCOLOR; c++) { const n = counts[c]; counts[c] = acc; acc += n; }
+    for (let i = 0; i < nT; i++) { const c = touched[i]; order[counts[ccol[c]]++] = c; }
+    let cur = -1;
+    for (let i = 0; i < nT; i++) {
+      const c = order[i], cc = ccol[c];
+      if (cc !== cur) { cur = cc; ctx.fillStyle = COLSTR[cc]; }
+      const row = (c / cols) | 0;
+      ctx.fillText(CH[cchar[c]], (c - row * cols) * cw, row * ch);
+    }
+  }
+
+  // ---------- Sky, sparkles, sprout ----------
+  // Stars come out one by one as the rose grows and go dark with it at the end of the loop.
+  function drawSky(fade) {
+    for (let o = 0; o < stars.length; o += 6) {
+      const a = smooth((t - stars[o + 5]) / 0.8) * fade;
+      if (a <= 0) continue;
+      const tw = 0.5 + 0.5 * Math.sin(skyT * stars[o + 4] + stars[o + 3]);
+      ctx.fillStyle = STAR_COLS[(tw * a * 7.99) | 0];
+      ctx.fillText(stars[o + 2] ? '+' : '.', stars[o], stars[o + 1]);
+    }
+  }
+
+  let tipHalo = null, sparkHalo = null;
+  function sprite(R, r, g, b) {
+    const c = document.createElement('canvas');
+    c.width = c.height = Math.ceil(R * 2);
+    const x = c.getContext('2d'), gr = x.createRadialGradient(R, R, 0, R, R, R);
+    gr.addColorStop(0, 'rgba(255,255,255,0.95)');
+    gr.addColorStop(0.18, `rgba(${r},${g},${b},0.8)`);
+    gr.addColorStop(0.5, `rgba(${r},${g},${b},0.2)`);
+    gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
+    x.fillStyle = gr; x.fillRect(0, 0, c.width, c.height);
+    return c;
+  }
+  function makeHalos() {
+    tipHalo = sprite(Math.max(6, cw * 2.4), 120, 255, 130);
+    sparkHalo = sprite(Math.max(8, cw * 3), 190, 210, 255);
+  }
+  function drawHalos() {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 0.7;
+    for (let i = 0; i < nT; i++) {
+      const c = touched[i];
+      if (ckind[c] !== K_TIP) continue;
+      const row = (c / cols) | 0;
+      ctx.drawImage(tipHalo, (c - row * cols + 0.5) * cw - tipHalo.width / 2, (row + 0.5) * ch - tipHalo.height / 2);
+    }
+    ctx.restore();
+  }
+
+  // 4-point sparkles: long thin '-' and '|' rays, faint diagonals, flaring once per period.
+  const FLARE = 1.6;
+  function drawSparkles(fade) {
+    ctx.fillStyle = '#e4ecff';
+    for (let o = 0; o < sparks.length; o += 6) {
+      const app = smooth((t - sparks[o + 5]) / 0.6) * fade;
+      if (app <= 0) continue;
+      const x = sparks[o], y = sparks[o + 1], cyc = (skyT + sparks[o + 3]) % sparks[o + 2];
+      const p = cyc / FLARE, e = p < 1 ? Math.pow(Math.sin(Math.PI * p), 2) : 0;
+      ctx.globalAlpha = (0.3 + 0.7 * e) * app;
+      ctx.fillText(e > 0.35 ? '*' : '+', x, y);
+      if (e < 0.02) continue;
+      const nh = Math.round(sparks[o + 4] * e), nv = Math.round(nh * 0.6), nd = Math.round(nh * 0.2);
+      for (let j = 1; j <= nh; j++) {
+        ctx.globalAlpha = app * e * Math.pow(1 - j / (nh + 1), 1.3);
+        ctx.fillText('-', x + j * cw, y); ctx.fillText('-', x - j * cw, y);
+      }
+      for (let j = 1; j <= nv; j++) {
+        ctx.globalAlpha = app * e * Math.pow(1 - j / (nv + 1), 1.3);
+        ctx.fillText('|', x, y + j * ch); ctx.fillText('|', x, y - j * ch);
+      }
+      for (let j = 1; j <= nd; j++) {
+        ctx.globalAlpha = 0.35 * app * e * (1 - j / (nd + 1));
+        ctx.fillText('/', x + j * cw, y - j * ch); ctx.fillText('/', x - j * cw, y + j * ch);
+        ctx.fillText('\\', x - j * cw, y - j * ch); ctx.fillText('\\', x + j * cw, y + j * ch);
+      }
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = app * e * 0.8;
+      ctx.drawImage(sparkHalo, x + cw / 2 - sparkHalo.width / 2, y + ch / 2 - sparkHalo.height / 2);
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // The sprout: a green spark at the base before the stem rises, then twinkling specks that
+  // follow the growing tip.
+  function drawSprout() {
+    const a = smooth((t - T.SPROUT) / 0.4) * (1 - smooth((t - T.STEM - 0.6) / 0.8));
+    if (a > 0) {
+      project(0, 0, 0.02);
+      const pulse = 0.8 + 0.2 * Math.sin(skyT * 6), k = 1.8;
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = a * pulse;
+      ctx.drawImage(tipHalo, projX - tipHalo.width * k / 2, projY - tipHalo.height * k / 2, tipHalo.width * k, tipHalo.height * k);
+      ctx.restore();
+      ctx.globalAlpha = a;
+      ctx.fillStyle = '#d9ffd4';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('*', projX - cw / 2, projY);
+      ctx.textBaseline = 'top';
+    }
+    const sa = smooth((t - T.SPROUT) / 0.6) * (1 - smooth((t - T.STEM - T.STEM_DUR) / 0.8));
+    if (sa > 0) {
+      const y = clamp((t - T.STEM) / T.STEM_DUR, 0, 1) * STEM_TOP;
+      project(stemX(y), y, 0.02);
+      for (let i = 0; i < SPECK_N; i++) {
+        const o = i * 4, ph = ((skyT + specks[o + 3]) % specks[o + 2]) / specks[o + 2];
+        const e = Math.sin(Math.PI * ph);
+        ctx.globalAlpha = sa * e * 0.9;
+        ctx.fillStyle = i % 3 ? '#c8ffc0' : '#ffffff';
+        ctx.fillText(e > 0.7 ? '*' : e > 0.35 ? '+' : '.', projX + specks[o] * cw, projY + specks[o + 1] * ch);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // Bloom: shrink the frame, remove the background with 'difference', blur, and add it back on top.
+  const glow = document.createElement('canvas'), gctx = glow.getContext('2d');
+  const GLOW_DIV = 5, GLOW_A = 0.9;
+  function drawGlow() {
+    const gw = Math.ceil(W / GLOW_DIV), gh = Math.ceil(H / GLOW_DIV);
+    if (glow.width !== gw || glow.height !== gh) { glow.width = gw; glow.height = gh; }
+    gctx.setTransform(1, 0, 0, 1, 0, 0);
+    gctx.globalCompositeOperation = 'copy';
+    gctx.filter = 'blur(2px)';
+    gctx.drawImage(canvas, 0, 0, gw, gh);
+    gctx.filter = 'none';
+    gctx.globalCompositeOperation = 'difference';
+    gctx.setTransform(gw / W, 0, 0, gh / H, 0, 0);
+    gctx.fillStyle = bgGrad;
+    gctx.fillRect(0, 0, W, H);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = GLOW_A;
+    ctx.drawImage(glow, 0, 0, W, H);
+    ctx.restore();
+  }
+
+  function render() {
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+    ctx.textBaseline = 'top';
+    ctx.font = cellFont;
+    // Rose, stars and sparkles all fade back to black before the loop restarts.
+    const fade = reduced ? 1 : 1 - smooth((t - T.FADE) / T.FADE_DUR);
+    drawSky(fade);
+    drawSparkles(fade);
+    buildScene();
+    ctx.globalAlpha = fade;
+    drawCells();
+    ctx.globalAlpha = 1;
+    drawHalos();
+    drawSprout();
+    drawGlow();
+  }
+
+  // ---------- Loop, HUD, controls ----------
+  let paused = false, last = performance.now();
+  let frames = 0, fpsT = last, fps = 0, hudT = 0;
+
+  function updateHud(now) {
+    const tail = paused ? 'paused' : `${fps} fps`;
+    const head = `bloom ${(bloom * 100).toFixed(1)}%  sway ${Math.abs(roll * 180 / Math.PI).toFixed(1)}°  `;
+    // Narrow screens drop the letter count so nothing is clipped.
+    hudEl.textContent = W < 640 ? head + tail : head + `letters ${nT.toLocaleString('en-US')}  ${tail}`;
+    hudT = now;
+  }
+
+  function pose() {
+    // Breeze: roll about the base plus a slight turn, eased in after the bloom.
+    const e = smooth((t - T.SWAY) / T.SWAY_IN), ph = (t - T.SWAY) * SWAY_W;
+    roll = SWAY_A * e * (Math.sin(ph) * 0.85 + 0.15 * Math.sin(ph * 2.3 + 1));
+    turn = TURN_A * e * Math.sin(ph * 0.7 + 0.6);
+  }
+
+  function frame(now) {
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); // no jumps after a hidden tab
+    last = now;
+    if (needResize) resize();
+    if (!paused) {
+      t += dt; skyT += dt;
+      if (reduced) { if (t > T.FADE) t = T.FADE; }   // reduced motion: hold the open rose, no loop
+      else if (t >= T.END) t = 0;
+      pose();
+    }
+    if (!paused || dirty) { render(); dirty = false; frames++; }
+    if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
+    if (now - hudT >= 250) updateHud(now);
+    requestAnimationFrame(frame);
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); }
+  function replay() { t = 0; pose(); paused = false; dirty = true; }
+
+  addEventListener('resize', () => { needResize = true; });
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return; // leave Cmd/Ctrl+R alone
+    if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
+    else if (e.key === 'r' || e.key === 'R') replay();
+  });
+  // Single tap = pause (decided after 280 ms), two quick taps = replay.
+  let tapTimer = 0;
+  canvas.addEventListener('pointerup', e => {
+    if (e.button > 0) return;
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; replay(); }
+    else tapTimer = setTimeout(() => { tapTimer = 0; togglePause(); }, 280);
+  });
+
+  // Hint language: ?lang= wins, then saved site preference, then browser.
+  let pref = null;
+  try { pref = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (!pref) { try { pref = localStorage.getItem('lang'); } catch (e) {} }
+  if (!pref) pref = navigator.language || 'en';
+  const zh = String(pref).toLowerCase().startsWith('zh');
+  document.documentElement.lang = zh ? 'zh-Hant' : 'en';
+  const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  hintEl.textContent = touch ? (zh ? '點擊暫停 · 雙擊重播' : 'tap to pause · double-tap to replay')
+                             : (zh ? '空白鍵 暫停 · R 重播 · 點擊暫停 · 雙擊重播'
+                                   : 'Space pause · R replay · click to pause · double-click to replay');
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

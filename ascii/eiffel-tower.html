@@ -1,0 +1,798 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ASCII Eiffel Tower | Alex Li (李翔緯)</title>
+  <meta name="description" content="The Eiffel Tower over a Paris skyline at night, drawn entirely with ASCII characters: the tower builds itself in blue, turns gold, sweeps its searchlights, sparkles and lights up with fireworks. Vanilla JS on a single canvas.">
+  <meta name="theme-color" content="#03050a">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;600;800&display=swap">
+  <style>
+    :root {
+      --bg: #0b1120;
+      --sky: #03050a;
+      --text: #e6edf6;
+      --muted: #a3b1c6;
+      --accent: #3b82f6;
+      --mono: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--sky);
+      color: var(--text);
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    canvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100svh;
+      display: block;
+      touch-action: manipulation; /* no double-tap zoom: double-tap means replay */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .back {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(59, 130, 246, 0.45);
+      background: rgba(59, 130, 246, 0.12);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .back:hover, .back:focus-visible {
+      background: rgba(59, 130, 246, 0.28);
+      border-color: var(--accent);
+      outline: none;
+    }
+    .hud, .hint {
+      position: fixed;
+      z-index: 1;
+      bottom: 12px;
+      color: var(--muted);
+      opacity: 0.75;
+      font: 11px/1.4 var(--mono);
+      white-space: pre;
+      pointer-events: none;
+      max-width: calc(100% - 24px);
+      overflow: hidden;
+    }
+    .hud { left: 12px; }
+    .hint {
+      right: 12px;
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    @media (max-width: 640px) {
+      .hud, .hint { font-size: 10px; }
+      .hint { bottom: 30px; } /* stack above the HUD on narrow screens */
+    }
+  </style>
+</head>
+<body>
+  <h1 class="sr-only">ASCII Eiffel Tower</h1>
+  <a class="back" href="./">← ASCII</a>
+  <canvas id="c" role="img" aria-label="Animated Eiffel Tower over a Paris skyline at night drawn with ASCII characters: the tower builds up in blue, turns gold, sweeps searchlights across the sky, sparkles and is surrounded by fireworks"></canvas>
+  <div class="hud" id="hud" aria-hidden="true"></div>
+  <div class="hint" id="hint"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ---------- Timeline (seconds of scene time) ----------
+  const T = {
+    CITY_IN: 1.2,                     // city fades in at the start of every loop
+    BUILD: 2.0, BUILD_DUR: 5.0,       // tower grows bottom -> top in blue, done at 7.0
+    GOLD: 7.0, GOLD_DUR: 2.0,         // blue -> gold wave, done at 9.0
+    BEAM: 9.0, BEAM_IN: 1.0,          // searchlights + beacon
+    SHOW: 12.0, SHOW_END: 18.0,       // sparkles + fireworks
+    FADE: 20.0, FADE_DUR: 2.4, END: 23.0
+  };
+
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T_START = reduced ? 10.0 : 0;   // reduced motion: open (and stay) on the lit gold tower
+  const BEAM_W = reduced ? 0.12 : 0.42; // rad/s of the searchlight rotation
+  const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  // Stateless integer hash -> [0, 1), for per-cell flicker without storing state.
+  function hash2(a, b) {
+    let h = Math.imul(a ^ Math.imul(b, 0x9E3779B1), 0x85EBCA6B);
+    h ^= h >>> 13; h = Math.imul(h, 0xC2B2AE35); h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
+  }
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+
+  // ---------- Tower shape (fractions of tower height; y = 0 ground, 1 antenna tip) ----------
+  // Outer half-width: splayed legs, first platform, curved middle, long slender top, cupola, antenna.
+  function hwo(y) {
+    if (y < 0.18) return 0.098 + 0.092 * Math.pow(1 - y / 0.18, 1.35);
+    if (y < 0.38) return 0.056 + 0.042 * Math.pow(1 - (y - 0.18) / 0.2, 1.25);
+    if (y < 0.88) return 0.011 + 0.045 * Math.pow(1 - (y - 0.38) / 0.5, 1.7);
+    if (y < 0.935) return 0.011 - 0.005 * (y - 0.88) / 0.055;
+    return 0;
+  }
+  // Inner half-width (openings): the big arch between the legs, and the narrowing gaps above.
+  function hwi(y) {
+    if (y < 0.125) return 0.108 * Math.sqrt(1 - (y / 0.125) * (y / 0.125));
+    if (y > 0.2 && y < 0.37) return 0.034 * Math.pow(1 - (y - 0.2) / 0.17, 0.8) * Math.min(1, (y - 0.2) / 0.02);
+    if (y > 0.39 && y < 0.56) return 0.016 * (1 - (y - 0.39) / 0.17) * Math.min(1, (y - 0.39) / 0.015);
+    return 0;
+  }
+  const PLATS = [[0.168, 0.198, 0.014], [0.37, 0.388, 0.009], [0.874, 0.888, 0.006]]; // y0, y1, overhang
+
+  // ---------- Characters & colours ----------
+  const CH = [];
+  const ci = s => { let i = CH.indexOf(s); if (i < 0) { CH.push(s); i = CH.length - 1; } return i; };
+  const C_SP = ci(' '); // occluder: hides what is behind, never drawn
+  const C_SL = ci('/'), C_BS = ci('\\'), C_X = ci('X'), C_BAR = ci('|'), C_HASH = ci('#'), C_EQ = ci('='),
+        C_US = ci('_'), C_DASH = ci('-'), C_DOT = ci('.'), C_STAR = ci('*'), C_PLUS = ci('+'), C_o = ci('o'),
+        C_COLON = ci(':'), C_n = ci('n'), C_LB = ci('['), C_RB = ci(']'), C_CARET = ci('^');
+
+  const LEVELS = 16;
+  const PAL = [];
+  const pal = (r, g, b) => { PAL.push([r, g, b]); return PAL.length - 1; };
+  const BLUE = [110, 160, 255], GOLD = [255, 190, 80];
+  const TW = [];
+  for (let i = 0; i <= 8; i++) {
+    const m = i / 8;
+    TW.push(pal(BLUE[0] + (GOLD[0] - BLUE[0]) * m, BLUE[1] + (GOLD[1] - BLUE[1]) * m, BLUE[2] + (GOLD[2] - BLUE[2]) * m));
+  }
+  const P_WHITE = pal(255, 255, 255);
+  const P_OUT = pal(82, 100, 138), P_ROOF = pal(70, 86, 122), P_WDARK = pal(56, 66, 92);
+  const P_LIT = [pal(255, 196, 84), pal(255, 150, 60), pal(255, 222, 150)];
+  const P_STREET = pal(74, 86, 110), P_LAMP = pal(255, 206, 120);
+  const P_CARS = [pal(255, 60, 60), pal(80, 240, 120), pal(90, 150, 255), pal(240, 244, 255), pal(255, 60, 60)];
+  const P_BEAM = pal(255, 236, 200), P_BEACON = pal(255, 40, 40), P_ROCKET = pal(255, 225, 170);
+  const P_FW = [pal(255, 70, 80), pal(255, 196, 70), pal(60, 232, 210), pal(255, 80, 220), pal(100, 150, 255)];
+  const HALO_P = [P_WHITE, P_LAMP, ...P_CARS, P_BEACON, P_ROCKET];
+
+  // Colour strings cached per (palette entry, brightness level).
+  const NCOLOR = PAL.length * LEVELS;
+  const COLSTR = new Array(NCOLOR);
+  PAL.forEach(([r, g, b], p) => {
+    for (let l = 0; l < LEVELS; l++) {
+      // Top levels overshoot 1 and wash toward white, so lit characters read as glowing.
+      const m = 0.3 + 1.05 * l / (LEVELS - 1), w = Math.max(0, m - 1) * 160;
+      const lift = v => Math.min(255, v * m + w) | 0;
+      COLSTR[p * LEVELS + l] = `rgb(${lift(r)},${lift(g)},${lift(b)})`;
+    }
+  });
+  const STAR_COLS = [];
+  for (let l = 0; l < 8; l++) STAR_COLS.push(`rgba(175,190,225,${(0.06 + 0.42 * l / 7).toFixed(3)})`);
+
+  // ---------- Canvas, grid, layout ----------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const hudEl = document.getElementById('hud');
+  const hintEl = document.getElementById('hint');
+
+  let W = 0, H = 0, fs = 10, cw = 6, ch = 11, cols = 0, rows = 0, vis = 0;
+  let lineRow = 0, gy = 0, kc = 0, cxp = 0, TH = 300, tipRow = 0;
+  let cellFont = '', bgGrad = null, glowGold = null, glowBlue = null;
+  let stampA, cchar, ccol, ckind, clb, touched, order, nT = 0, stamp = 0;
+  const counts = new Uint32Array(NCOLOR);
+  let skyStars = [];
+  let needResize = true, dirty = true;
+  // Tower cells (built per resize)
+  let nTw = 0, tC, tCh, tY, tB, tT0, tPh;
+  // City cells (static outline/occluders, windows, lamps, cars)
+  let nB = 0, bC, bCh, bP, bBr;
+  let nWin = 0, wC, wBase, wF, wPh, wP, wJ;
+  let nLamp = 0, lC;
+  let nCar = 0;
+  const MAXCAR = 40, carX = new Float32Array(MAXCAR), carV = new Float32Array(MAXCAR), carP = new Uint16Array(MAXCAR);
+
+  function resize() {
+    needResize = false;
+    W = canvas.clientWidth || innerWidth;
+    H = canvas.clientHeight || innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    fs = clamp(Math.round(Math.min(W, H * 0.8) / 80), 7, 14);
+    cellFont = `${fs}px ${MONO}`;
+    ctx.font = cellFont;
+    cw = ctx.measureText('M').width || fs * 0.6;
+    ch = fs * 1.1;
+    cols = Math.ceil(W / cw);
+    rows = Math.ceil(H / ch);
+    vis = Math.floor(W / cw);
+    const n = cols * rows;
+    stampA = new Uint32Array(n);
+    cchar = new Uint8Array(n); ccol = new Uint16Array(n); ckind = new Uint8Array(n); clb = new Float32Array(n);
+    touched = new Int32Array(n); order = new Int32Array(n); stamp = 0;
+
+    // Street line near the bottom, tower centred on it, ~73% of the screen tall.
+    lineRow = Math.floor(H / ch) - 4;
+    gy = lineRow * ch;
+    kc = Math.floor(vis / 2);
+    cxp = (kc + 0.5) * cw;
+    TH = Math.max(60, Math.min(H * 0.73, gy - 52, (W - 24) / 0.4));
+
+    bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, '#03050a');
+    bgGrad.addColorStop(1, '#070b16');
+    const gcy = gy - 0.42 * TH, gr = TH * 0.62;
+    glowGold = ctx.createRadialGradient(cxp, gcy, 0, cxp, gcy, gr);
+    glowGold.addColorStop(0, 'rgba(255,170,70,0.16)');
+    glowGold.addColorStop(0.5, 'rgba(255,150,60,0.06)');
+    glowGold.addColorStop(1, 'rgba(255,150,60,0)');
+    glowBlue = ctx.createRadialGradient(cxp, gcy, 0, cxp, gcy, gr);
+    glowBlue.addColorStop(0, 'rgba(90,140,255,0.12)');
+    glowBlue.addColorStop(0.5, 'rgba(90,140,255,0.04)');
+    glowBlue.addColorStop(1, 'rgba(90,140,255,0)');
+
+    makeHalos();
+    buildTower();
+    const skyTop = buildCity();
+
+    // Stars only where the sky is open (never through a facade).
+    const r2 = mulberry32(7);
+    const nStars = Math.round(cols * rows * 0.01);
+    const SCH = ['.', '·', '.', '+'];
+    skyStars = [];
+    for (let i = 0; i < nStars; i++) {
+      const c = (r2() * vis) | 0, r = (r2() * rows) | 0, q = r2();
+      if (r >= skyTop[c] - 1) continue;
+      skyStars.push({ x: c * cw, y: r * ch, c: SCH[(q * 4) | 0], ph: r2() * 6.283, sp: 0.4 + r2() * 1.8 });
+    }
+    dirty = true;
+  }
+
+  // Boundary character from how far the edge moves sideways per row going up.
+  function edgeChar(delta, s) {
+    const a = Math.abs(delta);
+    if (a > 1.9) return C_DASH;
+    if (s === 0 || a < 0.35) return C_BAR;
+    return s * delta > 0 ? C_SL : C_BS;
+  }
+
+  const K_FILL = 0, K_EDGE = 1, K_PLAT = 2;
+  function buildTower() {
+    const c = [], chs = [], ys = [], bs = [];
+    const k = TH / cw;
+    const r0 = lineRow - 1;
+    tipRow = r0;
+    const add = (col, chr, y, kind) => {
+      if (col < 0 || col >= cols) return;
+      c.push(tipRowOf * cols + col); chs.push(chr); ys.push(y);
+      bs.push(kind === K_PLAT ? 0.9 : kind === K_EDGE ? 0.74 : 0.56);
+    };
+    let tipRowOf = 0;
+    for (let r = r0; r >= 0; r--) {
+      const yB = (gy - (r + 1) * ch) / TH, yT = (gy - r * ch) / TH, yM = (yB + yT) / 2;
+      if (yB >= 1) break;
+      tipRowOf = r; tipRow = r;
+      let plat = -1;
+      for (let p = 0; p < PLATS.length; p++) {
+        const P = PLATS[p], mid = (P[0] + P[1]) / 2;
+        if ((yM >= P[0] && yM < P[1]) || (mid >= yB && mid < yT)) plat = P[2];
+      }
+      const oT = hwo(Math.min(yT, 1)) * k, oB = hwo(yB) * k, oM = hwo(yM) * k;
+      if (plat >= 0) {
+        const e = Math.round(oM + plat * k);
+        for (let d = 0; d <= e; d++) {
+          const chr = d === e ? -1 : C_EQ;
+          if (d === 0) add(kc, C_EQ, yM, K_PLAT);
+          else { add(kc - d, chr < 0 ? C_LB : chr, yM, K_PLAT); add(kc + d, chr < 0 ? C_RB : chr, yM, K_PLAT); }
+        }
+        continue;
+      }
+      const iT = hwi(yT) * k, iB = hwi(yB) * k;
+      const olo = Math.round(Math.min(oT, oB)), ohi = Math.round(Math.max(oT, oB));
+      const ilo = Math.round(Math.min(iT, iB)), ihi = Math.round(Math.max(iT, iB));
+      const gap = Math.max(iT, iB) > 0.5;
+      const P = yM < 0.38 ? 4 : 3;
+      for (let d = 0; d <= ohi; d++) {
+        for (let s = -1; s <= 1; s += 2) {
+          if (d === 0 && s > 0) break;
+          const ss = d === 0 ? 0 : s;
+          const col = kc + ss * d;
+          if (d >= olo) { add(col, edgeChar(oT - oB, ss), yM, K_EDGE); continue; }
+          if (gap && d >= ilo && d <= ihi) { add(col, edgeChar(iT - iB, ss), yM, K_EDGE); continue; }
+          if (gap && d < ilo) continue; // open sky between the legs
+          let chr = -1;
+          if (olo <= 2) chr = r % 2 ? C_X : C_PLUS;
+          else {
+            const u = ss * d;
+            const a = (((u + r) % P) + P) % P === 0, b = (((u - r) % P) + P) % P === 0;
+            chr = a && b ? C_X : a ? C_SL : b ? C_BS : -1;
+          }
+          if (chr >= 0) add(col, chr, yM, K_FILL);
+        }
+      }
+    }
+    nTw = c.length;
+    tC = Int32Array.from(c); tCh = Uint8Array.from(chs); tY = Float32Array.from(ys); tB = Float32Array.from(bs);
+    tT0 = new Float32Array(nTw); tPh = new Float32Array(nTw);
+    for (let i = 0; i < nTw; i++) {
+      tT0[i] = T.BUILD + tY[i] * T.BUILD_DUR * 0.97 + hash2(i, 11) * 0.08;
+      tPh[i] = hash2(i, 23) * 1000;
+    }
+  }
+
+  // Haussmann-style blocks on both sides of a central gap where the tower stands.
+  function buildCity() {
+    const r = mulberry32(1889);
+    const bc = [], bch = [], bp = [], bb = [];
+    const wc = [], wb = [], wf = [], wph = [], wp = [], wj = [];
+    const skyTop = new Int16Array(cols).fill(lineRow);
+    const bot = lineRow - 1;
+    const st = (col, row, chr, p, b) => {
+      if (col < 0 || col >= cols || row < 0) return;
+      bc.push(row * cols + col); bch.push(chr); bp.push(p); bb.push(b);
+      if (row < skyTop[col]) skyTop[col] = row;
+    };
+    const win = (col, row, lit) => {
+      if (col < 0 || col >= cols || row < 0) return;
+      const dyn = r() < 0.22;
+      wc.push(row * cols + col); wb.push(lit ? 1 : 0);
+      wf.push(dyn ? 0.18 + r() * 0.35 : 0); wph.push(r() * 6.283);
+      wp.push(P_LIT[r() < 0.55 ? 0 : r() < 0.6 ? 1 : 2]); wj.push(r() * 0.12);
+    };
+    const maxH = Math.max(6, Math.floor((gy - H * 0.65) / ch));
+    const step = cw < 5 ? 2 : 3;
+
+    function building(x0, w, hTot) {
+      let hr = 2 + ((r() * 2) | 0);
+      hr = Math.min(hr, Math.floor((w - 3) / 2));
+      const hf = Math.max(3, hTot - hr - 1);
+      const ft = bot - hf + 1, cr = ft - 1;
+      for (let row = ft; row <= bot; row++)
+        for (let c = x0; c < x0 + w; c++)
+          if (c === x0 || c === x0 + w - 1) st(c, row, C_BAR, P_OUT, 0.42); else st(c, row, C_SP, 0, 0);
+      for (let c = x0; c < x0 + w; c++) st(c, cr, C_EQ, P_OUT, 0.4);
+      // Windows: tall single cells on every other row, a balcony line on the 2nd and top floors.
+      let floor = 0;
+      for (let row = bot - 2; row >= ft; row -= 2, floor++) {
+        const balcony = floor === 1 || row - 2 < ft;
+        for (let c = x0 + 2; c <= x0 + w - 3; c++) {
+          if ((c - x0 - 2) % step === 0) win(c, row, r() < 0.45);
+          else if (balcony) st(c, row, C_DASH, P_OUT, 0.32);
+        }
+      }
+      // Ground floor shops.
+      for (let c = x0 + 2; c <= x0 + w - 3; c += step) if (r() < 0.35) win(c, bot, true);
+      // Mansard roof with dormers.
+      const dj = Math.max(1, Math.ceil(hr / 2));
+      for (let j = 1; j <= hr; j++) {
+        const row = cr - j, L = x0 + j - 1, R = x0 + w - j;
+        st(L, row, C_SL, P_ROOF, 0.4); st(R, row, C_BS, P_ROOF, 0.4);
+        for (let c = L + 1; c < R; c++) {
+          if (j === dj && (c - L) % 3 === 2 && c < R - 1) { if (r() < 0.3) win(c, row, true); else st(c, row, C_n, P_ROOF, 0.32); }
+          else st(c, row, C_SP, 0, 0);
+        }
+      }
+      const top = cr - hr - 1, L = x0 + hr, R = x0 + w - 1 - hr;
+      for (let c = L; c <= R; c++) st(c, top, C_US, P_ROOF, 0.38);
+      // Chimneys.
+      const nc = 1 + ((r() * 2) | 0);
+      for (let q = 0; q < nc; q++) {
+        const c = L + 1 + ((r() * Math.max(1, R - L - 2)) | 0);
+        st(c, top - 1, C_LB, P_ROOF, 0.36); st(c + 1, top - 1, C_RB, P_ROOF, 0.36);
+        if (r() < 0.5) { st(c, top, C_BAR, P_ROOF, 0.34); st(c + 1, top, C_BAR, P_ROOF, 0.34); }
+      }
+    }
+
+    const gapHalf = Math.round(0.19 * TH / cw * 0.92) + 1;
+    const wMin = cw < 5 ? 8 : 10, wVar = cw < 5 ? 7 : 10;
+    for (let side = -1; side <= 1; side += 2) {
+      let x = side < 0 ? kc - gapHalf : kc + gapHalf, first = true;
+      while (side < 0 ? x > -2 : x < vis + 2) {
+        const w = wMin + ((r() * wVar) | 0);
+        const x0 = side < 0 ? x - w + 1 : x;
+        const hTot = Math.round(maxH * (first ? 0.4 + 0.15 * r() : 0.6 + 0.4 * r()));
+        building(x0, w, hTot);
+        x += side * (w + (r() < 0.35 ? 1 : -1));
+        first = false;
+      }
+    }
+    // Street line with lamps.
+    const lamps = [];
+    const lampStep = cw < 5 ? 9 : 13;
+    for (let c = 0; c < vis; c++) {
+      if ((c + 4) % lampStep === 0) lamps.push(lineRow * cols + c);
+      else st(c, lineRow, C_US, P_STREET, 0.42);
+    }
+    nB = bc.length;
+    bC = Int32Array.from(bc); bCh = Uint8Array.from(bch); bP = Uint16Array.from(bp); bBr = Float32Array.from(bb);
+    nWin = wc.length;
+    wC = Int32Array.from(wc); wBase = Float32Array.from(wb); wF = Float32Array.from(wf);
+    wPh = Float32Array.from(wph); wP = Uint16Array.from(wp); wJ = Float32Array.from(wj);
+    nLamp = lamps.length; lC = Int32Array.from(lamps);
+    // Cars: little coloured lights drifting along the road below the street line.
+    nCar = Math.min(MAXCAR, Math.max(4, Math.round(vis / 14)));
+    for (let i = 0; i < nCar; i++) {
+      carX[i] = r() * vis;
+      carV[i] = (r() < 0.5 ? -1 : 1) * (1.5 + 3.5 * r()) * (reduced ? 0.4 : 1);
+      carP[i] = P_CARS[(r() * P_CARS.length) | 0];
+    }
+    return skyTop;
+  }
+
+  // ---------- Cell buffer ----------
+  function put(c, chr, p, b, halo) {
+    if (stampA[c] !== stamp) { stampA[c] = stamp; touched[nT++] = c; }
+    let l = (b * 15.99) | 0;
+    if (l < 0) l = 0; else if (l > 15) l = 15;
+    cchar[c] = chr; ccol[c] = p * LEVELS + l; ckind[c] = halo; clb[c] = b > 1 ? 1 : b;
+  }
+  function putXY(x, y, chr, p, b, halo) {
+    if (x < 0 || y < 0) return;
+    const col = (x / cw) | 0, row = (y / ch) | 0;
+    if (col >= cols || row >= rows) return;
+    put(row * cols + col, chr, p, b, halo);
+  }
+
+  let t = T_START, skyT = 0, nSpark = 0, letters = 0;
+
+  function drawBeams() {
+    if (t < T.BEAM) return;
+    const a = smooth((t - T.BEAM) / T.BEAM_IN);
+    const ox = cxp, oy = gy - 0.905 * TH;
+    const R = Math.max(W, H) * 0.85;
+    const stepPx = Math.min(cw, ch) * 0.9;
+    for (let k = 0; k < 2; k++) {
+      // Beam rotates in a horizontal plane; seen from the front it sweeps and foreshortens.
+      const ph = (skyT - T.BEAM) * BEAM_W + 0.4 + k * Math.PI;
+      const co = Math.cos(ph), si = Math.sin(ph);
+      const dx = co * R, dy = -(0.2 + 0.12 * si) * R;
+      const dcx = dx / cw, dcy = dy / ch;
+      const chr = Math.abs(dcx) > 2.2 * Math.abs(dcy) ? C_DASH : Math.abs(dcy) > 2.2 * Math.abs(dcx) ? C_BAR
+        : dcx * dcy < 0 ? C_SL : C_BS;
+      const inten = a * (0.78 + 0.22 * si);
+      const n = Math.ceil(Math.hypot(dx, dy) / stepPx);
+      for (let j = 3; j <= n; j++) {
+        const p = j / n, x = ox + dx * p, y = oy + dy * p;
+        if (x < 0 || x >= W || y < 0) break;
+        const b = inten * (0.95 * Math.pow(1 - p, 1.3) + 0.05);
+        if (b < 0.06) break;
+        putXY(x, y, p > 0.5 && hash2(j, k + 7) < (p - 0.5) * 2.2 ? C_DOT : chr, P_BEAM, b, 0);
+      }
+    }
+  }
+
+  function drawTower() {
+    nSpark = 0;
+    if (t < T.BUILD) return;
+    const goldGlow = smooth((t - T.GOLD - 0.8) / 1.4);
+    const sEnv = (!reduced && t >= T.SHOW && t < T.SHOW_END)
+      ? Math.min(1, (t - T.SHOW) / 0.6, (T.SHOW_END - t) / 0.6) : 0;
+    const pS = 0.06 * sEnv, ep = skyT * 7;
+    const gw = T.GOLD_DUR - 0.7;
+    for (let i = 0; i < nTw; i++) {
+      const age = t - tT0[i];
+      if (age < 0) continue;
+      const y = tY[i];
+      const mix = clamp((t - T.GOLD - y * gw) / 0.7, 0, 1);
+      let b = tB[i];
+      if (age < 0.45) b += 0.55 * (1 - age / 0.45);            // bright growth front
+      b += 1.2 * mix * (1 - mix);                              // bright colour wave
+      b += goldGlow * (0.14 + 0.05 * Math.sin(skyT * 1.7 + y * 14));
+      let chr = tCh[i], p = TW[(mix * 8 + 0.5) | 0], halo = 0;
+      if (pS > 0) {
+        const h = hash2(i, (ep + tPh[i]) | 0);
+        if (h < pS) { chr = h < pS * 0.5 ? C_STAR : C_PLUS; p = P_WHITE; b = 1; halo = 1; nSpark++; }
+      }
+      put(tC[i], chr, p, b, halo);
+    }
+  }
+
+  function drawBeacon() {
+    if (t < T.BEAM) return;
+    const on = reduced || (skyT % 1.1) < 0.4;
+    put(tipRow * cols + kc, on ? C_STAR : C_o, P_BEACON, on ? 1 : 0.4, on ? 1 : 0);
+  }
+
+  function drawCity() {
+    for (let i = 0; i < nB; i++) put(bC[i], bCh[i], bP[i], bBr[i], 0);
+    for (let i = 0; i < nWin; i++) {
+      let s = wBase[i];
+      if (wF[i] > 0) s = clamp(0.5 + 2.2 * Math.sin(skyT * wF[i] + wPh[i]), 0, 1); // slow on/off
+      if (s > 0.25) put(wC[i], s > 0.6 ? C_HASH : C_EQ, wP[i], 0.32 + 0.55 * s + wJ[i], 0);
+      else put(wC[i], C_DOT, P_WDARK, 0.4, 0);
+    }
+    for (let i = 0; i < nLamp; i++) put(lC[i], C_STAR, P_LAMP, 0.85, 1);
+    const row = lineRow + 1;
+    if (row >= rows) return;
+    for (let i = 0; i < nCar; i++) {
+      const x = carX[i] | 0, dir = carV[i] > 0 ? 1 : -1;
+      if (x >= 0 && x < cols) put(row * cols + x, C_o, carP[i], 1, 1);
+      const tx = x - dir;
+      if (tx >= 0 && tx < cols) put(row * cols + tx, C_DASH, carP[i], 0.45, 0);
+    }
+  }
+
+  function updateCars(dt) {
+    for (let i = 0; i < nCar; i++) {
+      carX[i] += carV[i] * dt;
+      if (carX[i] < -2) carX[i] += vis + 4; else if (carX[i] > vis + 2) carX[i] -= vis + 4;
+    }
+  }
+
+  // ---------- Fireworks (fixed pools, no per-frame allocation) ----------
+  const MAXP = 2400, MAXR = 10;
+  const fx = new Float32Array(MAXP), fy = new Float32Array(MAXP), fvx = new Float32Array(MAXP), fvy = new Float32Array(MAXP),
+        fage = new Float32Array(MAXP), flife = new Float32Array(MAXP), fp = new Uint16Array(MAXP);
+  const rx = new Float32Array(MAXR), ry = new Float32Array(MAXR), rvy = new Float32Array(MAXR), rty = new Float32Array(MAXR),
+        rp = new Uint16Array(MAXR);
+  let np = 0, nr = 0, nextLaunch = 0, frameNo = 0;
+  function clearFireworks() { np = 0; nr = 0; nextLaunch = 0; }
+
+  function launch() {
+    const i = nr++;
+    rx[i] = W * (0.1 + 0.8 * Math.random());
+    ry[i] = gy;
+    rty[i] = H * (0.07 + 0.3 * Math.random());
+    rvy[i] = -Math.sqrt(2 * H * 0.45 * (ry[i] - rty[i]));
+    rp[i] = P_FW[(Math.random() * P_FW.length) | 0];
+  }
+  function burst(x, y, p) {
+    const n = 120 + ((Math.random() * 80) | 0);
+    const p2 = Math.random() < 0.35 ? P_FW[(Math.random() * P_FW.length) | 0] : p;
+    const sp = H * (0.12 + 0.08 * Math.random());
+    for (let j = 0; j < n && np < MAXP; j++) {
+      const z = 2 * Math.random() - 1, a = Math.random() * 6.2832, rr = Math.sqrt(1 - z * z);
+      const v = sp * (0.85 + 0.15 * Math.random());
+      const i = np++;
+      fx[i] = x; fy[i] = y; fvx[i] = rr * Math.cos(a) * v; fvy[i] = rr * Math.sin(a) * v;
+      fage[i] = 0; flife[i] = 1.3 + Math.random() * 0.9; fp[i] = j % 3 ? p : p2;
+    }
+  }
+  function updateFireworks(dt) {
+    if (!reduced && t >= T.SHOW && t < T.SHOW_END - 0.6) {
+      nextLaunch -= dt;
+      if (nextLaunch <= 0 && nr < MAXR) { launch(); nextLaunch = 0.28 + Math.random() * 0.45; }
+    }
+    const RG = H * 0.45;
+    for (let i = 0; i < nr; i++) {
+      rvy[i] += RG * dt; ry[i] += rvy[i] * dt;
+      if (ry[i] <= rty[i] || rvy[i] > -H * 0.05) {
+        burst(rx[i], ry[i], rp[i]);
+        nr--; rx[i] = rx[nr]; ry[i] = ry[nr]; rvy[i] = rvy[nr]; rty[i] = rty[nr]; rp[i] = rp[nr]; i--;
+      }
+    }
+    const g = H * 0.075, drag = 1 - Math.min(0.5, 0.9 * dt);
+    for (let i = 0; i < np; i++) {
+      fage[i] += dt;
+      if (fage[i] >= flife[i]) {
+        np--; fx[i] = fx[np]; fy[i] = fy[np]; fvx[i] = fvx[np]; fvy[i] = fvy[np];
+        fage[i] = fage[np]; flife[i] = flife[np]; fp[i] = fp[np]; i--; continue;
+      }
+      fvx[i] *= drag; fvy[i] = fvy[i] * drag + g * dt;
+      fx[i] += fvx[i] * dt; fy[i] += fvy[i] * dt;
+    }
+  }
+  function drawFireworks() {
+    for (let i = 0; i < nr; i++) {
+      putXY(rx[i], ry[i], C_CARET, P_ROCKET, 1, 1);
+      for (let k = 1; k <= 4; k++) putXY(rx[i], ry[i] + k * ch, k < 3 ? C_COLON : C_DOT, P_ROCKET, 0.75 - 0.14 * k, 0);
+    }
+    for (let i = 0; i < np; i++) {
+      const a = fage[i] / flife[i];
+      if (a > 0.55 && hash2(i, frameNo) < 0.25) continue; // late sparks twinkle out
+      const chr = a < 0.25 ? C_STAR : a < 0.4 ? C_o : a < 0.7 ? C_PLUS : C_DOT;
+      putXY(fx[i], fy[i], chr, fp[i], 0.3 + 0.8 * Math.pow(1 - a, 0.7), 0);
+    }
+  }
+
+  // Bucket by colour so fillStyle changes once per colour, not once per cell.
+  function drawCells() {
+    counts.fill(0);
+    for (let i = 0; i < nT; i++) counts[ccol[touched[i]]]++;
+    let acc = 0;
+    for (let c = 0; c < NCOLOR; c++) { const n = counts[c]; counts[c] = acc; acc += n; }
+    for (let i = 0; i < nT; i++) { const c = touched[i]; order[counts[ccol[c]]++] = c; }
+    let cur = -1, n = 0;
+    for (let i = 0; i < nT; i++) {
+      const c = order[i];
+      if (cchar[c] === C_SP) continue;
+      const cc = ccol[c];
+      if (cc !== cur) { cur = cc; ctx.fillStyle = COLSTR[cc]; }
+      const row = (c / cols) | 0;
+      ctx.fillText(CH[cchar[c]], (c - row * cols) * cw, row * ch);
+      n++;
+    }
+    letters = n;
+  }
+
+  function drawSky() {
+    for (let i = 0; i < skyStars.length; i++) {
+      const s = skyStars[i];
+      ctx.fillStyle = STAR_COLS[((0.5 + 0.5 * Math.sin(skyT * s.sp + s.ph)) * 7.99) | 0];
+      ctx.fillText(s.c, s.x, s.y);
+    }
+  }
+
+  // Light halos: one pre-rendered radial sprite per emissive palette entry.
+  let halos = [];
+  function makeHalos() {
+    const R = Math.max(6, cw * 2.4);
+    halos = PAL.map(([r, g, b], p) => {
+      if (!HALO_P.includes(p)) return null;
+      const c = document.createElement('canvas');
+      c.width = c.height = Math.ceil(R * 2);
+      const x = c.getContext('2d'), gr = x.createRadialGradient(R, R, 0, R, R, R);
+      gr.addColorStop(0, 'rgba(255,255,255,0.9)');
+      gr.addColorStop(0.18, `rgba(${r},${g},${b},0.8)`);
+      gr.addColorStop(0.5, `rgba(${r},${g},${b},0.2)`);
+      gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
+      x.fillStyle = gr; x.fillRect(0, 0, c.width, c.height);
+      return c;
+    });
+  }
+  function drawHalos(alpha) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < nT; i++) {
+      const c = touched[i];
+      if (ckind[c] !== 1) continue;
+      const img = halos[(ccol[c] / LEVELS) | 0], row = (c / cols) | 0;
+      if (!img) continue;
+      ctx.globalAlpha = clb[c] * alpha * 0.8;
+      ctx.drawImage(img, (c - row * cols + 0.5) * cw - img.width / 2, (row + 0.5) * ch - img.height / 2);
+    }
+    ctx.restore();
+  }
+
+  function drawTowerGlow(alpha) {
+    if (t < T.BUILD) return;
+    const built = smooth((t - T.BUILD) / T.BUILD_DUR), gold = smooth((t - T.GOLD) / T.GOLD_DUR);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const x = cxp - TH * 0.62, y = gy - 0.42 * TH - TH * 0.62, s = TH * 1.24;
+    if (gold < 1) { ctx.globalAlpha = alpha * built * (1 - gold); ctx.fillStyle = glowBlue; ctx.fillRect(x, y, s, s); }
+    if (gold > 0) {
+      ctx.globalAlpha = alpha * gold * (0.9 + 0.1 * Math.sin(skyT * 1.3));
+      ctx.fillStyle = glowGold; ctx.fillRect(x, y, s, s);
+    }
+    ctx.restore();
+  }
+
+  // Bloom: shrink the frame, remove the background with 'difference', blur, and add it back on top.
+  const glow = document.createElement('canvas'), gctx = glow.getContext('2d');
+  const GLOW_DIV = 5, GLOW_A = 0.85;
+  function drawGlow() {
+    const gw = Math.ceil(W / GLOW_DIV), gh = Math.ceil(H / GLOW_DIV);
+    if (glow.width !== gw || glow.height !== gh) { glow.width = gw; glow.height = gh; }
+    gctx.setTransform(1, 0, 0, 1, 0, 0);
+    gctx.globalCompositeOperation = 'copy';
+    gctx.filter = 'blur(2px)';
+    gctx.drawImage(canvas, 0, 0, gw, gh);
+    gctx.filter = 'none';
+    gctx.globalCompositeOperation = 'difference';
+    gctx.setTransform(gw / W, 0, 0, gh / H, 0, 0);
+    gctx.fillStyle = bgGrad;
+    gctx.fillRect(0, 0, W, H);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = GLOW_A;
+    ctx.drawImage(glow, 0, 0, W, H);
+    ctx.restore();
+  }
+
+  function render() {
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+    ctx.textBaseline = 'top';
+    ctx.font = cellFont;
+    drawSky();
+    // Everything but the sky fades in at the loop start and out before the loop ends.
+    const alpha = reduced ? 1 : Math.min(smooth(t / T.CITY_IN), 1 - smooth((t - T.FADE) / T.FADE_DUR));
+    if (alpha <= 0.001) { nT = 0; letters = 0; nSpark = 0; return; }
+    stamp++; nT = 0;
+    drawBeams();
+    drawFireworks();   // behind the tower, so its silhouette always reads
+    drawTower();
+    drawBeacon();
+    drawCity();
+    drawTowerGlow(alpha);
+    ctx.globalAlpha = alpha;
+    drawCells();
+    ctx.globalAlpha = 1;
+    drawHalos(alpha);
+    drawGlow();
+  }
+
+  // ---------- Loop, HUD, controls ----------
+  let paused = false, last = performance.now();
+  let frames = 0, fpsT = last, fps = 0, hudT = 0;
+
+  function updateHud(now) {
+    const tail = paused ? 'paused' : `${fps} fps`;
+    // Narrow screens get a short line so nothing is clipped.
+    hudEl.textContent = W < 640 ? `sparkles ${nSpark}  fireworks ${np}  ${tail}`
+      : `sparkles ${nSpark}  fireworks ${np}  letters ${letters.toLocaleString('en-US')}  ${tail}`;
+    hudT = now;
+  }
+
+  function frame(now) {
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); // no jumps after a hidden tab
+    last = now;
+    if (needResize) resize();
+    if (!paused) {
+      skyT += dt;
+      if (!reduced) {
+        t += dt;
+        if (t >= T.END) { t = 0; clearFireworks(); }
+      }
+      frameNo++;
+      updateCars(dt);
+      updateFireworks(dt);
+    }
+    if (!paused || dirty) { render(); dirty = false; frames++; }
+    if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
+    if (now - hudT >= 250) updateHud(now);
+    requestAnimationFrame(frame);
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); }
+  function replay() { t = T_START; clearFireworks(); paused = false; dirty = true; }
+
+  addEventListener('resize', () => { needResize = true; });
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return; // leave Cmd/Ctrl+R alone
+    if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
+    else if (e.key === 'r' || e.key === 'R') replay();
+  });
+  // Single tap = pause (decided after 280 ms), two quick taps = replay.
+  let tapTimer = 0;
+  canvas.addEventListener('pointerup', e => {
+    if (e.button > 0) return;
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; replay(); }
+    else tapTimer = setTimeout(() => { tapTimer = 0; togglePause(); }, 280);
+  });
+
+  // Hint language: ?lang= wins, then saved site preference, then browser.
+  let pref = null;
+  try { pref = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (!pref) { try { pref = localStorage.getItem('lang'); } catch (e) {} }
+  if (!pref) pref = navigator.language || 'en';
+  const zh = String(pref).toLowerCase().startsWith('zh');
+  document.documentElement.lang = zh ? 'zh-Hant' : 'en';
+  // Touch screens have no keyboard, and the full hint would not fit on a phone.
+  const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  hintEl.textContent = touch ? (zh ? '點擊暫停 · 雙擊重播' : 'tap to pause · double-tap to replay')
+                             : (zh ? '空白鍵 暫停 · R 重播 · 點擊暫停 · 雙擊重播'
+                                   : 'Space pause · R replay · click to pause · double-click to replay');
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

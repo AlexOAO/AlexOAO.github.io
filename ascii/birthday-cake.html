@@ -1,0 +1,895 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ASCII Birthday Cake | Alex Li (李翔緯)</title>
+  <meta name="description" content="A 3D chocolate birthday cake drawn entirely with ASCII characters: swirling particles assemble the layers, a striped candle lights with a flickering flame, HAPPY BIRTHDAY drops in as glowing block letters and confetti rains down. Vanilla JS on a single canvas.">
+  <meta name="theme-color" content="#020203">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;600;800&display=swap">
+  <style>
+    :root {
+      --sky: #020203;
+      --text: #e6edf6;
+      --muted: #a3b1c6;
+      --accent: #3b82f6;
+      --mono: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--sky);
+      color: var(--text);
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    canvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100svh;
+      display: block;
+      touch-action: manipulation; /* no double-tap zoom: double-tap means replay */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .back {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(59, 130, 246, 0.45);
+      background: rgba(59, 130, 246, 0.12);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .back:hover, .back:focus-visible {
+      background: rgba(59, 130, 246, 0.28);
+      border-color: var(--accent);
+      outline: none;
+    }
+    .hud, .hint {
+      position: fixed;
+      z-index: 1;
+      bottom: 12px;
+      color: var(--muted);
+      opacity: 0.75;
+      font: 11px/1.4 var(--mono);
+      white-space: pre;
+      pointer-events: none;
+      max-width: calc(100% - 24px);
+      overflow: hidden;
+    }
+    .hud { left: 12px; }
+    .hint {
+      right: 12px;
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    @media (max-width: 640px) {
+      .hud, .hint { font-size: 10px; }
+      .hint { bottom: 30px; } /* stack above the HUD on narrow screens */
+    }
+  </style>
+</head>
+<body>
+  <h1 class="sr-only">ASCII Birthday Cake</h1>
+  <a class="back" href="./">← ASCII</a>
+  <canvas id="c" role="img" aria-label="Animated 3D chocolate birthday cake drawn with ASCII characters: particles assemble the cake, a striped candle lights, the words Happy Birthday drop in as glowing block letters and confetti falls"></canvas>
+  <div class="hud" id="hud" aria-hidden="true"></div>
+  <div class="hint" id="hint"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ---------- Timeline (seconds of scene time) ----------
+  const T = {
+    BUILD: 0.0, FLY: 0.9, LAND: 0.9, LAND_DUR: 2.1, // particles swirl in; last lands at 3.0
+    CANDLE: 3.0, CANDLE_DUR: 1.4,                    // candle slides into the top, settled by 4.4
+    LIGHT: 4.5, LIGHT_DUR: 1.0,                      // spark, flame grows to full by 5.5
+    WORDS: 6.0, LETTER: 0.14, DROP: 0.5,             // 13 letters, last lands ~8.2
+    CONF: 8.0, CONF_END: 18.0,
+    NAME: 9.0, NAME_CH: 0.06,
+    BLOW: 19.0, BLOW_DUR: 0.35, SMOKE_END: 20.6,
+    FADE: 20.0, FADE_DUR: 2.0, END: 22.0
+  };
+
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T_START = reduced ? 12.0 : 0;   // reduced motion: open on the lit cake with the words, no loop
+  const T_HOLD = 17.5;
+  const SWAY_A = reduced ? 0.12 : 0.35; // rad, gentle turn around Y
+  const SWAY_W = reduced ? 0.2 : 0.4;
+  const ROT0 = 0.35;
+  const CONF_FACTOR = reduced ? 0.4 : 1;
+
+  // ---------- Camera / world ----------
+  const CAM_D = 3;
+  const PIVOT = 0.2;
+  const TILT = 0.24;        // look a little down onto the cake top
+  const ct = Math.cos(TILT), st = Math.sin(TILT);
+  const R_C = 0.36, H_C = 0.42;             // cake radius / height (cake sits on y = 0)
+  const R_P = 0.52;                         // plate radius
+  const CAN_R = 0.019, CAN_H = 0.2;         // candle
+  const WICK_Y = H_C + CAN_H + 0.016, FLAME_Y = WICK_Y + 0.07;
+  const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
+  const LX0 = -0.45, LY0 = 0.7, LZ0 = 0.6;
+  const LN = Math.hypot(LX0, LY0, LZ0);
+  const LX = LX0 / LN, LY = LY0 / LN, LZ = LZ0 / LN;
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  const rng = mulberry32(20260101);
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+
+  // ---------- Characters & colours ----------
+  const CH = [];
+  const ci = s => { let i = CH.indexOf(s); if (i < 0) { CH.push(s); i = CH.length - 1; } return i; };
+  const C_RAMP = [...'.:-=+*#%@'].map(ci);
+  const C_EQ = ci('='), C_DASH = ci('-'), C_BAR = ci('|'), C_COLON = ci(':'), C_o = ci('o'), C_O = ci('O'),
+        C_AT = ci('@'), C_SLASH = ci('/'), C_STAR = ci('*'), C_PLUS = ci('+'), C_DOT = ci('.'), C_HASH = ci('#');
+  const C_SPR = [...'-|/\\\'`,'].map(ci);
+
+  const LEVELS = 16;
+  const PAL = [];
+  const pal = (r, g, b) => { PAL.push([r, g, b]); return PAL.length - 1; };
+  const P_SPONGE = [pal(190, 106, 46), pal(176, 96, 40), pal(200, 116, 52)];
+  const P_CREAM = pal(250, 236, 208);
+  const P_FROST = pal(132, 74, 40);
+  const P_PLATE = pal(150, 134, 98);
+  const P_RIM = pal(214, 192, 136);
+  const P_CPINK = pal(255, 96, 150);
+  const P_CWHITE = pal(250, 240, 245);
+  const P_WICK = pal(120, 110, 100);
+  const P_SPECK = pal(255, 196, 120);
+  const P_SPRS = [pal(80, 150, 255), pal(255, 105, 185), pal(255, 222, 70), pal(110, 230, 150), pal(190, 120, 255)];
+  // Flame colours (outer -> core), drawn straight into the grid.
+  const P_FLAME = [pal(230, 70, 24), pal(255, 132, 34), pal(255, 196, 70), pal(255, 246, 205)];
+
+  const K_SPONGE = 0, K_CREAM = 1, K_DRIP = 2, K_DOLLOP = 3, K_FROST = 4, K_SPRK = 5,
+        K_PLATE = 6, K_RIM = 7, K_CANDLE = 8, K_WICK = 9, K_FLY = 10, K_FLAME = 11;
+
+  // ---------- Build the static scene ----------
+  const B = { x: [], y: [], z: [], nx: [], ny: [], nz: [], k: [], p: [], t0: [], ph: [] };
+  const Y_MIN = -0.2, Y_SPAN = H_C + 0.04 - Y_MIN;
+  function add(x, y, z, nx, ny, nz, k, p, t0, ph) {
+    const l = Math.hypot(nx, ny, nz) || 1;
+    if (t0 < 0) t0 = T.LAND + clamp((y - Y_MIN) / Y_SPAN, 0, 1) * (T.LAND_DUR - 0.2) + rng() * 0.2;
+    B.x.push(x); B.y.push(y); B.z.push(z);
+    B.nx.push(nx / l); B.ny.push(ny / l); B.nz.push(nz / l);
+    B.k.push(k); B.p.push(p); B.t0.push(t0); B.ph.push(ph);
+  }
+  const TAU = Math.PI * 2;
+  // Area-proportional random points.
+  function cylinder(r, y0, y1, n, cb) {
+    for (let i = 0; i < n; i++) { const a = rng() * TAU, y = y0 + rng() * (y1 - y0); cb(Math.cos(a), Math.sin(a), y, a, r); }
+  }
+  function annulus(r0, r1, n, cb) {
+    for (let i = 0; i < n; i++) {
+      const r = Math.sqrt(r0 * r0 + rng() * (r1 * r1 - r0 * r0)), a = rng() * TAU;
+      cb(Math.cos(a) * r, Math.sin(a) * r, r, a);
+    }
+  }
+
+  // Stand: base disc, pedestal, plate with a raised rim.
+  annulus(0, 0.26, 1300, (x, z) => add(x, -0.19, z, 0, 1, 0, K_PLATE, P_PLATE, -1, rng()));
+  cylinder(0.26, -0.215, -0.19, 500, (c, s, y, a, r) => add(c * r, y, s * r, c, 0, s, K_RIM, P_RIM, -1, rng()));
+  cylinder(0.075, -0.19, -0.035, 1100, (c, s, y, a, r) => add(c * r, y, s * r, c, 0, s, K_PLATE, P_PLATE, -1, rng()));
+  annulus(0.3, R_P, 5200, (x, z) => add(x, -0.01, z, 0, 1, 0, K_PLATE, P_PLATE, -1, rng()));
+  annulus(R_P, R_P + 0.03, 1500, (x, z, r, a) => add(x, 0.002, z, Math.cos(a) * 0.4, 1, Math.sin(a) * 0.4, K_RIM, P_RIM, -1, rng()));
+  cylinder(R_P + 0.03, -0.04, 0.0, 1300, (c, s, y, a, r) => add(c * r, y, s * r, c, -0.2, s, K_RIM, P_RIM, -1, rng()));
+
+  // Cake side: three sponge layers split by cream fillings, chocolate band at the top.
+  const CREAMS = [[0.125, 0.161], [0.263, 0.299]];
+  cylinder(R_C, 0, H_C, 15000, (c, s, y, a, r) => {
+    let k = K_SPONGE, p = P_SPONGE[Math.min(2, (y / 0.14) | 0)];
+    if (y > H_C - 0.03) { k = K_FROST; p = P_FROST; }
+    for (const [y0, y1] of CREAMS) if (y >= y0 && y < y1) { k = K_CREAM; p = P_CREAM; }
+    add(c * r, y, s * r, c, 0, s, k, p, -1, rng());
+  });
+  // Cream piping around the base.
+  for (let i = 0; i < 900; i++) {
+    const a = rng() * TAU, b = rng() * Math.PI;
+    const rr = R_C + 0.012 * Math.sin(b), y = 0.012 - 0.012 * Math.cos(b) * 0.9 + 0.006;
+    add(Math.cos(a) * rr, y, Math.sin(a) * rr, Math.cos(a) * Math.sin(b), -Math.cos(b), Math.sin(a) * Math.sin(b), K_DOLLOP, P_CREAM, -1, rng());
+  }
+  // Chocolate frosting top.
+  annulus(0, R_C, 4200, (x, z) => add(x, H_C, z, (rng() - 0.5) * 0.25, 1, (rng() - 0.5) * 0.25, K_FROST, P_FROST, -1, rng()));
+  // Cream drips hanging over the top edge.
+  for (let d = 0; d < 16; d++) {
+    const a0 = d / 16 * TAU + rng() * 0.2, len = 0.03 + 0.07 * rng() * rng() + 0.02 * rng();
+    const wA = 0.03 + 0.02 * rng();
+    for (let j = 0; j < 60; j++) {
+      const u = rng() * 2 - 1, v = rng();
+      const yy = H_C - v * len;
+      // Narrow toward the rounded tip.
+      const half = wA * (v > 0.75 ? Math.sqrt(Math.max(0, 1 - ((v - 0.75) / 0.25) ** 2)) : 1);
+      const a = a0 + u * half, r = R_C + 0.006;
+      add(Math.cos(a) * r, yy, Math.sin(a) * r, Math.cos(a), 0.1, Math.sin(a), K_DRIP, P_CREAM, -1, rng());
+    }
+  }
+  // Cream dollops around the top border.
+  for (let d = 0; d < 22; d++) {
+    const a0 = d / 22 * TAU, br = 0.03;
+    const cx = Math.cos(a0) * (R_C - 0.035), cz = Math.sin(a0) * (R_C - 0.035);
+    for (let j = 0; j < 60; j++) {
+      const zz = 1 - (j + 0.5) / 60, rr = Math.sqrt(1 - zz * zz), phi = j * 2.39996;
+      const nx = rr * Math.cos(phi), nz = rr * Math.sin(phi);
+      add(cx + nx * br, H_C + zz * br * 0.9, cz + nz * br, nx, zz, nz, K_DOLLOP, P_CREAM, -1, rng());
+    }
+  }
+  // Sprinkles: short sticks of colour on the frosting.
+  for (let i = 0; i < 70; i++) {
+    const r = Math.sqrt(rng()) * (R_C - 0.08), a = rng() * TAU, d = rng() * Math.PI;
+    if (r < 0.04) continue;
+    const p = P_SPRS[(rng() * P_SPRS.length) | 0], ph = rng();
+    const t0 = T.LAND + T.LAND_DUR - 0.25 + rng() * 0.25;
+    for (let j = 0; j < 3; j++) {
+      const o = (j - 1) * 0.008;
+      add(Math.cos(a) * r + Math.cos(d) * o, H_C + 0.012, Math.sin(a) * r + Math.sin(d) * o, 0, 1, 0, K_SPRK, p, t0, ph);
+    }
+  }
+  // Candle: pink-and-white helix stripes, plus a wick. Not part of the swirl-in.
+  const CANDLE_I0 = B.x.length;
+  cylinder(CAN_R, H_C, H_C + CAN_H, 1000, (c, s, y, a, r) => {
+    const stripe = Math.sin(a + (y - H_C) * 70) > 0.15;
+    add(c * r, y, s * r, c, 0, s, K_CANDLE, stripe ? P_CPINK : P_CWHITE, T.CANDLE, stripe ? 1 : 0);
+  });
+  annulus(0, CAN_R, 60, (x, z) => add(x, H_C + CAN_H, z, 0, 1, 0, K_CANDLE, P_CWHITE, T.CANDLE, 0));
+  for (let j = 0; j < 20; j++) add(0, H_C + CAN_H + j * 0.0008, 0, 0, 1, 0.5, K_WICK, P_WICK, T.CANDLE, 0);
+  const CANDLE_I1 = B.x.length;
+
+  const N = B.x.length;
+  const PX = Float32Array.from(B.x), PY = Float32Array.from(B.y), PZ = Float32Array.from(B.z);
+  const NX = Float32Array.from(B.nx), NY = Float32Array.from(B.ny), NZ = Float32Array.from(B.nz);
+  const KD = Uint8Array.from(B.k), PP = Uint16Array.from(B.p);
+  const T0 = Float32Array.from(B.t0), PH = Float32Array.from(B.ph);
+  // Swirl-in start (cylindrical): radius, height, extra spin. Flame-light factor per point.
+  const FR = new Float32Array(N), FYS = new Float32Array(N), FSW = new Float32Array(N), FL = new Float32Array(N);
+  const RT = new Float32Array(N), AT = new Float32Array(N);
+  for (let i = 0; i < N; i++) {
+    RT[i] = Math.hypot(PX[i], PZ[i]); AT[i] = Math.atan2(PZ[i], PX[i]);
+    FR[i] = 0.55 + 0.75 * rng(); FYS[i] = PY[i] + (rng() - 0.3) * 0.7; FSW[i] = 2.2 + 2.2 * rng();
+    const d2 = PX[i] * PX[i] + (PY[i] - FLAME_Y) ** 2 + PZ[i] * PZ[i];
+    FL[i] = 0.75 * Math.exp(-d2 / 0.07) * (NY[i] > 0.5 ? 1 : 0.55);
+  }
+
+  const NCOLOR = PAL.length * LEVELS;
+  const COLSTR = new Array(NCOLOR);
+  PAL.forEach(([r, g, b], p) => {
+    for (let l = 0; l < LEVELS; l++) {
+      // Top levels overshoot 1 and wash toward white, so lit characters read as glowing.
+      const m = 0.3 + 1.05 * l / (LEVELS - 1), w = Math.max(0, m - 1) * 160;
+      const lift = v => Math.min(255, v * m + w) | 0;
+      COLSTR[p * LEVELS + l] = `rgb(${lift(r)},${lift(g)},${lift(b)})`;
+    }
+  });
+  const STAR_COLS = [];
+  for (let l = 0; l < 8; l++) STAR_COLS.push(`rgba(255,215,170,${(0.04 + 0.3 * l / 7).toFixed(3)})`);
+
+  // ---------- Block letters: 5x7 dot-matrix font ----------
+  const FONT = {
+    H: ['10001', '10001', '10001', '11111', '10001', '10001', '10001'],
+    A: ['01110', '10001', '10001', '11111', '10001', '10001', '10001'],
+    P: ['11110', '10001', '10001', '11110', '10000', '10000', '10000'],
+    Y: ['10001', '10001', '01010', '00100', '00100', '00100', '00100'],
+    B: ['11110', '10001', '10001', '11110', '10001', '10001', '11110'],
+    I: ['01110', '00100', '00100', '00100', '00100', '00100', '01110'],
+    R: ['11110', '10001', '10001', '11110', '10100', '10010', '10001'],
+    T: ['11111', '00100', '00100', '00100', '00100', '00100', '00100'],
+    D: ['11100', '10010', '10001', '10001', '10001', '10010', '11100']
+  };
+  const WORDS = ['HAPPY', 'BIRTHDAY'];
+  const NLET = WORDS[0].length + WORDS[1].length;
+  const dL = [], dX = [], dY = [], dPh = [];
+  const letLine = new Uint8Array(NLET), letPos = new Uint8Array(NLET);
+  {
+    let li = 0;
+    WORDS.forEach((w, line) => {
+      for (let j = 0; j < w.length; j++, li++) {
+        letLine[li] = line; letPos[li] = j;
+        FONT[w[j]].forEach((row, y) => {
+          for (let x = 0; x < 5; x++) if (row[x] === '1') { dL.push(li); dX.push(x); dY.push(y); dPh.push(rng() * TAU); }
+        });
+      }
+    });
+  }
+  const ND = dL.length;
+  const DL = Uint8Array.from(dL), DX = Uint8Array.from(dX), DY = Uint8Array.from(dY), DPH = Float32Array.from(dPh);
+  const letX = new Float32Array(NLET), letOff = new Float32Array(NLET), letB = new Float32Array(NLET);
+  const LET_LV = 8;
+  const LET_BASE = [[255, 206, 112], [255, 122, 184]]; // HAPPY gold-cream, BIRTHDAY pink
+  const LET_COLS = LET_BASE.map(([r, g, b]) => {
+    const a = [];
+    for (let l = 0; l < LET_LV; l++) {
+      const m = 0.55 + 0.75 * l / (LET_LV - 1), w = Math.max(0, m - 1) * 200;
+      const lift = v => Math.min(255, v * m + w) | 0;
+      a.push(`rgb(${lift(r)},${lift(g)},${lift(b)})`);
+    }
+    a.push('#ffffff');
+    return a;
+  });
+  const LET_CH = ['+', '*', '#', '#', '#', '@', '@', '@', '@'];
+
+  // ---------- Optional ?name= (drawn with fillText only, never as HTML) ----------
+  let rawName = null;
+  try { rawName = new URLSearchParams(location.search).get('name'); } catch (e) {}
+  let NAME = rawName ? Array.from(String(rawName).replace(/[\u0000-\u001f\u007f-\u009f​-‏‪-‮⁦-⁩]/g, ' ')
+    .replace(/\s+/g, ' ').trim()).slice(0, 20).join('').trim() : '';
+  const NAME_STR = NAME ? `~ ${NAME} ~` : '';
+  const NAME_CHARS = Array.from(NAME_STR);
+
+  // ---------- Canvas, grid, layout ----------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const hudEl = document.getElementById('hud');
+  const hintEl = document.getElementById('hint');
+
+  let W = 0, H = 0, fs = 10, cw = 6, ch = 11, cols = 0, rows = 0;
+  let S = 300, ox = 0, oy = 0, bgGrad = null, cellFont = '', confFont = '';
+  let du = 10, dsx = 3, dsy = 2, lcw = 3, lch = 5, letFont = '', lineY0 = 0, lineY1 = 0;
+  let nameFs = 12, nameFont = '', nameY = 0, nameCw = 7;
+  let zbuf, stampA, cchar, ccol, ckind, clb, touched, order, nT = 0, stamp = 0;
+  const counts = new Uint32Array(NCOLOR);
+  let skyDots = [];
+  let needResize = true, dirty = true;
+  let halo = null, sparkHalo = null;
+
+  function resize() {
+    needResize = false;
+    W = canvas.clientWidth || innerWidth;
+    H = canvas.clientHeight || innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    fs = clamp(Math.round(Math.min(W, H * 0.8) / 80), 7, 14);
+    cellFont = `${fs}px ${MONO}`;
+    confFont = `700 ${Math.round(fs * 1.45)}px ${MONO}`;
+    ctx.font = cellFont;
+    cw = ctx.measureText('M').width || fs * 0.6;
+    ch = fs * 1.1;
+    cols = Math.ceil(W / cw);
+    rows = Math.ceil(H / ch);
+    const n = cols * rows;
+    zbuf = new Float32Array(n); stampA = new Uint32Array(n);
+    cchar = new Uint8Array(n); ccol = new Uint16Array(n); ckind = new Uint8Array(n); clb = new Float32Array(n);
+    touched = new Int32Array(n); order = new Int32Array(n); stamp = 0;
+
+    // Letter "pixel" size: ~1/12 of the width per letter (narrow screens: as wide as BIRTHDAY's 47 dots allow),
+    // and leave room for the cake.
+    du = Math.min(W < 700 ? W : W / 72, (W - 28) / 47, H * 0.3 / 15.6);
+    // Each dot is a little cluster of characters: 3x2 on big screens, 2x2 on small ones.
+    dsx = du >= 12 ? 3 : 2; dsy = 2;
+    lcw = du / dsx; lch = du / dsy;
+    letFont = `700 ${(lcw / 0.6).toFixed(1)}px ${MONO}`;
+
+    nameFs = NAME_STR ? Math.max(11, Math.min(fs * 1.9, (W - 32) / (NAME_CHARS.length * 0.62))) : 0;
+    nameFont = `700 ${nameFs.toFixed(1)}px ${MONO}`;
+    ctx.font = nameFont;
+    nameCw = ctx.measureText('M').width;
+
+    // Words block + cake (flame tip ~0.64 S above pivot, stand ~0.5 S below; plate half width ~0.64 S) + name line.
+    const TOP = 52, BOT = 58, UP = 0.64, DOWN = 0.5;
+    const wordsH = 15.2 * du, gap = Math.max(10, du * 0.8), nameH = nameFs * 1.8;
+    S = Math.max(40, Math.min(H * 0.62, (W / 2 - 14) / 0.64, (H - TOP - BOT - wordsH - gap - nameH) / (UP + DOWN)));
+    const spare = Math.max(0, H - TOP - BOT - wordsH - gap - nameH - (UP + DOWN) * S);
+    const top = TOP + spare * 0.35;
+    lineY0 = top;
+    lineY1 = top + 8.2 * du;
+    ox = W / 2;
+    oy = top + wordsH + gap + spare * 0.3 + UP * S;
+    nameY = oy + DOWN * S + nameFs * 0.7;
+    for (let li = 0; li < NLET; li++) {
+      const w = WORDS[letLine[li]].length;
+      letX[li] = W / 2 - (w * 6 - 1) * du / 2 + letPos[li] * 6 * du;
+    }
+
+    bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, '#020203');
+    bgGrad.addColorStop(1, '#060406');
+
+    // Flame halo sprites (pre-rendered; scaled each frame).
+    halo = sprite(128, [[0, 'rgba(255,214,140,0.9)'], [0.12, 'rgba(255,170,70,0.55)'], [0.4, 'rgba(255,120,40,0.16)'], [1, 'rgba(255,100,30,0)']]);
+    sparkHalo = sprite(64, [[0, 'rgba(255,255,255,1)'], [0.25, 'rgba(255,220,150,0.6)'], [1, 'rgba(255,200,120,0)']]);
+
+    const r2 = mulberry32(9);
+    const nDots = Math.round(cols * rows * 0.006);
+    const SCH = ['.', '.', '·', '+'];
+    skyDots = [];
+    for (let i = 0; i < nDots; i++) {
+      skyDots.push({ x: ((r2() * cols) | 0) * cw, y: ((r2() * rows) | 0) * ch, c: SCH[(r2() * 4) | 0], ph: r2() * TAU, sp: 0.4 + r2() * 1.6 });
+    }
+    resizeConfetti();
+    dirty = true;
+  }
+
+  function sprite(size, stops) {
+    const c = document.createElement('canvas');
+    c.width = c.height = size;
+    const x = c.getContext('2d'), R = size / 2, g = x.createRadialGradient(R, R, 0, R, R, R);
+    for (const [o, col] of stops) g.addColorStop(o, col);
+    x.fillStyle = g; x.fillRect(0, 0, size, size);
+    return c;
+  }
+
+  // ---------- Projection + z-buffered splat ----------
+  let cr = 1, sr = 0, t = 0, rot = ROT0, skyT = 0;
+  let projX = 0, projY = 0, flameI = 0, flameShow = 0, flameN = 0, flameN2 = 0;
+
+  function project(x, y, z) {
+    const rz = z * cr - x * sr, rx = x * cr + z * sr, yy = y - PIVOT;
+    const y2 = yy * ct - rz * st, z2 = yy * st + rz * ct;
+    const f = CAM_D / (CAM_D - z2);
+    projX = ox + rx * S * f; projY = oy - y2 * S * f;
+  }
+
+  function splat(x, y, z, nx, ny, nz, k, p, ph, ex) {
+    const rx = x * cr + z * sr, rz = z * cr - x * sr, yy = y - PIVOT;
+    const y2 = yy * ct - rz * st, z2 = yy * st + rz * ct;
+    const f = CAM_D / (CAM_D - z2);
+    const px = ox + rx * S * f, py = oy - y2 * S * f;
+    if (px < 0 || py < 0) return;
+    const col = (px / cw) | 0, row = (py / ch) | 0;
+    if (col >= cols || row >= rows) return;
+    const c = row * cols + col;
+    const fresh = stampA[c] !== stamp;
+    if (!fresh && zbuf[c] >= z2) return;
+
+    const rnx = nx * cr + nz * sr, rnz = nz * cr - nx * sr;
+    const ny2 = ny * ct - rnz * st, nz2 = ny * st + rnz * ct;
+    let lam = rnx * LX + ny2 * LY + nz2 * LZ;
+    if (lam < 0) lam = 0;
+    let dd = (z2 + 0.75) / 1.5;
+    dd = 0.6 + 0.4 * (dd < 0 ? 0 : dd > 1 ? 1 : dd);
+
+    let b, cc;
+    switch (k) {
+      case K_SPONGE:
+        b = clamp((0.3 + 0.55 * lam) * dd + ex, 0, 0.9);
+        cc = C_RAMP[clamp((2.5 + b * 6 + (ph - 0.5) * 2.4) | 0, 2, 8)]; break;
+      case K_CREAM:
+        b = clamp((0.6 + 0.4 * lam) * dd + ex, 0, 1); cc = C_EQ; break;
+      case K_DRIP:
+        b = clamp((0.4 + 0.5 * lam) * dd + ex, 0, 0.85); cc = b > 0.55 ? C_BAR : C_COLON; break;
+      case K_DOLLOP:
+        b = clamp((0.35 + 0.65 * lam) * dd + ex, 0, 1); cc = lam > 0.9 ? C_AT : b > 0.55 ? C_O : C_o; break;
+      case K_FROST:
+        b = clamp((0.3 + 0.7 * lam) * dd + ex, 0, 1);
+        cc = C_RAMP[clamp((2 + b * 6.99 + (ph - 0.5) * 2) | 0, 1, 8)]; break;
+      case K_SPRK:
+        b = clamp(0.62 + 0.38 * lam + ex * 0.4, 0, 1); cc = C_SPR[(ph * C_SPR.length) | 0]; break;
+      case K_PLATE:
+        b = clamp((0.15 + 0.6 * lam) * dd + ex * 0.5, 0, 1);
+        cc = C_RAMP[clamp((b * 4.5 + (ph - 0.5) * 1.5) | 0, 0, 4)]; break;
+      case K_RIM:
+        b = clamp((0.35 + 0.65 * lam) * dd + ex * 0.5, 0, 1); cc = b > 0.6 ? C_EQ : C_DASH; break;
+      case K_CANDLE:
+        b = clamp((0.4 + 0.6 * lam) * dd + ex, 0, 1); cc = ph > 0.5 ? C_SLASH : C_BAR; break;
+      case K_WICK:
+        b = clamp(0.3 + ex, 0, 1); cc = C_BAR; break;
+      default: // K_FLY: warm speck
+        b = clamp(ex, 0, 1); cc = b > 0.8 ? C_STAR : b > 0.55 ? C_PLUS : C_DOT;
+    }
+    if (fresh) { stampA[c] = stamp; touched[nT++] = c; }
+    zbuf[c] = z2; cchar[c] = cc; ccol[c] = p * LEVELS + ((b * 15.99) | 0); ckind[c] = k; clb[c] = b;
+  }
+
+  // Write one cell directly (flame); always on top.
+  function stampCell(col, row, cc, p, b) {
+    if (col < 0 || row < 0 || col >= cols || row >= rows) return;
+    const c = row * cols + col;
+    if (stampA[c] !== stamp) { stampA[c] = stamp; touched[nT++] = c; }
+    zbuf[c] = 99; cchar[c] = cc; ccol[c] = p * LEVELS + ((clamp(b, 0, 1) * 15.99) | 0); ckind[c] = K_FLAME; clb[c] = b;
+  }
+
+  // Candle slides down into the top: falls, then a small settle bounce.
+  function candleDy() {
+    const p = (t - T.CANDLE) / T.CANDLE_DUR;
+    if (p >= 1) return 0;
+    if (p < 0.7) { const e = 1 - p / 0.7; return 0.55 * e * e * e; }
+    return 0.012 * Math.sin(Math.PI * (p - 0.7) / 0.3);
+  }
+
+  function buildCake() {
+    stamp++; nT = 0;
+    const cdy = candleDy();
+    const lightK = flameI * 0.85;
+    for (let i = 0; i < N; i++) {
+      const t0 = T0[i];
+      const k = KD[i];
+      if (i >= CANDLE_I0 && i < CANDLE_I1) {
+        if (t < t0) continue;
+        const a = clamp((t - t0) / 0.35, 0, 1);
+        splat(PX[i], PY[i] + cdy, PZ[i], NX[i], NY[i], NZ[i], k, PP[i], PH[i], (a - 1) * 0.5 + FL[i] * lightK);
+        continue;
+      }
+      if (t < t0 - T.FLY) continue;
+      if (t < t0) {
+        // In flight: only one in six particles is drawn, as warm specks spiralling in.
+        if (i % 6 !== 0) continue;
+        const p = (t - (t0 - T.FLY)) / T.FLY, e = 1 - (1 - p) * (1 - p) * (1 - p);
+        const r = FR[i] + (RT[i] - FR[i]) * e, a = AT[i] + FSW[i] * (1 - e) * (1 - e);
+        const y = FYS[i] + (PY[i] - FYS[i]) * e;
+        splat(Math.cos(a) * r, y, Math.sin(a) * r, 0, 1, 0, K_FLY, P_SPECK, 0, 0.3 + 0.7 * p);
+        continue;
+      }
+      const age = t - t0;
+      const flash = age < 0.35 ? 0.45 * (1 - age / 0.35) : 0;
+      splat(PX[i], PY[i], PZ[i], NX[i], NY[i], NZ[i], k, PP[i], PH[i], flash + FL[i] * lightK);
+    }
+    buildFlame();
+  }
+
+  // ---------- Flame: noise-driven teardrop written straight into the grid ----------
+  let wickX = 0, wickY = 0;
+  function buildFlame() {
+    project(0, WICK_Y, 0);
+    wickX = projX; wickY = projY;
+    if (flameShow <= 0.01) return;
+    const Hf = S * 0.2 * flameShow * (0.92 + 0.1 * flameN), Wf = S * 0.06 * Math.sqrt(flameShow);
+    const baseY = wickY + S * 0.012;
+    const c0 = Math.floor((wickX - Wf * 1.6) / cw), c1 = Math.ceil((wickX + Wf * 1.6) / cw);
+    const r0 = Math.floor((baseY - Hf * 1.1) / ch), r1 = Math.ceil(baseY / ch);
+    for (let row = r0; row <= r1; row++) {
+      const s = (baseY - (row + 0.5) * ch) / Hf;
+      if (s <= 0 || s >= 1) continue;
+      // Teardrop: round belly low down, a point at the tip, swaying more toward the tip.
+      const rad = 1.75 * Math.sqrt(s) * Math.pow(1 - s, 1.05);
+      const sway = flameN2 * 0.55 * s * s;
+      for (let col = c0; col <= c1; col++) {
+        const u = ((col + 0.5) * cw - wickX) / Wf - sway;
+        const q = 1 - Math.abs(u) / (rad + 0.18);
+        if (q <= 0) continue;
+        const heat = q * (1.15 - s * 0.9) * flameI;
+        let p, cc;
+        if (heat > 0.62) { p = P_FLAME[3]; cc = C_AT; }
+        else if (heat > 0.42) { p = P_FLAME[2]; cc = C_HASH; }
+        else if (heat > 0.22) { p = P_FLAME[1]; cc = s > 0.6 ? C_PLUS : C_STAR; }
+        else { p = P_FLAME[0]; cc = s > 0.7 ? C_DOT : C_COLON; }
+        stampCell(col, row, cc, p, 0.75 + 0.35 * heat + 0.1 * flameN);
+      }
+    }
+  }
+
+  function drawCells() {
+    counts.fill(0);
+    for (let i = 0; i < nT; i++) counts[ccol[touched[i]]]++;
+    let acc = 0;
+    for (let c = 0; c < NCOLOR; c++) { const n = counts[c]; counts[c] = acc; acc += n; }
+    for (let i = 0; i < nT; i++) { const c = touched[i]; order[counts[ccol[c]]++] = c; }
+    let cur = -1;
+    for (let i = 0; i < nT; i++) {
+      const c = order[i], cc = ccol[c];
+      if (cc !== cur) { cur = cc; ctx.fillStyle = COLSTR[cc]; }
+      const row = (c / cols) | 0;
+      ctx.fillText(CH[cchar[c]], (c - row * cols) * cw, row * ch);
+    }
+  }
+
+  // ---------- Sky, flame glow, letters, name, confetti, smoke ----------
+  function drawSky() {
+    for (let i = 0; i < skyDots.length; i++) {
+      const s = skyDots[i];
+      ctx.fillStyle = STAR_COLS[((0.5 + 0.5 * Math.sin(skyT * s.sp + s.ph)) * 7.99) | 0];
+      ctx.fillText(s.c, s.x, s.y);
+    }
+  }
+
+  function drawFlameGlow(fade) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    if (flameShow > 0.01) {
+      const R = S * 0.62 * (0.95 + 0.06 * flameN);
+      ctx.globalAlpha = clamp(flameI * 0.4, 0, 1) * fade;
+      ctx.drawImage(halo, wickX - R, wickY - S * 0.08 - R, R * 2, R * 2);
+      const r2 = S * 0.12;
+      ctx.globalAlpha = clamp(flameI * 0.22, 0, 1) * fade;
+      ctx.drawImage(sparkHalo, wickX - r2, wickY - S * 0.08 - r2, r2 * 2, r2 * 2);
+    }
+    // Ignition spark.
+    const a = t - T.LIGHT;
+    if (a >= 0 && a < 0.5) {
+      const p = a / 0.5, r = S * (0.05 + 0.2 * p);
+      ctx.globalAlpha = (1 - p) * (1 - p);
+      ctx.drawImage(sparkHalo, wickX - r, wickY - r, r * 2, r * 2);
+    }
+    ctx.restore();
+  }
+
+  function dropOff(p) {
+    if (p >= 1) return 0;
+    if (p < 0.6) { const x = p / 0.6; return 1 - x * x; }
+    return 0.07 * Math.sin(Math.PI * (p - 0.6) / 0.4);
+  }
+
+  let letterChars = 0;
+  function drawLetters(fade) {
+    letterChars = 0;
+    if (t < T.WORDS) return;
+    for (let li = 0; li < NLET; li++) {
+      const a = t - (T.WORDS + li * T.LETTER);
+      letB[li] = a < 0 ? -1 : a;
+      letOff[li] = a < 0 ? 0 : -dropOff(a / T.DROP) * 6 * du;
+    }
+    ctx.font = letFont;
+    for (let d = 0; d < ND; d++) {
+      const li = DL[d], age = letB[li];
+      if (age < 0) continue;
+      ctx.globalAlpha = fade * smooth(age / (T.DROP * 0.45));
+      const line = letLine[li];
+      const px = letX[li] + DX[d] * du, py = (line ? lineY1 : lineY0) + DY[d] * du + letOff[li];
+      if (py < -du) continue;
+      const tw = 0.5 + 0.5 * Math.sin(skyT * 2.6 + DPH[d] + li * 0.7);
+      let lv = (0.45 + 0.55 * tw * tw) * (LET_LV - 1);
+      // Landing flash, then an occasional white twinkle.
+      const land = age - T.DROP * 0.6;
+      if (land > 0 && land < 0.18) lv = LET_LV;
+      else if (Math.sin(skyT * 1.3 + DPH[d] * 3) > 0.985) lv = LET_LV;
+      const li2 = lv | 0;
+      ctx.fillStyle = LET_COLS[line][li2];
+      const c = LET_CH[li2];
+      for (let sy = 0; sy < dsy; sy++)
+        for (let sx = 0; sx < dsx; sx++) ctx.fillText(c, px + sx * lcw, py + sy * lch);
+      letterChars += dsx * dsy;
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawName(fade) {
+    if (!NAME_STR || t < T.NAME) return;
+    const n = Math.min(NAME_CHARS.length, Math.floor((t - T.NAME) / T.NAME_CH) + 1);
+    ctx.font = nameFont;
+    const x0 = W / 2 - NAME_CHARS.length * nameCw / 2;
+    for (let i = 0; i < n; i++) {
+      const age = t - (T.NAME + i * T.NAME_CH);
+      ctx.globalAlpha = fade * (0.82 + 0.15 * Math.sin(skyT * 2.2 + i * 0.9));
+      ctx.fillStyle = age < 0.15 ? '#ffffff' : (i < 2 || i >= NAME_CHARS.length - 2) ? '#ff8cc6' : '#fbe8c8';
+      ctx.fillText(NAME_CHARS[i], x0 + i * nameCw, nameY);
+    }
+    ctx.globalAlpha = 1;
+    letterChars += n;
+  }
+
+  // Confetti: [x, y, vy, phase, flutter rate, sway amp, colour, char, alive]
+  const CF = 9, CONF_MAX = 220;
+  const conf = new Float32Array(CONF_MAX * CF);
+  const CONF_COLS = ['#ff5a8a', '#ffd84a', '#5ab4ff', '#7dffa0', '#ff9a3c', '#c78bff', '#ffffff'];
+  const CONF_CH = ['*', '+', '~', '.', 'o'];
+  const CONF_ALT = ['+', 'x', '-', '\'', '.'];
+  let confN = 0, confAlive = 0, confOn = false;
+  const cr2 = mulberry32(31);
+  function resizeConfetti() { confN = Math.min(CONF_MAX, Math.round(W * H / 4200 * CONF_FACTOR)); }
+  function spawnConf(o, y) {
+    conf[o] = cr2() * W; conf[o + 1] = y;
+    conf[o + 2] = H * (0.07 + 0.08 * cr2()) * (reduced ? 0.6 : 1);
+    conf[o + 3] = cr2() * TAU; conf[o + 4] = 2 + 5 * cr2(); conf[o + 5] = 10 + 30 * cr2();
+    conf[o + 6] = (cr2() * CONF_COLS.length) | 0; conf[o + 7] = (cr2() * CONF_CH.length) | 0; conf[o + 8] = 1;
+  }
+  function clearConf() { for (let o = 0; o < conf.length; o += CF) conf[o + 8] = 0; confOn = false; }
+  function updateConf(dt) {
+    if (!confOn && t >= T.CONF && t < T.CONF_END) {
+      confOn = true;
+      for (let i = 0; i < confN; i++) spawnConf(i * CF, -10 - cr2() * H * 0.9);
+    }
+    confAlive = 0;
+    for (let i = 0; i < confN; i++) {
+      const o = i * CF;
+      if (!conf[o + 8]) continue;
+      conf[o + 1] += conf[o + 2] * dt;
+      conf[o + 3] += conf[o + 4] * dt;
+      conf[o] += Math.cos(conf[o + 3] * 0.5) * conf[o + 5] * dt;
+      if (conf[o + 1] > H + 10) {
+        if (t < T.CONF_END) spawnConf(o, -10); else conf[o + 8] = 0;
+      }
+      if (conf[o] < -10) conf[o] += W + 20; else if (conf[o] > W + 10) conf[o] -= W + 20;
+      if (conf[o + 8] && conf[o + 1] > 0 && conf[o + 1] < H) confAlive++;
+    }
+  }
+  function drawConf(fade) {
+    if (!confOn && confAlive === 0) return;
+    ctx.font = confFont;
+    for (let c = 0; c < CONF_COLS.length; c++) {
+      ctx.fillStyle = CONF_COLS[c];
+      for (let i = 0; i < confN; i++) {
+        const o = i * CF;
+        if (!conf[o + 8] || conf[o + 6] !== c || conf[o + 1] < -10) continue;
+        // Flutter: the bit flips edge-on and dims as it tumbles.
+        const fl = Math.sin(conf[o + 3]);
+        ctx.globalAlpha = fade * (0.45 + 0.55 * Math.abs(fl));
+        const k = conf[o + 7];
+        ctx.fillText(fl > -0.3 ? CONF_CH[k] : CONF_ALT[k], conf[o], conf[o + 1]);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // Smoke after the blow-out: [x0, y, age, life, phase, alive]
+  const SF = 6, SMOKE_N = 60;
+  const smoke = new Float32Array(SMOKE_N * SF);
+  let smokeAcc = 0, smokeNext = 0;
+  const SMOKE_COLS = [];
+  for (let l = 0; l < 8; l++) SMOKE_COLS.push(`rgba(200,196,192,${(0.1 + 0.75 * l / 7).toFixed(3)})`);
+  function clearSmoke() { for (let o = 0; o < smoke.length; o += SF) smoke[o + 5] = 0; smokeAcc = 0; }
+  function updateSmoke(dt) {
+    if (t >= T.BLOW + 0.1 && t < T.SMOKE_END) {
+      smokeAcc += dt;
+      project(0, WICK_Y, 0);
+      while (smokeAcc > 0.045) {
+        smokeAcc -= 0.045;
+        const o = smokeNext * SF; smokeNext = (smokeNext + 1) % SMOKE_N;
+        smoke[o] = projX + (cr2() - 0.5) * cw; smoke[o + 1] = projY - ch * 0.5;
+        smoke[o + 2] = 0; smoke[o + 3] = 1.4 + cr2() * 0.9; smoke[o + 4] = cr2() * 0.8; smoke[o + 5] = 1;
+      }
+    }
+    for (let o = 0; o < smoke.length; o += SF) {
+      if (!smoke[o + 5]) continue;
+      smoke[o + 2] += dt;
+      smoke[o + 1] -= (S * 0.16) * dt * (1 - 0.3 * smoke[o + 2] / smoke[o + 3]);
+      if (smoke[o + 2] > smoke[o + 3]) smoke[o + 5] = 0;
+    }
+  }
+  function drawSmoke() {
+    ctx.font = cellFont;
+    for (let o = 0; o < smoke.length; o += SF) {
+      if (!smoke[o + 5]) continue;
+      const a = smoke[o + 2], q = a / smoke[o + 3];
+      // A lazy S-curl that widens as it rises.
+      const x = smoke[o] + Math.sin(a * 3.2 + smoke[o + 4]) * S * 0.05 * (0.3 + a);
+      ctx.fillStyle = SMOKE_COLS[((1 - q) * 7.99) | 0];
+      ctx.fillText(q < 0.45 ? '~' : q < 0.75 ? ':' : '.', x, smoke[o + 1]);
+    }
+  }
+
+  const glow = document.createElement('canvas'), gctx = glow.getContext('2d');
+  const GLOW_DIV = 5, GLOW_A = 0.9;
+  function drawGlow() {
+    const gw = Math.ceil(W / GLOW_DIV), gh = Math.ceil(H / GLOW_DIV);
+    if (glow.width !== gw || glow.height !== gh) { glow.width = gw; glow.height = gh; }
+    gctx.setTransform(1, 0, 0, 1, 0, 0);
+    gctx.globalCompositeOperation = 'copy';
+    gctx.filter = 'blur(2px)';
+    gctx.drawImage(canvas, 0, 0, gw, gh);
+    gctx.filter = 'none';
+    gctx.globalCompositeOperation = 'difference';
+    gctx.setTransform(gw / W, 0, 0, gh / H, 0, 0);
+    gctx.fillStyle = bgGrad;
+    gctx.fillRect(0, 0, W, H);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = GLOW_A;
+    ctx.drawImage(glow, 0, 0, W, H);
+    ctx.restore();
+  }
+
+  function render() {
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+    ctx.textBaseline = 'top';
+    ctx.font = cellFont;
+    drawSky();
+    const fade = reduced ? 1 : 1 - smooth((t - T.FADE) / T.FADE_DUR);
+    buildCake();
+    ctx.globalAlpha = fade;
+    drawCells();
+    ctx.globalAlpha = 1;
+    drawFlameGlow(fade);
+    drawLetters(fade);
+    drawName(fade);
+    drawGlow();
+    drawSmoke();
+    drawConf(fade);
+  }
+
+  // ---------- Time, loop, HUD, controls ----------
+  function updateFlame() {
+    // Sum of incommensurate sines as cheap 1D noise.
+    flameN = 0.5 * Math.sin(skyT * 11.3) + 0.3 * Math.sin(skyT * 17.9 + 1.3) + 0.2 * Math.sin(skyT * 29.1 + 4.1);
+    flameN2 = 0.6 * Math.sin(skyT * 3.1 + 0.4) + 0.4 * Math.sin(skyT * 7.7 + 2.2);
+    const grow = smooth((t - T.LIGHT - 0.1) / (T.LIGHT_DUR - 0.1));
+    const out = 1 - smooth((t - T.BLOW) / T.BLOW_DUR);
+    flameShow = grow * out;
+    flameI = flameShow * (0.88 + 0.1 * flameN);
+  }
+
+  function advance(dt) {
+    t += dt; skyT += dt;
+    if (reduced) { if (t > T_HOLD) t = T_HOLD; }
+    else if (t >= T.END) { t = 0; clearConf(); clearSmoke(); }
+    rot = ROT0 + SWAY_A * Math.sin(skyT * SWAY_W);
+    cr = Math.cos(rot); sr = Math.sin(rot);
+    updateFlame();
+    updateConf(dt);
+    updateSmoke(dt);
+  }
+
+  let paused = false, last = performance.now();
+  let frames = 0, fpsT = last, fps = 0, hudT = 0, warmed = false;
+
+  function updateHud(now) {
+    const lit = flameShow > 0.05 ? 'candle lit' : 'candle off';
+    const tail = paused ? 'paused' : `${fps} fps`;
+    const head = `${lit}  flame ${flameI.toFixed(2)}  confetti ${confAlive}  `;
+    hudEl.textContent = W < 640 ? head + tail
+      : head + `letters ${(nT + letterChars).toLocaleString('en-US')}  ${tail}`;
+    hudT = now;
+  }
+
+  function frame(now) {
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); // no jumps after a hidden tab
+    last = now;
+    if (needResize) resize();
+    if (!warmed) {
+      // Fast-forward particle state to the start time (reduced motion opens on the finished scene).
+      warmed = true;
+      for (let i = 0; i < Math.round(T_START * 30); i++) advance(1 / 30);
+    }
+    if (!paused) advance(dt);
+    if (!paused || dirty) { render(); dirty = false; frames++; }
+    if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
+    if (now - hudT >= 250) updateHud(now);
+    requestAnimationFrame(frame);
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); }
+  function replay() { t = 0; clearConf(); clearSmoke(); paused = false; dirty = true; }
+
+  addEventListener('resize', () => { needResize = true; });
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return; // leave Cmd/Ctrl+R alone
+    if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
+    else if (e.key === 'r' || e.key === 'R') replay();
+  });
+  // Single tap = pause (decided after 280 ms), two quick taps = replay.
+  let tapTimer = 0;
+  canvas.addEventListener('pointerup', e => {
+    if (e.button > 0) return;
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; replay(); }
+    else tapTimer = setTimeout(() => { tapTimer = 0; togglePause(); }, 280);
+  });
+
+  // Hint language: ?lang= wins, then saved site preference, then browser.
+  let pref = null;
+  try { pref = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (!pref) { try { pref = localStorage.getItem('lang'); } catch (e) {} }
+  if (!pref) pref = navigator.language || 'en';
+  const zh = String(pref).toLowerCase().startsWith('zh');
+  document.documentElement.lang = zh ? 'zh-Hant' : 'en';
+  // Touch screens have no keyboard, and the full hint would not fit on a phone.
+  const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  hintEl.textContent = touch ? (zh ? '點擊暫停 · 雙擊重播' : 'tap to pause · double-tap to replay')
+                             : (zh ? '空白鍵 暫停 · R 重播 · 點擊暫停 · 雙擊重播'
+                                   : 'Space pause · R replay · click to pause · double-click to replay');
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

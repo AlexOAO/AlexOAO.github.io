@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ASCII Ocean Waves | Alex Li (李翔緯)</title>
+  <meta name="description" content="A moonlit open sea drawn entirely with ASCII characters: rolling swells in perspective, breaking crests with lingering foam and streaks of moonlight on the horizon. Vanilla JS on a single canvas.">
+  <meta name="theme-color" content="#030408">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;600;800&display=swap">
+  <style>
+    :root {
+      --bg: #0b1120;
+      --sky: #030408;
+      --text: #e6edf6;
+      --muted: #a3b1c6;
+      --accent: #3b82f6;
+      --mono: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--sky);
+      color: var(--text);
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    canvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100svh;
+      display: block;
+      touch-action: manipulation; /* no double-tap zoom: double-tap means reset */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .back {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(59, 130, 246, 0.45);
+      background: rgba(59, 130, 246, 0.12);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .back:hover, .back:focus-visible {
+      background: rgba(59, 130, 246, 0.28);
+      border-color: var(--accent);
+      outline: none;
+    }
+    .hud, .hint {
+      position: fixed;
+      z-index: 1;
+      bottom: 12px;
+      color: var(--muted);
+      opacity: 0.75;
+      font: 11px/1.4 var(--mono);
+      white-space: pre;
+      pointer-events: none;
+      max-width: calc(100% - 24px);
+      overflow: hidden;
+    }
+    .hud { left: 12px; }
+    .hint {
+      right: 12px;
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    @media (max-width: 640px) {
+      .hud, .hint { font-size: 10px; }
+      .hint { bottom: 30px; } /* stack above the HUD on narrow screens */
+    }
+  </style>
+</head>
+<body>
+  <h1 class="sr-only">ASCII Ocean Waves</h1>
+  <a class="back" href="./">← ASCII</a>
+  <canvas id="c" role="img" aria-label="Animated moonlit open sea drawn with ASCII characters, with swells rolling toward the viewer, breaking crests and white foam under a dark sky"></canvas>
+  <div class="hud" id="hud" aria-hidden="true"></div>
+  <div class="hint" id="hint"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T_START = 0;                       // scene time at load (headless tests change this)
+  const TIME_SCALE = reduced ? 0.35 : 0.8; // sea time per real second
+  const CYCLE = 22 * 0.8;                  // scene time of one calm -> big swells -> calm loop (~22 s real)
+
+  // ---------- Camera / world ----------
+  const HORIZON = 0.25;     // horizon at 25% of the screen height
+  const CAM_H = 3;          // camera height above mean sea level (world units)
+  const NEAR_EXTRA = 2;     // sample this much closer than the bottom row (big swells rise into view)
+  const FOAM_TAU = 1.4;     // seconds for foam to fade to 1/e
+  const FOAM_THR = 0.22;    // crest curvature that starts to break
+  const FOAM_GAIN = 7;
+  const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
+  // Moonlight from high up beyond the horizon (upper back), as seen from the camera.
+  const LX0 = 0.1, LY0 = 0.5, LZ0 = 0.86;
+  const LN = Math.hypot(LX0, LY0, LZ0);
+  const LX = LX0 / LN, LY = LY0 / LN, LZ = LZ0 / LN;
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+
+  // ---------- Waves ----------
+  // [wavelength, amplitude, direction (rad from "toward the camera"), shaped crest?, grows with the swell cycle?]
+  // Shaped waves use ((1+sin)^3/4 - 0.625): sharp crests, flat troughs, zero mean.
+  const WAVES = [
+    [24, 0.5, 0.00, 1, 1],
+    [15, 0.24, 0.22, 1, 1],
+    [10, 0.14, -0.3, 1, 1],
+    [6.2, 0.09, 0.7, 0, 0],
+    [3.7, 0.065, -1.0, 0, 0],
+    [2.3, 0.04, 0.45, 0, 0],
+    [1.4, 0.024, -0.6, 0, 0],
+    [0.9, 0.014, 1.3, 0, 0]
+  ];
+  const NW = WAVES.length;
+  const KX = new Float32Array(NW), KZ = new Float32Array(NW), KK = new Float32Array(NW),
+        OM = new Float32Array(NW), A0 = new Float32Array(NW), PH0 = new Float32Array(NW),
+        SHP = new Uint8Array(NW), GROW = new Uint8Array(NW), LAM = new Float32Array(NW);
+  const wr = mulberry32(4242);
+  WAVES.forEach(([lam, a, dir, shp, grow], w) => {
+    const k = 2 * Math.PI / lam;
+    // Travelling toward the camera: phase k(d.x) + wt with d.z > 0 moves crests to smaller z.
+    KX[w] = k * Math.sin(dir); KZ[w] = k * Math.cos(dir); KK[w] = k * k;
+    OM[w] = Math.sqrt(9.8 * k); A0[w] = a; PH0[w] = wr() * 6.283;
+    SHP[w] = shp; GROW[w] = grow; LAM[w] = lam;
+  });
+  const AMP = new Float32Array(NW), PT = new Float32Array(NW);
+
+  // ---------- Characters & colours ----------
+  const CH = [...' .,-~:;=+*#%@'];
+  const NRAMP = CH.length - 1;
+  const C_STAR = CH.indexOf('*'), C_PCT = CH.indexOf('%'), C_AT = CH.indexOf('@'), C_DASH = CH.indexOf('-');
+
+  const LEVELS = 16;
+  const PAL = [];
+  const pal = (r, g, b) => { PAL.push([r, g, b]); return PAL.length - 1; };
+  const P_DEEP = pal(92, 112, 140);    // trough faces: dark steel blue
+  const P_SEA = pal(140, 158, 182);    // mid slopes
+  const P_CREST = pal(196, 205, 218);  // lit crests: grey-white
+  const P_GLINT = pal(214, 224, 240);  // moonlight streaks
+  const P_FOAM = pal(236, 241, 248);   // foam
+  const NCOLOR = PAL.length * LEVELS;
+  const COLSTR = new Array(NCOLOR);
+  PAL.forEach(([r, g, b], p) => {
+    for (let l = 0; l < LEVELS; l++) {
+      // Top levels overshoot 1 and wash toward white, so lit characters read as glowing.
+      const m = 0.3 + 1.05 * l / (LEVELS - 1), w = Math.max(0, m - 1) * 160;
+      const lift = v => Math.min(255, v * m + w) | 0;
+      COLSTR[p * LEVELS + l] = `rgb(${lift(r)},${lift(g)},${lift(b)})`;
+    }
+  });
+
+  // ---------- Canvas, grid, layout ----------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const hudEl = document.getElementById('hud');
+  const hintEl = document.getElementById('hint');
+
+  let W = 0, H = 0, fs = 9, cw = 5, ch = 10, cols = 0, rows = 0, hr = 0, hyPx = 0, F = 500;
+  let cellFont = '', bgGrad = null;
+  let cchar, ccol, touched, order, nT = 0;
+  let nS = 0, ZS, ATT, FOAM, FHASH;
+  const counts = new Uint32Array(NCOLOR);
+  let needResize = true, dirty = true;
+
+  function resize() {
+    needResize = false;
+    W = canvas.clientWidth || innerWidth;
+    H = canvas.clientHeight || innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    fs = clamp(Math.round(Math.min(W, H * 1.2) / 105), 7, 12);
+    cellFont = `${fs}px ${MONO}`;
+    ctx.font = cellFont;
+    cw = ctx.measureText('M').width || fs * 0.6;
+    ch = fs * 1.1;
+    cols = Math.ceil(W / cw);
+    rows = Math.ceil(H / ch);
+    hr = Math.round(H * HORIZON / ch);
+    hyPx = hr * ch;
+    F = Math.max(W * 0.72, H * 0.75);
+    const n = cols * rows;
+    cchar = new Uint8Array(n); ccol = new Uint16Array(n);
+    touched = new Int32Array(n); order = new Int32Array(n);
+
+    // Depth samples, near -> far. Each step is under one row at sea level; beyond the bottom row
+    // a few coarser samples catch swells that rise into view from below the frame.
+    const seaH = H - hyPx, zNear = CAM_H * F / seaH;
+    const zs = [];
+    let z = Math.max(0.8, zNear - NEAR_EXTRA);
+    while (z < zNear) { zs.push(z); z += 0.25; }
+    for (let dy = seaH; dy > ch * 0.3; dy -= ch * 0.7) zs.push(CAM_H * F / dy);
+    nS = zs.length;
+    ZS = Float32Array.from(zs);
+    // Per-sample wave fade: waves shorter than ~3 rows of depth would only alias into noise.
+    ATT = new Float32Array(nS * NW);
+    for (let i = 0; i < nS; i++) {
+      const zz = ZS[i], foot = zz * zz * ch / (CAM_H * F) + zz * cw / F;
+      for (let w = 0; w < NW; w++) ATT[i * NW + w] = clamp(LAM[w] / (foot * 3) - 0.5, 0, 1);
+    }
+    FOAM = new Float32Array(nS * cols);
+    FHASH = new Float32Array(nS * cols);
+    const r = mulberry32(99);
+    for (let i = 0; i < FHASH.length; i++) FHASH[i] = 0.45 + 0.9 * r();
+
+    bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, '#020305');
+    bgGrad.addColorStop(HORIZON * 0.9, '#070a11');
+    bgGrad.addColorStop(HORIZON, '#0c111a');
+    bgGrad.addColorStop(Math.min(1, HORIZON + 0.08), '#05070b');
+    bgGrad.addColorStop(1, '#030407');
+    dirty = true;
+  }
+
+  // ---------- Sea: column-wise height-field ray march on the character grid ----------
+  let t = T_START, swells = 0, foamCov = 0, intensity = 0;
+
+  function buildSea(dt) {
+    const ph = ((t % CYCLE) + CYCLE) % CYCLE / CYCLE;
+    intensity = reduced ? 0.15 : 0.5 - 0.5 * Math.cos(2 * Math.PI * ph);
+    const I = intensity;
+    for (let w = 0; w < NW; w++) {
+      AMP[w] = A0[w] * (GROW[w] ? 0.4 + 0.85 * I : 0.85 + 0.25 * I);
+      PT[w] = OM[w] * t + PH0[w];
+    }
+    // A wave group that sweeps in from far away and rears up in the foreground mid-cycle.
+    const gs = reduced ? 0 : Math.pow(Math.sin(Math.PI * Math.pow(ph, 1.5)), 2) * 0.8;
+    const zg = 72 - 75 * ph; // reaches the foreground late in the cycle
+    const thr = FOAM_THR, decay = Math.exp(-dt / FOAM_TAU);
+    const midC = cols >> 1;
+    const half = W / 2;
+    nT = 0; swells = 0;
+    let foamN = 0, seaN = 0;
+
+    for (let c = 0; c < cols; c++) {
+      const px = (c + 0.5) * cw - half;
+      let top = rows;
+      let prevH = -1e9, rising = false;
+      for (let i = 0; i < nS; i++) {
+        const z = ZS[i], x = px * z / F;
+        const dz = (z - zg) / 16, env = 1 + gs * Math.exp(-dz * dz);
+        let h = 0, hx = 0, hz = 0, K = 0;
+        const ab = i * NW;
+        for (let w = 0; w < NW; w++) {
+          let a = AMP[w] * ATT[ab + w];
+          if (a < 1e-4) continue;
+          if (GROW[w]) a *= env;
+          const th = KX[w] * x + KZ[w] * z + PT[w];
+          const s = Math.sin(th), co = Math.cos(th);
+          let g, gp, gpp;
+          if (SHP[w]) { const u = 1 + s, u2 = u * u; g = a * (u2 * u * 0.25 - 0.625); gp = a * 0.75 * u2 * co; gpp = a * 0.75 * (2 * u * co * co - u2 * s); }
+          else { g = a * s; gp = a * co; gpp = -g; }
+          h += g; hx += gp * KX[w]; hz += gp * KZ[w];
+          if (GROW[w]) K -= gpp * KK[w]; // only swells break; chop curvature is noise
+        }
+
+        // Foam lives at fixed sea positions: steep crests deposit it, then it fades as waves pass.
+        const fi = i * cols + c;
+        let f = FOAM[fi] * decay;
+        const st = K - thr;
+        if (st > 0 && h > 0) { const nf = st * FOAM_GAIN * FHASH[fi]; if (nf > f) f = nf > 1 ? 1 : nf; }
+        FOAM[fi] = f;
+        if (z > 30) f *= clamp(1.5 - z / 60, 0, 1); // distant foam thins into streaks
+
+        const sy = (hyPx + (CAM_H - h) * F / z) / ch;
+        let r0 = sy < 0 ? 0 : sy | 0; // a big crest may rise over the horizon
+        if (r0 >= top) continue;
+
+        if (c === midC) {
+          if (h > prevH) rising = true;
+          else if (rising && h < prevH - 0.01) { rising = false; swells++; }
+          prevH = h;
+        }
+
+        // Shade by slope toward the moon, plus a narrow glint toward the camera.
+        const nl = 1 / Math.sqrt(hx * hx + 1 + hz * hz);
+        const nx = -hx * nl, ny = nl, nz = -hz * nl;
+        const ndl = nx * LX + ny * LY + nz * LZ;
+        const vx = -x, vy = CAM_H - h, vz = -z, vl = 1 / Math.sqrt(vx * vx + vy * vy + vz * vz);
+        let hx2 = LX + vx * vl, hy2 = LY + vy * vl, hz2 = LZ + vz * vl;
+        const hl = 1 / Math.sqrt(hx2 * hx2 + hy2 * hy2 + hz2 * hz2);
+        let sp = (nx * hx2 + ny * hy2 + nz * hz2) * hl;
+        sp = sp > 0 ? sp : 0;
+        sp *= sp; sp *= sp; sp *= sp; sp *= sp; sp *= sp; // ^32
+        const near = z < 20 ? 0.12 * (1 - z / 20) : 0;
+        let b = 0.37 + near + 1.4 * (ndl - LY) + 0.8 * h / (1 + (h < 0 ? -h : h)) + 0.2 * sp + (K > 0 ? 1.1 * K : 0); // crest lines catch the light
+        // Distance haze: far rows blend toward a soft grey band with moonlit streaks.
+        const fog = clamp((z - 25) / 140, 0, 0.75);
+        b = b * (1 - fog) + fog * (0.4 + 1.2 * sp);
+        const bmax = 1 - 0.5 * fog; // far rows stay fine-grained (no @ blobs on the horizon)
+        if (b > bmax) b = bmax;
+
+        const foamy = f > 0.22;
+        let cc, pIdx, lv;
+        if (foamy) {
+          cc = f > 0.75 ? C_AT : f > 0.45 ? C_PCT : C_STAR;
+          if (z > 70) cc = C_DASH;
+          pIdx = P_FOAM; lv = 9 + ((f * 6.99) | 0);
+        } else {
+          pIdx = sp > 0.35 ? P_GLINT : b > 0.62 ? P_CREST : b > 0.32 ? P_SEA : P_DEEP;
+          lv = (b * 15.99) | 0;
+        }
+
+        for (let r = r0; r < top; r++) {
+          // Faces below the top edge face the camera and fall into the moon's shadow.
+          let bb = b;
+          if (r > r0) { bb = b - 0.025 * (r - r0); if (bb < 0.2) bb = 0.2; if (foamy && r - r0 < 2) bb = b; }
+          if (r >= rows) continue;
+          const cell = r * cols + c;
+          if (foamy && (r - r0 < 2 || bb > 0.4)) {
+            cchar[cell] = cc; ccol[cell] = pIdx * LEVELS + lv; touched[nT++] = cell; foamN++; seaN++;
+            continue;
+          }
+          seaN++;
+          if (bb < 0.1) continue;
+          const k = (bb * (NRAMP - 0.01)) | 0;
+          if (k < 1) continue;
+          cchar[cell] = k;
+          ccol[cell] = (foamy ? P_SEA : pIdx) * LEVELS + (bb === b ? lv : (bb * 15.99) | 0);
+          touched[nT++] = cell;
+        }
+        top = r0;
+        if (top <= hr) break;
+      }
+    }
+    foamCov = seaN ? Math.min(1, foamN / seaN * 4) : 0;
+  }
+
+  // Bucket by colour so fillStyle changes once per colour, not once per cell.
+  function drawCells() {
+    counts.fill(0);
+    for (let i = 0; i < nT; i++) counts[ccol[touched[i]]]++;
+    let acc = 0;
+    for (let c = 0; c < NCOLOR; c++) { const n = counts[c]; counts[c] = acc; acc += n; }
+    for (let i = 0; i < nT; i++) { const c = touched[i]; order[counts[ccol[c]]++] = c; }
+    let cur = -1;
+    for (let i = 0; i < nT; i++) {
+      const c = order[i], cc = ccol[c];
+      if (cc !== cur) { cur = cc; ctx.fillStyle = COLSTR[cc]; }
+      const row = (c / cols) | 0;
+      ctx.fillText(CH[cchar[c]], (c - row * cols) * cw, row * ch);
+    }
+  }
+
+  // Faint moon haze above the horizon and a thin horizon line.
+  function drawSky() {
+    const cx = W * 0.5, gw = W * 0.6, gh = H * 0.12;
+    ctx.save();
+    ctx.translate(cx, hyPx);
+    ctx.scale(1, gh / gw);
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, gw);
+    g.addColorStop(0, 'rgba(150,170,200,0.10)');
+    g.addColorStop(1, 'rgba(150,170,200,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(-gw, -gw, gw * 2, gw);
+    ctx.restore();
+    ctx.fillStyle = 'rgba(170,185,210,0.18)';
+    ctx.fillRect(0, hyPx - 1, W, 1);
+  }
+
+  // Bloom: shrink the frame, remove the background with 'difference', blur, and add it back on top.
+  const glow = document.createElement('canvas'), gctx = glow.getContext('2d');
+  const GLOW_DIV = 5, GLOW_A = 0.55;
+  function drawGlow() {
+    const gw = Math.ceil(W / GLOW_DIV), gh = Math.ceil(H / GLOW_DIV);
+    if (glow.width !== gw || glow.height !== gh) { glow.width = gw; glow.height = gh; }
+    gctx.setTransform(1, 0, 0, 1, 0, 0);
+    gctx.globalCompositeOperation = 'copy';
+    gctx.filter = 'blur(2px)';
+    gctx.drawImage(canvas, 0, 0, gw, gh);
+    gctx.filter = 'none';
+    gctx.globalCompositeOperation = 'difference';
+    gctx.setTransform(gw / W, 0, 0, gh / H, 0, 0);
+    gctx.fillStyle = bgGrad;
+    gctx.fillRect(0, 0, W, H);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = GLOW_A;
+    ctx.drawImage(glow, 0, 0, W, H);
+    ctx.restore();
+  }
+
+  function render(dt) {
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+    ctx.textBaseline = 'top';
+    ctx.font = cellFont;
+    drawSky();
+    buildSea(dt);
+    drawCells();
+    drawGlow();
+  }
+
+  // ---------- Loop, HUD, controls ----------
+  let paused = false, last = performance.now();
+  let frames = 0, fpsT = last, fps = 0, hudT = 0;
+
+  function updateHud(now) {
+    const tail = paused ? 'paused' : `${fps} fps`;
+    // Narrow screens get a short line so nothing is clipped.
+    hudEl.textContent = W < 640 ? `swells ${swells}  foam ${foamCov.toFixed(2)}  ${tail}`
+      : `swells ${swells}  foam ${foamCov.toFixed(2)}  letters ${nT.toLocaleString('en-US')}  ${tail}`;
+    hudT = now;
+  }
+
+  function frame(now) {
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); // no jumps after a hidden tab
+    last = now;
+    if (needResize) resize();
+    const sdt = paused ? 0 : dt * TIME_SCALE;
+    if (!paused) t += sdt;
+    if (!paused || dirty) { render(sdt); dirty = false; frames++; }
+    if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
+    if (now - hudT >= 250) updateHud(now);
+    requestAnimationFrame(frame);
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); }
+  // Reset the sea state: back to the calm start of the cycle with no foam.
+  function replay() { t = T_START; if (FOAM) FOAM.fill(0); paused = false; dirty = true; }
+
+  addEventListener('resize', () => { needResize = true; });
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return; // leave Cmd/Ctrl+R alone
+    if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
+    else if (e.key === 'r' || e.key === 'R') replay();
+  });
+  // Single tap = pause (decided after 280 ms), two quick taps = reset.
+  let tapTimer = 0;
+  canvas.addEventListener('pointerup', e => {
+    if (e.button > 0) return;
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; replay(); }
+    else tapTimer = setTimeout(() => { tapTimer = 0; togglePause(); }, 280);
+  });
+
+  // Hint language: ?lang= wins, then saved site preference, then browser.
+  let pref = null;
+  try { pref = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (!pref) { try { pref = localStorage.getItem('lang'); } catch (e) {} }
+  if (!pref) pref = navigator.language || 'en';
+  const zh = String(pref).toLowerCase().startsWith('zh');
+  document.documentElement.lang = zh ? 'zh-Hant' : 'en';
+  // Touch screens have no keyboard, and the full hint would not fit on a phone.
+  const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  hintEl.textContent = touch ? (zh ? '點擊暫停 · 雙擊重設海況' : 'tap to pause · double-tap to reset the sea')
+                             : (zh ? '空白鍵 暫停 · R 重設 · 點擊暫停 · 雙擊重設'
+                                   : 'Space pause · R reset · click to pause · double-click to reset');
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

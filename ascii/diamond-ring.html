@@ -1,0 +1,785 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ASCII Diamond Ring | Alex Li (李翔緯)</title>
+  <meta name="description" content="A rotating 3D solitaire diamond ring drawn entirely with ASCII characters: silver dust gathers into the band, a faceted brilliant-cut diamond flashes into place, orbit lines circle it and star-shaped glints sparkle. Vanilla JS on a single canvas.">
+  <meta name="theme-color" content="#000000">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;600;800&display=swap">
+  <style>
+    :root {
+      --sky: #000000;
+      --text: #e8edf5;
+      --muted: #a3adbd;
+      --accent: #cbd5e1;
+      --mono: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--sky);
+      color: var(--text);
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    canvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100svh;
+      display: block;
+      touch-action: manipulation; /* no double-tap zoom: double-tap means replay */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .back {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(203, 213, 225, 0.4);
+      background: rgba(203, 213, 225, 0.1);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .back:hover, .back:focus-visible {
+      background: rgba(203, 213, 225, 0.24);
+      border-color: var(--accent);
+      outline: none;
+    }
+    .hud, .hint {
+      position: fixed;
+      z-index: 1;
+      bottom: 12px;
+      color: var(--muted);
+      opacity: 0.75;
+      font: 11px/1.4 var(--mono);
+      white-space: pre;
+      pointer-events: none;
+      max-width: calc(100% - 24px);
+      overflow: hidden;
+    }
+    .hud { left: 12px; }
+    .hint {
+      right: 12px;
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    @media (max-width: 640px) {
+      .hud, .hint { font-size: 10px; }
+      .hint { bottom: 30px; } /* stack above the HUD on narrow screens */
+    }
+  </style>
+</head>
+<body>
+  <h1 class="sr-only">ASCII Diamond Ring</h1>
+  <a class="back" href="./">← ASCII</a>
+  <canvas id="c" role="img" aria-label="Animated rotating 3D diamond engagement ring drawn with silver ASCII characters, with orbiting dotted lines and twinkling star glints"></canvas>
+  <div class="hud" id="hud" aria-hidden="true"></div>
+  <div class="hint" id="hint"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ---------- Timeline (seconds of scene time) ----------
+  const T = {
+    CONV_DUR: 3.0,                       // loose dust drifts inward 0 – 3
+    BAND: 2.0, BAND_DUR: 3.0, BAND_FLY: 0.9, // band closes bottom -> top, done at 5.0
+    HEAD: 4.4, HEAD_DUR: 0.7, HEAD_FLY: 0.5,
+    GEM: 5.0, GEM_DUR: 0.5, GEM_FLY: 0.5,
+    FLASH: 5.7, HALO_DUR: 1.8,
+    SPIN: 5.9, SPIN_RAMP: 1.2,
+    ORBIT: 6.2, ORBIT_DUR: 1.6, ORBIT_OUT: 18.6,
+    GLINT: 5.8, GLINT_END: 19.3,
+    FADE: 19.0, FADE_SPREAD: 1.4, FADE_FLY: 1.5,
+    END: 22.0
+  };
+
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T_START = reduced ? 10.0 : 0;    // reduced motion: hold the finished ring, no loop
+  const ROT_SPEED = 0.65;                // rad/s once spinning
+
+  // ---------- Camera / world ----------
+  const CAM_D = 3;
+  const PIVOT = 0.06;
+  const TILT = 0.1;
+  const ct = Math.cos(TILT), st = Math.sin(TILT);
+  const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
+  const norm3 = (x, y, z) => { const l = Math.hypot(x, y, z); return [x / l, y / l, z / l]; };
+  const [LX, LY, LZ] = norm3(-0.42, 0.62, 0.66);     // key light, upper left front
+  const [L2X, L2Y, L2Z] = norm3(0.62, 0.32, 0.72);   // fill light, right
+  const [H1X, H1Y, H1Z] = norm3(LX, LY, LZ + 1);     // Blinn half vectors (viewer at +z)
+  const [H2X, H2Y, H2Z] = norm3(L2X, L2Y, L2Z + 1);
+
+  // Ring dimensions (world units).
+  const R = 0.42, RR = 0.058, RZ = 0.085;  // band radius, radial / axial half-thickness
+  const FLOOR = -(R + RR) - 0.035;          // mirror plane for the reflection
+  const REFL_D = 0.24;                      // reflection fades out over this depth
+  const RG = 0.16, YG = 0.625, HC = 0.064, RT = 0.56 * RG, PD = 0.14; // diamond
+  const ORB_R = 0.8, ORB_Y = 0.06;
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  const rng = mulberry32(20260214);
+
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const smooth = v => { v = clamp(v, 0, 1); return v * v * (3 - 2 * v); };
+  const easeOut = v => { v = clamp(v, 0, 1); return 1 - (1 - v) * (1 - v) * (1 - v); };
+
+  // ---------- Characters & colours ----------
+  const CH = [];
+  const ci = s => { let i = CH.indexOf(s); if (i < 0) { CH.push(s); i = CH.length - 1; } return i; };
+  const C_RAMP = [...'.:-=+*#%@'].map(ci);
+  const C_DOT = ci('.'), C_COLON = ci(':'), C_PLUS = ci('+'), C_STAR = ci('*'), C_o = ci('o');
+
+  const LEVELS = 16;
+  const PAL = [];
+  const pal = (r, g, b) => { PAL.push([r, g, b]); return PAL.length - 1; };
+  const P_BAND = pal(196, 204, 218);
+  const P_BAND2 = pal(178, 190, 214);   // slightly cooler strands mixed in
+  const P_PRONG = pal(210, 214, 224);
+  const P_GEM = pal(214, 228, 255);
+  const P_DUST = pal(168, 178, 198);
+  const P_ORB = pal(150, 162, 186);
+  const P_REFL = pal(140, 150, 172);
+
+  const K_BAND = 0, K_PRONG = 1, K_GEM = 2, K_DUST = 3, K_ORB = 4, K_REFL = 5;
+
+  // ---------- Build the static scene ----------
+  // Target position + normal, dust position (view space), arrival time, fly time, hashes.
+  const B = { x: [], y: [], z: [], nx: [], ny: [], nz: [], k: [], p: [], t0: [], fly: [], dx: [], dy: [], dz: [] };
+  function add(x, y, z, nx, ny, nz, k, p, t0, fly, dx, dy, dz) {
+    const l = Math.hypot(nx, ny, nz) || 1;
+    B.x.push(x); B.y.push(y); B.z.push(z);
+    B.nx.push(nx / l); B.ny.push(ny / l); B.nz.push(nz / l);
+    B.k.push(k); B.p.push(p); B.t0.push(t0); B.fly.push(fly);
+    B.dx.push(dx); B.dy.push(dy); B.dz.push(dz);
+  }
+  // Loose dust anywhere around the ring, a bit denser near it.
+  function dustPos() {
+    if (rng() < 0.55) {
+      const a = rng() * 6.283, r = 0.35 + 0.75 * Math.sqrt(rng());
+      return [Math.cos(a) * r * 1.2, Math.sin(a) * r * 0.95 + 0.05, (rng() * 2 - 1) * 0.5];
+    }
+    return [(rng() * 2 - 1) * 1.55, -0.95 + rng() * 2.05, (rng() * 2 - 1) * 0.7];
+  }
+  // Dust close to a point (diamond spray).
+  function nearPos(x, y, z, r0, r1) {
+    const [a, b, c] = norm3(rng() * 2 - 1, rng() * 2 - 1, rng() * 2 - 1), r = r0 + r1 * rng();
+    return [x + a * r * 1.3, y + Math.abs(b) * r, z + c * r];
+  }
+
+  // Band: torus standing upright (axis = z), elliptical cross-section.
+  // u = 0 at the bottom, so both halves grow up and meet at the top.
+  const NU = 360, NV = 44;
+  for (let iu = 0; iu < NU; iu++) {
+    const u = (iu + 0.5) / NU * Math.PI * 2;
+    const ex = Math.sin(u), ey = -Math.cos(u);
+    const g = Math.min(u, Math.PI * 2 - u) / Math.PI;
+    for (let iv = 0; iv < NV; iv++) {
+      const v = (iv + rng() * 0.6) / NV * Math.PI * 2;
+      const cv = Math.cos(v), sv = Math.sin(v);
+      const rad = R + RR * cv;
+      const nr = cv / RR, nz = sv / RZ;
+      const [dx, dy, dz] = dustPos();
+      add(ex * rad, ey * rad, RZ * sv, ex * nr, ey * nr, nz, K_BAND, rng() < 0.82 ? P_BAND : P_BAND2,
+          T.BAND + g * T.BAND_DUR + rng() * 0.06, T.BAND_FLY, dx, dy, dz);
+    }
+  }
+  const N_BAND = B.x.length;
+
+  // Prongs: four claws rising from the band top and curling over the girdle.
+  for (let pr = 0; pr < 4; pr++) {
+    const a = Math.PI / 4 + pr * Math.PI / 2, ca = Math.cos(a), sa = Math.sin(a);
+    for (let j = 0; j < 190; j++) {
+      const s = rng(), v = rng() * 6.283;
+      let r = 0.035 + (RG * 1.05 - 0.035) * Math.pow(s, 0.8), y = R + RR - 0.02 + (YG + 0.012 - (R + RR - 0.02)) * s;
+      if (s > 0.86) { const q = (s - 0.86) / 0.14; r -= RG * 0.12 * q; y += HC * 0.45 * q; }
+      const cr0 = 0.012 * Math.cos(v), sr0 = 0.012 * Math.sin(v);
+      const [dx, dy, dz] = nearPos(ca * r, y, sa * r, 0.1, 0.25);
+      add(ca * (r + cr0) - sa * sr0, y, sa * (r + cr0) + ca * sr0, ca * Math.cos(v) - sa * Math.sin(v), 0.15,
+          sa * Math.cos(v) + ca * Math.sin(v), K_PRONG, P_PRONG, T.HEAD + s * T.HEAD_DUR, T.HEAD_FLY, dx, dy, dz);
+    }
+  }
+  // Basket ring under the stone.
+  for (let j = 0; j < 220; j++) {
+    const a = rng() * 6.283, v = rng() * 6.283, rb = 0.072 + 0.009 * Math.cos(v);
+    const [dx, dy, dz] = nearPos(Math.cos(a) * rb, 0.53, Math.sin(a) * rb, 0.1, 0.25);
+    add(Math.cos(a) * rb, 0.53 + 0.009 * Math.sin(v), Math.sin(a) * rb, Math.cos(a) * Math.cos(v), Math.sin(v),
+        Math.sin(a) * Math.cos(v), K_PRONG, P_PRONG, T.HEAD + 0.15 + rng() * 0.3, T.HEAD_FLY, dx, dy, dz);
+  }
+
+  // Diamond: round brilliant built from flat triangles; every sample keeps its facet normal,
+  // so whole facets flash on and off as the stone turns.
+  const gp = (r, a, y) => [r * Math.cos(a), y, r * Math.sin(a)];
+  const E8 = Math.PI / 4;
+  const Tv = [], Mv = [], Gv = [], Lv = [];
+  for (let k = 0; k < 8; k++) {
+    Tv.push(gp(RT, k * E8, YG + HC));
+    Mv.push(gp(RG * 0.8, (k + 0.5) * E8, YG + HC * 0.45));
+    Lv.push(gp(RG * 0.48, k * E8, YG - PD * 0.55));
+  }
+  for (let j = 0; j < 16; j++) Gv.push(gp(RG, j * E8 / 2, YG));
+  const TC = [0, YG + HC, 0], CUL = [0, YG - PD, 0];
+  const FACETS = [];
+  const m8 = i => (i + 8) % 8, m16 = i => (i + 16) % 16;
+  for (let k = 0; k < 8; k++) {
+    FACETS.push([TC, Tv[k], Tv[m8(k + 1)]]);                       // table (fan)
+    FACETS.push([Tv[k], Tv[m8(k + 1)], Mv[k]]);                    // star
+    FACETS.push([Tv[k], Mv[m8(k - 1)], Gv[2 * k]]);                // bezel (kite, two halves)
+    FACETS.push([Tv[k], Gv[2 * k], Mv[k]]);
+    FACETS.push([Mv[k], Gv[2 * k], Gv[2 * k + 1]]);                // upper girdle
+    FACETS.push([Mv[k], Gv[2 * k + 1], Gv[m16(2 * k + 2)]]);
+    FACETS.push([Gv[m16(2 * k - 1)], Gv[2 * k], Lv[k]]);           // lower girdle
+    FACETS.push([Gv[2 * k], Gv[2 * k + 1], Lv[k]]);
+    FACETS.push([Lv[k], Gv[2 * k + 1], Lv[m8(k + 1)]]);
+    FACETS.push([Lv[k], Lv[m8(k + 1)], CUL]);                      // pavilion main
+  }
+  const GEM_DENS = 26000;
+  FACETS.forEach(([a, b, c]) => {
+    const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2];
+    const vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+    let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+    const area = Math.hypot(nx, ny, nz) / 2;
+    const cx = (a[0] + b[0] + c[0]) / 3, cy = (a[1] + b[1] + c[1]) / 3 - YG, cz = (a[2] + b[2] + c[2]) / 3;
+    if (nx * cx + ny * cy + nz * cz < 0) { nx = -nx; ny = -ny; nz = -nz; }
+    const n = Math.max(6, Math.ceil(area * GEM_DENS));
+    for (let j = 0; j < n; j++) {
+      let s = rng(), q = rng();
+      if (s + q > 1) { s = 1 - s; q = 1 - q; }
+      const x = a[0] + ux * s + vx * q, y = a[1] + uy * s + vy * q, z = a[2] + uz * s + vz * q;
+      const [dx, dy, dz] = nearPos(x, y, z, 0.08, 0.3);
+      add(x, y, z, nx, ny, nz, K_GEM, P_GEM, T.GEM + rng() * T.GEM_DUR, T.GEM_FLY, dx, dy, dz);
+    }
+  });
+
+  const N = B.x.length;
+  const PX = Float32Array.from(B.x), PY = Float32Array.from(B.y), PZ = Float32Array.from(B.z);
+  const NX = Float32Array.from(B.nx), NY = Float32Array.from(B.ny), NZ = Float32Array.from(B.nz);
+  const KD = Uint8Array.from(B.k), PP = Uint16Array.from(B.p);
+  const T0 = Float32Array.from(B.t0), FLY = Float32Array.from(B.fly);
+  const DX = Float32Array.from(B.dx), DY = Float32Array.from(B.dy), DZ = Float32Array.from(B.dz);
+  const HS = new Float32Array(N), PH = new Float32Array(N), LEAVE = new Float32Array(N);
+  const REFL = new Uint8Array(N);
+  for (let i = 0; i < N; i++) {
+    HS[i] = rng(); PH[i] = rng() * 6.283;
+    LEAVE[i] = T.FADE + rng() * T.FADE_SPREAD;
+    REFL[i] = i < N_BAND && PY[i] < FLOOR + REFL_D && (i & 1) === 0 ? 1 : 0;
+  }
+
+  // Orbits: circles tipped back 65° then rolled ±35°, like an atom symbol.
+  const ORB_N = 380;
+  const OX = new Float32Array(ORB_N * 2), OY = new Float32Array(ORB_N * 2), OZ = new Float32Array(ORB_N * 2);
+  for (let k = 0; k < 2; k++) {
+    const tx = 1.13, tz = k ? -0.62 : 0.62;
+    for (let j = 0; j < ORB_N; j++) {
+      const a = j / ORB_N * Math.PI * 2;
+      const x0 = ORB_R * Math.cos(a), y0 = ORB_R * Math.sin(a) * Math.cos(tx), z0 = ORB_R * Math.sin(a) * Math.sin(tx);
+      const o = k * ORB_N + j;
+      OX[o] = x0 * Math.cos(tz) - y0 * Math.sin(tz);
+      OY[o] = x0 * Math.sin(tz) + y0 * Math.cos(tz);
+      OZ[o] = z0;
+    }
+  }
+
+  // Colour strings cached per (palette entry, brightness level).
+  const NCOLOR = PAL.length * LEVELS;
+  const COLSTR = new Array(NCOLOR);
+  PAL.forEach(([r, g, b], p) => {
+    for (let l = 0; l < LEVELS; l++) {
+      // Top levels overshoot 1 and wash toward white, so lit characters read as glowing.
+      const m = 0.3 + 1.1 * l / (LEVELS - 1), w = Math.max(0, m - 1) * 180;
+      const lift = v => Math.min(255, v * m + w) | 0;
+      COLSTR[p * LEVELS + l] = `rgb(${lift(r)},${lift(g)},${lift(b)})`;
+    }
+  });
+  const BG_COLS = [];
+  for (let l = 0; l < 8; l++) BG_COLS.push(`rgba(190,200,220,${(0.06 + 0.4 * l / 7).toFixed(3)})`);
+  const GLINT_COL = 'rgb(236,243,255)';
+
+  // ---------- Canvas, grid, layout ----------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const hudEl = document.getElementById('hud');
+  const hintEl = document.getElementById('hint');
+
+  let W = 0, H = 0, fs = 10, cw = 6, ch = 11, cols = 0, rows = 0;
+  let S = 300, ox = 0, oy = 0;
+  let cellFont = '', bgGrad = null;
+  let zbuf, stampA, cchar, ccol, ckind, clb, touched, order, nT = 0, stamp = 0;
+  const counts = new Uint32Array(NCOLOR);
+  let bgDust = null, haloS = null, haloL = null;
+  let needResize = true, dirty = true;
+
+  function makeHalo(Rp, r, g, b, a0) {
+    const c = document.createElement('canvas');
+    c.width = c.height = Math.ceil(Rp * 2);
+    const x = c.getContext('2d'), gr = x.createRadialGradient(Rp, Rp, 0, Rp, Rp, Rp);
+    gr.addColorStop(0, `rgba(255,255,255,${a0})`);
+    gr.addColorStop(0.2, `rgba(${r},${g},${b},${(a0 * 0.75).toFixed(3)})`);
+    gr.addColorStop(0.55, `rgba(${r},${g},${b},${(a0 * 0.18).toFixed(3)})`);
+    gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
+    x.fillStyle = gr; x.fillRect(0, 0, c.width, c.height);
+    return c;
+  }
+
+  function resize() {
+    needResize = false;
+    W = canvas.clientWidth || innerWidth;
+    H = canvas.clientHeight || innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    fs = clamp(Math.round(Math.min(W, H * 0.8) / 80), 7, 14);
+    cellFont = `${fs}px ${MONO}`;
+    ctx.font = cellFont;
+    cw = ctx.measureText('M').width || fs * 0.6;
+    ch = fs * 1.1;
+    cols = Math.ceil(W / cw);
+    rows = Math.ceil(H / ch);
+    const n = cols * rows;
+    zbuf = new Float32Array(n); stampA = new Uint32Array(n);
+    cchar = new Uint8Array(n); ccol = new Uint16Array(n); ckind = new Uint8Array(n); clb = new Float32Array(n);
+    touched = new Int32Array(n); order = new Int32Array(n); stamp = 0;
+    haloS = makeHalo(Math.max(5, cw * 2.2), 200, 220, 255, 0.8);
+    haloL = makeHalo(Math.max(9, cw * 4.5), 190, 210, 255, 0.9);
+
+    // Fit: ~0.72 S above the pivot (stone + glints), ~0.9 S below (band + reflection), half width ~0.95 S.
+    const TOP = 48, BOT = 56;
+    S = Math.max(40, Math.min(H * 0.4, (W / 2 - 12) / 0.95, (H - TOP - BOT) / 1.62));
+    const top = TOP + Math.max(0, (H - TOP - BOT - 1.62 * S) / 2);
+    ox = W / 2;
+    oy = top + 0.72 * S;
+
+    bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, '#000000');
+    bgGrad.addColorStop(1, '#040507');
+
+    // Background dust: [x, y, phase, speed, char] per mote, seeded so the layout is stable.
+    const r2 = mulberry32(11);
+    const nd = Math.round(cols * rows * 0.014);
+    bgDust = new Float32Array(nd * 5);
+    for (let i = 0; i < nd; i++) {
+      const o = i * 5, q = r2();
+      bgDust[o] = ((r2() * cols) | 0) * cw; bgDust[o + 1] = ((r2() * rows) | 0) * ch;
+      bgDust[o + 2] = r2() * 6.283; bgDust[o + 3] = 0.6 + r2() * 2.4;
+      bgDust[o + 4] = q < 0.7 ? 0 : q < 0.93 ? 1 : 2;
+    }
+    dirty = true;
+  }
+
+  // ---------- Projection + z-buffered splat ----------
+  let t = T_START, skyT = 0, rot = 0, scint = 0;
+  let projX = 0, projY = 0;
+  const rotAt = tt => {
+    const a = tt - T.SPIN;
+    if (a <= 0) return 0;
+    return a < T.SPIN_RAMP ? ROT_SPEED * a * a / (2 * T.SPIN_RAMP) : ROT_SPEED * (a - T.SPIN_RAMP / 2);
+  };
+
+  // (x, y, z) are already turned around Y; this tilts, projects and returns false when off-screen.
+  function project(x, y, z) {
+    const yy = y - PIVOT, y2 = yy * ct - z * st, z2 = yy * st + z * ct;
+    const f = CAM_D / (CAM_D - z2);
+    projX = ox + x * S * f; projY = oy - y2 * S * f;
+    return z2;
+  }
+
+  function splat(x, y, z, nx, ny, nz, k, p, aux) {
+    const yy = y - PIVOT, y2 = yy * ct - z * st, z2 = yy * st + z * ct;
+    const f = CAM_D / (CAM_D - z2);
+    const px = ox + x * S * f, py = oy - y2 * S * f;
+    if (px < 0 || py < 0) return;
+    const col = (px / cw) | 0, row = (py / ch) | 0;
+    if (col >= cols || row >= rows) return;
+    const c = row * cols + col;
+    const fresh = stampA[c] !== stamp;
+    if (!fresh && zbuf[c] >= z2) return; // keep nearest (larger z2 = closer)
+
+    let b, cc;
+    if (k === K_DUST) {
+      b = aux; cc = b > 0.8 ? C_STAR : b > 0.58 ? C_PLUS : b > 0.38 ? C_COLON : C_DOT;
+    } else if (k === K_ORB) {
+      b = aux; cc = b > 0.9 ? C_STAR : b > 0.72 ? C_o : C_DOT;
+    } else {
+      const ny2 = ny * ct - nz * st, nz2 = ny * st + nz * ct;
+      let lam = nx * LX + ny2 * LY + nz2 * LZ;
+      if (lam < 0) lam = 0;
+      if (k === K_GEM) {
+        // Mirror the view ray off the facet and see which light it catches.
+        const rx = 2 * nz2 * nx, ry = 2 * nz2 * ny2, rz = 2 * nz2 * nz2 - 1;
+        let s1 = rx * LX + ry * LY + rz * LZ; s1 = s1 > 0 ? s1 : 0; s1 *= s1; s1 *= s1; s1 *= s1;
+        let s2 = rx * L2X + ry * L2Y + rz * L2Z; s2 = s2 > 0 ? s2 : 0; s2 *= s2; s2 *= s2; s2 *= s2;
+        let s3 = ry > 0 ? ry : 0; s3 *= s3; s3 *= s3;
+        const sc = 0.5 + 0.5 * Math.sin(nx * 11 + ny2 * 7 + nz2 * 5 + scint);
+        b = 0.2 + 0.2 * lam + 1.1 * (s1 > s2 ? s1 : s2) + 0.3 * s3 + 0.28 * sc * sc + aux;
+        if (b > 1) b = 1;
+        cc = b > 0.93 ? C_STAR : C_RAMP[1 + ((b * 7.99) | 0)];
+      } else {
+        let h1 = nx * H1X + ny2 * H1Y + nz2 * H1Z; h1 = h1 > 0 ? h1 : 0;
+        h1 *= h1; h1 *= h1; h1 *= h1; h1 *= h1; h1 *= h1;           // ^32
+        let h2 = nx * H2X + ny2 * H2Y + nz2 * H2Z; h2 = h2 > 0 ? h2 : 0;
+        h2 *= h2; h2 *= h2; h2 *= h2; h2 *= h2; h2 *= h2;
+        let rim = 1 - (nz2 < 0 ? -nz2 : nz2); rim = rim * rim * rim;  // bright silhouette edges
+        let dd = (z2 + 0.6) / 1.2;
+        dd = 0.6 + 0.4 * (dd < 0 ? 0 : dd > 1 ? 1 : dd);
+        b = (0.16 + 0.5 * lam) * dd + 0.95 * h1 + 0.55 * h2 + 0.38 * rim;
+        if (k === K_REFL) { b *= aux; cc = C_RAMP[b > 0.44 ? 4 : ((b * 9) | 0)]; }
+        else { if (b > 1) b = 1; cc = C_RAMP[2 + ((b * 6.99) | 0)]; }
+        if (b > 1) b = 1;
+      }
+    }
+    if (fresh) { stampA[c] = stamp; touched[nT++] = c; }
+    zbuf[c] = z2; cchar[c] = cc; ccol[c] = p * LEVELS + ((b * 15.99) | 0); ckind[c] = k; clb[c] = b;
+  }
+
+  function buildScene() {
+    rot = reduced ? 0.5 + 0.18 * skyT : rotAt(t);
+    const cr = Math.cos(rot), sr = Math.sin(rot);
+    scint = (reduced ? skyT * 0.5 : t) * 2.3;
+    stamp++; nT = 0;
+
+    const conv = 1 - 0.25 * smooth(t / T.CONV_DUR);
+    const flash = t > T.FLASH ? Math.max(0, 1 - (t - T.FLASH) / 0.5) * 0.8 : 0;
+
+    for (let i = 0; i < N; i++) {
+      const k = KD[i], t0 = T0[i], fl = FLY[i];
+      const tx = PX[i] * cr + PZ[i] * sr, tz = PZ[i] * cr - PX[i] * sr, ty = PY[i];
+      const hs = HS[i];
+      // Dust state: before the flight, or after leaving during the fade.
+      let q = -1; // 0 = at dust position, 1 = in place
+      if (t < t0 - fl) q = 0;
+      else if (t < t0) q = smooth((t - t0 + fl) / fl);
+      else if (t > LEAVE[i]) q = 1 - smooth((t - LEAVE[i]) / T.FADE_FLY);
+      if (q >= 0) {
+        const q4 = q * q * q * q;
+        if (hs > (k === K_BAND ? 0.14 : 0.04) * (1 - q) + q4 * q4 * q4) continue;
+        const c = k === K_BAND && t < t0 ? conv : 1;
+        const dx = DX[i] * c, dy = DY[i] * c, dz = DZ[i] * c;
+        const bd = 0.22 + 0.12 * Math.sin(skyT * (1.5 + hs * 3) + PH[i]);
+        splat(dx + (tx - dx) * q, dy + (ty - dy) * q, dz + (tz - dz) * q, 0, 0, 1,
+              K_DUST, k === K_BAND ? P_DUST : P_GEM, bd + (0.7 - bd) * q);
+        continue;
+      }
+      const nx = NX[i] * cr + NZ[i] * sr, nz = NZ[i] * cr - NX[i] * sr, ny = NY[i];
+      splat(tx, ty, tz, nx, ny, nz, k, PP[i], k === K_GEM ? flash : 0);
+      if (REFL[i]) {
+        const yr = 2 * FLOOR - ty, d = 1 - (FLOOR - yr) / REFL_D;
+        splat(tx, yr, tz, nx, -ny, nz, K_REFL, P_REFL, 0.2 * d * d);
+      }
+    }
+
+    // Orbits trace themselves in, spin slowly, and carry two bright comet heads each.
+    const og = smooth((t - T.ORBIT) / T.ORBIT_DUR);
+    const of = reduced ? 1 : 1 - smooth((t - T.ORBIT_OUT) / 1.0);
+    if (og > 0 && of > 0) {
+      const tm = reduced ? skyT * 0.4 : t;
+      const yaw = 0.25 * (tm - T.ORBIT), cy = Math.cos(yaw), sy = Math.sin(yaw);
+      for (let kk = 0; kk < 2; kk++) {
+        const hp = tm * 1.15 + kk * 2.1;
+        const lim = smooth((t - T.ORBIT - kk * 0.3) / T.ORBIT_DUR) * ORB_N;
+        for (let j = 0; j < lim; j++) {
+          const o = kk * ORB_N + j, a = j / ORB_N * 6.2832;
+          let d = (hp - a) % Math.PI; if (d < 0) d += Math.PI;
+          const tr = d < 0.45 ? 1 - d / 0.45 : 0;
+          const b = (0.34 + 0.66 * tr * tr) * of;
+          if (b < 0.05 || (j & 1) && tr === 0) continue; // fine dotted line
+          const x = OX[o], z = OZ[o];
+          splat(x * cy + z * sy, OY[o] + ORB_Y, z * cy - x * sy, 0, 0, 1, K_ORB, P_ORB, b);
+        }
+      }
+    }
+  }
+
+  // Bucket by colour so fillStyle changes once per colour, not once per cell.
+  function drawCells() {
+    counts.fill(0);
+    for (let i = 0; i < nT; i++) counts[ccol[touched[i]]]++;
+    let acc = 0;
+    for (let c = 0; c < NCOLOR; c++) { const n = counts[c]; counts[c] = acc; acc += n; }
+    for (let i = 0; i < nT; i++) { const c = touched[i]; order[counts[ccol[c]]++] = c; }
+    let cur = -1;
+    for (let i = 0; i < nT; i++) {
+      const c = order[i], cc = ccol[c];
+      if (cc !== cur) { cur = cc; ctx.fillStyle = COLSTR[cc]; }
+      const row = (c / cols) | 0;
+      ctx.fillText(CH[cchar[c]], (c - row * cols) * cw, row * ch);
+    }
+  }
+
+  // ---------- Background dust, sparkles, halo, glints ----------
+  const SCH = ['.', '·', '+'];
+  function drawBgDust() {
+    for (let o = 0; o < bgDust.length; o += 5) {
+      const s = 0.5 + 0.5 * Math.sin(skyT * bgDust[o + 3] + bgDust[o + 2]);
+      ctx.fillStyle = BG_COLS[(s * s * 7.99) | 0];
+      ctx.fillText(SCH[bgDust[o + 4]], bgDust[o] + Math.sin(skyT * 0.2 + bgDust[o + 2]) * cw,
+                   bgDust[o + 1] - ((skyT * 3 * bgDust[o + 3]) % (ch * 4)) + ch * 2);
+    }
+  }
+
+  let fx = 0; // sparkle characters drawn this frame (HUD "glints")
+
+  // Facet sparkles: the hottest diamond cells get a small halo.
+  function drawSparkles() {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const hw = haloS.width / 2;
+    for (let i = 0; i < nT; i++) {
+      const c = touched[i];
+      if (ckind[c] !== K_GEM || clb[c] < 0.93) continue;
+      const row = (c / cols) | 0;
+      ctx.globalAlpha = 0.55 + 0.45 * Math.sin(skyT * 9 + c);
+      ctx.drawImage(haloS, (c - row * cols + 0.5) * cw - hw, (row + 0.5) * ch - hw);
+      fx++;
+    }
+    ctx.restore();
+  }
+
+  // Four-point star glints: pool of fixed slots, no allocation per frame.
+  const GN = 40;
+  const gX = new Float32Array(GN), gY = new Float32Array(GN), gB = new Float32Array(GN),
+        gL = new Float32Array(GN), gS = new Float32Array(GN), gOn = new Uint8Array(GN);
+  let gAcc = 0;
+  function spawnGlints(dt) {
+    if (t < T.GLINT || t > T.GLINT_END || nT === 0) return;
+    gAcc += dt * (reduced ? 2.5 : 7);
+    while (gAcc >= 1) {
+      gAcc -= 1;
+      let slot = -1;
+      for (let s = 0; s < GN; s++) if (!gOn[s]) { slot = s; break; }
+      if (slot < 0) return;
+      for (let tries = 0; tries < 40; tries++) {
+        const c = touched[(Math.random() * nT) | 0], k = ckind[c];
+        if ((k !== K_GEM && k !== K_BAND && k !== K_PRONG) || clb[c] < (k === K_GEM ? 0.8 : 0.72)) continue;
+        const row = (c / cols) | 0;
+        gX[slot] = c - row * cols; gY[slot] = row;
+        gB[slot] = skyT; gL[slot] = 0.35 + Math.random() * 0.5;
+        gS[slot] = (k === K_GEM ? 6 : 3) + Math.random() * 5;
+        gOn[slot] = 1;
+        break;
+      }
+    }
+  }
+
+  function star4(col, row, L, e) {
+    ctx.globalAlpha = e;
+    ctx.fillText('*', col * cw, row * ch); fx++;
+    const LV = Math.round(L * 0.6);
+    for (let j = 1; j <= L; j++) {
+      ctx.globalAlpha = e * (1 - j / (L + 1));
+      ctx.fillText('-', (col + j) * cw, row * ch);
+      ctx.fillText('-', (col - j) * cw, row * ch);
+      fx += 2;
+      if (j <= LV) {
+        ctx.fillText('|', col * cw, (row + j) * ch);
+        ctx.fillText('|', col * cw, (row - j) * ch);
+        fx += 2;
+      }
+    }
+  }
+
+  function drawGlints() {
+    ctx.fillStyle = GLINT_COL;
+    const hw = haloL.width / 2;
+    for (let s = 0; s < GN; s++) {
+      if (!gOn[s]) continue;
+      const a = (skyT - gB[s]) / gL[s];
+      if (a >= 1 || a < 0) { gOn[s] = 0; continue; }
+      const e = Math.sin(Math.PI * a);
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = e;
+      ctx.drawImage(haloL, (gX[s] + 0.5) * cw - hw, (gY[s] + 0.5) * ch - hw);
+      ctx.globalCompositeOperation = 'source-over';
+      star4(gX[s], gY[s], Math.round(gS[s] * e), e);
+    }
+    // Sparks riding the two growth fronts while the band closes (ring is still face-on here).
+    const gf = (t - T.BAND) / T.BAND_DUR;
+    if (gf > 0.05 && gf < 1) {
+      const u = gf * Math.PI, e = 0.6 + 0.4 * Math.sin(skyT * 13);
+      for (let sd = -1; sd <= 1; sd += 2) {
+        project(sd * R * Math.sin(u), -R * Math.cos(u), RZ);
+        const col = Math.floor(projX / cw), row = Math.floor(projY / ch);
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.globalAlpha = e;
+        ctx.drawImage(haloL, (col + 0.5) * cw - hw, (row + 0.5) * ch - hw);
+        ctx.globalCompositeOperation = 'source-over';
+        star4(col, row, 3, e);
+      }
+    }
+    // A steady, breathing star on the diamond's table.
+    const live = reduced ? 1 : smooth((t - T.FLASH) / 0.4) * (1 - smooth((t - T.FADE) / 1.0));
+    if (live > 0) {
+      project(0, YG + HC + 0.01, 0);
+      const col = Math.floor(projX / cw), row = Math.floor(projY / ch);
+      const e = live * (0.75 + 0.25 * Math.sin(skyT * 3.1));
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = e;
+      ctx.drawImage(haloL, (col + 0.5) * cw - hw, (row + 0.5) * ch - hw);
+      ctx.globalCompositeOperation = 'source-over';
+      star4(col, row, Math.round((4 + 2 * Math.sin(skyT * 2.3)) * live), e);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // Flash + thin halo ring that expands once when the stone locks in.
+  function drawFlash() {
+    const a = t - T.FLASH;
+    if (a < 0 || a > T.HALO_DUR) return;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    if (a < 0.7) {
+      project(0, YG, 0);
+      const p = a / 0.7, fa = (1 - p) * (1 - p) * 0.9, fr = S * (0.15 + 0.45 * p);
+      const g = ctx.createRadialGradient(projX, projY, 0, projX, projY, fr);
+      g.addColorStop(0, `rgba(255,255,255,${fa.toFixed(3)})`);
+      g.addColorStop(0.3, `rgba(200,220,255,${(fa * 0.4).toFixed(3)})`);
+      g.addColorStop(1, 'rgba(200,220,255,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(projX - fr, projY - fr, fr * 2, fr * 2);
+    }
+    project(0, 0.04, 0);
+    const p = a / T.HALO_DUR, rr = S * (0.68 + 0.2 * easeOut(p));
+    ctx.globalAlpha = Math.pow(1 - p, 1.4) * 0.95;
+    ctx.fillStyle = 'rgb(220,230,250)';
+    const n = Math.ceil(rr * 6.2832 / (cw * 0.45));
+    for (let j = 0; j < n; j++) {
+      const th = j / n * 6.2832, c = Math.cos(th), s = Math.sin(th);
+      const col = Math.floor((projX + c * rr) / cw), row = Math.floor((projY - s * rr) / ch);
+      const ac = c < 0 ? -c : c, as = s < 0 ? -s : s;
+      ctx.fillText(ac > 0.92 ? '|' : as > 0.92 ? '-' : (c * s > 0 ? '\\' : '/'), col * cw, row * ch);
+    }
+    ctx.restore();
+  }
+
+  // Bloom: shrink the frame, remove the background with 'difference', blur, and add it back on top.
+  const glow = document.createElement('canvas'), gctx = glow.getContext('2d');
+  const GLOW_DIV = 5, GLOW_A = 0.9;
+  function drawGlow() {
+    const gw = Math.ceil(W / GLOW_DIV), gh = Math.ceil(H / GLOW_DIV);
+    if (glow.width !== gw || glow.height !== gh) { glow.width = gw; glow.height = gh; }
+    gctx.setTransform(1, 0, 0, 1, 0, 0);
+    gctx.globalCompositeOperation = 'copy';
+    gctx.filter = 'blur(2px)';
+    gctx.drawImage(canvas, 0, 0, gw, gh);
+    gctx.filter = 'none';
+    gctx.globalCompositeOperation = 'difference';
+    gctx.setTransform(gw / W, 0, 0, gh / H, 0, 0);
+    gctx.fillStyle = bgGrad;
+    gctx.fillRect(0, 0, W, H);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = GLOW_A;
+    ctx.drawImage(glow, 0, 0, W, H);
+    ctx.restore();
+  }
+
+  function render(dt) {
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+    ctx.textBaseline = 'top';
+    ctx.font = cellFont;
+    fx = 0;
+    drawBgDust();
+    buildScene();
+    drawCells();
+    spawnGlints(dt);
+    drawSparkles();
+    drawFlash();
+    drawGlints();
+    drawGlow();
+  }
+
+  // ---------- Loop, HUD, controls ----------
+  let paused = false, last = performance.now();
+  let frames = 0, fpsT = last, fps = 0, hudT = 0;
+
+  function updateHud(now) {
+    const deg = ((rot * 180 / Math.PI) % 360 + 360) % 360;
+    const tail = paused ? 'paused' : `${fps} fps`;
+    // Narrow screens get a short line so nothing is clipped.
+    hudEl.textContent = W < 640 ? `rotation ${deg.toFixed(1)}°  glints ${fx}  ${tail}`
+      : `rotation ${deg.toFixed(1)}°  glints ${fx}  letters ${(nT + fx).toLocaleString('en-US')}  ${tail}`;
+    hudT = now;
+  }
+
+  function clearGlints() { gOn.fill(0); gAcc = 0; }
+
+  function frame(now) {
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); // no jumps after a hidden tab
+    last = now;
+    if (needResize) resize();
+    if (!paused) {
+      skyT += dt;
+      if (!reduced) { t += dt; if (t >= T.END) { t = 0; clearGlints(); } }
+    }
+    if (!paused || dirty) { render(paused ? 0 : dt); dirty = false; frames++; }
+    if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
+    if (now - hudT >= 250) updateHud(now);
+    requestAnimationFrame(frame);
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); }
+  function replay() { t = T_START; clearGlints(); paused = false; dirty = true; }
+
+  addEventListener('resize', () => { needResize = true; });
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return; // leave Cmd/Ctrl+R alone
+    if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
+    else if (e.key === 'r' || e.key === 'R') replay();
+  });
+  // Single tap = pause (decided after 280 ms), two quick taps = replay.
+  let tapTimer = 0;
+  canvas.addEventListener('pointerup', e => {
+    if (e.button > 0) return;
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; replay(); }
+    else tapTimer = setTimeout(() => { tapTimer = 0; togglePause(); }, 280);
+  });
+
+  // Hint language: ?lang= wins, then saved site preference, then browser.
+  let pref = null;
+  try { pref = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (!pref) { try { pref = localStorage.getItem('lang'); } catch (e) {} }
+  if (!pref) pref = navigator.language || 'en';
+  const zh = String(pref).toLowerCase().startsWith('zh');
+  document.documentElement.lang = zh ? 'zh-Hant' : 'en';
+  // Touch screens have no keyboard, and the full hint would not fit on a phone.
+  const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  hintEl.textContent = touch ? (zh ? '點擊暫停 · 雙擊重播' : 'tap to pause · double-tap to replay')
+                             : (zh ? '空白鍵 暫停 · R 重播 · 點擊暫停 · 雙擊重播'
+                                   : 'Space pause · R replay · click to pause · double-click to replay');
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

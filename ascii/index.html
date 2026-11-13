@@ -69,6 +69,7 @@
     .card:hover { transform: translateY(-4px); border-color: rgba(96,165,250,0.4); box-shadow: 0 30px 60px -30px rgba(37,99,235,0.5); }
     .preview {
       background: #05070d; border-bottom: 1px solid var(--line); display: grid; place-items: center; padding: 1.25rem 0.5rem; overflow: hidden;
+      min-height: calc(12 * 13px * 1.15 + 2.5rem);
     }
     .preview pre {
       font-family: var(--mono); font-size: 13px; line-height: 1.15; color: #22c55e; white-space: pre;
@@ -102,6 +103,68 @@
     .r-petal { display: inline-block; color: #f9a8d4; animation: petal 4.5s ease-in infinite; }
     @keyframes petal { 0% { transform: translate(0, 0) rotate(0); opacity: 0; } 15% { opacity: 1; } 100% { transform: translate(-0.6em, 6.5em) rotate(160deg); opacity: 0; } }
 
+    /* Mona Lisa preview: gold frame around per-cell colours from the painting; a light band sweeps across */
+    .m-frame { color: #d4a73c; }
+    .m-g { animation: glint 7s linear infinite; animation-delay: calc(var(--d, 0) * 0.05s); }
+    @keyframes glint { 0%, 7%, 100% { filter: none; text-shadow: none; } 3.5% { filter: brightness(1.7); text-shadow: 0 0 6px rgba(255,236,170,0.75); } }
+
+    /* Eiffel preview: gold tower, dim skyline with lit windows, blinking sparkles */
+    .e-gold { color: #f5b942; }
+    .e-city { color: #334155; }
+    .e-win { color: #fde047; }
+    .e-sky { color: #cbd5e1; animation: twinkle 3.2s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -1.1s); }
+    .e-spark { color: #fff; text-shadow: 0 0 6px rgba(255,255,255,0.9); animation: spark 1.8s steps(1) infinite; animation-delay: calc(var(--k, 0) * -0.45s); }
+    @keyframes spark { 50% { color: #f5b942; text-shadow: none; } }
+
+    /* Black hole preview: cream lensed arc, white photon ring, amber disk with a flowing shimmer */
+    .b-arc { color: #fde68a; text-shadow: 0 0 6px rgba(253,230,138,0.55); }
+    .b-ring { color: #fff7ed; text-shadow: 0 0 5px rgba(255,237,213,0.8); }
+    .b-disk { color: #f59e0b; animation: shimmer 3s ease-in-out infinite; animation-delay: calc((var(--x, 0) - 17) * 0.12s); }
+    @keyframes shimmer { 50% { color: #fef3c7; text-shadow: 0 0 6px rgba(251,191,36,0.8); } }
+
+    /* Money rain preview: green bills at different tilts that flutter; one keeps falling */
+    .g-bill { display: inline-block; color: #22c55e; transform: rotate(var(--t, 0deg)); animation: flutter 3.2s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.9s); }
+    .g-bill b { font-weight: inherit; color: #86efac; }
+    @keyframes flutter { 50% { transform: rotate(calc(var(--t, 0deg) * -0.6)) translateY(0.15em); } }
+    .g-fall { animation: fall 6s linear infinite; }
+    @keyframes fall {
+      0% { transform: translate(0, -1.6em) rotate(-10deg); opacity: 0; }
+      10% { opacity: 1; }
+      35% { transform: translate(0.7em, 3em) rotate(14deg); }
+      65% { transform: translate(-0.4em, 6.5em) rotate(-12deg); }
+      88% { opacity: 1; }
+      100% { transform: translate(0.3em, 10.5em) rotate(8deg); opacity: 0; }
+    }
+    .g-dim { color: #166534; }
+
+    /* Diamond ring preview: icy gem, silver band, twinkling glints */
+    .d-gem { color: #e0f2fe; text-shadow: 0 0 6px rgba(186,230,253,0.85); }
+    .d-band { color: #cbd5e1; }
+    .d-glint { color: #fff; text-shadow: 0 0 8px rgba(255,255,255,0.95); animation: twinkle 1.7s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.6s); }
+
+    /* Red rose preview (reuses .r-bloom for the heart of the flower) */
+    .s-rose { color: #ef4444; }
+    .s-stem { color: #16a34a; }
+    .s-leaf { color: #22c55e; }
+    .s-star { color: #fde68a; animation: twinkle 2.2s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.8s); }
+
+    /* Birthday cake preview: chocolate layers, cream, pink candle, flickering flame, confetti */
+    .c-choc { color: #9a5b2e; }
+    .c-cream { color: #fde7c7; }
+    .c-candle { color: #f472b6; }
+    .c-flame { display: inline-block; color: #fb923c; text-shadow: 0 0 8px rgba(251,146,60,0.9); transform-origin: 50% 100%; animation: flicker 0.9s ease-in-out infinite alternate; }
+    @keyframes flicker { 50% { color: #fde047; transform: scaleY(1.15) skewX(-6deg); } 100% { transform: scaleY(0.9) skewX(5deg); } }
+    .c-conf { animation: twinkle 2s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.5s); }
+
+    /* Ocean preview: grey swells darker far away, a bright crest that sweeps along, foam */
+    .o-moon { color: #fef9c3; text-shadow: 0 0 10px rgba(254,249,195,0.9); }
+    .o-far { color: #475569; }
+    .o-mid { color: #64748b; }
+    .o-near { color: #94a3b8; }
+    .o-crest { color: #cbd5e1; animation: crest 3.4s ease-in-out infinite; animation-delay: calc((var(--x, 0) - 17) * 0.14s); }
+    @keyframes crest { 0%, 100% { color: #94a3b8; } 50% { color: #fff; text-shadow: 0 0 6px rgba(255,255,255,0.8); } }
+    .o-foam { color: #e2e8f0; animation: twinkle 2.6s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.43s); }
+
     footer { color: var(--dim); font-size: 0.82rem; margin-top: 4rem; }
 
     @media (max-width: 600px) {
@@ -109,7 +172,7 @@
       .grid { grid-template-columns: 1fr; }
     }
     @media (prefers-reduced-motion: reduce) {
-      body::before, header.intro, .card, .t-light, .t-star, .r-bloom, .r-petal, h1 .cur { animation: none; }
+      body::before, header.intro, .card, .t-light, .t-star, .r-bloom, .r-petal, .m-g, .e-sky, .e-spark, .b-disk, .g-bill, .g-fall, .d-glint, .s-star, .c-flame, .c-conf, .o-crest, .o-foam, h1 .cur { animation: none; }
       .r-petal { opacity: 0; }
       .card, .preview pre { transition: none; }
       .card:hover { transform: none; }
@@ -153,6 +216,78 @@
           en: 'A 3D bouquet grown from characters: stems, leaves, wrapping paper and a gold bow, with roses blooming one by one and petals drifting down.'
         },
         preview: rosePreview()
+      },
+      {
+        href: 'mona-lisa.html',
+        title: { zh: 'ASCII 蒙娜麗莎', en: 'ASCII Mona Lisa' },
+        desc: {
+          zh: '達文西的名畫化成上萬個彩色字元：畫面炸成碎片四散，再一塊塊飛回原位。滑鼠或手指可以撥動字元。',
+          en: "Leonardo's masterpiece as thousands of coloured characters that shatter into fragments and fly back into place. Brush the letters aside with your cursor or finger."
+        },
+        preview: monaPreview()
+      },
+      {
+        href: 'eiffel-tower.html',
+        title: { zh: 'ASCII 艾菲爾鐵塔', en: 'ASCII Eiffel Tower' },
+        desc: {
+          zh: '巴黎夜景裡由下往上長出的鐵塔：藍色鋼架轉成金色，探照燈掃過夜空，整點閃爍，煙火綻放。',
+          en: 'An Eiffel Tower rising over Paris at night: blue steel turns gold, searchlights sweep the sky, the tower sparkles and fireworks burst.'
+        },
+        preview: eiffelPreview()
+      },
+      {
+        href: 'black-hole.html',
+        title: { zh: 'ASCII 黑洞', en: 'ASCII Black Hole' },
+        desc: {
+          zh: '發光的吸積盤繞著漆黑的事件視界旋轉，遠端的光環被重力彎折，從頂上越過。',
+          en: 'A glowing accretion disk swirling around a black event horizon, its far side bent up over the top by gravity.'
+        },
+        preview: blackHolePreview()
+      },
+      {
+        href: 'money-rain.html',
+        title: { zh: 'ASCII 鈔票雨', en: 'ASCII Money Rain' },
+        desc: {
+          zh: '一張張綠色的字元鈔票從天而降，翻轉、飄落。',
+          en: 'Green banknotes made of characters, tumbling and fluttering down.'
+        },
+        preview: moneyPreview()
+      },
+      {
+        href: 'diamond-ring.html',
+        title: { zh: 'ASCII 鑽戒', en: 'ASCII Diamond Ring' },
+        desc: {
+          zh: '銀色粉塵聚成一枚旋轉的鑽戒，光線環繞，鑽石閃閃發亮。',
+          en: 'Silver dust gathers into a spinning diamond ring, with orbiting lines and glints of light.'
+        },
+        preview: ringPreview()
+      },
+      {
+        href: 'red-rose.html',
+        title: { zh: 'ASCII 一枝玫瑰', en: 'ASCII Red Rose' },
+        desc: {
+          zh: '一枝玫瑰從嫩芽長起，舒展葉子，在閃爍的星空下綻放。',
+          en: 'A single rose grows from a sprout, unfolds its leaves and blooms among twinkling stars.'
+        },
+        preview: redRosePreview()
+      },
+      {
+        href: 'birthday-cake.html',
+        title: { zh: 'ASCII 生日蛋糕', en: 'ASCII Birthday Cake' },
+        desc: {
+          zh: '巧克力蛋糕一層層疊起，蠟燭點亮，HAPPY BIRTHDAY 浮現，彩紙紛紛落下。在網址加上 ?name=名字 就能放上名字。',
+          en: 'A chocolate cake stacks up, the candle lights, HAPPY BIRTHDAY appears and confetti falls. Add ?name= to the link to show a name.'
+        },
+        preview: cakePreview()
+      },
+      {
+        href: 'ocean-waves.html',
+        title: { zh: 'ASCII 海浪', en: 'ASCII Ocean Waves' },
+        desc: {
+          zh: '月光下一望無際的字元海，浪湧一波波推來，碎成白色浪花。',
+          en: 'An endless moonlit sea of characters, with swells rolling in and foam breaking.'
+        },
+        preview: oceanPreview()
       }
     ];
 
@@ -210,6 +345,229 @@
         if (y === 7 || (y === 8 && (c === '/' || c === '\\'))) return `<span class="t-bow">${Site.esc(c)}</span>`;
         return Site.esc(c);
       }).join('')).join('\n');
+    }
+
+    // Small framed portrait generated from the real painting (head and shoulders, 15x10 area-averaged cells,
+    // brightened with a warm bias): one luminance-ramp char + one 3-digit hex colour per cell,
+    // inside a gold +===+ frame. A light band sweeps diagonally across.
+    function monaPreview() {
+      const W = 15, H = 10;
+      const CH = '+++++++~~++++++****+~-:.::++++###~*%%*-...+**##*:*##*~:..:~+~~-:##*#*:...--::..~*~*~....::--:..~~-:....:---:..:~+~~:...::...-#%%%#~:...:..+%@@@@#~--:.';
+      const COL = 'ef5ef5ef4ff4ff4ff5ee5ed5ed5ee5ef5ef6ef5ee5ef5ff6ff5ff5ff5fd3fa1f90c60a41952a83ff5ff6ff5ff6ff7ff6ff7fa3fe1ff3ff2ff0f90831412632ed6ff6ff6ff8ff7ff5e61fe2ff2ff2fe0fb0c51512312763cc4de6db4cb4c83e61ff2ff2fe1ff1ff1d615124135338a49b5983973942922f91fe1fa0fe1fa1a31512413423774784994ba4a73912921f92fb1f81c51831622413423774894b95ba4973822822b51fb1fc1fb0fb0d60721622543773952952732922f80ff2ff2ff2ff2ff1fa0c40831722732a52723832fd0ff2ff3ff4ff4ff4ff1fa0f70e70e71a42';
+      const frame = (c, d) => `<span class="m-frame m-g" style="--d:${d}">${c}</span>`;
+      const edge = y => frame('+', y) + Array.from({ length: W }, (_, x) => frame('=', x + 1 + y)).join('') + frame('+', W + 1 + y);
+      const rows = [edge(0)];
+      for (let y = 0; y < H; y++) {
+        let line = frame('|', y + 1);
+        for (let x = 0; x < W; x++) {
+          const i = y * W + x;
+          line += `<span class="m-g" style="color:#${COL.substr(i * 3, 3)};--d:${x + y + 2}">${Site.esc(CH[i])}</span>`;
+        }
+        rows.push(line + frame('|', W + y + 2));
+      }
+      rows.push(edge(H + 1));
+      return rows.join('\n');
+    }
+
+    // Small Eiffel Tower: gold girders, * blinking sparkles, + . stars, dim skyline with # lit windows.
+    function eiffelPreview() {
+      const rows = [
+        '  +     |     .  ',
+        '   .   /|\\   +   ',
+        '       |*|       ',
+        '      /_|_\\      ',
+        '      / * \\      ',
+        '     /_____\\     ',
+        '    /  /*\\  \\    ',
+        ' _ /  /   \\  \\ _ ',
+        '|#|__/_____\\__|#|',
+        '|#|=#=|=#=|=#=|#|'
+      ];
+      let k = 0, s = 0;
+      return rows.map((r, y) => [...r].map((c, x) => {
+        if (c === ' ') return c;
+        if (c === '*') return `<span class="e-spark" style="--k:${k++}">*</span>`;
+        if (y <= 1 && (c === '+' || c === '.')) return `<span class="e-sky" style="--k:${s++}">${c}</span>`;
+        if (c === '#') return `<span class="e-win">#</span>`;
+        const tower = y <= 5 || (y <= 7 && x >= 3 && x <= 13) || (y === 8 && (c === '/' || c === '\\'));
+        return `<span class="${tower ? 'e-gold' : 'e-city'}">${Site.esc(c)}</span>`;
+      }).join('')).join('\n');
+    }
+
+    // Paint rows using a same-sized mask: each mask letter picks a class (space = plain text).
+    // Every painted span gets --k (running index) and --x (column) for staggered animations.
+    function paint(rows, masks, map) {
+      let k = 0;
+      return rows.map((r, y) => [...r].map((c, x) => {
+        const cl = map[masks[y][x]];
+        if (c === ' ' || !cl) return Site.esc(c);
+        return `<span class="${cl}" style="--k:${k++};--x:${x}">${Site.esc(c)}</span>`;
+      }).join('')).join('\n');
+    }
+
+    // Black hole: lensed arc over the top (a), photon ring (r), accretion disk across the middle (d), stars (s).
+    function blackHolePreview() {
+      return paint([
+        '  +           .  ',
+        '    .-~~~~~-.    ',
+        '  .~ .-----. ~.  ',
+        ' (  /       \\  ) ',
+        '-=~(         )~=-',
+        '=~=-=~=====~=-=~=',
+        ' (  \\_______/  ) ',
+        '  `~.       .~`  ',
+        '    `-~~~~~-`    ',
+        '  .           +  '
+      ], [
+        '  s           s  ',
+        '    aaaaaaaaa    ',
+        '  aa rrrrrrr aa  ',
+        ' a  r       r  a ',
+        'dddr         rddd',
+        'ddddddddddddddddd',
+        ' a  rrrrrrrrr  a ',
+        '  aaa       aaa  ',
+        '    aaaaaaaaa    ',
+        '  s           s  '
+      ], { s: 'e-sky', a: 'b-arc', r: 'b-ring', d: 'b-disk' });
+    }
+
+    // Money rain: [$ 100 ] bills at different tilts fluttering; the top one keeps falling.
+    function moneyPreview() {
+      const rows = [
+        '    [$ 100 ]     ',
+        '  .          $   ',
+        '        [$ 100 ] ',
+        ' $               ',
+        '[$ 100 ]      .  ',
+        '            $    ',
+        '      [$ 100 ]   ',
+        '  .              ',
+        '   $        .    ',
+        ' _[$]_[$$]_[$]_  '
+      ];
+      const tilts = [0, 9, -14, 6];
+      let n = 0;
+      return rows.map((r, y) => {
+        if (y === rows.length - 1) return `<span class="g-dim">${Site.esc(r)}</span>`;
+        return Site.esc(r)
+          .replace(/\[\$ 100 \]/g, () => {
+            const i = n++;
+            return `<span class="g-bill${i === 0 ? ' g-fall' : ''}" style="--t:${tilts[i]}deg;--k:${i}">[<b>$</b> 100 ]</span>`;
+          })
+          .replace(/(^|[^>])([$.])(?![^<]*<\/b>)/g, (m, a, c) => `${a}<span class="g-dim">${c}</span>`);
+      }).join('\n');
+    }
+
+    // Diamond ring: faceted gem (g) on a silver band (b), twinkling + glints (t).
+    function ringPreview() {
+      return paint([
+        '  +           .  ',
+        '      _____      ',
+        '     /\\ | /\\     ',
+        '     \\ \\|/ /     ',
+        '      \\ | /   +  ',
+        '    .-=\\V/=-.    ',
+        '  /           \\  ',
+        ' |             | ',
+        '  \\           /  ',
+        '    `-=====-`    '
+      ], [
+        '  t           t  ',
+        '      ggggg      ',
+        '     ggggggg     ',
+        '     ggggggg     ',
+        '      ggggg   t  ',
+        '    bbbgggbbb    ',
+        '  b           b  ',
+        ' b             b ',
+        '  b           b  ',
+        '    bbbbbbbbb    '
+      ], { t: 'd-glint', g: 'd-gem', b: 'd-band' });
+    }
+
+    // One red rose: head (r) with a pulsing heart (h), green sepals/stem (s), leaves (l), stars (*).
+    function redRosePreview() {
+      return paint([
+        '  +           .  ',
+        '      ,@@@,      ',
+        '     @@(@)@@     ',
+        '     `@@@@@`     ',
+        '       \\@/    +  ',
+        '        |        ',
+        '    _   |   _    ',
+        '   (_\\_ | _/_)   ',
+        '        |        ',
+        ' .      |        '
+      ], [
+        '  *           *  ',
+        '      rrrrr      ',
+        '     rrrhrrr     ',
+        '     rrrrrrr     ',
+        '       srs    *  ',
+        '        s        ',
+        '    l   s   l    ',
+        '   lllll s lllll ',
+        '        s        ',
+        ' *      s        '
+      ], { '*': 's-star', r: 's-rose', h: 'r-bloom', s: 's-stem', l: 's-leaf' });
+    }
+
+    // Birthday cake: flickering flame (f), pink candle (p), cream (c), chocolate (#), confetti (*).
+    function cakePreview() {
+      const conf = ['#f472b6', '#facc15', '#38bdf8', '#a78bfa', '#4ade80'];
+      let k = 0;
+      return paint([
+        '  *    .    ~  , ',
+        ' ~      (     *  ',
+        '        |    .   ',
+        '    .---|---.    ',
+        '    |~~~~~~~|    ',
+        '    |#######|    ',
+        '  .-+-------+-.  ',
+        '  |~~~~~~~~~~~|  ',
+        '  |###########|  ',
+        ' =============== '
+      ], [
+        '  *    *    *  * ',
+        ' *      f     *  ',
+        '        p    *   ',
+        '    ccccpcccc    ',
+        '    ccccccccc    ',
+        '    c#######c    ',
+        '  ccccccccccccc  ',
+        '  ccccccccccccc  ',
+        '  c###########c  ',
+        ' ccccccccccccccc '
+      ], { '*': 'c-conf', f: 'c-flame', p: 'c-candle', c: 'c-cream', '#': 'c-choc' })
+        .replace(/class="c-conf" style="/g, () => `class="c-conf" style="color:${conf[k++ % conf.length]};`);
+    }
+
+    // Ocean: moon (m), swells dim in the distance (1, 2), a bright crest sweeping along (c), near water (3), foam (f).
+    function oceanPreview() {
+      return paint([
+        '  .          O   ',
+        '       .         ',
+        ' .-~-.   .-~~-.  ',
+        '~     ~-~      ~-',
+        '  .-~~~-.  .-~~-.',
+        '-~       ~~      ',
+        '~^~-._.-~^~-._.-~',
+        '  ~ ~~ ~  ~~ ~ ~ ',
+        '.:~:.:~~:.:~:.:~:',
+        '~~--~~--~~--~~--~'
+      ], [
+        '  1          m   ',
+        '       1         ',
+        '11111111111111111',
+        '11111111111111111',
+        '22222222222222222',
+        '22222222222222222',
+        'ccccccccccccccccc',
+        '33333333333333333',
+        'f3f3ff33ff3f3ff3f',
+        '22222222222222222'
+      ], { m: 'o-moon', 1: 'o-far', 2: 'o-mid', c: 'o-crest', 3: 'o-near', f: 'o-foam' });
     }
 
     function render() {

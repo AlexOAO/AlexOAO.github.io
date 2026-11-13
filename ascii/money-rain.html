@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ASCII Money Rain | Alex Li (李翔緯)</title>
+  <meta name="description" content="A shower of 3D banknotes drawn entirely with green ASCII characters: hundred-dollar bills tumble, flutter and flash as they rain down through the dark. Vanilla JS on a single canvas.">
+  <meta name="theme-color" content="#000000">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;600;800&display=swap">
+  <style>
+    :root {
+      --sky: #000000;
+      --text: #e6edf6;
+      --muted: #a3b1c6;
+      --accent: #3b82f6;
+      --mono: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--sky);
+      color: var(--text);
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    canvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100svh;
+      display: block;
+      touch-action: manipulation; /* no double-tap zoom: double-tap means replay */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .back {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(59, 130, 246, 0.45);
+      background: rgba(59, 130, 246, 0.12);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .back:hover, .back:focus-visible {
+      background: rgba(59, 130, 246, 0.28);
+      border-color: var(--accent);
+      outline: none;
+    }
+    .hud, .hint {
+      position: fixed;
+      z-index: 1;
+      bottom: 12px;
+      color: var(--muted);
+      opacity: 0.75;
+      font: 11px/1.4 var(--mono);
+      white-space: pre;
+      pointer-events: none;
+      max-width: calc(100% - 24px);
+      overflow: hidden;
+    }
+    .hud { left: 12px; }
+    .hint {
+      right: 12px;
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    @media (max-width: 640px) {
+      .hud, .hint { font-size: 10px; }
+      .hint { bottom: 30px; } /* stack above the HUD on narrow screens */
+    }
+  </style>
+</head>
+<body>
+  <h1 class="sr-only">ASCII Money Rain</h1>
+  <a class="back" href="./">← ASCII</a>
+  <canvas id="c" role="img" aria-label="Animated shower of tumbling 3D hundred-dollar banknotes drawn with green ASCII characters falling through a black sky"></canvas>
+  <div class="hud" id="hud" aria-hidden="true"></div>
+  <div class="hint" id="hint"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ---------- Timeline (seconds of scene time) ----------
+  const T = {
+    DRIFT: 3.0,                 // 0-3 s: a few bills drift in
+    RAMP: 3.0, RAMP_DUR: 5.0,   // 3-8 s: the rain intensifies
+    SHOWER: 8.0,                // 8-18 s: full shower
+    TAPER: 18.0, TAPER_DUR: 3.0,// 18-21 s: no new bills, the rest fall out
+    FADE: 20.5, FADE_DUR: 1.5,
+    END: 22.0
+  };
+  const DRIFT_I = 0.2;          // share of the full shower during the drift-in
+
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T_START = reduced ? 12.0 : 0;   // reduced motion: open in the middle of the shower
+  const SPEED = reduced ? 0.35 : 1;     // and let it fall slowly, without looping
+
+  // ---------- World ----------
+  const ASPECT = 2.35;          // banknote width : height
+  const Z_NEAR = 2.9, Z_FAR = 9.0;
+  const POOL = 30;
+  const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
+  // Light from upper-left-front, in view space (camera looks down +z, y up).
+  const LX0 = -0.45, LY0 = 0.6, LZ0 = -0.66;
+  const LN = Math.hypot(LX0, LY0, LZ0);
+  const LX = LX0 / LN, LY = LY0 / LN, LZ = LZ0 / LN;
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  let rng = mulberry32(100);
+
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+
+  // ---------- Characters & colours ----------
+  const CH = [];
+  const ci = s => { let i = CH.indexOf(s); if (i < 0) { CH.push(s); i = CH.length - 1; } return i; };
+  const C_THIN = [...'.-:~'].map(ci);
+  const C_HASH = ci('#'), C_DOT = ci('.'), C_COLON = ci(':'), C_EQ = ci('='), C_BAR = ci('|'),
+        C_AT = ci('@'), C_PCT = ci('%'), C_STAR = ci('*'), C_PLUS = ci('+'), C_o = ci('o'),
+        C_TILDE = ci('~'), C_DASH = ci('-'), C_DOLLAR = ci('$'), C_1 = ci('1'), C_0 = ci('0');
+
+  const LEVELS = 16;
+  const PAL = [];
+  const pal = (r, g, b) => { PAL.push([r, g, b]); return PAL.length - 1; };
+  const P_DARK = pal(40, 90, 60);
+  const P_MID = pal(72, 160, 108);
+  const P_MINT = pal(120, 220, 160);
+  const P_PALE = pal(200, 255, 222);
+
+  const NCOLOR = PAL.length * LEVELS;
+  const COLSTR = new Array(NCOLOR);
+  PAL.forEach(([r, g, b], p) => {
+    for (let l = 0; l < LEVELS; l++) {
+      // Top levels overshoot 1 and wash toward white, so lit characters read as glowing.
+      const m = 0.3 + 1.05 * l / (LEVELS - 1), w = Math.max(0, m - 1) * 160;
+      const lift = v => Math.min(255, v * m + w) | 0;
+      COLSTR[p * LEVELS + l] = `rgb(${lift(r)},${lift(g)},${lift(b)})`;
+    }
+  });
+
+  // ---------- Banknote textures (front + back) ----------
+  // Each texel: character, palette entry, base brightness, glyph flag (never thinned).
+  const TW = 64, TH = 27, TN = TW * TH;
+  function makeTex() {
+    return { c: new Uint8Array(TN), p: new Uint8Array(TN), b: new Float32Array(TN), g: new Uint8Array(TN) };
+  }
+  const FRONT = makeTex(), BACK = makeTex();
+  function put(tx, i, j, c, p, b, g) {
+    if (i < 0 || j < 0 || i >= TW || j >= TH) return;
+    const k = j * TW + i;
+    tx.c[k] = c; tx.p[k] = p; tx.b[k] = b; tx.g[k] = g ? 1 : 0;
+  }
+  function frame(tx, i, j, inner) {
+    const ex = Math.min(i, TW - 1 - i), ey = Math.min(j, TH - 1 - j), e = Math.min(ex, ey);
+    if (e === 0) { put(tx, i, j, C_HASH, P_MINT, 0.8, 1); return true; }
+    if (e === 1) { put(tx, i, j, C_COLON, P_DARK, 0.45, 0); return true; }
+    if (e === 2) { put(tx, i, j, C_EQ, P_DARK, 0.5, 0); return true; }
+    if (e === 3) {
+      put(tx, i, j, ex < ey ? C_BAR : C_EQ, P_MINT, inner, 1); return true;
+    }
+    return false;
+  }
+  function text(tx, s, i, j, b) {
+    for (let k = 0; k < s.length; k++) put(tx, i + k, j, ci(s[k]), P_PALE, b, 1);
+  }
+
+  for (let j = 0; j < TH; j++) {
+    for (let i = 0; i < TW; i++) {
+      const u = (i + 0.5) / TW, v = (j + 0.5) / TH;
+      // Front
+      if (!frame(FRONT, i, j, 0.85)) {
+        const ox = (u - 0.5) / 0.13, oy = (v - 0.5) / 0.36, r = Math.hypot(ox, oy);
+        const sl = Math.hypot((u - 0.24) * TW / 3.2, (v - 0.56) * TH / 3.2);   // left seal
+        const sr = Math.hypot((u - 0.76) * TW / 3.6, (v - 0.5) * TH / 3.6);    // right seal
+        const wave = j - TH / 2 + 1.6 * Math.sin(i * 0.32) + 0.8 * Math.sin(i * 0.11 + j);
+        if (r < 1.0 && r > 0.78) put(FRONT, i, j, C_AT, P_DARK, 0.62, 0);        // darker portrait ring
+        else if (r <= 0.78) {
+          // Face lit from the upper left, hair on top, two eyes.
+          const lit = clamp(0.62 + 0.38 * (1 - r) - 0.25 * ox - 0.1 * oy, 0, 1);
+          if (oy < -0.42) put(FRONT, i, j, C_PCT, P_MID, 0.7, 0);
+          else if (Math.abs(oy + 0.12) < 0.09 && Math.abs(Math.abs(ox) - 0.32) < 0.14) put(FRONT, i, j, C_o, P_DARK, 0.55, 0);
+          else put(FRONT, i, j, lit > 0.8 ? C_STAR : C_PLUS, lit > 0.82 ? P_PALE : P_MINT, 0.6 + 0.4 * lit, 0);
+        } else if (sl < 1) put(FRONT, i, j, sl > 0.6 ? C_o : C_STAR, sl > 0.6 ? P_MID : P_MINT, 0.75, 0);
+        else if (sr < 1) put(FRONT, i, j, sr > 0.6 ? C_o : C_PCT, P_MID, 0.72, 0);
+        else if (Math.abs(((wave % 5) + 5) % 5 - 2.5) < 0.55) put(FRONT, i, j, C_TILDE, P_MID, 0.62, 0); // guilloche
+        else put(FRONT, i, j, j % 2 ? C_EQ : (i % 4 ? C_DASH : C_COLON), P_DARK, j % 2 ? 0.58 : 0.5, 0);
+      }
+      // Back: darker, simpler — a framed building in an oval, ruled lines.
+      if (!frame(BACK, i, j, 0.7)) {
+        const ox = (u - 0.5) / 0.22, oy = (v - 0.5) / 0.34, r = Math.hypot(ox, oy);
+        if (r < 1.0 && r > 0.86) put(BACK, i, j, C_EQ, P_MID, 0.6, 0);
+        else if (r <= 0.86) put(BACK, i, j, oy < -0.45 ? C_EQ : i % 3 === 0 ? C_BAR : C_DOT,
+                                oy < -0.45 || i % 3 === 0 ? P_MINT : P_DARK, oy < -0.45 || i % 3 === 0 ? 0.62 : 0.4, 0);
+        else put(BACK, i, j, j % 3 === 1 ? C_EQ : C_DASH, P_DARK, j % 3 === 1 ? 0.52 : 0.42, 0);
+      }
+    }
+  }
+  // Corner numerals: $ and 100 on the front, 100 in all four corners of the back.
+  for (const [tx, b] of [[FRONT, 1.0], [BACK, 0.85]]) {
+    const dark = (i, j, w) => { for (let k = -1; k <= w; k++) for (let q = -1; q <= 1; q++) put(tx, i + k, j + q, C_DOT, P_DARK, 0.25, 0); };
+    if (tx === FRONT) {
+      dark(5, 5, 1); text(tx, '$', 5, 5, b);
+      dark(TW - 6, TH - 6, 1); text(tx, '$', TW - 6, TH - 6, b);
+      dark(TW - 9, 5, 3); text(tx, '100', TW - 9, 5, b);
+      dark(5, TH - 6, 3); text(tx, '100', 5, TH - 6, b);
+    } else {
+      for (const [i, j] of [[5, 5], [TW - 8, 5], [5, TH - 6], [TW - 8, TH - 6]]) { dark(i, j, 3); text(tx, '100', i, j, b); }
+    }
+  }
+
+  // ---------- Bills (pool) ----------
+  const bAct = new Uint8Array(POOL);
+  const bx = new Float32Array(POOL), by = new Float32Array(POOL), bz = new Float32Array(POOL);
+  const bvy = new Float32Array(POOL), bvt = new Float32Array(POOL);
+  const bsw = new Float32Array(POOL), bswW = new Float32Array(POOL), bswP = new Float32Array(POOL);
+  const bax = new Float32Array(POOL), bay = new Float32Array(POOL), baz = new Float32Array(POOL);
+  const bwx = new Float32Array(POOL), bwy = new Float32Array(POOL), bwz = new Float32Array(POOL);
+  const bhw = new Float32Array(POOL), bfl = new Float32Array(POOL), bflW = new Float32Array(POOL);
+  const bSeen = new Uint8Array(POOL);
+  // Per-frame basis (view space): U, V unit axes, N normal.
+  const ux = new Float32Array(POOL), uy = new Float32Array(POOL), uz = new Float32Array(POOL);
+  const vx = new Float32Array(POOL), vy = new Float32Array(POOL), vz = new Float32Array(POOL);
+  const nx = new Float32Array(POOL), ny = new Float32Array(POOL), nz = new Float32Array(POOL);
+  const fz = new Float32Array(POOL); // depth order (far first) for halos
+
+  // ---------- Canvas, grid, layout ----------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const hudEl = document.getElementById('hud');
+  const hintEl = document.getElementById('hint');
+
+  let W = 0, H = 0, fs = 10, cw = 6, ch = 11, cols = 0, rows = 0;
+  let F = 600, ox = 0, oy = 0, NMAX = 22;
+  let cellFont = '', bgGrad = null;
+  let zbuf, stampA, cchar, ccol, touched, order, nT = 0, stamp = 0;
+  const counts = new Uint32Array(NCOLOR);
+  let needResize = true, dirty = true;
+
+  function resize() {
+    needResize = false;
+    W = canvas.clientWidth || innerWidth;
+    H = canvas.clientHeight || innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    fs = clamp(Math.round(Math.min(W, H * 0.8) / 80), 7, 14);
+    cellFont = `${fs}px ${MONO}`;
+    ctx.font = cellFont;
+    cw = ctx.measureText('M').width || fs * 0.6;
+    ch = fs * 1.1;
+    cols = Math.ceil(W / cw);
+    rows = Math.ceil(H / ch);
+    const n = cols * rows;
+    zbuf = new Float32Array(n); stampA = new Uint32Array(n);
+    cchar = new Uint8Array(n); ccol = new Uint16Array(n);
+    touched = new Int32Array(n); order = new Int32Array(n); stamp = 0;
+
+    F = Math.min(W * 1.0, H * 0.9);
+    ox = W / 2; oy = H / 2;
+    NMAX = clamp(Math.round(10 + 12 * W / 1280), 14, 22);
+
+    bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, '#000000');
+    bgGrad.addColorStop(1, '#010403');
+    makeHalo();
+    dirty = true;
+  }
+
+  // Visible half extents (world units) at depth z.
+  const halfH = z => oy * z / F, halfW = z => ox * z / F;
+
+  // ---------- Simulation ----------
+  let t = 0, skyT = 0, spawnCd = 0, intensity = 0;
+
+  function intensityAt(tt) {
+    if (tt < T.RAMP) return DRIFT_I * smooth(tt / 0.6);
+    if (tt < T.SHOWER) return DRIFT_I + (1 - DRIFT_I) * smooth((tt - T.RAMP) / T.RAMP_DUR);
+    if (tt < T.TAPER) return 1;
+    return 1 - smooth((tt - T.TAPER) / T.TAPER_DUR);
+  }
+
+  function spawn(b, first) {
+    const q = rng();
+    const z = Z_NEAR + (Z_FAR - Z_NEAR) * Math.pow(q, 0.85);
+    const s = 1.1 + 0.4 * rng();
+    bhw[b] = s;
+    bz[b] = z;
+    bx[b] = (rng() * 2 - 1) * (halfW(z) * 0.95 + 0.3);
+    by[b] = halfH(z) + s * 1.05 + rng() * (first ? 0.4 : 1.6);
+    const fall = 4.2 + 0.25 * z + 1.6 * rng();         // seconds to cross the screen
+    bvt[b] = (2 * halfH(z) + 2.2 * s) / fall;
+    bvy[b] = bvt[b] * (0.25 + 0.2 * rng());             // starts slow, drag eases it to terminal speed
+    bsw[b] = (0.25 + 0.5 * rng()) * z / 6; bswW[b] = 0.6 + 0.9 * rng(); bswP[b] = rng() * 6.283;
+    bax[b] = rng() * 6.283; bay[b] = rng() * 6.283; baz[b] = rng() * 6.283;
+    const sg = () => rng() < 0.5 ? -1 : 1;
+    bwx[b] = sg() * (0.5 + 1.6 * rng()); bwy[b] = sg() * (0.3 + 1.1 * rng()); bwz[b] = sg() * (0.2 + 0.8 * rng());
+    bfl[b] = rng() * 6.283; bflW[b] = 2 + 3 * rng();
+    bAct[b] = 1;
+  }
+
+  function step(dt) {
+    t += dt; skyT += dt;
+    if (reduced) { if (t > T_START) t = T_START; }
+    else if (t >= T.END) { t = 0; bAct.fill(0); spawnCd = 0; rng = mulberry32(100); }
+    intensity = intensityAt(t);
+    const target = Math.round(intensity * NMAX);
+    let active = 0;
+    for (let b = 0; b < POOL; b++) active += bAct[b];
+
+    for (let b = 0; b < POOL; b++) {
+      if (!bAct[b]) continue;
+      // Drag toward terminal speed, with a flutter that briefly slows the fall.
+      const fl = Math.sin(bfl[b] += bflW[b] * dt);
+      const tv = bvt[b] * (1 - 0.22 * fl);
+      bvy[b] += (tv - bvy[b]) * Math.min(1, dt * 1.4);
+      by[b] -= bvy[b] * dt;
+      bx[b] += Math.cos(skyT * bswW[b] + bswP[b]) * bsw[b] * bswW[b] * dt;
+      bax[b] += bwx[b] * dt; bay[b] += bwy[b] * dt; baz[b] += bwz[b] * dt;
+      if (by[b] < -halfH(bz[b]) - bhw[b] * 1.1) {          // left the bottom
+        if (active > target || t >= T.TAPER) { bAct[b] = 0; active--; }
+        else spawn(b, false);                            // recycle to the top
+      }
+    }
+    spawnCd -= dt;
+    if (active < target && spawnCd <= 0 && t < T.TAPER) {
+      for (let b = 0; b < POOL; b++) if (!bAct[b]) { spawn(b, t < T.RAMP); break; }
+      spawnCd = t < T.RAMP ? 0.55 : 0.18;
+    }
+  }
+
+  // ---------- Rasterise bills by casting a ray per cell (z-buffered) ----------
+  function buildScene() {
+    stamp++; nT = 0;
+    for (let b = 0; b < POOL; b++) {
+      bSeen[b] = 0;
+      if (!bAct[b]) continue;
+      // Orientation R = Rz * Ry * Rx; U = R·x̂, V = R·ŷ, N = R·ẑ.
+      const cx = Math.cos(bax[b]), sx = Math.sin(bax[b]);
+      const cy = Math.cos(bay[b]), sy = Math.sin(bay[b]);
+      const cz = Math.cos(baz[b]), sz = Math.sin(baz[b]);
+      const r00 = cz * cy, r01 = cz * sy * sx - sz * cx, r02 = cz * sy * cx + sz * sx;
+      const r10 = sz * cy, r11 = sz * sy * sx + cz * cx, r12 = sz * sy * cx - cz * sx;
+      const r20 = -sy, r21 = cy * sx, r22 = cy * cx;
+      ux[b] = r00; uy[b] = r10; uz[b] = r20;
+      vx[b] = r01; vy[b] = r11; vz[b] = r21;
+      nx[b] = r02; ny[b] = r12; nz[b] = r22;
+      rasterBill(b);
+    }
+  }
+
+  function rasterBill(b) {
+    const X = bx[b], Y = by[b], Z = bz[b];
+    const HW = bhw[b], HH = HW / ASPECT;
+    const Ux = ux[b], Uy = uy[b], Uz = uz[b], Vx = vx[b], Vy = vy[b], Vz = vz[b];
+    const Nx = nx[b], Ny = ny[b], Nz = nz[b];
+    // Screen bounding box from the four corners.
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    for (let k = 0; k < 4; k++) {
+      const a = k & 1 ? HW : -HW, c = k & 2 ? HH : -HH;
+      const px = X + Ux * a + Vx * c, py = Y + Uy * a + Vy * c, pz = Z + Uz * a + Vz * c;
+      const sx = ox + px / pz * F, sy = oy - py / pz * F;
+      if (sx < x0) x0 = sx; if (sx > x1) x1 = sx; if (sy < y0) y0 = sy; if (sy > y1) y1 = sy;
+    }
+    const c0 = Math.max(0, Math.floor(x0 / cw)), c1 = Math.min(cols - 1, Math.floor(x1 / cw));
+    const r0 = Math.max(0, Math.floor(y0 / ch)), r1 = Math.min(rows - 1, Math.floor(y1 / ch));
+    if (c0 > c1 || r0 > r1) return;
+    bSeen[b] = 1;
+
+    const CU = X * Ux + Y * Uy + Z * Uz, CV = X * Vx + Y * Vy + Z * Vz, CN = X * Nx + Y * Ny + Z * Nz;
+    // Shading terms that are constant per bill (plane is flat): Lambert on the visible side.
+    const lamF = Nx * LX + Ny * LY + Nz * LZ;
+    let dd = 1.22 - Z / 15; dd = dd < 0.5 ? 0.5 : dd > 1 ? 1 : dd;   // far bills dimmer
+    const flPh = bfl[b] * 0.9, iF = 1 / F;
+
+    for (let row = r0; row <= r1; row++) {
+      const dy = -((row + 0.5) * ch - oy) * iF;
+      for (let col = c0; col <= c1; col++) {
+        const dx = ((col + 0.5) * cw - ox) * iF;
+        const dN = dx * Nx + dy * Ny + Nz;
+        if (dN > -1e-4 && dN < 1e-4) continue;
+        const s = CN / dN;                                // ray (dx,dy,1)*s hits the plane; s = depth
+        if (s < 0.3) continue;
+        const a = (s * (dx * Ux + dy * Uy + Uz) - CU) / HW;
+        if (a < -1 || a > 1) continue;
+        const v = (s * (dx * Vx + dy * Vy + Vz) - CV) / HH;
+        if (v < -1 || v > 1) continue;
+        const c = row * cols + col;
+        const fresh = stampA[c] !== stamp;
+        if (!fresh && zbuf[c] <= s) continue;           // keep nearest (smaller depth)
+
+        // Facing: cosine between the normal and the ray back to the camera.
+        const inv = 1 / Math.sqrt(dx * dx + dy * dy + 1);
+        const fc = -dN * inv;                            // >0: front faces the camera
+        const front = fc > 0;
+        const f = front ? fc : -fc;
+        let lam = front ? lamF : -lamF; if (lam < 0) lam = 0;
+        let ti = ((a + 1) * 0.5 * TW) | 0; if (ti >= TW) ti = TW - 1;
+        if (!front) ti = TW - 1 - ti;                    // mirrored on the back
+        let tj = ((1 - v) * 0.5 * TH) | 0; if (tj >= TH) tj = TH - 1;
+        const tx = front ? FRONT : BACK, k = tj * TW + ti;
+
+        const f2 = f * f, f4 = f2 * f2, spec = f4 * f4 * f4 * 0.55;    // flash when facing the viewer
+        const flut = 1 + 0.16 * Math.sin(a * 3.1 + flPh);              // soft bend/flutter shading
+        let br = tx.b[k] * (0.18 + 0.42 * lam + 0.5 * f) * dd * flut + spec * tx.b[k];
+        if (!front) br *= 0.82;
+        if (br > 1) br = 1;
+        let cc = tx.c[k];
+        if (f < 0.32 && !(tx.g[k] && f > 0.18)) cc = C_THIN[(br * 3.99) | 0];   // edge-on: thin strokes
+        if (fresh) { stampA[c] = stamp; touched[nT++] = c; }
+        zbuf[c] = s; cchar[c] = cc; ccol[c] = tx.p[k] * LEVELS + ((br * 15.99) | 0);
+      }
+    }
+  }
+
+  // Bucket by colour so fillStyle changes once per colour, not once per cell.
+  function drawCells() {
+    counts.fill(0);
+    for (let i = 0; i < nT; i++) counts[ccol[touched[i]]]++;
+    let acc = 0;
+    for (let c = 0; c < NCOLOR; c++) { const n = counts[c]; counts[c] = acc; acc += n; }
+    for (let i = 0; i < nT; i++) { const c = touched[i]; order[counts[ccol[c]]++] = c; }
+    let cur = -1;
+    for (let i = 0; i < nT; i++) {
+      const c = order[i], cc = ccol[c];
+      if (cc !== cur) { cur = cc; ctx.fillStyle = COLSTR[cc]; }
+      const row = (c / cols) | 0;
+      ctx.fillText(CH[cchar[c]], (c - row * cols) * cw, row * ch);
+    }
+  }
+
+  // Flash halos: a soft mint sprite over bills that turn to face the camera.
+  let halo = null;
+  function makeHalo() {
+    const R = 64;
+    halo = document.createElement('canvas');
+    halo.width = halo.height = R * 2;
+    const x = halo.getContext('2d'), gr = x.createRadialGradient(R, R, 0, R, R, R);
+    gr.addColorStop(0, 'rgba(200,255,220,0.55)');
+    gr.addColorStop(0.35, 'rgba(120,220,160,0.25)');
+    gr.addColorStop(1, 'rgba(120,220,160,0)');
+    x.fillStyle = gr; x.fillRect(0, 0, R * 2, R * 2);
+  }
+  function drawHalos(fade) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let b = 0; b < POOL; b++) {
+      if (!bSeen[b]) continue;
+      const Z = bz[b], dN = (bx[b] * nx[b] + by[b] * ny[b] + Z * nz[b]) / Math.hypot(bx[b], by[b], Z);
+      const f = dN < 0 ? -dN : dN;
+      if (f < 0.8) continue;
+      const a = (f - 0.8) / 0.2;
+      ctx.globalAlpha = a * a * 0.45 * fade;
+      const r = bhw[b] * F / Z * 1.15, sx = ox + bx[b] / Z * F, sy = oy - by[b] / Z * F;
+      ctx.drawImage(halo, sx - r, sy - r * 0.6, r * 2, r * 1.2);
+    }
+    ctx.restore();
+  }
+
+  // Bloom: shrink the frame, remove the background with 'difference', blur, and add it back on top.
+  const glow = document.createElement('canvas'), gctx = glow.getContext('2d');
+  const GLOW_DIV = 5, GLOW_A = 0.9;
+  function drawGlow() {
+    const gw = Math.ceil(W / GLOW_DIV), gh = Math.ceil(H / GLOW_DIV);
+    if (glow.width !== gw || glow.height !== gh) { glow.width = gw; glow.height = gh; }
+    gctx.setTransform(1, 0, 0, 1, 0, 0);
+    gctx.globalCompositeOperation = 'copy';
+    gctx.filter = 'blur(2px)';
+    gctx.drawImage(canvas, 0, 0, gw, gh);
+    gctx.filter = 'none';
+    gctx.globalCompositeOperation = 'difference';
+    gctx.setTransform(gw / W, 0, 0, gh / H, 0, 0);
+    gctx.fillStyle = bgGrad;
+    gctx.fillRect(0, 0, W, H);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = GLOW_A;
+    ctx.drawImage(glow, 0, 0, W, H);
+    ctx.restore();
+  }
+
+  function render() {
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+    ctx.textBaseline = 'top';
+    ctx.font = cellFont;
+    buildScene();
+    // Whatever is still falling fades out before the loop restarts.
+    const fade = reduced ? 1 : 1 - smooth((t - T.FADE) / T.FADE_DUR);
+    ctx.globalAlpha = fade;
+    drawCells();
+    ctx.globalAlpha = 1;
+    drawHalos(fade);
+    drawGlow();
+  }
+
+  // ---------- Loop, HUD, controls ----------
+  let paused = false, last = performance.now();
+  let frames = 0, fpsT = last, fps = 0, hudT = 0;
+
+  function updateHud(now) {
+    let nb = 0;
+    for (let b = 0; b < POOL; b++) nb += bSeen[b];
+    const tail = paused ? 'paused' : `${fps} fps`;
+    // Narrow screens get a short line so nothing is clipped.
+    hudEl.textContent = W < 640 ? `bills ${nb}  falling ${intensity.toFixed(2)}  ${tail}`
+      : `bills ${nb}  falling ${intensity.toFixed(2)}  letters ${nT.toLocaleString('en-US')}  ${tail}`;
+    hudT = now;
+  }
+
+  function prewarm(until) {
+    // Integrate the shower with fixed steps so a later start time shows a settled scene.
+    const n = Math.round(until * 60);
+    for (let i = 0; i < n; i++) step(1 / 60);
+  }
+
+  function frameLoop(now) {
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); // no jumps after a hidden tab
+    last = now;
+    if (needResize) {
+      const first = W === 0;
+      resize();
+      if (first && T_START > 0) prewarm(T_START);
+    }
+    if (!paused) step(dt * SPEED);
+    if (!paused || dirty) { render(); dirty = false; frames++; }
+    if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
+    if (now - hudT >= 250) updateHud(now);
+    requestAnimationFrame(frameLoop);
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); }
+  function replay() {
+    t = 0; bAct.fill(0); spawnCd = 0; rng = mulberry32(100);
+    if (reduced) prewarm(T_START);
+    paused = false; dirty = true;
+  }
+
+  addEventListener('resize', () => { needResize = true; });
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return; // leave Cmd/Ctrl+R alone
+    if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
+    else if (e.key === 'r' || e.key === 'R') replay();
+  });
+  // Single tap = pause (decided after 280 ms), two quick taps = replay.
+  let tapTimer = 0;
+  canvas.addEventListener('pointerup', e => {
+    if (e.button > 0) return;
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; replay(); }
+    else tapTimer = setTimeout(() => { tapTimer = 0; togglePause(); }, 280);
+  });
+
+  // Hint language: ?lang= wins, then saved site preference, then browser.
+  let pref = null;
+  try { pref = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (!pref) { try { pref = localStorage.getItem('lang'); } catch (e) {} }
+  if (!pref) pref = navigator.language || 'en';
+  const zh = String(pref).toLowerCase().startsWith('zh');
+  document.documentElement.lang = zh ? 'zh-Hant' : 'en';
+  // Touch screens have no keyboard, and the full hint would not fit on a phone.
+  const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  hintEl.textContent = touch ? (zh ? '點擊暫停 · 雙擊重播' : 'tap to pause · double-tap to replay')
+                             : (zh ? '空白鍵 暫停 · R 重播 · 點擊暫停 · 雙擊重播'
+                                   : 'Space pause · R replay · click to pause · double-click to replay');
+
+  requestAnimationFrame(frameLoop);
+})();
+</script>
+</body>
+</html>

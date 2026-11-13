@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ASCII Black Hole | Alex Li (李翔緯)</title>
+  <meta name="description" content="A black hole drawn entirely with ASCII characters: a photon ring ignites, a hot accretion disk spreads out edge-on, gravitational lensing wraps its far side over the event horizon, and the disk swirls with differential rotation. Vanilla JS on a single canvas.">
+  <meta name="theme-color" content="#000000">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;600;800&display=swap">
+  <style>
+    :root {
+      --bg: #0b1120;
+      --sky: #000000;
+      --text: #e6edf6;
+      --muted: #a3b1c6;
+      --accent: #3b82f6;
+      --mono: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--sky);
+      color: var(--text);
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    canvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100svh;
+      display: block;
+      touch-action: manipulation; /* no double-tap zoom: double-tap means replay */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .back {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(59, 130, 246, 0.45);
+      background: rgba(59, 130, 246, 0.12);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .back:hover, .back:focus-visible {
+      background: rgba(59, 130, 246, 0.28);
+      border-color: var(--accent);
+      outline: none;
+    }
+    .hud, .hint {
+      position: fixed;
+      z-index: 1;
+      bottom: 12px;
+      color: var(--muted);
+      opacity: 0.75;
+      font: 11px/1.4 var(--mono);
+      white-space: pre;
+      pointer-events: none;
+      max-width: calc(100% - 24px);
+      overflow: hidden;
+    }
+    .hud { left: 12px; }
+    .hint {
+      right: 12px;
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    @media (max-width: 640px) {
+      .hud, .hint { font-size: 10px; }
+      .hint { bottom: 30px; } /* stack above the HUD on narrow screens */
+    }
+  </style>
+</head>
+<body>
+  <h1 class="sr-only">ASCII Black Hole</h1>
+  <a class="back" href="./">← ASCII</a>
+  <canvas id="c" role="img" aria-label="Animated black hole drawn with ASCII characters: a glowing photon ring, a swirling amber accretion disk seen nearly edge-on, and its lensed far side arching over the black event horizon"></canvas>
+  <div class="hud" id="hud" aria-hidden="true"></div>
+  <div class="hint" id="hint"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ---------- Timeline (seconds of scene time) ----------
+  const T = {
+    RING: 0.2, RING_DUR: 2.6,          // thin photon ring ignites
+    THICK: 3.0, THICK_DUR: 3.0,        // ring thickens into a hot torus, view starts to tip
+    SPREAD: 6.0, SPREAD_DUR: 3.0,      // disk spreads wide and flattens edge-on
+    HOLD: 9.0,                         // swirl
+    FADE: 19.0, FADE_DUR: 3.0,
+    END: 22.0
+  };
+
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T_START = reduced ? 13.0 : 0;   // reduced motion: open on the finished disk
+  const SWIRL = reduced ? 0.3 : 1;      // speed of the disk's rotation clock
+
+  // ---------- World (units of the event-horizon radius) ----------
+  const RIN = 1.5, ROUT = 4.5;         // accretion disk radii
+  const W0 = 1.25;                      // rad/s at the inner edge; omega ~ r^-1.5
+  const ROLL = -0.33;                    // in-screen roll: left end of the disk sits higher
+  const cR = Math.cos(ROLL), sR = Math.sin(ROLL);
+  const INC0 = 62 * Math.PI / 180, INC1 = 36 * Math.PI / 180, INC2 = 17 * Math.PI / 180;
+  const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  const rng = mulberry32(20140101);
+
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const smooth = v => { v = clamp(v, 0, 1); return v * v * (3 - 2 * v); };
+
+  // ---------- Characters & colours ----------
+  const CH = [];
+  const ci = s => { let i = CH.indexOf(s); if (i < 0) { CH.push(s); i = CH.length - 1; } return i; };
+  const C_RAMP = [...'.:-=+*#%@'].map(ci);
+  const C_SPACE = ci(' ');
+  const C_RING = [ci('o'), ci('O'), ci('0'), ci('@')];
+
+  const LEVELS = 16;
+  const PAL = [];
+  const pal = (r, g, b) => { PAL.push([r, g, b]); return PAL.length - 1; };
+  // Inner (hot, cream-white) -> outer (cool, orange-brown).
+  const P_DISK = [pal(255, 240, 214), pal(250, 222, 172), pal(238, 190, 124), pal(218, 148, 84), pal(170, 104, 58)];
+  const NDP = P_DISK.length;
+  const P_RING = pal(255, 196, 110);
+
+  const NCOLOR = PAL.length * LEVELS;
+  const COLSTR = new Array(NCOLOR);
+  PAL.forEach(([r, g, b], p) => {
+    for (let l = 0; l < LEVELS; l++) {
+      // Top levels overshoot 1 and wash toward white, so the hot inner disk reads as glowing.
+      const m = 0.3 + 1.05 * l / (LEVELS - 1), w = Math.max(0, m - 1) * 160;
+      const lift = v => Math.min(255, v * m + w) | 0;
+      COLSTR[p * LEVELS + l] = `rgb(${lift(r)},${lift(g)},${lift(b)})`;
+    }
+  });
+  const STAR_COLS = [];
+  for (let l = 0; l < 8; l++) STAR_COLS.push(`rgba(200,205,225,${(0.08 + 0.4 * l / 7).toFixed(3)})`);
+
+  // ---------- Particles ----------
+  // Accretion disk: denser toward the hot inner edge.
+  const ND = 34000;
+  const DR = new Float32Array(ND), DPH = new Float32Array(ND), DOM = new Float32Array(ND),
+        DH = new Float32Array(ND), DS = new Float32Array(ND), DU = new Float32Array(ND);
+  const DP = new Uint16Array(ND);
+  for (let i = 0; i < ND; i++) {
+    const u = Math.pow(rng(), 1.15);
+    const r = RIN + (ROUT - RIN) * u;
+    DR[i] = r; DU[i] = u;
+    DPH[i] = rng() * Math.PI * 2;
+    DOM[i] = W0 * Math.pow(r / RIN, -1.5);
+    DH[i] = (rng() + rng() + rng() - 1.5) * 0.035 * r;      // slight thickness
+    DS[i] = rng() * 6.283;
+    DP[i] = P_DISK[clamp((u * NDP + (rng() - 0.5) * 0.9) | 0, 0, NDP - 1)];
+  }
+  // Photon ring: a thin circle hugging the horizon in screen space.
+  const NR = 1400;
+  const RA = new Float32Array(NR), RRR = new Float32Array(NR), RS = new Float32Array(NR);
+  for (let i = 0; i < NR; i++) { RA[i] = rng() * 6.283; RRR[i] = 1.0 + 0.05 * rng(); RS[i] = rng() * 6.283; }
+
+  // ---------- Canvas, grid, layout ----------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const hudEl = document.getElementById('hud');
+  const hintEl = document.getElementById('hint');
+
+  let W = 0, H = 0, fs = 10, cw = 6, ch = 11, cols = 0, rows = 0;
+  let S = 100, ox = 0, oy = 0;
+  let cellFont = '', bgGrad = null, ringGlow = null, coreGlow = null;
+  let zbuf, stampA, cchar, ccol, touched, order, nT = 0, stamp = 0;
+  const counts = new Uint32Array(NCOLOR);
+  let starX, starY, starC, starPh, starSp, nStars = 0;
+  let needResize = true, dirty = true;
+
+  function resize() {
+    needResize = false;
+    W = canvas.clientWidth || innerWidth;
+    H = canvas.clientHeight || innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    fs = clamp(Math.round(Math.min(W, H * 0.8) / 80), 7, 14);
+    cellFont = `${fs}px ${MONO}`;
+    ctx.font = cellFont;
+    cw = ctx.measureText('M').width || fs * 0.6;
+    ch = fs * 1.1;
+    cols = Math.ceil(W / cw);
+    rows = Math.ceil(H / ch);
+    const n = cols * rows;
+    zbuf = new Float32Array(n); stampA = new Uint32Array(n);
+    cchar = new Uint8Array(n); ccol = new Uint16Array(n);
+    touched = new Int32Array(n); order = new Int32Array(n); stamp = 0;
+
+    // Horizon radius in px; the disk is allowed to run off the sides like a wide-angle shot.
+    S = Math.max(30, Math.min(W * 0.17, H * 0.18));
+    ox = W / 2;
+    oy = H * 0.47;
+
+    bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, '#000000');
+    bgGrad.addColorStop(1, '#030305');
+    makeHalos();
+
+    // Sparse faint background stars (seeded per resize so the layout is stable).
+    const r2 = mulberry32(7);
+    nStars = Math.round(cols * rows * 0.0035);
+    starX = new Float32Array(nStars); starY = new Float32Array(nStars);
+    starC = new Uint8Array(nStars); starPh = new Float32Array(nStars); starSp = new Float32Array(nStars);
+    const SCH = [ci('.'), ci('.'), ci('·'), ci('+')];
+    for (let i = 0; i < nStars; i++) {
+      starX[i] = ((r2() * cols) | 0) * cw; starY[i] = ((r2() * rows) | 0) * ch;
+      starC[i] = SCH[(r2() * SCH.length) | 0]; starPh[i] = r2() * 6.283; starSp[i] = 0.4 + r2() * 1.6;
+    }
+    dirty = true;
+  }
+
+  // Halo sprites: a warm ring of light around the horizon and a soft core glow behind the disk.
+  function makeHalos() {
+    const mk = (R, stops) => {
+      const c = document.createElement('canvas');
+      c.width = c.height = Math.ceil(R * 2);
+      const x = c.getContext('2d'), g = x.createRadialGradient(R, R, 0, R, R, R);
+      stops.forEach(([o, col]) => g.addColorStop(o, col));
+      x.fillStyle = g; x.fillRect(0, 0, c.width, c.height);
+      return c;
+    };
+    const R1 = S * 2.2;
+    ringGlow = mk(R1, [[0, 'rgba(0,0,0,0)'], [0.96 / 2.2, 'rgba(255,190,110,0)'],
+      [1.03 / 2.2, 'rgba(255,200,120,0.5)'], [1.3 / 2.2, 'rgba(255,150,70,0.1)'], [1, 'rgba(255,120,50,0)']]);
+    const R2 = S * 4.5;
+    coreGlow = mk(R2, [[0, 'rgba(255,170,90,0.22)'], [0.35, 'rgba(255,140,60,0.10)'], [1, 'rgba(255,120,50,0)']]);
+  }
+
+  // ---------- Scene state ----------
+  let t = T_START, rt = T_START, skyT = 0;   // rt = disk rotation clock
+  let ringAmt = 0, rmax = 0, inc = INC0, ci_ = 1, si_ = 0, lens = 0, heat = 0, heatB = 0;
+  let letters = 0;
+
+  function sceneParams() {
+    ringAmt = smooth((t - T.RING) / T.RING_DUR);
+    const a = smooth((t - T.THICK) / T.THICK_DUR), b = smooth((t - T.SPREAD) / T.SPREAD_DUR);
+    // Outer edge of the visible disk grows: torus first, then the wide disk.
+    rmax = t < T.THICK ? 0 : RIN + 0.15 + 1.05 * a + (ROUT - RIN - 1.0) * b;
+    inc = INC0 + (INC1 - INC0) * a + (INC2 - INC1) * b + 0.012 * Math.sin(skyT * 0.4) * b;
+    ci_ = Math.cos(inc); si_ = Math.sin(inc);
+    lens = smooth((48 * Math.PI / 180 - inc) / (30 * Math.PI / 180));
+    heat = 2.3 * smooth((t - T.THICK) / (T.HOLD - T.THICK));
+    heatB = 0.8 + 0.2 * heat / 2.3;
+  }
+
+  // ---------- Projection + z-buffered splat ----------
+  // (X, Y) in the un-rolled screen frame (world units, Y up), Z = depth toward the viewer.
+  function splat(X, Y, Z, b, p, cc) {
+    const sx = X * cR - Y * sR, sy = X * sR + Y * cR;
+    const px = ox + sx * S, py = oy - sy * S;
+    if (px < 0 || py < 0) return;
+    const col = (px / cw) | 0, row = (py / ch) | 0;
+    if (col >= cols || row >= rows) return;
+    const c = row * cols + col;
+    const fresh = stampA[c] !== stamp;
+    if (!fresh && zbuf[c] >= Z) return; // keep nearest (larger Z = closer)
+    if (fresh) { stampA[c] = stamp; touched[nT++] = c; }
+    if (b > 1) b = 1;
+    zbuf[c] = Z;
+    cchar[c] = cc >= 0 ? cc : C_RAMP[(b * 8.99) | 0];
+    ccol[c] = p * LEVELS + ((b * 15.99) | 0);
+  }
+
+  // The event horizon: a black sphere written into the z-buffer so it hides everything behind it.
+  function stampHole() {
+    const R = 0.985;
+    const r0 = Math.max(0, ((oy - R * S) / ch) | 0), r1 = Math.min(rows - 1, ((oy + R * S) / ch) | 0);
+    const c0 = Math.max(0, ((ox - R * S) / cw) | 0), c1 = Math.min(cols - 1, ((ox + R * S) / cw) | 0);
+    for (let row = r0; row <= r1; row++) {
+      const dy = ((row + 0.5) * ch - oy) / S;
+      for (let col = c0; col <= c1; col++) {
+        const dx = ((col + 0.5) * cw - ox) / S, d2 = dx * dx + dy * dy;
+        if (d2 > R * R) continue;
+        const c = row * cols + col;
+        stampA[c] = stamp; touched[nT++] = c;
+        zbuf[c] = Math.sqrt(1 - d2); cchar[c] = C_SPACE; ccol[c] = 0;
+      }
+    }
+  }
+
+  function buildScene() {
+    stamp++; nT = 0;
+    stampHole();
+
+    // Photon ring: thin bright circle right at the horizon edge.
+    if (ringAmt > 0) {
+      for (let i = 0; i < NR; i++) {
+        const a = RA[i] + rt * 0.9, r = RRR[i];
+        const fl = 0.8 + 0.2 * Math.sin(skyT * 3 + RS[i]);
+        const b = ringAmt * fl * (0.75 + 0.25 * heatB);
+        splat(Math.cos(a) * r, Math.sin(a) * r, 0.45, b, P_RING, C_RING[(b * 3.99) | 0]);
+      }
+    }
+    if (rmax <= 0) return;
+
+    for (let i = 0; i < ND; i++) {
+      const r = DR[i];
+      const reveal = (rmax - r) / 0.35;
+      if (reveal <= 0) continue;
+      const ph = DPH[i] + DOM[i] * rt;
+      const c = Math.cos(ph), s = Math.sin(ph);
+      const x = r * c, zd = r * s, h = DH[i];       // zd > 0: near side
+      const Y = -zd * si_ + h * ci_, Z = zd * ci_ + h * si_;
+      // Concentric banding that wobbles and co-rotates, so differential rotation shears it.
+      const bandA = 0.5 + 0.5 * Math.sin(r * 10.5 + 0.7 * Math.sin(ph * 2 + r * 1.3) + DS[i] * 0.08);
+      const tex = 0.82 + 0.18 * Math.sin(ph * 3 + r * 6 + DS[i] * 0.3);
+      const radial = 1.3 - 0.6 * DU[i];
+      const dop = 1 + 0.22 * c;                      // approaching (right) side brighter
+      let b = heatB * radial * (0.3 + 0.7 * bandA * bandA) * tex * dop;
+      if (reveal < 1) b *= reveal;
+      const p = DP[i];
+      splat(x, Y, Z, b, p, -1);
+
+      // Gravitational lensing: the far side's image wraps over the top of the horizon,
+      // and a thin secondary image hugs the bottom.
+      if (zd < 0 && lens > 0) {
+        const u = DU[i];
+        const rho = 1.06 + 0.5 * Math.pow(u, 0.8);
+        const pi = p > P_DISK[0] ? p - 1 : p;        // lensed light reads a bit hotter
+        const ba = heatB * (1.3 - 0.6 * u) * (0.55 + 0.45 * bandA) * lens;
+        splat(rho * c, -rho * s, 0.4, ba, pi, -1);
+        if ((i & 3) === 0) {
+          const rho2 = 1.035 + 0.17 * u;
+          splat(rho2 * c, rho2 * s, 0.3, ba * 0.7, pi, -1);
+        }
+      }
+    }
+  }
+
+  // Bucket by colour so fillStyle changes once per colour, not once per cell.
+  function drawCells() {
+    counts.fill(0);
+    for (let i = 0; i < nT; i++) counts[ccol[touched[i]]]++;
+    let acc = 0;
+    for (let c = 0; c < NCOLOR; c++) { const n = counts[c]; counts[c] = acc; acc += n; }
+    for (let i = 0; i < nT; i++) { const c = touched[i]; order[counts[ccol[c]]++] = c; }
+    let cur = -1, n = 0;
+    for (let i = 0; i < nT; i++) {
+      const c = order[i];
+      if (cchar[c] === C_SPACE) continue;
+      const cc = ccol[c];
+      if (cc !== cur) { cur = cc; ctx.fillStyle = COLSTR[cc]; }
+      const row = (c / cols) | 0;
+      ctx.fillText(CH[cchar[c]], (c - row * cols) * cw, row * ch);
+      n++;
+    }
+    letters = n;
+  }
+
+  function drawSky() {
+    const R2 = S * S * 1.1;
+    for (let i = 0; i < nStars; i++) {
+      const dx = starX[i] - ox, dy = starY[i] - oy;
+      if (dx * dx + dy * dy < R2) continue;          // nothing shines through the horizon
+      ctx.fillStyle = STAR_COLS[((0.5 + 0.5 * Math.sin(skyT * starSp[i] + starPh[i])) * 7.99) | 0];
+      ctx.fillText(CH[starC[i]], starX[i], starY[i]);
+    }
+  }
+
+  function drawHalos(fade) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const cg = fade * heat / 2.3;
+    if (cg > 0.01) {
+      ctx.save();
+      ctx.globalAlpha = cg;
+      ctx.translate(ox, oy); ctx.rotate(-ROLL); ctx.scale(1, 0.32); // flattened along the disk
+      ctx.drawImage(coreGlow, -coreGlow.width / 2, -coreGlow.height / 2);
+      ctx.restore();
+    }
+    ctx.globalAlpha = fade * ringAmt * (0.7 + 0.1 * Math.sin(skyT * 2.1));
+    ctx.drawImage(ringGlow, ox - ringGlow.width / 2, oy - ringGlow.height / 2);
+    ctx.restore();
+    // Keep the event horizon pure black under the glow.
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(ox, oy, S * 0.985, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Bloom: shrink the frame, remove the background with 'difference', blur, and add it back on top.
+  const glow = document.createElement('canvas'), gctx = glow.getContext('2d');
+  const GLOW_DIV = 5, GLOW_A = 0.9;
+  function drawGlow() {
+    const gw = Math.ceil(W / GLOW_DIV), gh = Math.ceil(H / GLOW_DIV);
+    if (glow.width !== gw || glow.height !== gh) { glow.width = gw; glow.height = gh; }
+    gctx.setTransform(1, 0, 0, 1, 0, 0);
+    gctx.globalCompositeOperation = 'copy';
+    gctx.filter = 'blur(2px)';
+    gctx.drawImage(canvas, 0, 0, gw, gh);
+    gctx.filter = 'none';
+    gctx.globalCompositeOperation = 'difference';
+    gctx.setTransform(gw / W, 0, 0, gh / H, 0, 0);
+    gctx.fillStyle = bgGrad;
+    gctx.fillRect(0, 0, W, H);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = GLOW_A;
+    ctx.drawImage(glow, 0, 0, W, H);
+    ctx.restore();
+  }
+
+  function render() {
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+    ctx.textBaseline = 'top';
+    ctx.font = cellFont;
+    drawSky();
+    sceneParams();
+    buildScene();
+    // Everything fades back to the starry sky before the loop restarts.
+    const fade = reduced ? 1 : 1 - smooth((t - T.FADE) / T.FADE_DUR);
+    drawHalos(fade);
+    ctx.globalAlpha = fade;
+    drawCells();
+    ctx.globalAlpha = 1;
+    drawGlow();
+  }
+
+  // ---------- Loop, HUD, controls ----------
+  let paused = false, last = performance.now();
+  let frames = 0, fpsT = last, fps = 0, hudT = 0;
+
+  function updateHud(now) {
+    const spin = W0 * rt / (Math.PI * 2);   // turns of the inner edge
+    const tail = paused ? 'paused' : `${fps} fps`;
+    const head = `spin ${spin.toFixed(2)}  heat ${heat.toFixed(2)}  `;
+    // Narrow screens drop the letter count so nothing is clipped.
+    hudEl.textContent = W < 640 ? head + tail : head + `letters ${letters.toLocaleString('en-US')}  ` + tail;
+    hudT = now;
+  }
+
+  function frame(now) {
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); // no jumps after a hidden tab
+    last = now;
+    if (needResize) resize();
+    if (!paused) {
+      t += dt; skyT += dt; rt += dt * SWIRL;
+      if (reduced) { if (t > T.FADE) t = T.FADE; }   // reduced motion: hold the disk, no loop
+      else if (t >= T.END) { t = 0; rt = 0; }        // stars keep twinkling across the loop
+    }
+    if (!paused || dirty) { render(); dirty = false; frames++; }
+    if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
+    if (now - hudT >= 250) updateHud(now);
+    requestAnimationFrame(frame);
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); }
+  function replay() { t = T_START; rt = T_START; paused = false; dirty = true; }
+
+  addEventListener('resize', () => { needResize = true; });
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return; // leave Cmd/Ctrl+R alone
+    if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
+    else if (e.key === 'r' || e.key === 'R') replay();
+  });
+  // Single tap = pause (decided after 280 ms), two quick taps = replay.
+  let tapTimer = 0;
+  canvas.addEventListener('pointerup', e => {
+    if (e.button > 0) return;
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; replay(); }
+    else tapTimer = setTimeout(() => { tapTimer = 0; togglePause(); }, 280);
+  });
+
+  // Hint language: ?lang= wins, then saved site preference, then browser.
+  let pref = null;
+  try { pref = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (!pref) { try { pref = localStorage.getItem('lang'); } catch (e) {} }
+  if (!pref) pref = navigator.language || 'en';
+  const zh = String(pref).toLowerCase().startsWith('zh');
+  document.documentElement.lang = zh ? 'zh-Hant' : 'en';
+  // Touch screens have no keyboard, and the full hint would not fit on a phone.
+  const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  hintEl.textContent = touch ? (zh ? '點擊暫停 · 雙擊重播' : 'tap to pause · double-tap to replay')
+                             : (zh ? '空白鍵 暫停 · R 重播 · 點擊暫停 · 雙擊重播'
+                                   : 'Space pause · R replay · click to pause · double-click to replay');
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
