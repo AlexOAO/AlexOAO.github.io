@@ -441,32 +441,8 @@
       margin-left: 2rem; padding-left: 1.25rem; border-left: 2px solid rgba(59,130,246,0.4);
     }
     .pcard.child h3::before { content: '↳ '; color: #3b82f6; }
-    .ms-rows { margin-top: auto; display: grid; gap: 0.9rem; }
-    .ms-step .t .why { display: block; color: #94a3b8; font-weight: 400; }
-    .ms-track-label { font-family: 'Inter', sans-serif; font-size: 0.72rem; font-weight: 700; letter-spacing: 1px; color: #94a3b8; margin-bottom: -0.4rem; }
-    .ms-track { list-style: none; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); }
-    .ms-step { position: relative; padding-top: 1.35rem; padding-right: 0.4rem; }
-    .ms-step::before {
-      content: ''; position: absolute; top: 0.35rem; left: 0; right: 0; height: 2px; background: rgba(148,163,184,0.2);
-    }
-    .ms-step.done::before { background: #10b981; }
-    .js .pcard.rv .ms-step::before { transform-origin: 0 50%; transform: scaleX(0); transition: transform 0.7s var(--ease); transition-delay: calc(0.25s + var(--k, 0) * 0.12s); }
-    .js .pcard.rv .ms-step::after { transform: scale(0); transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); transition-delay: calc(0.2s + var(--k, 0) * 0.12s); }
-    .js .pcard.rv.in .ms-step::before { transform: none; }
-    .js .pcard.rv.in .ms-step::after { transform: none; }
-    .ms-step:last-child::before { right: auto; width: 12px; }
-    .ms-step::after {
-      content: ''; position: absolute; top: 0; left: 0; width: 12px; height: 12px; border-radius: 50%; box-sizing: border-box;
-    }
-    .ms-step.done::after { background: #10b981; }
-    .ms-step.doing::after { background: #3b82f6; box-shadow: 0 0 0 4px rgba(59,130,246,0.25); animation: pulse 2s infinite; }
-    .ms-step.todo::after { background: #0f172a; border: 2px solid #475569; }
-    @keyframes pulse { 50% { box-shadow: 0 0 0 7px rgba(59,130,246,0.05); } }
-    .ms-step .d { display: block; font-size: 0.7rem; color: var(--dim); }
-    .ms-step .t { display: block; font-size: 0.8rem; color: #cbd5e1; line-height: 1.45; }
-    .ms-step.todo .t { color: #64748b; }
     .pcard-more {
-      display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 1.25rem;
+      display: inline-flex; align-items: center; gap: 0.4rem; margin-top: auto;
       font-size: 0.85rem; font-weight: 600; color: #3b82f6; transition: gap 0.3s;
     }
     .pcard:hover .pcard-more { gap: 0.7rem; }
@@ -656,7 +632,7 @@
     .js .rv.in { opacity: 1; transform: none; }
     @media (prefers-reduced-motion: reduce) {
       .js .sdlc.rv .sdlc-bar, .js .sdlc.rv .sdlc-chip { clip-path: none; }
-      .js .pcard.rv .ms-step::before, .js .pcard.rv .ms-step::after, .js .sdlc.rv .sdlc-stage { transform: none; opacity: 1; }
+      .js .sdlc.rv .sdlc-stage { transform: none; opacity: 1; }
       .rail::after { display: none; }
       *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
       .js .rv { opacity: 1; transform: none; }
@@ -722,13 +698,6 @@
       .company { padding-left: 1.5rem; }
       .company-head .period { margin-left: 0; width: 100%; }
       .other-exp { padding-left: 1.5rem; }
-      .ms-track { display: flex; flex-direction: column; gap: 0.7rem; }
-      .ms-step { padding: 0 0 0 1.4rem; }
-      .ms-step::before { top: 12px; bottom: -0.7rem; left: 5px; right: auto; width: 2px; height: auto; }
-      .ms-step:last-child::before { display: none; }
-      .ms-step { line-height: 1.45; display: flex; gap: 0.45rem; align-items: baseline; }
-      .ms-step .d { flex: 0 0 auto; }
-      .ms-step .t { flex: 1 1 auto; }
       .side-item { grid-template-columns: 36px 1fr; gap: 1rem; }
       .side-item.child { margin-left: 1.25rem; }
       .side-arrow { display: none; }
@@ -818,7 +787,7 @@
       <div class="sec-head rv">
         <p class="sec-idx">02 — Experience</p>
         <h2 class="section-title" data-i18n="t02">Experience</h2>
-        <p class="section-subtitle" data-i18n="expSub">Each card shows the milestones. Open a card for the full project story.</p>
+        <p class="section-subtitle" data-i18n="expSub">Open a card for the full project story and its milestones.</p>
       </div>
       <div id="expList"><!-- static:experience --><ul class="static-note"><li><strong>KGI Bank · Technology Innovation Dept.</strong> · PM &amp; System Analyst · 2026/07 ~ Now: Guardrails PoC (CyCraft); Enterprise Agentic Platform Evaluation (Agatha / Dify); AI Agent Cost Model &amp; 3-Year TCO / ROI; Loan Assistant (Sales Agent): Cost &amp; Benefit; Credit Review (Credit Agent): Cost &amp; Benefit; Customer Service (Service Agent): Cost &amp; Benefit; Wealth Assistant (App 2.0): PoC &amp; Cost; AI Agent Technical Specifications &amp; Governance; FSC FinLLM Data Cleaning &amp; Model Evaluation; Gemini Training Program; A2UI Technical Research</li><li><strong>KGI Financial Holding</strong> · AI Developer Intern · 2026/02 ~ 2026/06: Webai Finance Module (Kinance AI Market / Stock Assistant); AI Governance Automated Review System</li><li><strong>Taiwan Economic Journal (TEJ)</strong> · Quant Trading &amp; Data Science Intern · 2025/07 ~ 2025/12: AI Customer Service Bot &quot;Little t&quot;; Multi-Agent Investment Advisory Architecture; ASR Earnings Call Transcription</li><li><strong>Ministry of Digital Affairs, Administration for Digital Industries</strong> · 6th Digital Youth T-Ambassador · 2025/09 ~ 2025/12: Helping Companies Adopt Generative AI (Digital Youth T-Ambassador)</li><li><strong>TMBA 26th, Algorithmic Trading</strong> · Quant strategy developer · 2025/07 ~ 2025/12: CTA Strategy: TAIEX Futures; Event Trading Strategy: Earnings Calls</li><li><strong>National Taiwan University of Science and Technology, Graduate Institute of Finance</strong> · M.A. in Finance · 2024/09 ~ 2026: Stock Price Return Prediction Combining Retrieval-Augmented Generation and Panel Data Models: Taiwan Electronics Industry; Fubon Asset Management Campus Talent Program: ESG Portfolio Allocation</li><li><strong>Tunghai University, Global MBA (GMBA)</strong> · Master&#x27;s · 2023/09 ~ 2024/06: The Effect of ESG Risk Scores on the Capital Structure of Taiwanese Companies; Teaching Assistant for English-Taught Courses: Statistics, Economics, Financial Management</li></ul><!-- /static:experience --></div>
     </div>
@@ -974,7 +943,7 @@
         nItems: '{n} projects', unit: 'projects', nowK: 'Now', nowV: 'KGI Bank · Tech Innovation', st1: 'Business Planning', st2: 'Model Tuning', st3: 'Development & Deployment', st4: 'Operations & Monitoring', t01: 'Proof', t02: 'Experience', t03: 'Side Projects', t04: 'Blog',
         sign: 'Let\'s take AI <span class="grad">to production.</span>', toTop: 'Back to top',
         readBlog: 'Blog',
-        expSub: 'Each card shows the milestones. Open a card for the full project story.',
+        expSub: 'Open a card for the full project story and its milestones.',
         sideSub: "Things I've built or contributed to",
         blogSub: 'Notes, learnings & things I find interesting',
         postCount: '{n} posts · swipe or use the arrows',
@@ -990,7 +959,7 @@
         nItems: '{n} 個專案', unit: '個專案', nowK: '現職', nowV: '凱基銀行 科技創新部', st1: '業務規劃', st2: '模型調教', st3: '開發部署', st4: '營運監控', t01: 'Proof', t02: 'Experience', t03: 'Side Projects', t04: 'Blog',
         sign: '一起把 AI<br><span class="grad">推到上線。</span>', toTop: '回到頂端',
         readBlog: 'Blog',
-        expSub: '卡片顯示專案的 Milestone。點卡片看完整的專案說明。',
+        expSub: '點卡片看完整的專案說明與 Milestone。',
         sideSub: '我做過或參與的專案',
         blogSub: '筆記、學習心得與有趣的事',
         postCount: '共 {n} 篇 · 左右滑動或點箭頭看更多',
@@ -1133,23 +1102,11 @@
 
     function renderCard(p, id, names) {
       const pills = stagePills(p, names);
-      // One progress row per milestone track (e.g. two vendors); up to 5 steps per row.
-      // "Station: detail" shows the detail on its own line.
-      const msText = t => { const m = t.match(/^(.+?)[：:]\s*(.+)$/); return m ? `${esc(m[1])}<span class="why">${esc(m[2])}</span>` : esc(t); };
-      const all = p.milestones || [];
-      const tracks = [...new Set(all.map(m => m.track || ''))];
-      const rows = tracks.map(t => {
-        const ms = all.filter(m => (m.track || '') === t).slice(0, 5);
-        const steps = ms.map((m, k) => `
-          <li class="ms-step ${esc(m.status)}" style="--k:${k}"><span class="d">${esc(m.date)}</span><span class="t">${msText(m.text)}</span></li>`).join('');
-        return `${t ? `<div class="ms-track-label">${esc(t)}</div>` : ''}<ol class="ms-track" style="--n:${ms.length}">${steps}</ol>`;
-      }).join('');
       return `
         <a class="pcard spot-card rv ${p.parent ? 'child' : ''}" id="${id}" href="project.html?id=${encodeURIComponent(p.slug)}">
           <div class="pcard-top">${pills}<span class="pcard-own">${esc(p.ownership)}</span></div>
           <h3>${esc((p.sdlc || []).length ? (p.short || p.title) : p.title)}</h3>
           <p class="pcard-sum">${esc(p.summary)}</p>
-          <div class="ms-rows">${rows}</div>
           <span class="pcard-more">${esc(T('readCase'))} ${arrowSvg}</span>
         </a>`;
     }
