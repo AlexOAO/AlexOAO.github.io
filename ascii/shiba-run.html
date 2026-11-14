@@ -1,0 +1,1288 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ASCII Running Shiba | Alex Li (李翔緯)</title>
+  <meta name="description" content="A cute Shiba Inu gallops through a sunset meadow, drawn entirely with ASCII characters: a big low sun, parallax hills, trees and swaying grass, drifting clouds, dust puffs and a butterfly to chase. Tap to jump. Vanilla JS on a single canvas.">
+  <meta name="theme-color" content="#1a0f2e">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;600;800&display=swap">
+  <style>
+    :root {
+      --bg: #1a0f2e;
+      --sky: #140b26;
+      --text: #f3eaf6;
+      --muted: #d9c6d8;
+      --accent: #3b82f6;
+      --mono: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--sky);
+      color: var(--text);
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    canvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100svh;
+      display: block;
+      touch-action: manipulation; /* no double-tap zoom: double-tap means restart */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .back {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(59, 130, 246, 0.45);
+      background: rgba(59, 130, 246, 0.12);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .back:hover, .back:focus-visible {
+      background: rgba(59, 130, 246, 0.28);
+      border-color: var(--accent);
+      outline: none;
+    }
+    .hud, .hint {
+      position: fixed;
+      z-index: 1;
+      bottom: 12px;
+      color: var(--muted);
+      opacity: 0.8;
+      font: 11px/1.4 var(--mono);
+      white-space: pre;
+      pointer-events: none;
+      max-width: calc(100% - 24px);
+      overflow: hidden;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    }
+    .hud { left: 12px; }
+    .hint {
+      right: 12px;
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    @media (max-width: 640px) {
+      .hud, .hint { font-size: 10px; }
+      .hint { bottom: 30px; } /* stack above the HUD on narrow screens */
+    }
+  </style>
+</head>
+<body>
+  <h1 class="sr-only">ASCII Running Shiba</h1>
+  <a class="back" href="./">← ASCII</a>
+  <canvas id="c" role="img" aria-label="Animated cute Shiba Inu drawn with ASCII characters, galloping through a sunset meadow with parallax hills, trees, swaying grass and drifting clouds, and jumping after a butterfly"></canvas>
+  <div class="hud" id="hud" aria-hidden="true"></div>
+  <div class="hint" id="hint"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const TAU = Math.PI * 2;
+  const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
+
+  // ---------- Gait (stride phase in cycles; leg order: front near, front far, hind near, hind far) ----------
+  // Full motion: rotary gallop, ~2.2 strides/s. Reduced motion: a slow diagonal trot.
+  const GAIT = reduced
+    ? { f: 1.1, ds: 0.52, af: 0.3, ah: 0.27, fx: 0.55, pitch: 0.012, bob: 0.01, off: [0, 0.5, 0.5, 0], speed: 0.55, mps: 1.8 }
+    : { f: 2.2, ds: 0.4, af: 0.6, ah: 0.52, fx: 1, pitch: 0.07, bob: 0.035, off: [0.58, 0.5, 0.06, 0.0], speed: 1.75, mps: 5.4 };
+  const JUMP_DUR = 0.8, JUMP_H = 0.33;          // seconds, body units
+  const BF_FIRST = 4.0, BF_MIN = 8, BF_MAX = 12; // butterfly schedule (s)
+
+  // ---------- Camera (side view, turned a little toward the viewer, looking slightly down) ----------
+  const CAM_D = 4.5, PIVOT = 0.55, TILT = 0.07, YAW = -0.5;
+  const ct = Math.cos(TILT), st = Math.sin(TILT), cyw = Math.cos(YAW), syw = Math.sin(YAW);
+  // Warm light from the low sun ahead (upper right, in front), in view space.
+  const LX0 = 0.32, LY0 = 0.55, LZ0 = 0.78;
+  const LN = Math.hypot(LX0, LY0, LZ0);
+  const LX = LX0 / LN, LY = LY0 / LN, LZ = LZ0 / LN;
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  // Stateless integer hash -> uint32, for per-cell scenery without storing state.
+  function hash2(a, b) {
+    let h = Math.imul(a ^ Math.imul(b, 0x9E3779B1), 0x85EBCA6B);
+    h ^= h >>> 13; h = Math.imul(h, 0xC2B2AE35); h ^= h >>> 16;
+    return h >>> 0;
+  }
+  const U32 = 1 / 4294967296;
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+
+  // ---------- Characters & colours ----------
+  const CH = [];
+  const ci = s => { let i = CH.indexOf(s); if (i < 0) { CH.push(s); i = CH.length - 1; } return i; };
+  const C_SP = ci(' '); // occluder: hides what is behind, never drawn
+  const C_FUR = [...'.:;~=+*%#@'].map(ci);       // soft coat ramp, dim -> dense (as in shiba-sit)
+  const NFUR = C_FUR.length;
+  const C_SL = ci('/'), C_BS = ci('\\'), C_BAR = ci('|'), C_COMMA = ci(','), C_APOS = ci("'"), C_DOT = ci('.'),
+        C_COLON = ci(':'), C_DASH = ci('-'), C_TILDE = ci('~'), C_EQ = ci('='), C_STAR = ci('*'), C_PLUS = ci('+'),
+        C_LP = ci('('), C_RP = ci(')'), C_AT = ci('@'), C_O = ci('O'), C_o = ci('o'), C_US = ci('_'),
+        C_PCT = ci('%'), C_AMP = ci('&'), C_HASH = ci('#'), C_CARET = ci('^'), C_BTICK = ci('`');
+  const TREE_TEX = [C_PCT, C_AMP, C_STAR, C_HASH];
+
+  const LEVELS = 16;
+  const PAL = [];
+  const pal = (r, g, b) => { PAL.push([r, g, b]); return PAL.length - 1; };
+  // Shiba
+  const P_OR_D = pal(160, 80, 35), P_OR = pal(220, 120, 50), P_OR_L = pal(240, 150, 70);
+  const P_CR = pal(250, 232, 204), P_CR_D = pal(214, 176, 142);
+  const P_EARIN = pal(242, 160, 150);
+  const P_EYE = pal(34, 20, 16), P_CATCH = pal(255, 255, 255);
+  const P_NOSE = pal(44, 30, 28), P_MOUTH = pal(120, 58, 38), P_MIN = pal(150, 40, 55);
+  const P_TONGUE = pal(250, 120, 140), P_TONGUE_D = pal(214, 80, 106);
+  // Scenery
+  const P_HILL = pal(146, 98, 178), P_HILLRIM = pal(230, 140, 172);
+  const P_TREE = pal(58, 112, 72), P_TREERIM = pal(240, 158, 84);
+  const P_GRASS = [pal(112, 192, 70), pal(78, 166, 62), pal(168, 208, 84), pal(140, 200, 76)];
+  const P_FLOWER = [pal(255, 216, 80), pal(255, 136, 190), pal(255, 246, 230)];
+  const P_CLOUD = pal(255, 170, 190), P_CLOUDTOP = pal(206, 140, 212);
+  const P_DUST = pal(230, 206, 166), P_STAR = pal(232, 222, 255);
+  const P_SUN = [pal(255, 244, 200), pal(255, 216, 128), pal(255, 184, 100), pal(255, 150, 104)];
+  const SKY_STOPS = [[0, 118, 86, 200], [0.42, 196, 98, 196], [0.72, 255, 128, 156], [1, 255, 178, 98]];
+  const SKY_N = 14, SKY_P = [];
+  for (let k = 0; k < SKY_N; k++) {
+    const f = k / (SKY_N - 1);
+    let j = 0;
+    while (j < SKY_STOPS.length - 2 && f > SKY_STOPS[j + 1][0]) j++;
+    const a = SKY_STOPS[j], b = SKY_STOPS[j + 1], m = (f - a[0]) / (b[0] - a[0]);
+    SKY_P.push(pal(a[1] + (b[1] - a[1]) * m, a[2] + (b[2] - a[2]) * m, a[3] + (b[3] - a[3]) * m));
+  }
+
+  // Colour strings cached per (palette entry, brightness level).
+  const NCOLOR = PAL.length * LEVELS;
+  const COLSTR = new Array(NCOLOR);
+  PAL.forEach(([r, g, b], p) => {
+    for (let l = 0; l < LEVELS; l++) {
+      // Top levels overshoot 1 and wash toward white, so lit characters read as glowing.
+      const m = 0.3 + 1.05 * l / (LEVELS - 1), w = Math.max(0, m - 1) * 160;
+      const lift = v => Math.min(255, v * m + w) | 0;
+      COLSTR[p * LEVELS + l] = `rgb(${lift(r)},${lift(g)},${lift(b)})`;
+    }
+  });
+  const lvl = b => { const l = (b * 15.99) | 0; return l < 0 ? 0 : l > 15 ? 15 : l; };
+
+  // ---------- The Shiba: smooth parts sampled as surface point clouds with normals ----------
+  // Bones are rotations about z (the sagittal plane) plus a translation; points live in bone space.
+  // Head, ears, face, palette, fur shading and tail are the same character as ascii/shiba-sit.html,
+  // rebuilt for this side-view gallop rig.
+  const NB = 22, B_BODY = 0, B_HEAD = 1, B_EAR = 2, B_TONGUE = 4, B_TAIL = 5, B_LEG = 6;
+  const BODY_Y = 0.6, LEG_Z = 0.092, PAW_DROP = 0.05;
+  const FRONT_L = [0.22, 0.27, 0.07], FRONT_R0 = [0.072, 0.047, 0.038], FRONT_R1 = [0.052, 0.039, 0.035];
+  const HIND_L = [0.29, 0.27, 0.16], HIND_R0 = [0.096, 0.054, 0.038], HIND_R1 = [0.062, 0.04, 0.033];
+  const SPACING = 0.0072, DENS = 1.25 / (SPACING * SPACING);
+  const GOLDEN = Math.PI * (3 - Math.sqrt(5));
+  // Kinds of dog points (how the splat shades them).
+  const K_COAT = 0, K_EARIN = 1, K_EYE = 2, K_MOUTH = 3, K_NOSE = 4, K_TONGUE = 5;
+  const jr = mulberry32(20260801);
+  const jit = () => (jr() - 0.5) * 0.08;   // ragged cream/ginger borders
+
+  const MB = { x: [], y: [], z: [], nx: [], ny: [], nz: [], b: [], p: [], f: [], k: [], a1: [], a2: [] };
+  function addPt(b, x, y, z, nx, ny, nz, p, f, k, a1, a2) {
+    const l = Math.hypot(nx, ny, nz) || 1;
+    nx /= l; ny /= l; nz /= l;
+    if (nz < -0.42) return; // faces away from the camera in every pose: never visible
+    MB.x.push(x); MB.y.push(y); MB.z.push(z); MB.nx.push(nx); MB.ny.push(ny); MB.nz.push(nz);
+    MB.b.push(b); MB.p.push(p); MB.f.push(f); MB.k.push(k); MB.a1.push(a1); MB.a2.push(a2);
+  }
+  // Ellipsoid with optional rotation about z and a taper toward its local +x end.
+  function shape(cx, cy, cz, rx, ry, rz, rot, tp) {
+    return { cx, cy, cz, rx, ry, rz, tp, c: Math.cos(rot), s: Math.sin(rot) };
+  }
+  function inside(E, x, y, z) {
+    const dx = x - E.cx, dy = y - E.cy;
+    const lx = dx * E.c + dy * E.s, ly = -dx * E.s + dy * E.c, lz = z - E.cz;
+    const s = 1 - E.tp * Math.max(0, lx / E.rx);
+    const a = lx / E.rx, b = ly / (E.ry * s), c = lz / (E.rz * s);
+    return a * a + b * b + c * c < 0.96;
+  }
+  function ellArea(a, b, c) {
+    const p = 1.6;
+    return 4 * Math.PI * Math.pow((Math.pow(a * b, p) + Math.pow(a * c, p) + Math.pow(b * c, p)) / 3, 1 / p);
+  }
+  // Fibonacci-sample the surface; skip points buried inside sibling parts (clean union).
+  function sampleEll(bone, E, region, f, others) {
+    const n = Math.ceil(ellArea(E.rx, E.ry, E.rz) * DENS);
+    for (let j = 0; j < n; j++) {
+      const ux = 1 - 2 * (j + 0.5) / n, rr = Math.sqrt(1 - ux * ux), ph = j * GOLDEN;
+      const uy = rr * Math.cos(ph), uz = rr * Math.sin(ph);
+      const s = 1 - E.tp * Math.max(0, ux);
+      const lx = ux * E.rx, ly = uy * E.ry * s, lz = uz * E.rz * s;
+      const nlx = ux / E.rx + (ux > 0 ? E.tp * rr * 0.6 / E.rx : 0), nly = uy / (E.ry * s), nlz = uz / (E.rz * s);
+      const x = E.cx + lx * E.c - ly * E.s, y = E.cy + lx * E.s + ly * E.c, z = E.cz + lz;
+      if (others) {
+        let hid = false;
+        for (let k = 0; k < others.length; k++) if (others[k] !== E && inside(others[k], x, y, z)) { hid = true; break; }
+        if (hid) continue;
+      }
+      const nx = nlx * E.c - nly * E.s, ny = nlx * E.s + nly * E.c;
+      addPt(bone, x, y, z, nx, ny, nlz, region(x, y, z, nx, ny, nlz), f, K_COAT, 0, 0);
+    }
+  }
+
+  // Torso (body bone, origin at the body centre): chest, waist, rump and a forward-leaning neck.
+  const CHEST = shape(0.17, 0, 0, 0.24, 0.175, 0.14, 0, 0);
+  const BELLY = shape(-0.02, 0.025, 0, 0.27, 0.12, 0.125, 0, 0);
+  const RUMP = shape(-0.21, 0.03, 0, 0.21, 0.15, 0.135, 0, 0);
+  const NECK = shape(0.36, 0.2, 0, 0.17, 0.11, 0.105, 1.05, 0);
+  const TORSO = [CHEST, BELLY, RUMP, NECK];
+  // Cream "urajiro" on the belly, chest and throat.
+  const bodyRegion = (x, y, z, nx, ny) => (ny < -0.5 + jit() || (x > 0.24 + jit() && nx > 0.3 && y < 0.1 + jit())) ? P_CR : P_OR;
+  const neckRegion = (x, y, z, nx, ny) => (nx - 0.75 * ny > 0.4 + jit() * 2) ? P_CR : P_OR;
+  sampleEll(B_BODY, CHEST, bodyRegion, 1, TORSO);
+  sampleEll(B_BODY, BELLY, bodyRegion, 1, TORSO);
+  sampleEll(B_BODY, RUMP, bodyRegion, 1, TORSO);
+  sampleEll(B_BODY, NECK, neckRegion, 1, TORSO);
+
+  // Head: built in shiba-sit's head space (x across, y up, z forward, origin at the head centre),
+  // scaled 1.22x like there, then turned to face +x and yawed toward the viewer so the face reads.
+  const HSC = 1.22, HK = HSC * 1.12, TURN = 0.62;
+  const ctn = Math.cos(TURN), stn = Math.sin(TURN);
+  const XF = new Float32Array(3);
+  function hxf(x, y, z, sc) {
+    const fx = z * sc, fy = y * sc, fz = x * sc;
+    XF[0] = fx * ctn - fz * stn; XF[1] = fy; XF[2] = fx * stn + fz * ctn;
+  }
+  const EX = 0.076, EY = 0.022, EW = 0.026 * 1.3, EH = 0.017 * 1.3;   // eyes (head space; 1.3x so they read at run size)
+  const sol = (cx, cy, cz, rx, ry, rz, ax, name) => ({ c: [cx, cy, cz], r: [rx, ry, rz], ax: ax || 0, name });
+  const HEAD = [
+    sol(0, 0.01, 0, 0.19, 0.165, 0.165, 0, 'cranium'),
+    sol(0.092, -0.068, 0.045, 0.11, 0.082, 0.105, 0, 'cheek'),
+    sol(-0.092, -0.068, 0.045, 0.11, 0.082, 0.105, 0, 'cheek'),
+    sol(0, -0.066, 0.15, 0.09, 0.066, 0.12, 0.12, 'muzzle'),
+    sol(0, -0.036, 0.262, 0.02, 0.014, 0.014, 0, 'nose')
+  ];
+  function insideS(q, x, y, z, lim) {
+    const ca = Math.cos(q.ax), sa = Math.sin(q.ax);
+    const dx = x - q.c[0], dy0 = y - q.c[1], dz0 = z - q.c[2];
+    const dy = dy0 * ca + dz0 * sa, dz = -dy0 * sa + dz0 * ca;
+    return (dx / q.r[0]) ** 2 + (dy / q.r[1]) ** 2 + (dz / q.r[2]) ** 2 < lim;
+  }
+  const insideAnyS = (list, self, x, y, z) => {
+    for (let j = 0; j < list.length; j++) if (list[j] !== self && insideS(list[j], x, y, z, 0.985)) return true;
+    return false;
+  };
+  // Area-uniform samples on a (pitched) ellipsoid surface, skipping points buried in other solids.
+  function sampleSolid(q, dens, others, emit) {
+    const [rx, ry, rz] = q.r, ca = Math.cos(q.ax), sa = Math.sin(q.ax);
+    const area = 4 * Math.PI * Math.pow((Math.pow(rx * ry, 1.6) + Math.pow(rx * rz, 1.6) + Math.pow(ry * rz, 1.6)) / 3, 1 / 1.6);
+    const n = Math.round(area * dens), maxS = Math.max(ry * rz, rx * rz, rx * ry);
+    let made = 0, guard = 0;
+    while (made < n && guard++ < n * 30) {
+      const u = jr() * 2 - 1, ph = jr() * TAU, qq = Math.sqrt(1 - u * u);
+      const dx = qq * Math.cos(ph), dy = u, dz = qq * Math.sin(ph);
+      const sc = Math.hypot(ry * rz * dx, rx * rz * dy, rx * ry * dz);
+      if (jr() * maxS > sc) continue;
+      made++;
+      const lx = rx * dx, ly = ry * dy, lz = rz * dz;
+      const nx = dx / rx, ny0 = dy / ry, nz0 = dz / rz;
+      const x = q.c[0] + lx, y = q.c[1] + ly * ca - lz * sa, z = q.c[2] + ly * sa + lz * ca;
+      const ny = ny0 * ca - nz0 * sa, nz = ny0 * sa + nz0 * ca;
+      if (others && insideAnyS(others, q, x, y, z)) continue;
+      emit(x, y, z, nx, ny, nz, q);
+    }
+  }
+  // Emit a head-space point into a bone whose origin (in turned head-bone space) is o.
+  function emitH(bone, o, x, y, z, nx, ny, nz, k, p, a1, a2, f) {
+    hxf(x, y, z, HK);
+    const px = XF[0] - o[0], py = XF[1] - o[1], pz = XF[2] - o[2];
+    hxf(nx, ny, nz, 1);
+    addPt(bone, px, py, pz, XF[0], XF[1], XF[2], p, f || 1, k, a1, a2);
+  }
+  const ZERO = [0, 0, 0];
+  const HDENS = DENS * HK * HK * 1.4;
+
+  // Head: fox-like face with cream cheeks, muzzle and eyebrow dots; eyes and mouth are
+  // regions of the head surface whose look is decided per frame (blink, ^ ^, pant).
+  HEAD.forEach(q => sampleSolid(q, q.name === 'nose' ? HDENS * 2 : HDENS, HEAD, (x, y, z, nx, ny, nz, q) => {
+    const lx = x, ly = y, lz = z, ax = Math.abs(lx);
+    if (q.name === 'nose') { emitH(B_HEAD, ZERO, x, y, z, nx, ny, nz, K_NOSE, P_NOSE, 0, 0); return; }
+    // Mouth: lower front of the muzzle and cheeks.
+    if (q.name !== 'cranium' && ax < 0.07 && ly < -0.045 && ly > -0.15 && lz > 0.12 && nz > 0.15) {
+      emitH(B_HEAD, ZERO, x, y, z, nx, ny, nz, K_MOUTH, P_CR, lx, ly); return;
+    }
+    let cream = false;
+    if (q.name === 'cranium') {
+      const side = lx > 0 ? 1 : -1, cu = (lx - side * EX) / EW, cv = (ly - EY) / EH;
+      if (lz > 0.04 && Math.abs(cu) < 1.45 && Math.abs(cv - 0.3 * cu * side) < 1.9) {
+        emitH(B_HEAD, ZERO, x, y, z, nx, ny, nz, K_EYE, side > 0 ? 0 : 1, cu, cv); return;
+      }
+      const bu = (ax - 0.07) / 0.024, bv = (ly - 0.088) / 0.015;
+      cream = (lz > 0.04 && bu * bu + bv * bv < 1) ||
+              (lz > 0.03 + jit() * 0.5 && ly < -0.022 + jit() * 0.3 && ax < 0.15) ||
+              (ly < -0.09 + jit() * 0.5);
+    } else if (q.name === 'cheek') {
+      cream = !(ly > -0.035 + jit() * 0.3 && lz < 0.05);
+    } else { // muzzle: cream with a ginger bridge
+      cream = !(ly > -0.03 + jit() * 0.2 && ax < 0.035 + jit() * 0.2 && lz < 0.215);
+    }
+    emitH(B_HEAD, ZERO, x, y, z, nx, ny, nz, K_COAT, cream ? P_CR : P_OR_L, 0, 0);
+  }));
+
+  // Eye catchlights: one white cell each, upper-left in the eye, on the head surface (head-bone space).
+  const CATCH = new Float32Array(6);
+  [1, -1].forEach((sd, e) => {
+    const lx = sd * EX - 0.3 * EW, ly = EY + 0.35 * EH;
+    const lz = 0.165 * Math.sqrt(1 - (lx / 0.19) ** 2 - ((ly - 0.01) / 0.165) ** 2) + 0.004;
+    hxf(lx, ly, lz, HK); CATCH[e * 3] = XF[0]; CATCH[e * 3 + 1] = XF[1]; CATCH[e * 3 + 2] = XF[2];
+  });
+
+  // Ears: erect triangles, cupped on the front (pink inside, cream fluff), ginger behind.
+  const EAR_O = new Float32Array(6);   // ear bases in head-bone space (ear bones pivot there)
+  [1, -1].forEach((sd, e) => {
+    const bx = sd * 0.105, by = 0.115, bz = -0.025;
+    const tx = sd * 0.162, ty = 0.27, tz = -0.01;
+    let dx = tx - bx, dy = ty - by, dz = tz - bz;
+    const h = Math.hypot(dx, dy, dz); dx /= h; dy /= h; dz /= h;
+    let n0x = sd * 0.25, n0z = 1;
+    const n0l = Math.hypot(n0x, n0z); n0x /= n0l; n0z /= n0l;
+    let axx = dy * n0z, axy = dz * n0x - dx * n0z, axz = -dy * n0x;   // A = D x N0
+    const al = Math.hypot(axx, axy, axz); axx /= al; axy /= al; axz /= al;
+    const fx = axy * dz - axz * dy, fy = axz * dx - axx * dz, fz = axx * dy - axy * dx; // Nf = A x D
+    hxf(bx, by, bz, HK);
+    const o = [XF[0], XF[1], XF[2]];
+    EAR_O[e * 3] = o[0]; EAR_O[e * 3 + 1] = o[1]; EAR_O[e * 3 + 2] = o[2];
+    const near = sd > 0, f = near ? 1 : 0.85, bone = B_EAR + e, hw = 0.074, cran = [HEAD[0]];
+    const n = Math.round(h * hw * 64000 * HK * HK * 1.6);
+    for (let i = 0; i < n * 2 + 260; i++) {
+      const u = 1 - Math.sqrt(jr()), v = jr() * 2 - 1, w = Math.pow(1 - u, 0.85) * (1 + 0.12 * Math.sin(Math.PI * u));
+      const off = v * hw * w;
+      let x = bx + dx * h * u + axx * off, y = by + dy * h * u + axy * off, z = bz + dz * h * u + axz * off;
+      const bulge = (1 - v * v) * (1 - u);
+      let k = K_COAT, a1 = 0, nx, ny, nz;
+      if (i >= n * 2) {               // rim along both edges
+        const sv = v < 0 ? -1 : 1;
+        x = bx + dx * h * u + axx * sv * hw * w; y = by + dy * h * u + axy * sv * hw * w; z = bz + dz * h * u + axz * sv * hw * w;
+        x -= fx * 0.008; y -= fy * 0.008; z -= fz * 0.008;
+        nx = axx * sv + fx * 0.2; ny = axy * sv + fy * 0.2; nz = axz * sv + fz * 0.2;
+      } else if (i & 1) {             // front: cupped
+        const d = 0.006 - 0.02 * bulge;
+        x += fx * d; y += fy * d; z += fz * d;
+        nx = fx + axx * v * 0.5; ny = fy + axy * v * 0.5; nz = fz + axz * v * 0.5;
+        if (Math.abs(v) < 0.8 && u < 0.84) { k = K_EARIN; a1 = Math.abs(v) / 0.8 + jit(); }
+      } else {                        // back: convex
+        const d = -0.014 - 0.014 * bulge;
+        x += fx * d; y += fy * d; z += fz * d;
+        nx = -fx + axx * v * 0.5; ny = -fy + axy * v * 0.5; nz = -fz + axz * v * 0.5;
+      }
+      if (insideAnyS(cran, null, x, y, z)) continue;
+      emitH(bone, o, x, y, z, nx, ny, nz, k, P_OR, a1, 0, f);
+    }
+  });
+
+  // Tongue: a flat pink ellipsoid hanging out of the open mouth (flaps while running).
+  const TONGUE_O = (() => { hxf(0, -0.09, 0.24, HK); return [XF[0], XF[1], XF[2]]; })();
+  sampleSolid({ c: [0, -0.13, 0.255], r: [0.026, 0.05, 0.011], ax: 0.45 }, HDENS * 1.6, null,
+    (x, y, z, nx, ny, nz) => emitH(B_TONGUE, TONGUE_O, x, y, z, nx, ny, nz, K_TONGUE, P_TONGUE, x / 0.026, 0));
+
+  // Tail: a thick tube curled up over the back (sit's profile); ginger outside, cream inside the curl.
+  (function sampleTail() {
+    const TK = 1.12, Rc = 0.125 * TK, TH0 = 3.5, SWEEP = 1.62 * Math.PI;
+    const CX = -Rc * Math.cos(TH0), CY = -Rc * Math.sin(TH0);   // the curl starts at the bone origin
+    const ns = Math.ceil(Rc * SWEEP / SPACING * 1.4);
+    for (let i = 0; i < ns; i++) {
+      const s = (i + 0.5) / ns, th = TH0 - SWEEP * s;
+      const ox = Math.cos(th), oy = Math.sin(th);
+      let r = 0.064 * TK * (1 - 0.32 * s) * (1 + 0.18 * Math.sin(Math.PI * s));
+      if (s > 0.9) r *= Math.sqrt(Math.max(0.02, 1 - ((s - 0.9) / 0.1) ** 2));
+      const px = CX + Rc * ox, py = CY + Rc * oy, pz = 0.015 + 0.02 * s;
+      const na = Math.max(8, Math.ceil(TAU * r / SPACING * 1.4));
+      for (let j = 0; j < na; j++) {
+        const a = (j + (i & 1) * 0.5) / na * TAU, ca = Math.cos(a), sa = Math.sin(a);
+        const nx = ca * ox, ny = ca * oy, nz = sa;
+        const x = px + r * nx, y = py + r * ny, z = pz + r * nz;
+        // hide what is buried in the rump (tail origin sits at body (-0.39, 0.12))
+        let hid = false;
+        for (let q = 0; q < 3 && !hid; q++) if (inside(TORSO[q], x - 0.39, y + 0.12, z)) hid = true;
+        if (hid) continue;
+        addPt(B_TAIL, x, y, z, nx, ny, nz, ca < -0.3 + jit() ? P_CR : P_OR, 1, K_COAT, 0, 0);
+      }
+    }
+  })();
+
+  // Legs: three tapering segments hanging along -y from their joint, plus a paw. Far legs darker.
+  function legRegion(front, s, y, nx, L) {
+    const u = -y / L, j = jit();
+    if (front) {
+      if (s === 0) return nx < -0.55 + j ? P_CR : P_OR;
+      if (s === 1) return (nx < -0.2 + j || u > 0.72 + j) ? P_CR : P_OR;
+      return P_CR;
+    }
+    if (s === 0) return (nx < -0.6 + j && u > 0.35) ? P_CR : P_OR;
+    if (s === 1) return nx < -0.15 + j ? P_CR : P_OR;
+    return P_CR;
+  }
+  for (let l = 0; l < 4; l++) {
+    const front = l < 2, far = (l & 1) === 1, f = far ? 0.62 : 1;
+    const Ls = front ? FRONT_L : HIND_L, R0 = front ? FRONT_R0 : HIND_R0, R1 = front ? FRONT_R1 : HIND_R1;
+    for (let s = 0; s < 3; s++) {
+      const L = Ls[s], r0 = R0[s], r1 = R1[s];
+      const E = shape(0, -L / 2, 0, L / 2 + r1 * 0.7, r0, r0 * 0.86, -Math.PI / 2, 1 - r1 / r0);
+      sampleEll(B_LEG + l * 4 + s, E, (x, y, z, nx) => legRegion(front, s, y, nx, L), f, null);
+      if (s > 0) sampleEll(B_LEG + l * 4 + s, shape(0, 0, 0, r0 * 0.95, r0 * 0.95, r0 * 0.85, 0, 0),
+                           (x, y, z, nx) => legRegion(front, s, -0.5 * L, nx, L), f, null);
+    }
+    sampleEll(B_LEG + l * 4 + 3, shape(0.022, -0.024, 0, 0.054, 0.029, 0.042, 0, 0), () => P_CR, f, null);
+  }
+
+  const NP = MB.x.length;
+  const PX = Float32Array.from(MB.x), PY = Float32Array.from(MB.y), PZ = Float32Array.from(MB.z);
+  const NX = Float32Array.from(MB.nx), NY = Float32Array.from(MB.ny), NZ = Float32Array.from(MB.nz);
+  const PB = Uint8Array.from(MB.b), PP = Uint16Array.from(MB.p), PF = Float32Array.from(MB.f);
+  const PK = Uint8Array.from(MB.k), A1 = Float32Array.from(MB.a1), A2 = Float32Array.from(MB.a2);
+  const FJ = new Float32Array(NP);
+  for (let i = 0; i < NP; i++) FJ[i] = (jr() - 0.5) * 0.14;   // fur texture
+  const BO = new Float32Array(NB * 5); // per bone: ox, oy, oz, cos, sin
+
+  // ---------- Canvas, grid, layout ----------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const hudEl = document.getElementById('hud');
+  const hintEl = document.getElementById('hint');
+
+  let W = 0, H = 0, fs = 10, cw = 6, ch = 11, cols = 0, rows = 0, portrait = false;
+  let S = 300, ox = 0, oy = 0, horizonRow = 0, horizonY = 0, groundY = 0, mref = 400;
+  let sunX = 0, sunY = 0, sunR = 40, sunGR = 100;
+  let cellFont = '', bfFont = '', bfW = 10, bgGrad = null, sunGrad = null;
+  let zbuf, stampA, cchar, ccol, ckind, touched, order, nT = 0, stamp = 0;
+  const counts = new Uint32Array(NCOLOR);
+  let hillTop, treeTop, sunCol, nRun = 0, runs = new Int32Array(0);
+  let skyC, skyCh, skyCol, skyTw, nSky = 0;
+  let bmin = 0, bmax = 0, rmin = 0, rmax = 0;
+  let needResize = true, dirty = true;
+
+  // Clouds: [x, row, half-width px, half-height px, speed px/s] each.
+  const NCLOUD = 5, CLOUD = new Float32Array(NCLOUD * 5);
+  let nCloud = 0;
+
+  function resize() {
+    needResize = false;
+    W = canvas.clientWidth || innerWidth;
+    H = canvas.clientHeight || innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    fs = clamp(Math.round(Math.min(W, H * 0.8) / 80), 7, 14);
+    cellFont = `${fs}px ${MONO}`;
+    ctx.font = cellFont;
+    cw = ctx.measureText('M').width || fs * 0.6;
+    ch = fs * 1.1;
+    cols = Math.ceil(W / cw);
+    rows = Math.ceil(H / ch);
+    const n = cols * rows;
+    zbuf = new Float32Array(n); stampA = new Uint32Array(n);
+    cchar = new Uint8Array(n); ccol = new Uint16Array(n); ckind = new Uint8Array(n);
+    touched = new Int32Array(n); order = new Int32Array(n); stamp = 0;
+    hillTop = new Int16Array(cols); treeTop = new Int16Array(cols); sunCol = new Float32Array(cols);
+    runs = new Int32Array(rows * 3 * 8);
+
+    // Layout: horizon ~55% (portrait) / 60%, dog's ground line lower, dog ~40% from the left.
+    portrait = H > W * 1.1;
+    horizonRow = Math.round(H * (portrait ? 0.55 : 0.6) / ch);
+    horizonY = horizonRow * ch;
+    groundY = H * (portrait ? 0.79 : 0.86);
+    S = portrait ? Math.min(W * 0.5, H * 0.3) : Math.min(W * 0.32, H * 0.43);
+    ox = W * (portrait ? 0.44 : 0.4) - 0.11 * S;
+    oy = groundY - PIVOT * ct * S;
+    mref = Math.max(Math.min(W, H), H * 0.6);
+
+    bfFont = `700 ${Math.round(fs * 2)}px ${MONO}`;
+    ctx.font = bfFont;
+    bfW = ctx.measureText('}{').width;
+
+    sunX = W * (portrait ? 0.76 : 0.72);
+    sunR = portrait ? W * 0.15 : Math.min(W * 0.1, H * 0.12);
+    sunY = horizonY - sunR * 0.45;
+    sunGR = sunR * 3.6;
+
+    const hf = horizonY / H;
+    bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, '#170c33');
+    bgGrad.addColorStop(hf * 0.42, '#3c1856');
+    bgGrad.addColorStop(hf * 0.75, '#86305c');
+    bgGrad.addColorStop(hf * 0.999, '#d8683e');
+    bgGrad.addColorStop(Math.min(1, hf + 0.001), '#5a6a2a');
+    bgGrad.addColorStop(Math.min(1, hf + (1 - hf) * 0.4), '#2c4a20');
+    bgGrad.addColorStop(1, '#152a14');
+    sunGrad = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, sunGR);
+    sunGrad.addColorStop(0, 'rgba(255,214,140,0.75)');
+    sunGrad.addColorStop(0.25, 'rgba(255,170,100,0.38)');
+    sunGrad.addColorStop(0.6, 'rgba(255,120,110,0.12)');
+    sunGrad.addColorStop(1, 'rgba(255,110,110,0)');
+    for (let c = 0; c < cols; c++) {
+      const dx = ((c + 0.5) * cw - sunX) / (W * 0.3);
+      sunCol[c] = Math.exp(-dx * dx);
+    }
+
+    buildSky();
+    const r = mulberry32(31);
+    nCloud = portrait ? 3 : NCLOUD;
+    for (let i = 0; i < nCloud; i++) seedCloud(i, r, (i + 0.15 + 0.5 * r()) / nCloud * W);
+    makeHalo();
+    pose(1);
+    for (let l = 0; l < 4; l++) lastP[l] = legP[l];
+    dirty = true;
+  }
+
+  function seedCloud(i, r, x) {
+    const o = i * 5;
+    const hw = (portrait ? 0.16 : 0.07) * W * (0.7 + 0.6 * r());
+    CLOUD[o] = x;
+    CLOUD[o + 1] = Math.round(horizonRow * (0.12 + 0.5 * r()));
+    CLOUD[o + 2] = hw;
+    CLOUD[o + 3] = Math.max(ch * 2.2, hw * (0.16 + 0.08 * r()));
+    CLOUD[o + 4] = (reduced ? 2 : 6) + (reduced ? 2 : 8) * r();
+  }
+
+  // Static sky: gradient characters (streaky near the horizon), a few stars, and the big sun.
+  function buildSky() {
+    const c0 = [], h0 = [], k0 = [], t0 = [];
+    const r = mulberry32(7);
+    for (let row = 0; row < horizonRow; row++) {
+      const yf = (row + 0.5) / horizonRow;
+      const pIdx = SKY_P[Math.min(SKY_N - 1, (yf * SKY_N) | 0)];
+      const dens = 0.16 + 0.42 * Math.pow(yf, 1.6);
+      for (let c = 0; c < cols; c++) {
+        const x = (c + 0.5) * cw, y = (row + 0.5) * ch;
+        const dx = x - sunX, dy = y - sunY, d = Math.hypot(dx, dy) / sunR;
+        const q = r(), q2 = r();
+        if (d < 1) {
+          const ring = d < 0.6 ? 0 : d < 0.78 ? 1 : d < 0.92 ? 2 : 3;
+          c0.push(row * cols + c); h0.push([C_AT, C_O, C_o, C_COLON][ring]);
+          k0.push(P_SUN[ring] * LEVELS + [15, 14, 13, 12][ring]); t0.push(0);
+          continue;
+        }
+        if (d < 2.1) {
+          const g = (2.1 - d) / 1.1;
+          if (q < 0.25 + 0.6 * g) {
+            c0.push(row * cols + c); h0.push(g > 0.55 ? C_COLON : C_DOT);
+            k0.push(P_SUN[3] * LEVELS + lvl(0.45 + 0.4 * g)); t0.push(0);
+          }
+          continue;
+        }
+        if (yf < 0.26 && q < 0.022) {
+          c0.push(row * cols + c); h0.push(q2 < 0.75 ? C_DOT : C_PLUS);
+          k0.push(P_STAR * LEVELS + 8); t0.push(1 + ((q2 * 250) | 0));
+          continue;
+        }
+        // Horizontal streaks: density rises and falls in bands, like layered sunset cloud.
+        const band = 0.55 + 0.45 * Math.sin(row * 0.9 + Math.sin(c * 0.045 + row) * 1.4);
+        if (q > dens * (0.5 + 0.7 * band)) continue;
+        let chr;
+        if (yf < 0.4) chr = q2 < 0.75 ? C_DOT : C_COLON;
+        else if (yf < 0.75) chr = q2 < 0.45 ? C_DOT : q2 < 0.8 ? C_COLON : C_DASH;
+        else chr = q2 < 0.35 ? C_DASH : q2 < 0.65 ? C_TILDE : q2 < 0.85 ? C_COLON : C_EQ;
+        c0.push(row * cols + c); h0.push(chr);
+        k0.push(pIdx * LEVELS + lvl(0.32 + 0.22 * band + 0.18 * yf + 0.1 * q2)); t0.push(0);
+      }
+    }
+    nSky = c0.length;
+    skyC = Int32Array.from(c0); skyCh = Uint8Array.from(h0); skyCol = Uint16Array.from(k0); skyTw = Uint8Array.from(t0);
+  }
+
+  // ---------- Cell buffer ----------
+  function putc(c, chr, col) {
+    if (stampA[c] !== stamp) { stampA[c] = stamp; touched[nT++] = c; }
+    zbuf[c] = -1e9; cchar[c] = chr; ccol[c] = col; ckind[c] = 0;
+  }
+  const put = (c, chr, p, b) => putc(c, chr, p * LEVELS + lvl(b));
+  function putXY(x, y, chr, p, b) {
+    if (x < 0 || y < 0) return;
+    const col = (x / cw) | 0, row = (y / ch) | 0;
+    if (col >= cols || row >= rows) return;
+    put(row * cols + col, chr, p, b);
+  }
+
+  // ---------- State ----------
+  let t = 0, skyT = 0, gph = 0, worldU = 0, dist = 0, jumps = 0, jt = -1, yGround = 0, letters = 0;
+  const legP = new Float32Array(4), lastP = new Float32Array(4), pawX = new Float32Array(4);
+  let headSX = 0, headSY = 0, shadowX = 0, liftNow = 0;
+  let eyeOpen = 1, happy = 0, mouthOpen = 0;
+  let projX = 0, projY = 0;
+
+  function project(x, y, z) {
+    const rx = x * cyw + z * syw, rz = z * cyw - x * syw, yy = y - PIVOT;
+    const y2 = yy * ct - rz * st, z2 = yy * st + rz * ct;
+    const f = CAM_D / (CAM_D - z2);
+    projX = ox + rx * S * f; projY = oy - y2 * S * f;
+  }
+
+  function setBone(b, x, y, z, a) {
+    const o = b * 5;
+    BO[o] = x; BO[o + 1] = y; BO[o + 2] = z; BO[o + 3] = Math.cos(a); BO[o + 4] = Math.sin(a);
+  }
+
+  // Pose every bone for the current stride phase and jump.
+  function pose(dt) {
+    let w = 0, u = 0, jy = 0;
+    if (jt >= 0) { u = jt / JUMP_DUR; w = Math.sin(Math.PI * u); jy = JUMP_H * 4 * u * (1 - u); }
+    const fr = gph - Math.floor(gph);
+    let pb = GAIT.pitch * Math.sin(TAU * (fr + 0.15));
+    pb += (0.22 * Math.cos(Math.PI * u) - pb) * w;    // leap: nose up on take-off, down to land
+    const cb = Math.cos(pb), sb = Math.sin(pb);
+    setBone(B_BODY, 0, BODY_Y, 0, pb);
+
+    let minY = 9, any = false;
+    for (let l = 0; l < 4; l++) {
+      const front = l < 2;
+      let p = gph - GAIT.off[l]; p -= Math.floor(p);
+      legP[l] = p;
+      let a, fl;
+      const ds = GAIT.ds;
+      if (p < ds) { a = 1 - 2 * p / ds; fl = 0; }
+      else { const v = (p - ds) / (1 - ds); a = -Math.cos(Math.PI * v); fl = Math.sin(Math.PI * v) * GAIT.fx; }
+      let s0, s1, s2, sp;
+      if (front) {
+        s0 = -0.45 + GAIT.af * a; s1 = 0.45 + 1.0 * fl; s2 = 0.15 - 0.25 * fl; sp = -1.4 * fl;
+        s0 += (0.95 - s0) * w; s1 += (0.12 - s1) * w; s2 += (0.1 - s2) * w; sp += (-0.25 - sp) * w;
+      } else {
+        s0 = 0.5 + GAIT.ah * a; s1 = -1.2 - 0.55 * fl; s2 = 0.8 + 0.45 * fl; sp = -0.5 * fl;
+        s0 += (-0.4 - s0) * w; s1 += (-0.5 - s1) * w; s2 += (0.5 - s2) * w; sp += (-0.6 - sp) * w;
+      }
+      const rx = front ? 0.24 : -0.27, ry = front ? -0.04 : -0.02, rz = (l & 1) ? -LEG_Z : LEG_Z;
+      let jx = rx * cb - ry * sb, jyy = BODY_Y + rx * sb + ry * cb;
+      const Ls = front ? FRONT_L : HIND_L, b0 = B_LEG + l * 4;
+      let ang = pb + s0;
+      setBone(b0, jx, jyy, rz, ang); jx += Math.sin(ang) * Ls[0]; jyy -= Math.cos(ang) * Ls[0];
+      ang += s1;
+      setBone(b0 + 1, jx, jyy, rz, ang); jx += Math.sin(ang) * Ls[1]; jyy -= Math.cos(ang) * Ls[1];
+      ang += s2;
+      setBone(b0 + 2, jx, jyy, rz, ang); jx += Math.sin(ang) * Ls[2]; jyy -= Math.cos(ang) * Ls[2];
+      setBone(b0 + 3, jx, jyy, rz, sp);
+      pawX[l] = jx;
+      if (p < ds && jyy - PAW_DROP < minY) { minY = jyy - PAW_DROP; any = true; }
+    }
+    // Keep a planted paw on the ground; add a little lift in the gallop's suspension phase.
+    if (jt < 0) {
+      const target = any ? -minY : yGround + GAIT.bob;
+      yGround += (target - yGround) * Math.min(1, dt * 22);
+    }
+    const yo = yGround + jy;
+    liftNow = jy;
+
+    // Head stays steady (counter-pitches the body); ears flop back a little; mouth open, tongue out.
+    const hx = 0.53 * cb - 0.46 * sb, hy = BODY_Y + 0.53 * sb + 0.46 * cb;
+    const hA = -0.75 * pb + 0.035 * Math.sin(TAU * (fr + 0.35)) * (1 - w) - 0.1 * w;
+    const ch2 = Math.cos(hA), sh2 = Math.sin(hA);
+    setBone(B_HEAD, hx, hy, 0, hA);
+    const earBack = (reduced ? 0.04 : 0.1) + 0.08 * Math.sin(TAU * fr * 2 + 0.8) + 0.28 * w;
+    for (let k = 0; k < 2; k++) {
+      const ex = EAR_O[k * 3], ey = EAR_O[k * 3 + 1];
+      setBone(B_EAR + k, hx + ex * ch2 - ey * sh2, hy + ex * sh2 + ey * ch2, EAR_O[k * 3 + 2], hA + earBack);
+    }
+    setBone(B_TONGUE, hx + TONGUE_O[0] * ch2 - TONGUE_O[1] * sh2, hy + TONGUE_O[0] * sh2 + TONGUE_O[1] * ch2, TONGUE_O[2],
+            hA + 0.22 * Math.sin(TAU * fr * 2 + 1.5) - 0.2 * w);
+    // Face: panting "w" mouth, ^ ^ eyes in the air, the odd blink.
+    happy = w;
+    mouthOpen = (reduced ? 0.5 : 0.62) + 0.3 * Math.sin(TAU * fr * 2);
+    const bt = t % 4.3;
+    eyeOpen = bt > 4.1 ? 1 - Math.sin(Math.PI * (bt - 4.1) / 0.2) : 1;
+    const tx = -0.39 * cb - 0.12 * sb, ty = BODY_Y - 0.39 * sb + 0.12 * cb;
+    setBone(B_TAIL, tx, ty, 0, pb + 0.1 * Math.sin(TAU * fr + 2.2) - 0.12 * w);
+
+    for (let b = 0; b < NB; b++) BO[b * 5 + 1] += yo;
+    project(hx + 0.26 * ch2, hy + yo + 0.26 * sh2, 0);
+    headSX = projX; headSY = projY;
+    project(0.02, 0, 0);
+    shadowX = projX;
+  }
+
+  // ---------- Dog splat (z-buffered, lit, coloured by region) ----------
+  function splatDog() {
+    bmin = cols; bmax = -1; rmin = rows; rmax = -1;
+    for (let i = 0; i < NP; i++) {
+      const o = PB[i] * 5, bc = BO[o + 3], bs = BO[o + 4];
+      const lx = PX[i], ly = PY[i];
+      const x = BO[o] + lx * bc - ly * bs, y = BO[o + 1] + lx * bs + ly * bc, z = BO[o + 2] + PZ[i];
+      const rx = x * cyw + z * syw, rz = z * cyw - x * syw, yy = y - PIVOT;
+      const y2 = yy * ct - rz * st;
+      const z2 = yy * st + rz * ct;
+      const f = CAM_D / (CAM_D - z2);
+      const px = ox + rx * S * f, py = oy - y2 * S * f;
+      if (px < 0 || py < 0) continue;
+      const col = (px / cw) | 0, row = (py / ch) | 0;
+      if (col >= cols || row >= rows) continue;
+      const c = row * cols + col;
+      const fresh = stampA[c] !== stamp;
+      if (!fresh && zbuf[c] >= z2 + 0.035) continue; // cannot win even with the feature bias
+
+      const k = PK[i];
+      let p = PP[i];
+      const nxl = NX[i], nyl = NY[i], nz = NZ[i];
+      const nx = nxl * bc - nyl * bs, ny = nxl * bs + nyl * bc;
+      const rnx = nx * cyw + nz * syw, rnz = nz * cyw - nx * syw;
+      const ny2 = ny * ct - rnz * st, nz2 = ny * st + rnz * ct;
+      let lam = rnx * LX + ny2 * LY + nz2 * LZ;
+      const lam2 = lam < 0 ? -lam : lam;
+      if (lam < 0) lam = 0;
+      let dd = (z2 + 0.6) / 1.2;
+      dd = 0.62 + 0.38 * (dd < 0 ? 0 : dd > 1 ? 1 : dd);
+      const rim = nz2 < 0.35 ? (0.35 - (nz2 < 0 ? 0 : nz2)) * 0.35 : 0;   // warm rim glow on silhouettes
+
+      let b = 0, cc = 0, feat = 0, coat = false;
+      switch (k) {
+        case K_EYE: {
+          const sd = p ? -1 : 1, cu = A1[i], cv = A2[i], eu = cu * sd, ev = cv - 0.3 * eu;
+          coat = true; p = P_OR_L;
+          if (happy > 0.35) {                       // ^ ^ happy eyes while leaping
+            const arc = 0.9 * (1 - Math.abs(cu)) - 0.35;
+            if (Math.abs(cu) < 1.2 && Math.abs(cv - arc) < 0.42) {
+              coat = false; feat = 1; p = P_MOUTH; b = 0.8;
+              cc = cu < -0.3 ? C_SL : cu > 0.3 ? C_BS : C_CARET;
+            }
+          } else if (eyeOpen < 0.22) {              // closed: a lid line
+            if (Math.abs(eu) < 1.05 && Math.abs(ev + 0.15) < 0.3) {
+              coat = false; feat = 1; p = P_EYE; b = 0.24; cc = C_DASH;
+            }
+          } else if (Math.abs(eu) < 1) {
+            const hh = Math.pow(1 - eu * eu, 0.55) * eyeOpen;
+            if (Math.abs(ev) < hh) { coat = false; feat = 1; p = P_EYE; b = 0.24; cc = C_AT; }
+          }
+          break;
+        }
+        case K_MOUTH: {
+          const lx = A1[i], ly = A2[i];
+          coat = true;
+          if (Math.abs(lx) < 0.048) {
+            // A small "w" smile under the nose, with a short philtrum; it drops open while panting.
+            const ph = TAU * lx / 0.048, yc = -0.086 + 0.008 * Math.cos(ph) - 0.01 * mouthOpen;
+            const open = mouthOpen * 0.045 * (1 - (lx / 0.04) ** 2);
+            if (Math.abs(ly - yc) < 0.0045) {
+              coat = false; feat = 1; p = P_MOUTH; b = 0.55;
+              const sl = 1.05 * Math.sin(ph);
+              cc = sl > 0.45 ? C_SL : sl < -0.45 ? C_BS : C_US;
+            } else if (Math.abs(lx) < 0.004 && ly > yc && ly < -0.05) {
+              coat = false; feat = 1; p = P_MOUTH; b = 0.55; cc = C_BAR;
+            } else if (open > 0 && ly < yc && ly > yc - open) {
+              coat = false; feat = 1; p = P_MIN; b = 0.4; cc = C_HASH;
+            }
+          }
+          break;
+        }
+        case K_NOSE:
+          feat = 1;
+          if (lam > 0.86 && ny2 > 0.3) { p = P_CATCH; b = 0.7; cc = C_STAR; }
+          else { p = P_NOSE; b = 0.2 + 0.25 * lam; cc = C_AT; }
+          break;
+        case K_EARIN: {
+          const v = A1[i];
+          b = clamp((0.45 + 0.5 * lam2) * dd * PF[i], 0, 0.82);
+          if (v > 0.55) { p = P_CR; cc = C_FUR[(b * (NFUR - 0.01)) | 0]; }
+          else { p = P_EARIN; cc = b > 0.6 ? C_PCT : C_COLON; }
+          break;
+        }
+        case K_TONGUE:
+          b = clamp(0.5 + 0.5 * lam, 0, 0.85);
+          p = Math.abs(A1[i]) < 0.14 ? P_TONGUE_D : P_TONGUE;
+          cc = b > 0.7 ? C_O : C_o; feat = 2;
+          break;
+        default:
+          coat = true;
+      }
+      if (coat) {
+        // key light + camera fill + warm bounce from below + rim, as in shiba-sit
+        b = clamp((0.26 + 0.5 * lam + 0.26 * (nz2 > 0 ? nz2 : 0) + 0.2 * (ny2 < 0 ? -ny2 : 0) + rim) * dd * PF[i] + FJ[i],
+                  0, p === P_CR ? 0.7 : 0.8);
+        if (p === P_OR || p === P_OR_L) p = b < 0.36 ? P_OR_D : b > 0.66 ? P_OR_L : P_OR;
+        else if (p === P_CR && b < 0.38) p = P_CR_D;
+        cc = C_FUR[(b * (NFUR - 0.01)) | 0];
+      }
+      const zb = z2 + 0.015 * feat;
+      if (!fresh && zbuf[c] >= zb) continue; // keep nearest (larger z = closer)
+      if (fresh) { stampA[c] = stamp; touched[nT++] = c; }
+      zbuf[c] = zb; cchar[c] = cc; ccol[c] = p * LEVELS + lvl(b); ckind[c] = 1;
+      if (col < bmin) bmin = col; if (col > bmax) bmax = col;
+      if (row < rmin) rmin = row; if (row > rmax) rmax = row;
+    }
+    catchlights();
+    // Horizontal runs of dog cells, for a solid dark underlay behind the glyphs.
+    nRun = 0;
+    for (let r = rmin; r <= rmax; r++) {
+      let start = -1;
+      for (let c = bmin; c <= bmax + 1; c++) {
+        const k = r * cols + c;
+        const on = c <= bmax && stampA[k] === stamp && ckind[k] === 1;
+        if (on && start < 0) start = c;
+        else if (!on && start >= 0) {
+          if (nRun * 3 + 3 <= runs.length) { runs[nRun * 3] = r; runs[nRun * 3 + 1] = start; runs[nRun * 3 + 2] = c - start; nRun++; }
+          start = -1;
+        }
+      }
+    }
+  }
+
+  // Light up one catchlight cell inside each open eye (head surface point, head bone).
+  function catchlights() {
+    if (eyeOpen < 0.6 || happy > 0.35) return;
+    const o = B_HEAD * 5, bc = BO[o + 3], bs = BO[o + 4];
+    for (let e = 0; e < 2; e++) {
+      const lx = CATCH[e * 3], ly = CATCH[e * 3 + 1];
+      const x = BO[o] + lx * bc - ly * bs, y = BO[o + 1] + lx * bs + ly * bc, z = BO[o + 2] + CATCH[e * 3 + 2];
+      project(x, y, z);
+      const col = (projX / cw) | 0, row = (projY / ch) | 0;
+      if (col < 0 || row < 0 || col >= cols || row >= rows) continue;
+      const c = row * cols + col;
+      if (stampA[c] !== stamp || cchar[c] !== C_AT || ((ccol[c] / LEVELS) | 0) !== P_EYE) continue;
+      cchar[c] = C_o; ccol[c] = P_CATCH * LEVELS + 15;
+    }
+  }
+
+  // ---------- Scenery layers ----------
+  let scrollPx = 0;
+  function putSky() {
+    for (let i = 0; i < nSky; i++) {
+      let col = skyCol[i];
+      const tw = skyTw[i];
+      if (tw) col = P_STAR * LEVELS + lvl(0.3 + 0.55 * (0.5 + 0.5 * Math.sin(skyT * (0.6 + (tw & 7) * 0.25) + tw)));
+      putc(skyC[i], skyCh[i], col);
+    }
+  }
+
+  function cloudIn(o, x, y) {
+    const nx = (x - CLOUD[o]) / CLOUD[o + 2], ny = (y - (CLOUD[o + 1] + 0.5) * ch) / CLOUD[o + 3];
+    if (ny > 0.55) return false; // flat base
+    let a = (nx + 0.42) / 0.5, b = (ny - 0.1) / 0.62;
+    if (a * a + b * b < 1) return true;
+    a = (nx - 0.05) / 0.58; b = (ny + 0.18) / 0.95;
+    if (a * a + b * b < 1) return true;
+    a = (nx - 0.55) / 0.42; b = (ny - 0.15) / 0.55;
+    return a * a + b * b < 1;
+  }
+  function putClouds() {
+    for (let i = 0; i < nCloud; i++) {
+      const o = i * 5, hw = CLOUD[o + 2], hh = CLOUD[o + 3];
+      const c0 = Math.max(0, Math.floor((CLOUD[o] - hw) / cw)), c1 = Math.min(cols - 1, Math.ceil((CLOUD[o] + hw) / cw));
+      const cy = (CLOUD[o + 1] + 0.5) * ch;
+      const r0 = Math.max(0, Math.floor((cy - hh * 1.2) / ch)), r1 = Math.min(horizonRow - 1, Math.ceil((cy + hh * 0.6) / ch));
+      for (let r = r0; r <= r1; r++) {
+        const y = (r + 0.5) * ch, ny = (y - cy) / hh;
+        for (let c = c0; c <= c1; c++) {
+          const x = (c + 0.5) * cw;
+          if (!cloudIn(o, x, y)) continue;
+          const L = !cloudIn(o, x - cw, y), R = !cloudIn(o, x + cw, y), D = !cloudIn(o, x, y + ch);
+          const lit = clamp(0.5 + 0.5 * ny, 0, 1); // lit from below by the low sun
+          const hsh = hash2(c - Math.floor(CLOUD[o] / cw), r + i * 97) * U32;
+          let chr;
+          if (L) chr = C_LP; else if (R) chr = C_RP;
+          else if (D) chr = C_TILDE;
+          else chr = hsh < 0.55 ? C_TILDE : hsh < 0.7 ? C_DASH : C_SP;
+          put(r * cols + c, chr, lit > 0.45 ? P_CLOUD : P_CLOUDTOP, 0.4 + 0.42 * lit);
+        }
+      }
+    }
+  }
+
+  function edgeOf(delta) { return delta < 0 ? C_SL : delta > 0 ? C_BS : C_DASH; }
+
+  function putHills() {
+    const hs = H * (portrait ? 0.075 : 0.1), off = scrollPx * 0.035;
+    for (let c = 0; c < cols; c++) {
+      const X = c * cw + off;
+      const h = hs * (0.55 + 0.25 * Math.sin(X * 0.0058 + 1.3) + 0.14 * Math.sin(X * 0.0165 + 0.4) + 0.06 * Math.sin(X * 0.041));
+      hillTop[c] = horizonRow - Math.max(1, Math.round(h / ch));
+    }
+    const base = Math.floor(off / cw);
+    for (let c = 0; c < cols; c++) {
+      const top = hillTop[c];
+      const dl = c > 0 ? hillTop[c - 1] : top, dr = c < cols - 1 ? hillTop[c + 1] : top;
+      put(top * cols + c, edgeOf(dr - dl), P_HILLRIM, 0.42 + 0.3 * sunCol[c]);
+      for (let r = top + 1; r < horizonRow; r++) {
+        const hsh = hash2(c + base, r) * U32;
+        if (hsh < 0.16) put(r * cols + c, hsh < 0.1 ? C_DOT : C_COLON, P_HILL, 0.3 + 0.12 * sunCol[c]);
+        else putc(r * cols + c, C_SP, 0);
+      }
+    }
+  }
+
+  function treeH(X) {
+    const G = mref * 0.085;
+    let h = mref * (0.012 + 0.006 * Math.sin(X * 0.031) + 0.004 * Math.sin(X * 0.11));
+    const g = Math.floor(X / G);
+    for (let k = g - 1; k <= g + 1; k++) {
+      const q = hash2(k, 7) * U32;
+      if (q > 0.78) continue;
+      const q2 = hash2(k, 13) * U32, q3 = hash2(k, 29) * U32;
+      const R = mref * (0.018 + 0.024 * q2), tx = (k + 0.2 + 0.6 * q3) * G;
+      const dx = X - tx;
+      if (dx > -R && dx < R) {
+        const top = R * (0.6 + 1.4 * q) + Math.sqrt(R * R - dx * dx);
+        if (top > h) h = top;
+      }
+    }
+    return h;
+  }
+  function putTrees() {
+    const off = scrollPx * 0.12;
+    for (let c = 0; c < cols; c++) treeTop[c] = horizonRow - Math.max(1, Math.round(treeH(c * cw + off) / ch));
+    const base = Math.floor(off / cw);
+    for (let c = 0; c < cols; c++) {
+      const top = treeTop[c];
+      const dl = c > 0 ? treeTop[c - 1] : top, dr = c < cols - 1 ? treeTop[c + 1] : top;
+      const rim = 0.4 + 0.35 * sunCol[c];
+      const d = dr - dl;
+      put(top * cols + c, d <= -3 ? C_LP : d >= 3 ? C_RP : d < 0 ? C_SL : d > 0 ? C_BS : C_CARET, P_TREERIM, rim);
+      for (let r = top + 1; r < horizonRow; r++) {
+        const k = r * cols + c;
+        if (r < dl) put(k, C_LP, P_TREERIM, rim * 0.8);          // steep left side of a crown
+        else if (r < dr) put(k, C_RP, P_TREE, 0.4);              // shaded right side
+        else {
+          const hsh = hash2(c + base, r + 500);
+          if (hsh * U32 < 0.3) put(k, TREE_TEX[hsh & 3], P_TREE, 0.24 + 0.14 * sunCol[c]);
+          else putc(k, C_SP, 0);
+        }
+      }
+    }
+  }
+
+  function putMeadow() {
+    const gspan = groundY - horizonY;
+    const shR = S * (0.62 - 0.25 * Math.min(1, liftNow / JUMP_H)), shY = groundY + ch * 0.3, shH = ch * 1.6;
+    const sway = reduced ? 0.9 : 2.3;
+    for (let r = horizonRow; r < rows; r++) {
+      const yc = (r + 0.5) * ch;
+      const d = (yc - horizonY) / gspan;              // 0 at the horizon, 1 at the dog's ground line
+      const fac = 0.12 + 0.88 * d;                    // ground-plane perspective: nearer rows scroll faster
+      const base = Math.floor(scrollPx * fac / cw);
+      const dens = Math.min(0.7, 0.14 + 0.5 * d);
+      const near = d > 0.42, dd = d > 1.3 ? 1.3 : d;
+      const sy = (yc - shY) / shH;
+      for (let c = 0; c < cols; c++) {
+        const X = c + base;
+        const h = hash2(X, r);
+        const u = (h & 0xffff) / 65536;
+        if (u >= dens) continue;
+        const v = (h >>> 16) / 65536;
+        let b = 0.34 + 0.26 * v + 0.12 * dd + 0.3 * sunCol[c] * (1 - Math.min(1, d));
+        if (sy > -1 && sy < 1) {
+          const sx = ((c + 0.5) * cw - shadowX) / shR;
+          if (sx * sx + sy * sy < 1) b *= 0.45;       // the dog's soft shadow
+        }
+        const k = r * cols + c;
+        if (v < 0.018 && d > 0.15) { put(k, C_STAR, P_FLOWER[(h >>> 8) % 3], 0.75 + 0.2 * v * 50); continue; }
+        let chr;
+        if (near) {
+          const lean = Math.sin(skyT * sway - X * 0.23 + r * 0.37) + (v - 0.5) * 0.8;
+          chr = lean > 0.45 ? C_SL : lean < -0.45 ? C_BS : C_BAR;
+          if (v > 0.9) chr = C_COMMA;
+        } else chr = v < 0.4 ? C_COMMA : v < 0.7 ? C_APOS : v < 0.9 ? C_DOT : C_BTICK;
+        put(k, chr, P_GRASS[(h >>> 20) & 3], b);
+      }
+    }
+  }
+
+  // ---------- Dust puffs ----------
+  const MAXD = 160;
+  const dX = new Float32Array(MAXD), dY = new Float32Array(MAXD), dVX = new Float32Array(MAXD),
+        dVY = new Float32Array(MAXD), dAge = new Float32Array(MAXD), dLife = new Float32Array(MAXD);
+  let nDust = 0;
+  function puff(wx, wz, n, power) {
+    project(wx, 0, wz);
+    const vPx = GAIT.speed * S;
+    for (let k = 0; k < n && nDust < MAXD; k++) {
+      const i = nDust++;
+      dX[i] = projX + (Math.random() - 0.5) * cw * 2; dY[i] = projY - ch * 0.3;
+      dVX[i] = -vPx * (0.35 + 0.35 * Math.random()) - S * 0.15 * Math.random();
+      dVY[i] = -S * (0.2 + 0.45 * Math.random()) * power;
+      dAge[i] = 0; dLife[i] = 0.4 + 0.4 * Math.random();
+    }
+  }
+  function updateDust(dt) {
+    for (let i = 0; i < nDust; i++) {
+      dAge[i] += dt;
+      if (dAge[i] >= dLife[i]) {
+        nDust--;
+        dX[i] = dX[nDust]; dY[i] = dY[nDust]; dVX[i] = dVX[nDust]; dVY[i] = dVY[nDust];
+        dAge[i] = dAge[nDust]; dLife[i] = dLife[nDust]; i--;
+        continue;
+      }
+      dX[i] += dVX[i] * dt; dY[i] += dVY[i] * dt;
+      dVY[i] += S * 1.1 * dt; dVX[i] *= 1 - 1.5 * dt;
+    }
+  }
+  function putDust() {
+    for (let i = 0; i < nDust; i++) {
+      const a = dAge[i] / dLife[i];
+      putXY(dX[i], dY[i], a < 0.3 ? C_COLON : a < 0.65 ? C_COMMA : C_DOT, P_DUST, 1 - 0.55 * a);
+    }
+  }
+
+  // ---------- Butterfly ----------
+  let bfState = 0, bfT = BF_FIRST, bfX = 0, bfY = 0, bfVX = 0, bfVY = 0, bfAge = 0, bfBase = 0, bfEsc = 0, bfYellow = 0;
+  function updateButterfly(dt) {
+    if (bfState === 0) {
+      bfT -= dt;
+      if (bfT > 0) return;
+      bfState = 1; bfAge = 0; bfX = W + bfW; bfVX = -(0.22 * W + 30);
+      bfBase = headSY - S * 0.3; bfY = bfBase; bfYellow = Math.random() < 0.5 ? 1 : 0;
+      return;
+    }
+    bfAge += dt;
+    if (bfState === 1) {
+      bfX += bfVX * dt;
+      bfY = bfBase + S * 0.07 * Math.sin(bfAge * 5.2) + S * 0.03 * Math.sin(bfAge * 11);
+      if (bfX < headSX + (-bfVX) * 0.4) {
+        if (!reduced) jump();
+        bfState = 2; bfEsc = 0; bfVY = 0;
+      }
+    } else {
+      bfEsc += dt;
+      if (bfEsc > 0.3) { bfVY -= H * 1.4 * dt; bfVX += (0.06 * W - bfVX) * Math.min(1, dt * 2); }
+      bfX += bfVX * dt; bfY += bfVY * dt + S * 0.05 * Math.sin(bfAge * 11) * dt * 8;
+      if (bfY < -ch * 4 || bfX < -bfW * 2) { bfState = 0; bfT = BF_MIN + (BF_MAX - BF_MIN) * Math.random(); }
+    }
+  }
+  let halo = null;
+  function makeHalo() {
+    const R = Math.max(10, fs * 3.2);
+    halo = document.createElement('canvas');
+    halo.width = halo.height = Math.ceil(R * 2);
+    const x = halo.getContext('2d'), gr = x.createRadialGradient(R, R, 0, R, R, R);
+    gr.addColorStop(0, 'rgba(255,255,235,0.8)');
+    gr.addColorStop(0.3, 'rgba(255,230,150,0.35)');
+    gr.addColorStop(1, 'rgba(255,220,140,0)');
+    x.fillStyle = gr; x.fillRect(0, 0, halo.width, halo.height);
+  }
+  function drawButterfly() {
+    if (bfState === 0) return;
+    const open = ((bfAge * (bfState === 2 ? 16 : 11)) | 0) & 1;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 0.9;
+    ctx.drawImage(halo, bfX - halo.width / 2, bfY - halo.height / 2);
+    ctx.restore();
+    ctx.font = bfFont;
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = bfYellow ? '#ffe36a' : '#fffaf0';
+    ctx.fillText(open ? '}{' : '><', bfX - bfW / 2, bfY);
+    ctx.textBaseline = 'top';
+    ctx.font = cellFont;
+  }
+
+  // ---------- Drawing ----------
+  function buildScene() {
+    stamp++; nT = 0;
+    scrollPx = worldU * S;
+    putSky();
+    putClouds();
+    putHills();
+    putTrees();
+    putMeadow();
+    putDust();
+    splatDog();
+  }
+
+  // Bucket by colour so fillStyle changes once per colour, not once per cell.
+  function drawCells() {
+    counts.fill(0);
+    for (let i = 0; i < nT; i++) counts[ccol[touched[i]]]++;
+    let acc = 0;
+    for (let c = 0; c < NCOLOR; c++) { const n = counts[c]; counts[c] = acc; acc += n; }
+    for (let i = 0; i < nT; i++) { const c = touched[i]; order[counts[ccol[c]]++] = c; }
+    let cur = -1, n = 0;
+    for (let i = 0; i < nT; i++) {
+      const c = order[i];
+      if (cchar[c] === C_SP) continue;
+      const cc = ccol[c];
+      if (cc !== cur) { cur = cc; ctx.fillStyle = COLSTR[cc]; }
+      const row = (c / cols) | 0;
+      ctx.fillText(CH[cchar[c]], (c - row * cols) * cw, row * ch);
+      n++;
+    }
+    letters = n;
+  }
+
+  // Background fills: sky/meadow gradient, sun glow, hill + tree silhouettes, dark dog underlay.
+  function silhouette(g, top, fill) {
+    g.fillStyle = fill;
+    g.beginPath();
+    g.moveTo(0, horizonY);
+    for (let c = 0; c < cols; c++) { const y = top[c] * ch; g.lineTo(c * cw, y); g.lineTo((c + 1) * cw, y); }
+    g.lineTo(cols * cw, horizonY);
+    g.closePath();
+    g.fill();
+  }
+  function drawBackdrop(g) {
+    g.fillStyle = bgGrad;
+    g.fillRect(0, 0, W, H);
+    g.fillStyle = sunGrad;
+    g.fillRect(sunX - sunGR, sunY - sunGR, sunGR * 2, sunGR * 2);
+    silhouette(g, hillTop, '#4a2a62');
+    silhouette(g, treeTop, '#1d3a28');
+    g.fillStyle = '#26120a';
+    g.beginPath();
+    for (let i = 0; i < nRun; i++) g.rect(runs[i * 3 + 1] * cw, runs[i * 3] * ch, runs[i * 3 + 2] * cw, ch);
+    g.fill();
+  }
+
+  // Bloom: shrink the frame, subtract the backdrop with 'difference', blur, and add it back on top.
+  const glow = document.createElement('canvas'), gctx = glow.getContext('2d');
+  const bgc = document.createElement('canvas'), bctx = bgc.getContext('2d');
+  const glow2 = document.createElement('canvas'), g2ctx = glow2.getContext('2d');
+  const GLOW_DIV = 5, GLOW_A = 0.75;
+  function drawGlow() {
+    const gw = Math.ceil(W / GLOW_DIV), gh = Math.ceil(H / GLOW_DIV);
+    if (glow.width !== gw || glow.height !== gh) {
+      glow.width = bgc.width = glow2.width = gw;
+      glow.height = bgc.height = glow2.height = gh;
+    }
+    bctx.setTransform(gw / W, 0, 0, gh / H, 0, 0);
+    drawBackdrop(bctx);
+    gctx.globalCompositeOperation = 'copy';
+    gctx.drawImage(canvas, 0, 0, gw, gh);
+    gctx.globalCompositeOperation = 'difference';
+    gctx.drawImage(bgc, 0, 0);
+    g2ctx.globalCompositeOperation = 'copy';
+    g2ctx.filter = 'blur(2px)';
+    g2ctx.drawImage(glow, 0, 0);
+    g2ctx.filter = 'none';
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = GLOW_A;
+    ctx.drawImage(glow2, 0, 0, W, H);
+    ctx.restore();
+  }
+
+  function render() {
+    buildScene();
+    drawBackdrop(ctx);
+    ctx.textBaseline = 'top';
+    ctx.font = cellFont;
+    drawCells();
+    drawGlow();
+    drawButterfly();
+  }
+
+  // ---------- Loop, HUD, controls ----------
+  let paused = false, last = performance.now();
+  let frames = 0, fpsT = last, fps = 0, hudT = 0;
+
+  function jump() {
+    if (jt >= 0) return;
+    jt = 0; jumps++;
+    puff(pawX[2], LEG_Z, 5, 1);
+    puff(pawX[3], -LEG_Z, 4, 1);
+  }
+
+  function update(dt) {
+    t += dt; skyT += dt;
+    gph += GAIT.f * dt;
+    worldU += GAIT.speed * dt;
+    dist += GAIT.mps * dt;
+    if (jt >= 0) {
+      jt += dt;
+      if (jt >= JUMP_DUR) {
+        jt = -1;
+        for (let l = 0; l < 4; l++) puff(pawX[l], (l & 1) ? -LEG_Z : LEG_Z, 4, 1.3);
+      }
+    }
+    pose(dt);
+    if (jt < 0) {
+      for (let l = 0; l < 4; l++) {
+        if (legP[l] < lastP[l] - 0.5) puff(pawX[l], (l & 1) ? -LEG_Z : LEG_Z, reduced ? 1 : 4, (l & 1) ? 0.7 : 1);
+      }
+    }
+    for (let l = 0; l < 4; l++) lastP[l] = legP[l];
+    for (let i = 0; i < nCloud; i++) {
+      const o = i * 5;
+      CLOUD[o] -= (CLOUD[o + 4] + GAIT.speed * S * 0.015) * dt;
+      if (CLOUD[o] < -CLOUD[o + 2] * 1.3) seedCloud(i, Math.random, W + CLOUD[o + 2] * (1.3 + Math.random()));
+    }
+    updateDust(dt);
+    updateButterfly(dt);
+  }
+
+  function updateHud(now) {
+    const tail = paused ? 'paused' : `${fps} fps`;
+    const head = `distance ${Math.floor(dist).toLocaleString('en-US')} m  jumps ${jumps}  `;
+    // Narrow screens drop the letter count so nothing is clipped.
+    hudEl.textContent = W < 640 ? head + tail : head + `letters ${letters.toLocaleString('en-US')}  ${tail}`;
+    hudT = now;
+  }
+
+  function frame(now) {
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); // no jumps after a hidden tab
+    last = now;
+    if (needResize) resize();
+    if (!paused) update(dt);
+    if (!paused || dirty) { render(); dirty = false; frames++; }
+    if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
+    if (now - hudT >= 250) updateHud(now);
+    requestAnimationFrame(frame);
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); }
+  function replay() {
+    t = 0; skyT = 0; gph = 0; worldU = 0; dist = 0; jumps = 0; jt = -1; nDust = 0;
+    bfState = 0; bfT = BF_FIRST; paused = false; dirty = true;
+    pose(1);
+    for (let l = 0; l < 4; l++) lastP[l] = legP[l];
+  }
+
+  addEventListener('resize', () => { needResize = true; });
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return; // leave Cmd/Ctrl+R alone
+    if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
+    else if (e.key === 'r' || e.key === 'R') replay();
+    else if (e.key === 'ArrowUp') { e.preventDefault(); if (paused) togglePause(); jump(); }
+  });
+  // A tap jumps right away (and resumes if paused); a second tap within 280 ms restarts instead.
+  let tapTimer = 0;
+  canvas.addEventListener('pointerup', e => {
+    if (e.button > 0) return;
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; replay(); return; }
+    tapTimer = setTimeout(() => { tapTimer = 0; }, 280);
+    if (paused) togglePause();
+    jump();
+  });
+
+  // Hint language: ?lang= wins, then saved site preference, then browser.
+  let pref = null;
+  try { pref = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (!pref) { try { pref = localStorage.getItem('lang'); } catch (e) {} }
+  if (!pref) pref = navigator.language || 'en';
+  const zh = String(pref).toLowerCase().startsWith('zh');
+  document.documentElement.lang = zh ? 'zh-Hant' : 'en';
+  // Touch screens have no keyboard, and the full hint would not fit on a phone.
+  const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  hintEl.textContent = touch ? (zh ? '點擊跳躍 · 雙擊重新開始' : 'tap to jump · double-tap to restart')
+                             : (zh ? '點擊跳躍 · 空白鍵暫停 · R 重新開始' : 'tap to jump · Space pause · R restart');
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

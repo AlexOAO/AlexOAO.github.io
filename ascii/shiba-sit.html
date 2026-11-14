@@ -1,0 +1,1048 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ASCII Shiba Inu | Alex Li (李翔緯)</title>
+  <meta name="description" content="A cute 3D Shiba Inu sitting and wagging its curly tail, drawn entirely with ASCII characters. Warm particles swirl in to build the dog, its ears pop up, it blinks, pants and follows your pointer; tap it for a pat and hearts. Vanilla JS on a single canvas.">
+  <meta name="theme-color" content="#0b0806">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;600;800&display=swap">
+  <style>
+    :root {
+      --bg: #120c08;
+      --sky: #0b0806;
+      --text: #f6ece2;
+      --muted: #c9b3a0;
+      --accent: #f59e4b;
+      --mono: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--sky);
+      color: var(--text);
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    canvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100svh;
+      display: block;
+      touch-action: none; /* a finger steers the head; also no double-tap zoom */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .back {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(245, 158, 75, 0.45);
+      background: rgba(245, 158, 75, 0.12);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .back:hover, .back:focus-visible {
+      background: rgba(245, 158, 75, 0.28);
+      border-color: var(--accent);
+      outline: none;
+    }
+    .hud, .hint {
+      position: fixed;
+      z-index: 1;
+      bottom: 12px;
+      color: var(--muted);
+      opacity: 0.75;
+      font: 11px/1.4 var(--mono);
+      white-space: pre;
+      pointer-events: none;
+      max-width: calc(100% - 24px);
+      overflow: hidden;
+    }
+    .hud { left: 12px; }
+    .hint {
+      right: 12px;
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    @media (max-width: 640px) {
+      .hud, .hint { font-size: 10px; }
+      .hint { bottom: 30px; } /* stack above the HUD on narrow screens */
+    }
+  </style>
+</head>
+<body>
+  <h1 class="sr-only">ASCII Shiba Inu</h1>
+  <a class="back" href="./">← ASCII</a>
+  <canvas id="c" role="img" aria-label="Animated 3D Shiba Inu drawn with ASCII characters, sitting on a soft glowing ground and wagging its curly tail; it blinks, pants, looks around and follows the pointer, and hearts float up when you pat it"></canvas>
+  <div class="hud" id="hud" aria-hidden="true"></div>
+  <div class="hint" id="hint"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ---------- Timeline (seconds of scene time) ----------
+  const T = {
+    FLY: 0.9, ASM_END: 3.0,           // warm particles swirl in and land bottom-up, 0-3 s
+    EARS: 3.0, EARS_DUR: 0.6,         // ears pop up with a wiggle
+    EYES: 4.0,                        // eyes open, then one blink
+    TILT: 4.2, TILT_END: 5.4,         // curious head tilt
+    WAG: 3.4,                         // tail starts wagging
+    IDLE: 5.0, CYCLE: 20              // idle loop: blinks, ear twitches, a pant, looking around
+  };
+  // Idle events, in seconds into each 20 s cycle.
+  const BLINKS = [2.2, 6.9, 11.5, 11.8, 16.4];
+  const TWITCH = [[3.6, 1, 0], [9.3, 0, 1], [14.8, 1, 1]];   // [time, left, right]
+  const PANT0 = 7.4, PANT1 = 12.2;
+  const TILT0 = 15.2, TILT1 = 17.4;
+
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T_START = reduced ? 6.5 : 0;  // reduced motion: open on the assembled, awake dog
+  const WAG_F = reduced ? 1.0 : 2.4, WAG_F_HAPPY = reduced ? 1.6 : 4.2;   // Hz
+  const WAG_A = reduced ? 0.12 : 0.26;                                     // rad
+  const FOLLOW = reduced ? 1.6 : 6;   // head smoothing rate (1/s) while following the pointer
+
+  // ---------- Camera / world ----------
+  const CAM_D = 3.2;
+  const PIVOT = 0.5;        // tilt pivot height
+  const TILT = 0.15;        // look a little from above, onto the ground
+  const YAW0 = -0.38;       // body turned a little: a 3/4 view
+  const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
+  // Warm key light from upper-left-front, in view space.
+  const LX0 = -0.32, LY0 = 0.55, LZ0 = 0.78;
+  const LN = Math.hypot(LX0, LY0, LZ0);
+  const LX = LX0 / LN, LY = LY0 / LN, LZ = LZ0 / LN;
+  const TAU = Math.PI * 2;
+  const UP = 0.78, DOWN = 0.62, HALF = 0.54;   // screen extents around the pivot, in S units
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  const rng = mulberry32(20260801);
+
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const smooth = v => { v = clamp(v, 0, 1); return v * v * (3 - 2 * v); };
+  const easeOutBack = v => { const c = 2.2, x = v - 1; return 1 + (c + 1) * x * x * x + c * x * x; };
+  // 0 -> 1 -> 0 window with soft edges.
+  const win = (x, a, b, e) => smooth((x - a) / e) * (1 - smooth((x - b + e) / e));
+
+  // ---------- Characters & colours ----------
+  const CH = [];
+  const ci = s => { let i = CH.indexOf(s); if (i < 0) { CH.push(s); i = CH.length - 1; } return i; };
+  const C_FUR = [...'.:;~=+*%#@'].map(ci);       // soft coat ramp, dim -> dense
+  const NFUR = C_FUR.length;
+  const C_GND = [...'.,-~:'].map(ci);
+  const C_SPK = [...'.*+\'`'].map(ci);
+  const C_AT = ci('@'), C_HASH = ci('#'), C_o = ci('o'), C_O = ci('O'), C_STAR = ci('*'),
+        C_DASH = ci('-'), C_US = ci('_'), C_SL = ci('/'), C_BS = ci('\\'), C_CARET = ci('^'),
+        C_PCT = ci('%'), C_COLON = ci(':'), C_BAR = ci('|');
+
+  const LEVELS = 16;
+  const PAL = [];
+  const pal = (r, g, b) => { PAL.push([r, g, b]); return PAL.length - 1; };
+  const P_OR_D = pal(160, 80, 35), P_OR = pal(220, 120, 50), P_OR_L = pal(240, 150, 70);
+  const P_CR = pal(250, 232, 204), P_CR_D = pal(214, 176, 142);
+  const P_EARIN = pal(242, 160, 150);
+  const P_EYE = pal(34, 20, 16), P_CATCH = pal(255, 255, 255);
+  const P_NOSE = pal(44, 30, 28), P_MOUTH = pal(120, 58, 38), P_MIN = pal(150, 40, 55);
+  const P_TONGUE = pal(250, 120, 140), P_TONGUE_D = pal(214, 80, 106);
+  const P_GROUND = pal(206, 136, 84), P_SPARK = pal(255, 196, 120);
+  const P_HEART = pal(255, 92, 128);
+
+  // Kinds of points. Everything below K_GROUND is the dog (for the pat hit-test).
+  const K_COAT = 0, K_EARIN = 1, K_EYE = 2, K_MOUTH = 3, K_NOSE = 4, K_TONGUE = 5,
+        K_GROUND = 6, K_SPARK = 7;
+  // Rigid parts, each with its own transform per frame.
+  const R_BODY = 0, R_HEAD = 1, R_EARL = 2, R_EARR = 3, R_TAIL = 4, R_TONGUE = 5, R_GROUND = 6, NPART = 7;
+
+  // ---------- Anatomy (rest pose, y up, facing +z, ground y = 0) ----------
+  const H0 = [0, 0.78, 0.075];            // head centre
+  const NP = [0, 0.66, 0.03];           // neck pivot for head turns
+  const BCZ = 0.02;                     // chest centre z for breathing
+  const EX = 0.074, EY = 0.022, EW = 0.026, EH = 0.017;   // eyes (head-local)
+  const TB = [0.12, 0.24, -0.25];       // tail base: wag pivot
+  const TAX = (() => { const l = Math.hypot(0.15, 0.25, 1); return [0.15 / l, 0.25 / l, 1 / l]; })();
+  const TONGUE_A = [0, -0.09, 0.24];  // tongue anchor (head-local) for sticking out
+  const HSC = 1.22;                     // big head = cute: head parts are scaled about the neck pivot
+  const hsc = (v, j) => NP[j] + (v - NP[j]) * HSC;
+  const H0S = [hsc(H0[0], 0), hsc(H0[1], 1), hsc(H0[2], 2)];
+  // Eye catchlights: one white cell each, upper-left in the eye (light side), on the head surface.
+  const CATCH = [1, -1].map(sd => {
+    const lx = sd * EX - 0.3 * EW, ly = EY + 0.35 * EH;
+    const lz = 0.165 * Math.sqrt(1 - (lx / 0.19) ** 2 - ((ly - 0.01) / 0.165) ** 2) + 0.004;
+    return [hsc(H0[0] + lx, 0), hsc(H0[1] + ly, 1), hsc(H0[2] + lz, 2)];
+  });
+  const TAS = [hsc(H0[0] + TONGUE_A[0], 0), hsc(H0[1] + TONGUE_A[1], 1), hsc(H0[2] + TONGUE_A[2], 2)];
+
+  const sol = (cx, cy, cz, rx, ry, rz, ax, name) => ({ c: [cx, cy, cz], r: [rx, ry, rz], ax: ax || 0, name });
+  const BODY = [
+    sol(0, 0.35, -0.06, 0.2, 0.26, 0.19, 0.32, 'torso'),
+    sol(0, 0.43, 0.06, 0.165, 0.19, 0.15, 0.2, 'chest'),
+    sol(0, 0.6, 0.03, 0.13, 0.13, 0.125, 0, 'neck'),
+    sol(0.145, 0.15, -0.09, 0.125, 0.15, 0.18, 0, 'haunch'),
+    sol(-0.145, 0.15, -0.09, 0.125, 0.15, 0.18, 0, 'haunch'),
+    sol(0.085, 0.2, 0.12, 0.048, 0.2, 0.052, -0.06, 'leg'),
+    sol(-0.085, 0.2, 0.12, 0.048, 0.2, 0.052, -0.06, 'leg'),
+    sol(0.088, 0.032, 0.17, 0.056, 0.034, 0.072, 0, 'paw'),
+    sol(-0.088, 0.032, 0.17, 0.056, 0.034, 0.072, 0, 'paw'),
+    sol(0.19, 0.03, 0.04, 0.05, 0.032, 0.095, 0, 'paw'),
+    sol(-0.19, 0.03, 0.04, 0.05, 0.032, 0.095, 0, 'paw')
+  ];
+  const hs = (x, y, z, rx, ry, rz, ax, name) => sol(H0[0] + x, H0[1] + y, H0[2] + z, rx, ry, rz, ax, name);
+  const HEAD = [
+    hs(0, 0.01, 0, 0.19, 0.165, 0.165, 0, 'cranium'),
+    hs(0.092, -0.068, 0.045, 0.11, 0.082, 0.105, 0, 'cheek'),
+    hs(-0.092, -0.068, 0.045, 0.11, 0.082, 0.105, 0, 'cheek'),
+    hs(0, -0.066, 0.15, 0.09, 0.066, 0.12, 0.12, 'muzzle'),
+    hs(0, -0.036, 0.262, 0.02, 0.014, 0.014, 0, 'nose')
+  ];
+
+  function inside(s, x, y, z, lim) {
+    const ca = Math.cos(s.ax), sa = Math.sin(s.ax);
+    const dx = x - s.c[0], dy0 = y - s.c[1], dz0 = z - s.c[2];
+    const dy = dy0 * ca + dz0 * sa, dz = -dy0 * sa + dz0 * ca;
+    const q = (dx / s.r[0]) ** 2 + (dy / s.r[1]) ** 2 + (dz / s.r[2]) ** 2;
+    return q < lim;
+  }
+  const insideAny = (list, self, x, y, z) => {
+    for (let j = 0; j < list.length; j++) if (list[j] !== self && inside(list[j], x, y, z, 0.985)) return true;
+    return false;
+  };
+
+  const B = { x: [], y: [], z: [], nx: [], ny: [], nz: [], k: [], p: [], r: [], a1: [], a2: [], t0: [] };
+  function add(x, y, z, nx, ny, nz, k, p, part, a1, a2, t0) {
+    const l = Math.hypot(nx, ny, nz) || 1;
+    if (part >= R_HEAD && part <= R_TONGUE && part !== R_TAIL) { x = hsc(x, 0); y = hsc(y, 1); z = hsc(z, 2); }
+    B.x.push(x); B.y.push(y); B.z.push(z);
+    B.nx.push(nx / l); B.ny.push(ny / l); B.nz.push(nz / l);
+    B.k.push(k); B.p.push(p); B.r.push(part); B.a1.push(a1 || 0); B.a2.push(a2 || 0);
+    // Assembly order: bottom-up by rest height, with a little scatter.
+    B.t0.push(t0 !== undefined ? t0 : T.FLY + clamp(y / 1.1, 0, 1) * (T.ASM_END - T.FLY - 0.25) + rng() * 0.25);
+  }
+
+  // Area-uniform samples on a (pitched) ellipsoid surface, skipping points buried in other solids.
+  function sampleSolid(s, dens, others, emit) {
+    const [rx, ry, rz] = s.r, ca = Math.cos(s.ax), sa = Math.sin(s.ax);
+    const area = 4 * Math.PI * Math.pow((Math.pow(rx * ry, 1.6) + Math.pow(rx * rz, 1.6) + Math.pow(ry * rz, 1.6)) / 3, 1 / 1.6);
+    const n = Math.round(area * dens), maxS = Math.max(ry * rz, rx * rz, rx * ry);
+    let made = 0, guard = 0;
+    while (made < n && guard++ < n * 30) {
+      const u = rng() * 2 - 1, ph = rng() * TAU, q = Math.sqrt(1 - u * u);
+      const dx = q * Math.cos(ph), dy = u, dz = q * Math.sin(ph);
+      const sc = Math.hypot(ry * rz * dx, rx * rz * dy, rx * ry * dz);
+      if (rng() * maxS > sc) continue;
+      made++;
+      const lx = rx * dx, ly = ry * dy, lz = rz * dz;
+      const nx = dx / rx, ny0 = dy / ry, nz0 = dz / rz;
+      const x = s.c[0] + lx, y = s.c[1] + ly * ca - lz * sa, z = s.c[2] + ly * sa + lz * ca;
+      const ny = ny0 * ca - nz0 * sa, nz = ny0 * sa + nz0 * ca;
+      if (others && insideAny(others, s, x, y, z)) continue;
+      const nl = Math.hypot(nx, ny, nz);
+      emit(x, y, z, nx / nl, ny / nl, nz / nl, s);
+    }
+  }
+
+  // Body: ginger coat, cream "urajiro" on the throat, chest, belly, inner legs and paws.
+  const jit = () => (rng() - 0.5) * 0.08;
+  BODY.forEach(s => sampleSolid(s, 21000, BODY, (x, y, z, nx, ny, nz, s) => {
+    let cream = false;
+    const ax = Math.abs(x);
+    switch (s.name) {
+      case 'torso': cream = nz > 0.55 + jit() && ax < 0.08 + jit(); break;
+      case 'chest': cream = nz > 0.45 + jit() && ax < 0.095 + jit() * 0.6 && y < 0.62; break;
+      case 'neck': cream = nz > 0.3 + jit() && y < 0.66 + jit(); break;
+      case 'haunch': cream = (ax < 0.1 + jit() && y < 0.22) || y < 0.035; break;
+      case 'leg': cream = y < 0.12 + jit() || (ax < 0.075 + jit() * 0.3 && nz > 0.2); break;
+      default: cream = true; // paws
+    }
+    add(x, y, z, nx, ny, nz, K_COAT, cream ? P_CR : P_OR, R_BODY);
+  }));
+
+  // Head: fox-like face with cream cheeks, muzzle and eyebrow dots; eyes and mouth are
+  // regions of the head surface whose look is decided per frame (blink, ^ ^, pant).
+  HEAD.forEach(s => sampleSolid(s, s.name === 'nose' ? 90000 : 46000, HEAD, (x, y, z, nx, ny, nz, s) => {
+    const lx = x - H0[0], ly = y - H0[1], lz = z - H0[2], ax = Math.abs(lx);
+    if (s.name === 'nose') { add(x, y, z, nx, ny, nz, K_NOSE, P_NOSE, R_HEAD); return; }
+    // Mouth: lower front of the muzzle and cheeks.
+    if (s.name !== 'cranium' && ax < 0.07 && ly < -0.045 && ly > -0.15 && lz > 0.12 && nz > 0.15) {
+      add(x, y, z, nx, ny, nz, K_MOUTH, P_CR, R_HEAD, lx, ly); return;
+    }
+    let cream = false;
+    if (s.name === 'cranium') {
+      const side = lx > 0 ? 1 : -1, cu = (lx - side * EX) / EW, cv = (ly - EY) / EH;
+      if (lz > 0.04 && Math.abs(cu) < 1.45 && Math.abs(cv - 0.3 * cu * side) < 1.9) {
+        add(x, y, z, nx, ny, nz, K_EYE, side > 0 ? 0 : 1, R_HEAD, cu, cv); return;
+      }
+      const bu = (ax - 0.07) / 0.024, bv = (ly - 0.088) / 0.015;
+      cream = (lz > 0.04 && bu * bu + bv * bv < 1) ||
+              (lz > 0.03 + jit() * 0.5 && ly < -0.022 + jit() * 0.3 && ax < 0.15) ||
+              (ly < -0.09 + jit() * 0.5);
+    } else if (s.name === 'cheek') {
+      cream = !(ly > -0.035 + jit() * 0.3 && lz < 0.05);
+    } else { // muzzle: cream with a ginger bridge
+      cream = !(ly > -0.03 + jit() * 0.2 && ax < 0.035 + jit() * 0.2 && lz < 0.215);
+    }
+    add(x, y, z, nx, ny, nz, K_COAT, cream ? P_CR : P_OR_L, R_HEAD);
+  }));
+
+  // Ears: erect triangles, cupped on the front (pink inside, cream fluff), ginger behind.
+  // EARS[e] = [base x, y, z, D (up) xyz, A (across) xyz, Nf (front) xyz]
+  const EARS = [];
+  [1, -1].forEach((s, e) => {
+    const bx = H0[0] + s * 0.105, by = H0[1] + 0.115, bz = H0[2] - 0.025;
+    const tx = H0[0] + s * 0.162, ty = H0[1] + 0.27, tz = H0[2] - 0.01;
+    let dx = tx - bx, dy = ty - by, dz = tz - bz;
+    const h = Math.hypot(dx, dy, dz); dx /= h; dy /= h; dz /= h;
+    let n0x = s * 0.25, n0z = 1;
+    const n0l = Math.hypot(n0x, n0z); n0x /= n0l; n0z /= n0l;
+    let axx = dy * n0z, axy = dz * n0x - dx * n0z, axz = -dy * n0x;   // A = D x N0
+    const al = Math.hypot(axx, axy, axz); axx /= al; axy /= al; axz /= al;
+    const fx = axy * dz - axz * dy, fy = axz * dx - axx * dz, fz = axx * dy - axy * dx; // Nf = A x D
+    EARS.push([hsc(bx, 0), hsc(by, 1), hsc(bz, 2), dx, dy, dz, axx, axy, axz]);
+    const hw = 0.074, part = e ? R_EARR : R_EARL, cran = [HEAD[0]];
+    const n = Math.round(h * hw * 64000);
+    for (let i = 0; i < n * 2 + 260; i++) {
+      const u = 1 - Math.sqrt(rng()), v = rng() * 2 - 1, w = Math.pow(1 - u, 0.85) * (1 + 0.12 * Math.sin(Math.PI * u));
+      const off = v * hw * w;
+      let x = bx + dx * h * u + axx * off, y = by + dy * h * u + axy * off, z = bz + dz * h * u + axz * off;
+      const bulge = (1 - v * v) * (1 - u);
+      let k = K_COAT, p = P_OR, a1 = 0, nx, ny, nz;
+      if (i >= n * 2) {               // rim along both edges
+        const sv = v < 0 ? -1 : 1;
+        x = bx + dx * h * u + axx * sv * hw * w; y = by + dy * h * u + axy * sv * hw * w; z = bz + dz * h * u + axz * sv * hw * w;
+        x -= fx * 0.008; y -= fy * 0.008; z -= fz * 0.008;
+        nx = axx * sv + fx * 0.2; ny = axy * sv + fy * 0.2; nz = axz * sv + fz * 0.2;
+      } else if (i & 1) {             // front: cupped
+        const d = 0.006 - 0.02 * bulge;
+        x += fx * d; y += fy * d; z += fz * d;
+        nx = fx + axx * v * 0.5; ny = fy + axy * v * 0.5; nz = fz + axz * v * 0.5;
+        if (Math.abs(v) < 0.8 && u < 0.84) { k = K_EARIN; a1 = Math.abs(v) / 0.8 + jit(); }
+      } else {                        // back: convex
+        const d = -0.014 - 0.014 * bulge;
+        x += fx * d; y += fy * d; z += fz * d;
+        nx = -fx + axx * v * 0.5; ny = -fy + axy * v * 0.5; nz = -fz + axz * v * 0.5;
+      }
+      if (insideAny(cran, null, x, y, z)) continue;
+      add(x, y, z, nx, ny, nz, k, p, part, a1, 0);
+    }
+  });
+
+  // Tail: a thick torus segment curled up over the hip; ginger outside, cream underneath.
+  {
+    const CT = [0.2, 0.4, -0.2], R = 0.125;
+    let nlx = 0.85, nly = 0.15, nlz = 0.5;
+    const nl = Math.hypot(nlx, nly, nlz); nlx /= nl; nly /= nl; nlz /= nl;
+    // e2 = up projected into the ring plane, e1 = e2 x N
+    let e2x = -nly * nlx, e2y = 1 - nly * nly, e2z = -nly * nlz;
+    const e2l = Math.hypot(e2x, e2y, e2z); e2x /= e2l; e2y /= e2l; e2z /= e2l;
+    const e1x = e2y * nlz - e2z * nly, e1y = e2z * nlx - e2x * nlz, e1z = e2x * nly - e2y * nlx;
+    const SWEEP = 1.78 * Math.PI, TH0 = -Math.PI / 2;
+    const rad = s => {
+      let r = 0.064 * (1 - 0.32 * s) * (1 + 0.18 * Math.sin(Math.PI * s));
+      if (s > 0.9) r *= Math.sqrt(Math.max(0, 1 - ((s - 0.9) / 0.1) ** 2));
+      return r;
+    };
+    const n = 9000;
+    for (let i = 0; i < n; i++) {
+      const s = rng(), r = rad(s);
+      if (rng() * 0.075 > r) continue;           // area weighting along the tube
+      const th = TH0 + s * SWEEP, ph = rng() * TAU;
+      const rx = Math.cos(th) * e1x + Math.sin(th) * e2x, ry = Math.cos(th) * e1y + Math.sin(th) * e2y,
+            rz = Math.cos(th) * e1z + Math.sin(th) * e2z;
+      const cp = Math.cos(ph), sp = Math.sin(ph);
+      const nx = cp * rx + sp * nlx, ny = cp * ry + sp * nly, nz = cp * rz + sp * nlz;
+      const x = CT[0] + R * rx + r * nx, y = CT[1] + R * ry + r * ny, z = CT[2] + R * rz + r * nz;
+      if (insideAny(BODY, null, x, y, z)) continue;
+      add(x, y, z, nx, ny, nz, K_COAT, cp < -0.3 + jit() ? P_CR : P_OR, R_TAIL);
+    }
+  }
+
+  // Tongue: a flat pink ellipsoid hanging out of the mouth (shown only while it is out).
+  sampleSolid({ c: [H0[0], H0[1] - 0.118, H0[2] + 0.255], r: [0.025, 0.036, 0.01], ax: 0.45 }, 70000, null,
+    (x, y, z, nx, ny, nz) => add(x, y, z, nx, ny, nz, K_TONGUE, P_TONGUE, R_TONGUE, (x - H0[0]) / 0.025, 0, 0));
+
+  // Ground: a soft glowing ellipse, darker in the contact shadow under the dog.
+  const GX = 0.46, GZ = 0.36;
+  for (let i = 0; i < 5200; i++) {
+    const rr = Math.sqrt(rng()), a = rng() * TAU;
+    const b = (0.12 + 0.3 * smooth((rr - 0.3) / 0.4)) * (1 - smooth((rr - 0.7) / 0.3)) * (0.8 + 0.4 * rng());
+    if (b < 0.05) continue;
+    add(0.02 + Math.cos(a) * GX * rr, 0.001, Math.sin(a) * GZ * rr, 0, 1, 0, K_GROUND, P_GROUND, R_GROUND,
+        b, 0, 0.1 + rr * 0.7);
+  }
+
+  const N = B.x.length;
+  const PX = Float32Array.from(B.x), PY = Float32Array.from(B.y), PZ = Float32Array.from(B.z);
+  const NX = Float32Array.from(B.nx), NY = Float32Array.from(B.ny), NZ = Float32Array.from(B.nz);
+  const KD = Uint8Array.from(B.k), PP = Uint8Array.from(B.p), PR = Uint8Array.from(B.r);
+  const A1 = Float32Array.from(B.a1), A2 = Float32Array.from(B.a2), T0 = Float32Array.from(B.t0);
+  const FJ = new Float32Array(N), BW = new Float32Array(N), SRAD = new Float32Array(N), SY = new Float32Array(N);
+  for (let i = 0; i < N; i++) {
+    FJ[i] = (rng() - 0.5) * 0.14;                          // fur texture
+    SRAD[i] = 0.42 + 0.36 * rng(); SY[i] = -0.25 + 0.4 * rng();  // swirl start
+    if (PR[i] === R_BODY) BW[i] = Math.exp(-(((PY[i] - 0.45) / 0.16) ** 2)) * (PZ[i] > -0.08 ? 1 : 0.4);
+  }
+  B.x = B.y = B.z = null;
+
+  // Colour strings cached per (palette entry, brightness level).
+  const NCOLOR = PAL.length * LEVELS;
+  const COLSTR = new Array(NCOLOR);
+  PAL.forEach(([r, g, b], p) => {
+    for (let l = 0; l < LEVELS; l++) {
+      // Top levels overshoot 1 and wash toward white, so lit characters read as glowing.
+      const m = 0.3 + 1.05 * l / (LEVELS - 1), w = Math.max(0, m - 1) * 160;
+      const lift = v => Math.min(255, v * m + w) | 0;
+      COLSTR[p * LEVELS + l] = `rgb(${lift(r)},${lift(g)},${lift(b)})`;
+    }
+  });
+  const DUST_COLS = [];
+  for (let l = 0; l < 8; l++) DUST_COLS.push(`rgba(255,${200 + l * 5},${140 + l * 10},${(0.08 + 0.42 * l / 7).toFixed(3)})`);
+
+  // Heart made of '@', with one highlight.
+  const HEART = ['.@@.@@.', '@*@@@@@', '.@@@@@.', '..@@@..', '...@...'];
+  const HEART_CELLS = [];
+  HEART.forEach((row, r) => [...row].forEach((c, k) => { if (c !== '.') HEART_CELLS.push(k - 3, r - 2, c === '*' ? 1 : 0); }));
+  const NH = 12;
+  const hearts = new Float32Array(NH * 8);   // x, y, vx, vy, age, life, scale, phase
+  for (let i = 0; i < NH; i++) hearts[i * 8 + 4] = 1e9;
+
+  // ---------- 3x4 matrices (no per-frame allocation) ----------
+  function mAxis(o, x, y, z, ang) {          // rotation about a unit axis
+    const c = Math.cos(ang), s = Math.sin(ang), C = 1 - c;
+    o[0] = c + x * x * C;     o[1] = x * y * C - z * s; o[2] = x * z * C + y * s;  o[3] = 0;
+    o[4] = y * x * C + z * s; o[5] = c + y * y * C;     o[6] = y * z * C - x * s;  o[7] = 0;
+    o[8] = z * x * C - y * s; o[9] = z * y * C + x * s; o[10] = c + z * z * C;     o[11] = 0;
+  }
+  function mMul(o, a, b) {                   // o = a * b (b applied first); o must not alias
+    for (let r = 0; r < 12; r += 4) {
+      const a0 = a[r], a1 = a[r + 1], a2 = a[r + 2];
+      o[r] = a0 * b[0] + a1 * b[4] + a2 * b[8];
+      o[r + 1] = a0 * b[1] + a1 * b[5] + a2 * b[9];
+      o[r + 2] = a0 * b[2] + a1 * b[6] + a2 * b[10];
+      o[r + 3] = a0 * b[3] + a1 * b[7] + a2 * b[11] + a[r + 3];
+    }
+  }
+  function mPivot(o, px, py, pz) {           // make the rotation in o act about point p
+    o[3] += px - (o[0] * px + o[1] * py + o[2] * pz);
+    o[7] += py - (o[4] * px + o[5] * py + o[6] * pz);
+    o[11] += pz - (o[8] * px + o[9] * py + o[10] * pz);
+  }
+  const VIEW = new Float32Array(12), MA = new Float32Array(12), MB = new Float32Array(12),
+        MC = new Float32Array(12), HM = new Float32Array(12), HV = new Float32Array(12),
+        PM = new Float32Array(NPART * 12);
+  {
+    mAxis(MA, 0, 1, 0, YAW0); MA[7] = -PIVOT;   // turn the dog, then centre on the pivot
+    mAxis(MB, 1, 0, 0, TILT);
+    mMul(VIEW, MB, MA);
+  }
+
+  // ---------- Canvas, grid, layout ----------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const hudEl = document.getElementById('hud');
+  const hintEl = document.getElementById('hint');
+
+  let W = 0, H = 0, fs = 10, cw = 6, ch = 11, cols = 0, rows = 0;
+  let S = 300, ox = 0, oy = 0;
+  let cellFont = '', bgGrad = null, warmGlow = null;
+  let zbuf, stampA, cchar, ccol, ckind, touched, order, nT = 0, stamp = 0;
+  const counts = new Uint32Array(NCOLOR);
+  let dust = new Float32Array(0);
+  let needResize = true, dirty = true;
+
+  function resize() {
+    needResize = false;
+    W = canvas.clientWidth || innerWidth;
+    H = canvas.clientHeight || innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    fs = clamp(Math.round(Math.min(W, H * 0.8) / 88), 7, 14);
+    cellFont = `${fs}px ${MONO}`;
+    ctx.font = cellFont;
+    cw = ctx.measureText('M').width || fs * 0.6;
+    ch = fs * 1.1;
+    cols = Math.ceil(W / cw);
+    rows = Math.ceil(H / ch);
+    const n = cols * rows;
+    zbuf = new Float32Array(n); stampA = new Uint32Array(n);
+    cchar = new Uint8Array(n); ccol = new Uint16Array(n); ckind = new Uint8Array(n);
+    touched = new Int32Array(n); order = new Int32Array(n); stamp = 0;
+    makeHalos();
+
+    const TOP = 52, BOT = 60;
+    S = Math.max(40, Math.min((W / 2 - 12) / HALF, (H - TOP - BOT) / (UP + DOWN)));
+    ox = W / 2;
+    oy = TOP + Math.max(0, (H - TOP - BOT - (UP + DOWN) * S) / 2) + UP * S;
+
+    const cx = W / 2, cy = H * 0.5, R = Math.hypot(W, H) * 0.62;
+    bgGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, R);
+    bgGrad.addColorStop(0, '#120c08');
+    bgGrad.addColorStop(1, '#0b0806');
+    const gy = oy - 0.05 * S;
+    warmGlow = ctx.createRadialGradient(ox, gy, 0, ox, gy, S * 0.8);
+    warmGlow.addColorStop(0, 'rgba(255,150,70,0.13)');
+    warmGlow.addColorStop(0.5, 'rgba(255,120,50,0.05)');
+    warmGlow.addColorStop(1, 'rgba(255,120,50,0)');
+
+    // Floating sparkle dust: [x, y, vy, phase, twinkle speed, kind].
+    const r2 = mulberry32(7);
+    const nd = Math.round(W * H / 7000);
+    dust = new Float32Array(nd * 6);
+    for (let i = 0; i < nd; i++) {
+      const o = i * 6;
+      dust[o] = r2() * W; dust[o + 1] = r2() * H; dust[o + 2] = (5 + 12 * r2()) * (reduced ? 0.4 : 1);
+      dust[o + 3] = r2() * TAU; dust[o + 4] = 0.6 + 2 * r2(); dust[o + 5] = r2() < 0.18 ? 2 : r2() < 0.4 ? 1 : 0;
+    }
+    dirty = true;
+  }
+
+  function updateDust(dt) {
+    for (let o = 0; o < dust.length; o += 6) {
+      dust[o + 1] -= dust[o + 2] * dt;
+      dust[o] += Math.cos(skyT * 0.5 + dust[o + 3]) * 6 * dt;
+      if (dust[o + 1] < -10) { dust[o + 1] = H + 10; dust[o] = Math.random() * W; }
+    }
+  }
+
+  // ---------- Animation state ----------
+  let t = T_START, skyT = 0;
+  let hYaw = 0.05, hPitch = 0, hRoll = 0;          // head pose (smoothed)
+  let eyeOpen = 1, happy = 0, pant = 0, mouthOpen = 0, tongue = 0;
+  let wagPh = 0, wagF = WAG_F, wagAng = 0, breathPh = 0, breath = 0;
+  let earFold0 = 0, earFold1 = 0, earTw0 = 0, earTw1 = 0;
+  let ptrOn = false, ptrX = 0, ptrY = 0, headSX = 0, headSY = 0, headTopX = 0, headTopY = 0;
+  let patT = -99, pats = 0;
+
+  function earPop(d) {
+    if (d < 0) return -1.25;
+    const p = Math.min(1, d / T.EARS_DUR);
+    return -1.25 * (1 - easeOutBack(p)) + 0.16 * Math.sin(d * 19) * Math.exp(-d * 4.5);
+  }
+  function blinkAt(c, e) { const d = c - e; return d > 0 && d < 0.17 ? Math.sin(Math.PI * d / 0.17) : 0; }
+
+  function animate(dt) {
+    const idle = t >= T.IDLE, c = idle ? (t - T.IDLE) % T.CYCLE : -1, cyc = idle ? Math.floor((t - T.IDLE) / T.CYCLE) : 0;
+    const dp = t - patT;
+    happy = dp < 0 ? 0 : dp < 0.12 ? dp / 0.12 : dp < 1.5 ? 1 : 1 - smooth((dp - 1.5) / 0.4);
+
+    // Eyes: closed while assembling, open at T.EYES with one blink, then idle blinks.
+    let shut = 0;
+    if (t < T.EYES) shut = 1;
+    else {
+      shut = 1 - smooth((t - T.EYES) / 0.25);
+      shut = Math.max(shut, blinkAt(t, T.EYES + 0.75));
+      if (idle) for (let i = 0; i < BLINKS.length; i++) shut = Math.max(shut, blinkAt(c, BLINKS[i]));
+    }
+    eyeOpen = 1 - shut;
+
+    // Ears: folded back until they pop up, then occasional twitches.
+    earFold0 = earPop(t - T.EARS); earFold1 = earPop(t - T.EARS - 0.07);
+    earTw0 = earTw1 = 0;
+    if (idle && !reduced) {
+      for (let i = 0; i < TWITCH.length; i++) {
+        const d = c - TWITCH[i][0];
+        if (d <= 0 || d >= 0.34) continue;
+        const f = Math.sin(d / 0.34 * TAU) * (1 - d / 0.34) * 0.4, g = -0.22 * Math.sin(Math.PI * d / 0.34);
+        if (TWITCH[i][1]) { earTw0 += f; earFold0 += g; }
+        if (TWITCH[i][2]) { earTw1 -= f; earFold1 += g; }
+      }
+    }
+
+    // Pant (idle cycle) and pats both stick the tongue out.
+    pant = idle && !reduced ? win(c, PANT0, PANT1, 0.45) : 0;
+    tongue = Math.max(pant, happy);
+    mouthOpen = Math.max(pant * (0.62 + 0.38 * Math.sin(t * TAU * 3.1)), happy * 0.85);
+
+    // Head: idle look-around / curious tilt, or follow the pointer.
+    let ty = 0.05, tp = -0.04, tr = 0, rate = 3;
+    if (t >= T.TILT && t < T.TILT_END + 0.6) tr = 0.3 * win(t, T.TILT, T.TILT_END, 0.35);
+    if (idle && !reduced) {
+      const u = t - T.IDLE;
+      ty = 0.08 + 0.32 * Math.sin(u * TAU / 11) + 0.08 * Math.sin(u * TAU / 4.3 + 1);
+      tp = -0.04 + 0.06 * Math.sin(u * TAU / 7.3 + 0.5);
+      tr = 0.26 * win(c, TILT0, TILT1, 0.4) * (cyc & 1 ? -1 : 1);
+    }
+    if (happy > 0) { tr = 0.18 * happy; tp -= 0.1 * happy; }
+    if (ptrOn) {
+      ty = clamp(Math.atan2(ptrX - headSX, S * 0.9) - YAW0, -0.75, 0.75);
+      tp = clamp(Math.atan2(ptrY - headSY, S * 0.9) * 0.8, -0.35, 0.38);
+      rate = FOLLOW;
+    }
+    const k = 1 - Math.exp(-dt * rate);
+    hYaw += (ty - hYaw) * k; hPitch += (tp - hPitch) * k; hRoll += (tr - hRoll) * (1 - Math.exp(-dt * 4));
+
+    // Tail wag and breathing.
+    const wTarget = WAG_F + (WAG_F_HAPPY - WAG_F) * happy;
+    wagF += (wTarget - wagF) * (1 - Math.exp(-dt * 5));
+    wagPh += TAU * wagF * dt;
+    wagAng = smooth((t - T.WAG) / 1.2) * (WAG_A + 0.12 * happy) * Math.sin(wagPh);
+    breathPh += TAU * (0.32 + 1.3 * pant) * dt;
+    breath = (0.02 + 0.015 * pant) * Math.sin(breathPh) * smooth((t - 2.5) / 1);
+  }
+
+  function matrices() {
+    // Body and ground: just the view.
+    PM.set(VIEW, R_BODY * 12); PM.set(VIEW, R_GROUND * 12);
+    // Head: yaw * pitch * roll about the neck pivot, lifted a hair by breathing.
+    mAxis(MA, 0, 1, 0, hYaw); mAxis(MB, 1, 0, 0, hPitch); mMul(MC, MA, MB);
+    mAxis(MA, 0, 0, 1, hRoll); mMul(HM, MC, MA);
+    mPivot(HM, NP[0], NP[1], NP[2]); HM[7] += breath * 0.25;
+    mMul(HV, VIEW, HM);
+    PM.set(HV, R_HEAD * 12);
+    // Ears: twist about their own long axis, fold about the across axis at the base.
+    for (let e = 0; e < 2; e++) {
+      const E = EARS[e];
+      mAxis(MA, E[6], E[7], E[8], e ? earFold1 : earFold0);
+      mAxis(MB, E[3], E[4], E[5], e ? earTw1 : earTw0);
+      mMul(MC, MA, MB); mPivot(MC, E[0], E[1], E[2]);
+      mMul(MA, HV, MC);
+      PM.set(MA, (R_EARL + e) * 12);
+    }
+    // Tail: rock side to side about the base.
+    mAxis(MA, TAX[0], TAX[1], TAX[2], wagAng); mPivot(MA, TB[0], TB[1], TB[2]);
+    mMul(MB, VIEW, MA); PM.set(MB, R_TAIL * 12);
+    // Tongue: grows down out of the mouth.
+    const sy = 0.25 + 0.75 * tongue, sz = 0.6 + 0.4 * tongue;
+    MA.fill(0); MA[0] = 1; MA[5] = sy; MA[10] = sz;
+    mPivot(MA, TAS[0], TAS[1], TAS[2]);
+    mMul(MB, HV, MA); PM.set(MB, R_TONGUE * 12);
+  }
+
+  // ---------- Projection + z-buffered splat (inputs already in view space) ----------
+  let sparkB = 0;
+
+  function splat(x, y, z, nx, ny, nz, k, p, i) {
+    const f = CAM_D / (CAM_D - z);
+    const px = ox + x * S * f, py = oy - y * S * f;
+    if (px < 0 || py < 0) return;
+    const col = (px / cw) | 0, row = (py / ch) | 0;
+    if (col >= cols || row >= rows) return;
+    const c = row * cols + col;
+    const fresh = stampA[c] !== stamp;
+    if (!fresh && zbuf[c] >= z + 0.02) return; // cannot win even with the feature bias
+
+    let lam = nx * LX + ny * LY + nz * LZ;
+    const lam2 = lam < 0 ? -lam : lam;
+    if (lam < 0) lam = 0;
+    let dd = (z + 0.6) / 1.2;
+    dd = 0.62 + 0.38 * (dd < 0 ? 0 : dd > 1 ? 1 : dd);
+    const rim = nz < 0.35 ? (0.35 - (nz < 0 ? 0 : nz)) * 0.35 : 0;   // warm rim glow on silhouettes
+
+    let b = 0, cc = 0, feat = 0, coat = false;
+    switch (k) {
+      case K_EYE: {
+        const sd = p ? -1 : 1, cu = A1[i], cv = A2[i], eu = cu * sd, ev = cv - 0.3 * eu;
+        coat = true; p = P_OR_L;
+        if (happy > 0.35) {                       // ^ ^ happy eyes
+          const arc = 0.9 * (1 - Math.abs(cu)) - 0.35;
+          if (Math.abs(cu) < 1.2 && Math.abs(cv - arc) < 0.42) {
+            coat = false; feat = 1; p = P_MOUTH; b = 0.6;
+            cc = cu < -0.3 ? C_SL : cu > 0.3 ? C_BS : C_CARET;
+          }
+        } else if (eyeOpen < 0.22) {              // closed: a lid line
+          if (Math.abs(eu) < 1.05 && Math.abs(ev + 0.15) < 0.3) {
+            coat = false; feat = 1; p = P_EYE; b = 0.24; cc = C_DASH;
+          }
+        } else if (Math.abs(eu) < 1) {
+          const hh = Math.pow(1 - eu * eu, 0.55) * eyeOpen;
+          if (Math.abs(ev) < hh) {
+            coat = false; feat = 1;
+            p = P_EYE; b = 0.24; cc = C_AT;
+          }
+        }
+        break;
+      }
+      case K_MOUTH: {
+        const lx = A1[i], ly = A2[i];
+        coat = true;
+        if (Math.abs(lx) < 0.048) {
+          // A small "w" smile under the nose, with a short philtrum; it drops open when panting.
+          const ph = TAU * lx / 0.048, yc = -0.086 + 0.008 * Math.cos(ph) - 0.01 * mouthOpen;
+          const open = mouthOpen * 0.045 * (1 - (lx / 0.04) ** 2);
+          if (Math.abs(ly - yc) < 0.0045) {
+            coat = false; feat = 1; p = P_MOUTH; b = 0.55;
+            const sl = 1.05 * Math.sin(ph);
+            cc = sl > 0.45 ? C_SL : sl < -0.45 ? C_BS : C_US;
+          } else if (Math.abs(lx) < 0.004 && ly > yc && ly < -0.05) {
+            coat = false; feat = 1; p = P_MOUTH; b = 0.55; cc = C_BAR;
+          } else if (open > 0 && ly < yc && ly > yc - open) {
+            coat = false; feat = 1; p = P_MIN; b = 0.4; cc = C_HASH;
+          }
+        }
+        break;
+      }
+      case K_NOSE:
+        feat = 1;
+        if (lam > 0.86 && ny > 0.3) { p = P_CATCH; b = 0.7; cc = C_STAR; }
+        else { p = P_NOSE; b = 0.2 + 0.25 * lam; cc = C_AT; }
+        break;
+      case K_EARIN: {
+        const v = A1[i];
+        b = clamp((0.45 + 0.5 * lam2) * dd, 0, 0.82);
+        if (v > 0.55) { p = P_CR; cc = C_FUR[(b * (NFUR - 0.01)) | 0]; }
+        else { p = P_EARIN; cc = b > 0.6 ? C_PCT : C_COLON; }
+        break;
+      }
+      case K_TONGUE:
+        b = clamp(0.5 + 0.5 * lam, 0, 0.85);
+        p = Math.abs(A1[i]) < 0.14 ? P_TONGUE_D : P_TONGUE;
+        cc = b > 0.7 ? C_O : C_o; feat = 2;
+        break;
+      case K_GROUND:
+        b = A1[i] * smooth(t / 0.9); cc = C_GND[Math.min(4, (b * 9.99) | 0)]; break;
+      case K_SPARK:
+        b = sparkB; cc = C_SPK[i % 5]; break;
+      default:
+        coat = true;
+    }
+    if (coat) {
+      // key light + camera fill + warm bounce from the glowing ground + rim
+      b = clamp((0.26 + 0.5 * lam + 0.26 * (nz > 0 ? nz : 0) + 0.2 * (ny < 0 ? -ny : 0) + rim) * dd + FJ[i], 0, p === P_CR ? 0.7 : 0.8);
+      if (p === P_OR || p === P_OR_L) p = b < 0.36 ? P_OR_D : b > 0.66 ? P_OR_L : P_OR;
+      else if (p === P_CR && b < 0.38) p = P_CR_D;
+      cc = C_FUR[(b * (NFUR - 0.01)) | 0];
+    }
+    const zb = z + (feat ? 0.012 * feat : 0);
+    if (!fresh && zbuf[c] >= zb) return; // keep nearest (larger z = closer)
+    if (fresh) { stampA[c] = stamp; touched[nT++] = c; }
+    zbuf[c] = zb; cchar[c] = cc; ccol[c] = p * LEVELS + ((b * 15.99) | 0); ckind[c] = k;
+  }
+
+  function buildScene() {
+    matrices();
+    stamp++; nT = 0;
+    const tongueOn = tongue > 0.04;
+    for (let i = 0; i < N; i++) {
+      const t0 = T0[i], part = PR[i];
+      if (t < t0 - (part === R_GROUND ? 0 : T.FLY)) continue;
+      if (part === R_TONGUE && !tongueOn) continue;
+      const m = part * 12;
+      let x = PX[i], y = PY[i], z = PZ[i];
+      const w = BW[i];
+      if (w > 0) { const s = 1 + breath * w; x *= s; z = BCZ + (z - BCZ) * s; }
+      let vx = PM[m] * x + PM[m + 1] * y + PM[m + 2] * z + PM[m + 3];
+      let vy = PM[m + 4] * x + PM[m + 5] * y + PM[m + 6] * z + PM[m + 7];
+      let vz = PM[m + 8] * x + PM[m + 9] * y + PM[m + 10] * z + PM[m + 11];
+      if (t < t0) {
+        // In flight: swirl in around the vertical axis, every third point shown as a spark.
+        if (i % 4) continue;
+        const e = smooth((t - t0 + T.FLY) / T.FLY), u = 1 - e;
+        let r = Math.hypot(vx, vz), a = Math.atan2(vz, vx);
+        a += u * 4.2; r += (SRAD[i] - r) * u;
+        vx = r * Math.cos(a); vz = r * Math.sin(a); vy += SY[i] * u;
+        sparkB = 0.5 + 0.45 * e;
+        splat(vx, vy, vz, 0, 0, 1, K_SPARK, P_SPARK, i);
+        continue;
+      }
+      const nx = NX[i], ny = NY[i], nz = NZ[i];
+      splat(vx, vy, vz,
+            PM[m] * nx + PM[m + 1] * ny + PM[m + 2] * nz,
+            PM[m + 4] * nx + PM[m + 5] * ny + PM[m + 6] * nz,
+            PM[m + 8] * nx + PM[m + 9] * ny + PM[m + 10] * nz, KD[i], PP[i], i);
+    }
+    // Head anchors on screen (for pointer following and hearts).
+    const hx = H0S[0], hy = H0S[1], hz = H0S[2];
+    let f = CAM_D / (CAM_D - (HV[8] * hx + HV[9] * hy + HV[10] * hz + HV[11]));
+    headSX = ox + (HV[0] * hx + HV[1] * hy + HV[2] * hz + HV[3]) * S * f;
+    headSY = oy - (HV[4] * hx + HV[5] * hy + HV[6] * hz + HV[7]) * S * f;
+    const ty = hy + 0.2;
+    f = CAM_D / (CAM_D - (HV[8] * hx + HV[9] * ty + HV[10] * hz + HV[11]));
+    headTopX = ox + (HV[0] * hx + HV[1] * ty + HV[2] * hz + HV[3]) * S * f;
+    headTopY = oy - (HV[4] * hx + HV[5] * ty + HV[6] * hz + HV[7]) * S * f;
+  }
+
+  // Light up one catchlight cell inside each open eye.
+  function catchlights() {
+    if (eyeOpen < 0.6 || happy > 0.35) return;
+    for (let e = 0; e < 2; e++) {
+      const C = CATCH[e], x = C[0], y = C[1], z = C[2];
+      const vz = HV[8] * x + HV[9] * y + HV[10] * z + HV[11], f = CAM_D / (CAM_D - vz);
+      const px = ox + (HV[0] * x + HV[1] * y + HV[2] * z + HV[3]) * S * f;
+      const py = oy - (HV[4] * x + HV[5] * y + HV[6] * z + HV[7]) * S * f;
+      const col = (px / cw) | 0, row = (py / ch) | 0;
+      if (col < 0 || row < 0 || col >= cols || row >= rows) continue;
+      const c = row * cols + col;
+      if (stampA[c] !== stamp || ckind[c] !== K_EYE || cchar[c] !== C_AT) continue;
+      cchar[c] = C_o; ccol[c] = P_CATCH * LEVELS + 15;
+    }
+  }
+
+  // Bucket by colour so fillStyle changes once per colour, not once per cell.
+  function drawCells() {
+    counts.fill(0);
+    for (let i = 0; i < nT; i++) counts[ccol[touched[i]]]++;
+    let acc = 0;
+    for (let c = 0; c < NCOLOR; c++) { const n = counts[c]; counts[c] = acc; acc += n; }
+    for (let i = 0; i < nT; i++) { const c = touched[i]; order[counts[ccol[c]]++] = c; }
+    let cur = -1;
+    for (let i = 0; i < nT; i++) {
+      const c = order[i], cc = ccol[c];
+      if (cc !== cur) { cur = cc; ctx.fillStyle = COLSTR[cc]; }
+      const row = (c / cols) | 0;
+      ctx.fillText(CH[cchar[c]], (c - row * cols) * cw, row * ch);
+    }
+  }
+
+  // ---------- Dust, halos, hearts ----------
+  let dustHalo = null, heartHalo = null;
+  function sprite(R, r, g, b) {
+    const c = document.createElement('canvas');
+    c.width = c.height = Math.ceil(R * 2);
+    const x = c.getContext('2d'), gr = x.createRadialGradient(R, R, 0, R, R, R);
+    gr.addColorStop(0, 'rgba(255,255,255,0.9)');
+    gr.addColorStop(0.18, `rgba(${r},${g},${b},0.75)`);
+    gr.addColorStop(0.5, `rgba(${r},${g},${b},0.2)`);
+    gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
+    x.fillStyle = gr; x.fillRect(0, 0, c.width, c.height);
+    return c;
+  }
+  function makeHalos() {
+    dustHalo = sprite(Math.max(6, cw * 2.2), 255, 190, 120);
+    heartHalo = sprite(Math.max(16, cw * 6), 255, 90, 130);
+  }
+
+  function drawDust() {
+    for (let o = 0; o < dust.length; o += 6) {
+      const tw = 0.5 + 0.5 * Math.sin(skyT * dust[o + 4] + dust[o + 3]);
+      ctx.fillStyle = DUST_COLS[(tw * 7.99) | 0];
+      const kd = dust[o + 5];
+      ctx.fillText(kd === 2 ? (tw > 0.7 ? '*' : '+') : kd === 1 ? '\'' : '.', dust[o], dust[o + 1]);
+    }
+    ctx.globalCompositeOperation = 'lighter';
+    for (let o = 0; o < dust.length; o += 6) {
+      if (dust[o + 5] !== 2) continue;
+      const tw = 0.5 + 0.5 * Math.sin(skyT * dust[o + 4] + dust[o + 3]);
+      if (tw < 0.6) continue;
+      ctx.globalAlpha = (tw - 0.6) * 1.2;
+      ctx.drawImage(dustHalo, dust[o] + cw / 2 - dustHalo.width / 2, dust[o + 1] + ch / 2 - dustHalo.height / 2);
+    }
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  function spawnHearts() {
+    const n = 3 + ((Math.random() * 4) | 0);
+    let made = 0;
+    for (let i = 0; i < NH && made < n; i++) {
+      const o = i * 8;
+      if (hearts[o + 4] < hearts[o + 5]) continue;
+      hearts[o] = headTopX + ((made + 0.5) / n - 0.5) * S * 0.62 + (Math.random() - 0.5) * S * 0.06;
+      hearts[o + 1] = headTopY - S * (0.06 + 0.08 * Math.random());
+      hearts[o + 2] = (Math.random() - 0.5) * 30;
+      hearts[o + 3] = -(0.07 + 0.05 * Math.random()) * S;
+      hearts[o + 4] = -made * 0.11 - Math.random() * 0.06;
+      hearts[o + 5] = 1.7 + 0.6 * Math.random();
+      hearts[o + 6] = Math.random() < 0.4 ? 1 : 0;   // 1 = big, 0 = small
+      hearts[o + 7] = Math.random() * TAU;
+      made++;
+    }
+  }
+  function updateHearts(dt) {
+    for (let o = 0; o < hearts.length; o += 8) {
+      if (hearts[o + 4] >= hearts[o + 5]) continue;
+      hearts[o + 4] += dt;
+      if (hearts[o + 4] < 0) continue;
+      hearts[o] += hearts[o + 2] * dt; hearts[o + 1] += hearts[o + 3] * dt;
+    }
+  }
+  let heartsLive = 0;
+  function drawHearts() {
+    heartsLive = 0;
+    const small = `${Math.round(fs * 1.3)}px ${MONO}`, big = `${Math.round(fs * 1.7)}px ${MONO}`;
+    for (let o = 0; o < hearts.length; o += 8) {
+      const age = hearts[o + 4], life = hearts[o + 5];
+      if (age < 0 || age >= life) continue;
+      heartsLive++;
+      const p = age / life, a = smooth(age / 0.15) * (1 - smooth((p - 0.55) / 0.45));
+      const sc = hearts[o + 6] ? 1.7 : 1.3, x = hearts[o] + Math.sin(age * 4 + hearts[o + 7]) * cw * 1.2, y = hearts[o + 1];
+      const hx = cw * sc, hy = ch * sc;
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = a * 0.55;
+      ctx.drawImage(heartHalo, x - heartHalo.width / 2 * sc, y - heartHalo.height / 2 * sc, heartHalo.width * sc, heartHalo.height * sc);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = a;
+      ctx.font = sc > 1.5 ? big : small;
+      for (let j = 0; j < HEART_CELLS.length; j += 3) {
+        ctx.fillStyle = HEART_CELLS[j + 2] ? '#fff0f4' : COLSTR[P_HEART * LEVELS + 12];
+        ctx.fillText(HEART_CELLS[j + 2] ? '*' : '@', x + (HEART_CELLS[j] - 0.5) * hx, y + (HEART_CELLS[j + 1] - 0.5) * hy);
+      }
+    }
+    ctx.globalAlpha = 1;
+    ctx.font = cellFont;
+  }
+
+  // Bloom: shrink the frame, remove the background with 'difference', blur, and add it back on top.
+  const glow = document.createElement('canvas'), gctx = glow.getContext('2d');
+  const GLOW_DIV = 5, GLOW_A = 0.8;
+  function drawGlow() {
+    const gw = Math.ceil(W / GLOW_DIV), gh = Math.ceil(H / GLOW_DIV);
+    if (glow.width !== gw || glow.height !== gh) { glow.width = gw; glow.height = gh; }
+    gctx.setTransform(1, 0, 0, 1, 0, 0);
+    gctx.globalCompositeOperation = 'copy';
+    gctx.filter = 'blur(2px)';
+    gctx.drawImage(canvas, 0, 0, gw, gh);
+    gctx.filter = 'none';
+    gctx.globalCompositeOperation = 'difference';
+    gctx.setTransform(gw / W, 0, 0, gh / H, 0, 0);
+    gctx.fillStyle = bgGrad;
+    gctx.fillRect(0, 0, W, H);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = GLOW_A;
+    ctx.drawImage(glow, 0, 0, W, H);
+    ctx.restore();
+  }
+
+  function render() {
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = smooth(t / 2.5);
+    ctx.fillStyle = warmGlow;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.textBaseline = 'top';
+    ctx.font = cellFont;
+    drawDust();
+    buildScene();
+    catchlights();
+    drawCells();
+    drawHearts();
+    drawGlow();
+  }
+
+  // ---------- Loop, HUD, controls ----------
+  let paused = false, last = performance.now();
+  let frames = 0, fpsT = last, fps = 0, hudT = 0;
+
+  function updateHud(now) {
+    const tail = paused ? 'paused' : `${fps} fps`;
+    const head = `wag ${wagF.toFixed(1)} Hz  pats ${pats}  `;
+    // Narrow screens drop the letter count so nothing is clipped.
+    hudEl.textContent = W < 640 ? head + tail : head + `letters ${nT.toLocaleString('en-US')}  ${tail}`;
+    hudT = now;
+  }
+
+  function frame(now) {
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); // no jumps after a hidden tab
+    last = now;
+    if (needResize) resize();
+    if (!paused) {
+      t += dt; skyT += dt;
+      animate(dt);
+      updateDust(dt); updateHearts(dt);
+    }
+    if (!paused || dirty) { render(); dirty = false; frames++; }
+    if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
+    if (now - hudT >= 250) updateHud(now);
+    requestAnimationFrame(frame);
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); }
+  function replay() {
+    t = T_START; patT = -99; hYaw = 0.05; hPitch = 0; hRoll = 0; wagF = WAG_F;
+    for (let i = 0; i < NH; i++) hearts[i * 8 + 4] = 1e9;
+    paused = false; animate(0); dirty = true;
+  }
+  function pat() {
+    patT = t; pats++; paused = false; spawnHearts(); dirty = true; updateHud(performance.now());
+  }
+
+  // Did this point land on the dog in the last frame? (3x3 cells, so small fingers still hit)
+  function hitDog(x, y) {
+    const c0 = Math.floor(x / cw), r0 = Math.floor(y / ch);
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+      const r = r0 + dr, cl = c0 + dc;
+      if (r < 0 || cl < 0 || r >= rows || cl >= cols) continue;
+      const c = r * cols + cl;
+      if (stampA[c] === stamp && ckind[c] < K_GROUND) return true;
+    }
+    return false;
+  }
+
+  addEventListener('resize', () => { needResize = true; });
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return; // leave Cmd/Ctrl+R alone
+    if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
+    else if (e.key === 'r' || e.key === 'R') replay();
+  });
+
+  // The head follows the pointer; a press only counts as a tap if it moved less than 8 px.
+  let downX = 0, downY = 0, pressed = false, dragged = false;
+  function setPtr(e) {
+    const rc = canvas.getBoundingClientRect();
+    ptrX = e.clientX - rc.left; ptrY = e.clientY - rc.top; ptrOn = true;
+  }
+  canvas.addEventListener('pointerdown', e => {
+    setPtr(e); pressed = true; dragged = false; downX = e.clientX; downY = e.clientY;
+  });
+  canvas.addEventListener('pointermove', e => {
+    setPtr(e);
+    if (pressed && Math.hypot(e.clientX - downX, e.clientY - downY) >= 8) dragged = true;
+  });
+  const ptrOff = () => { ptrOn = false; pressed = false; };
+  canvas.addEventListener('pointerleave', ptrOff);
+  canvas.addEventListener('pointercancel', ptrOff);
+  // Tap on the dog = pat. Elsewhere: single tap = pause (decided after 280 ms), two quick taps = replay.
+  let tapTimer = 0;
+  canvas.addEventListener('pointerup', e => {
+    const wasTap = pressed && !dragged;
+    pressed = false;
+    const rc = canvas.getBoundingClientRect(), x = e.clientX - rc.left, y = e.clientY - rc.top;
+    if (e.pointerType !== 'mouse') ptrOn = false;
+    if (e.button > 0 || !wasTap) return;
+    if (hitDog(x, y)) { pat(); return; }
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; replay(); }
+    else tapTimer = setTimeout(() => { tapTimer = 0; togglePause(); }, 280);
+  });
+
+  // Hint language: ?lang= wins, then saved site preference, then browser.
+  let pref = null;
+  try { pref = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (!pref) { try { pref = localStorage.getItem('lang'); } catch (e) {} }
+  if (!pref) pref = navigator.language || 'en';
+  const zh = String(pref).toLowerCase().startsWith('zh');
+  document.documentElement.lang = zh ? 'zh-Hant' : 'en';
+  // Touch screens have no keyboard, and the full hint would not fit on a phone.
+  const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  hintEl.textContent = touch ? (zh ? '點柴犬摸摸 · 點擊暫停 · 雙擊重播' : 'tap the dog to pat · tap to pause · double-tap to replay')
+                             : (zh ? '點柴犬摸摸 · 空白鍵 暫停 · R 重播 · 點空白處暫停 · 雙擊重播'
+                                   : 'click the dog to pat · Space pause · R replay · click to pause · double-click to replay');
+
+  animate(0);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

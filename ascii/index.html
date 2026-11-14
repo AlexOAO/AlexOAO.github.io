@@ -165,6 +165,30 @@
     @keyframes crest { 0%, 100% { color: #94a3b8; } 50% { color: #fff; text-shadow: 0 0 6px rgba(255,255,255,0.8); } }
     .o-foam { color: #e2e8f0; animation: twinkle 2.6s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.43s); }
 
+    /* Shiba previews: orange fur, cream muzzle/cheeks/inner ears, dark eyes and nose */
+    .k-fur { color: #f59e42; }
+    .k-cream { color: #fde9c9; }
+    .k-eye { color: #2a1708; text-shadow: 0 0 2px #fde9c9, 0 0 4px rgba(253,233,201,0.7); font-weight: 700; }
+    .k-nose { color: #2a1708; text-shadow: 0 0 2px #fde9c9, 0 0 4px rgba(253,233,201,0.7); font-weight: 700; }
+    .k-tail { display: inline-block; color: #f59e42; transform-origin: 0 100%; animation: wag 0.7s ease-in-out infinite alternate; }
+    .k-tail.k-cream { color: #fde9c9; }
+    @keyframes wag { from { transform: rotate(-14deg); } to { transform: rotate(16deg) translateX(0.12em); } }
+    .k-heart { display: inline-block; color: #f472b6; text-shadow: 0 0 6px rgba(244,114,182,0.8); animation: floatUp 2.8s ease-out infinite; }
+    @keyframes floatUp { 0% { transform: translateY(0.6em); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(-1.1em); opacity: 0; } }
+    .k-sun { color: #fb923c; text-shadow: 0 0 8px rgba(251,146,60,0.7); }
+    .k-sun2 { color: #f472b6; }
+    .k-grass { color: #22c55e; }
+    .k-blade { display: inline-block; color: #4ade80; animation: sway 1.4s ease-in-out infinite alternate; animation-delay: calc(var(--x, 0) * -0.17s); }
+    @keyframes sway { to { transform: translateX(-0.25em) skewX(-14deg); } }
+    .k-fly { display: inline-block; color: #c4b5fd; text-shadow: 0 0 6px rgba(196,181,253,0.8); animation: flutterBy 1.8s ease-in-out infinite; }
+    @keyframes flutterBy { 0%, 100% { transform: translate(0, 0) scaleX(1); } 25% { transform: translate(0.3em, -0.3em) scaleX(0.35); } 50% { transform: translate(0.6em, 0.1em) scaleX(1); } 75% { transform: translate(0.25em, 0.3em) scaleX(0.35); } }
+    .k-moon { color: #fef3c7; text-shadow: 0 0 8px rgba(254,243,199,0.7); }
+    .k-z { display: inline-block; color: #93c5fd; animation: zzz 3.6s ease-out infinite; animation-delay: calc(var(--k, 0) * -1.2s); }
+    @keyframes zzz { 0% { transform: translate(-0.3em, 0.8em) scale(0.7); opacity: 0; } 25% { opacity: 1; } 100% { transform: translate(0.4em, -0.8em) scale(1.1); opacity: 0; } }
+    .k-breathe { display: inline-block; animation: breathe 3.6s ease-in-out infinite; }
+    @keyframes breathe { 50% { transform: translateY(-0.14em); } }
+    .k-bed { color: #475569; }
+
     footer { color: var(--dim); font-size: 0.82rem; margin-top: 4rem; }
 
     @media (max-width: 600px) {
@@ -172,7 +196,7 @@
       .grid { grid-template-columns: 1fr; }
     }
     @media (prefers-reduced-motion: reduce) {
-      body::before, header.intro, .card, .t-light, .t-star, .r-bloom, .r-petal, .m-g, .e-sky, .e-spark, .b-disk, .g-bill, .g-fall, .d-glint, .s-star, .c-flame, .c-conf, .o-crest, .o-foam, h1 .cur { animation: none; }
+      body::before, header.intro, .card, .t-light, .t-star, .r-bloom, .r-petal, .m-g, .e-sky, .e-spark, .b-disk, .g-bill, .g-fall, .d-glint, .s-star, .c-flame, .c-conf, .o-crest, .o-foam, .k-tail, .k-heart, .k-blade, .k-fly, .k-z, .k-breathe, h1 .cur { animation: none; }
       .r-petal { opacity: 0; }
       .card, .preview pre { transition: none; }
       .card:hover { transform: none; }
@@ -288,6 +312,33 @@
           en: 'An endless moonlit sea of characters, with swells rolling in and foam breaking.'
         },
         preview: oceanPreview()
+      },
+      {
+        href: 'shiba-sit.html',
+        title: { zh: 'ASCII 柴犬', en: 'ASCII Shiba Inu' },
+        desc: {
+          zh: '一隻坐著搖尾巴的 3D 柴犬：會歪頭、眨眼、轉頭看你，摸摸牠會開心吐舌頭冒出愛心。',
+          en: 'A 3D Shiba sitting and wagging its tail. It tilts its head, blinks and looks at you; give it a pat and it sticks its tongue out and sends up hearts.'
+        },
+        preview: shibaSitPreview()
+      },
+      {
+        href: 'shiba-run.html',
+        title: { zh: 'ASCII 奔跑柴犬', en: 'ASCII Running Shiba' },
+        desc: {
+          zh: '柴犬在夕陽草地上奔跑，偶爾跳起來追蝴蝶；點一下讓牠跳。',
+          en: 'A Shiba runs across a meadow at sunset and sometimes leaps after a butterfly. Tap to make it jump.'
+        },
+        preview: shibaRunPreview()
+      },
+      {
+        href: 'shiba-sleep.html',
+        title: { zh: 'ASCII 睡覺柴犬', en: 'ASCII Sleeping Shiba' },
+        desc: {
+          zh: '月光下捲成甜甜圈的柴犬，呼吸起伏、冒出 Z z z，偶爾做夢夢到骨頭。',
+          en: "A Shiba curled up like a donut under the moon, breathing softly, sending up Z's and dreaming of bones."
+        },
+        preview: shibaSleepPreview()
       }
     ];
 
@@ -568,6 +619,90 @@
         'f3f3ff33ff3f3ff3f',
         '22222222222222222'
       ], { m: 'o-moon', 1: 'o-far', 2: 'o-mid', c: 'o-crest', 3: 'o-near', f: 'o-foam' });
+    }
+
+    // Sitting Shiba: orange fur (o), cream inner ears/cheeks/muzzle (c), eyes (e), nose and mouth (n),
+    // a curled tail that wags (t), and a floating heart (h).
+    function shibaSitPreview() {
+      return paint([
+        '            <3   ',
+        '  /\\      /\\     ',
+        ' /\'\'\\____/\'\'\\    ',
+        '|            |   ',
+        '|  o      o  |   ',
+        '|,,   (v)  ,,|   ',
+        ' \\   \\_w_/  /  @)',
+        '  `-.____.-\'  // ',
+        '  /  \'  \'  \\_//  ',
+        ' (__)    (__)    '
+      ], [
+        '            hh   ',
+        '  oo      oo     ',
+        ' occoooooocco    ',
+        'o            o   ',
+        'o  e      e  o   ',
+        'occ   cnc  cco   ',
+        ' o   ccncc  o  tt',
+        '  oooooooooo  tt ',
+        '  o  c  c  oott  ',
+        ' cccc    cccc    '
+      ], { o: 'k-fur', c: 'k-cream', e: 'k-eye', n: 'k-nose', t: 'k-tail', h: 'k-heart' });
+    }
+
+    // Running Shiba: side view mid-stride (o fur, c cream chest/belly, e eye, n nose, t tail),
+    // a sunset sun (s, p), a fluttering butterfly (b) and grass with swaying blades (g, l).
+    function shibaRunPreview() {
+      return paint([
+        '  }{       .--.  ',
+        '          (    ) ',
+        '       /\\  \'--\'  ',
+        ' @    /o \\___    ',
+        '  \\__/  ,  __>   ',
+        '  (       /      ',
+        '  /\\ ___ /\\      ',
+        ' /  /   \\  \\     ',
+        '"`\'"`\'"`\'"`\'"`\'"`',
+        "',.,',.,',.,',.,'"
+      ], [
+        '  bb       pppp  ',
+        '          s    s ',
+        '       oo  pppp  ',
+        ' t    oeoooooo   ',
+        '  oooo  c  ccn   ',
+        '  o       o      ',
+        '  oo ccc oo      ',
+        ' o  o   o  o     ',
+        'lglglglglglglglgl',
+        'ddddddddddddddddd'
+      ], { o: 'k-fur', c: 'k-cream', e: 'k-eye', n: 'k-nose', t: 'k-tail', s: 'k-sun', p: 'k-sun2', b: 'k-fly', g: 'k-grass', l: 'k-blade', d: 'g-dim' });
+    }
+
+    // Sleeping Shiba: curled donut (o fur, b back that rises with each breath, c cream muzzle and tail tip),
+    // closed eye (e), nose (n), a crescent moon (m), stars (s), Z's drifting up (z) and a cushion (d).
+    function shibaSleepPreview() {
+      return paint([
+        '  .         ,-.  ',
+        '       Z   (     ',
+        '   +  z     `-\'  ',
+        '     z        .  ',
+        '     .-~~~~~~-.  ',
+        '   /\\          \\ ',
+        '  / - \\  .--.   |',
+        ' (o  ,_)(\'\'\' )  |',
+        '  `----\'-\'--\'--\' ',
+        ' ~~~~~~~~~~~~~~~ '
+      ], [
+        '  s         mmm  ',
+        '       z   m     ',
+        '   s  z     mmm  ',
+        '     z        s  ',
+        '     bbbbbbbbbb  ',
+        '   oo          o ',
+        '  o e o  oooo   o',
+        ' on  coocccc c  o',
+        '  oooooooooooooo ',
+        ' ddddddddddddddd '
+      ], { m: 'k-moon', s: 'e-sky', z: 'k-z', o: 'k-fur', b: 'k-fur k-breathe', c: 'k-cream', e: 'k-eye', n: 'k-nose', d: 'k-bed' });
     }
 
     function render() {
