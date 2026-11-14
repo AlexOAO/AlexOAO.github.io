@@ -204,21 +204,25 @@
 
   const H0 = [0, 0.76, 0.31];            // head centre (before the cute big-head scaling)
   const NP = [0, 0.64, 0.265];          // neck pivot
-  const EX = 0.078, EY = 0.024, EW = 0.032, EH = 0.03;   // big round eyes (head-local)
+  const EX = 0.078, EY = 0.024, EW = 0.036, EH = 0.036;   // big round eyes (head-local)
   const TONGUE_A = [0, -0.09, 0.24];
   const HSC = 1.24;                     // big head = cute: head parts are scaled about the neck pivot
   const hsc = (v, j) => NP[j] + (v - NP[j]) * HSC;
   const H0S = [hsc(H0[0], 0), hsc(H0[1], 1), hsc(H0[2], 2)];
-  // Eye catchlights: a bright white highlight, upper-right in each eye (toward the sun), on the head surface.
-  const CATCH = [1, -1].map(sd => {
-    const lx = sd * EX + 0.3 * EW, ly = EY + 0.38 * EH;
-    const lz = 0.165 * Math.sqrt(1 - (lx / 0.19) ** 2 - ((ly - 0.01) / 0.165) ** 2) + 0.004;
-    return [hsc(H0[0] + lx, 0), hsc(H0[1] + ly, 1), hsc(H0[2] + lz, 2)];
-  });
-  const CATCH2 = [1, -1].map(sd => {
-    const lx = sd * EX - 0.45 * EW, ly = EY - 0.45 * EH;
-    const lz = 0.165 * Math.sqrt(1 - (lx / 0.19) ** 2 - ((ly - 0.01) / 0.165) ** 2) + 0.004;
-    return [hsc(H0[0] + lx, 0), hsc(H0[1] + ly, 1), hsc(H0[2] + lz, 2)];
+  // Eyes: crisp round glossy discs drawn on top after the bloom (see drawFace). Per eye: the centre on the
+  // cranium surface, two tangent half-axes (U across, V up) of length ER and the surface normal (all scaled).
+  const ER = 0.04;
+  const EYES = [1, -1].map(sd => {
+    const lx = sd * EX, ly = EY, lz = 0.165 * Math.sqrt(1 - (lx / 0.19) ** 2 - ((ly - 0.01) / 0.165) ** 2);
+    let nx = lx / 0.0361, ny = (ly - 0.01) / 0.027225, nz = lz / 0.027225;
+    const nl = Math.hypot(nx, ny, nz); nx /= nl; ny /= nl; nz /= nl;
+    let ux = nz, uz = -nx;
+    const ul = Math.hypot(ux, uz); ux /= ul; uz /= ul;
+    let vx = ny * uz, vy = nz * ux - nx * uz, vz = -ny * ux;
+    const vl = Math.hypot(vx, vy, vz); vx /= vl; vy /= vl; vz /= vl;
+    const k = ER * HSC;
+    return { c: [hsc(H0[0] + lx + nx * 0.004, 0), hsc(H0[1] + ly + ny * 0.004, 1), hsc(H0[2] + lz + nz * 0.004, 2)],
+             u: [ux * k, 0, uz * k], v: [vx * k, vy * k, vz * k], n: [nx, ny, nz] };
   });
   const TAS = [hsc(H0[0] + TONGUE_A[0], 0), hsc(H0[1] + TONGUE_A[1], 1), hsc(H0[2] + TONGUE_A[2], 2)];
 
@@ -239,7 +243,7 @@
     hs(0.094, -0.07, 0.045, 0.112, 0.084, 0.105, 0, 'cheek'),
     hs(-0.094, -0.07, 0.045, 0.112, 0.084, 0.105, 0, 'cheek'),
     hs(0, -0.068, 0.15, 0.092, 0.068, 0.115, 0.12, 'muzzle'),
-    hs(0, -0.032, 0.258, 0.03, 0.022, 0.019, 0, 'nose')
+    hs(0, -0.03, 0.266, 0.019, 0.014, 0.013, 0, 'nose')
   ];
 
   function inside(s, x, y, z, lim) {
@@ -326,7 +330,7 @@
       if (lz > 0.04 && Math.abs(cu) < 1.45 && Math.abs(cv) < 1.6) {
         add(x, y, z, nx, ny, nz, K_EYE, side > 0 ? 0 : 1, R_HEAD, cu, cv); return;
       }
-      const bu = (ax - 0.068) / 0.022, bv = (ly - 0.094) / 0.014;   // cream eyebrow dots
+      const bu = (ax - 0.07) / 0.024, bv = (ly - 0.1) / 0.015;   // cream eyebrow dots
       // the mask: up from the muzzle and sweeping toward the cheeks in a curve
       const ex = ax > 0.06 ? ax - 0.06 : 0, edge = -0.03 + 4.5 * ex * ex;
       cream = (lz > 0.04 && bu * bu + bv * bv < 1) ||
@@ -706,7 +710,7 @@
     // Head: rides on the squashed neck, nods a beat behind the bounce, wobbles a little; cheeks jiggle.
     const nod = (reduced ? 0.02 : 0.06) * Math.sin(ph2 - 1.3) * r;
     const hPitch = 0.6 * up + nod + 0.04 * w, hRoll = (reduced ? 0.02 : 0.05) * Math.sin(TAU * fr) * r;
-    mAxis(MA, 0, 1, 0, -0.2); mAxis(MB, 1, 0, 0, hPitch); mMul(MC, MA, MB);
+    mAxis(MA, 0, 1, 0, -0.34); mAxis(MB, 1, 0, 0, hPitch); mMul(MC, MA, MB);
     mAxis(MA, 0, 0, 1, hRoll); mMul(HM, MC, MA);
     const jg = 1 + (reduced ? 0.006 : 0.022) * Math.sin(ph2 - 2.2) * r;
     mScale(MA, jg, 1 / jg, 1); mMul(MB, HM, MA);
@@ -783,19 +787,12 @@
       case K_EYE: {                               // big round glossy eyes
         const cu = A1[i], cv = A2[i];
         coat = true; p = P_OR_L;
-        if (happy > 0.35) {                       // ^ ^ happy eyes
-          const arc = 0.9 * (1 - Math.abs(cu)) - 0.35;
-          if (Math.abs(cu) < 1.2 && Math.abs(cv - arc) < 0.42) {
-            coat = false; feat = 1; p = P_MOUTH; b = 0.8;
-            cc = cu < -0.3 ? C_SL : cu > 0.3 ? C_BS : C_CARET;
-          }
+        if (happy > 0.35) {                       // ^ ^ happy eyes: crisp arcs drawn by drawFace()
         } else if (eyeOpen < 0.22) {              // closed: a lid line
           if (Math.abs(cu) < 1.05 && Math.abs(cv + 0.1) < 0.3) {
-            coat = false; feat = 1; p = P_EYE; b = 0.24; cc = C_DASH;
+            coat = false; feat = 1; p = P_MOUTH; b = 0.6; cc = C_DASH;
           }
-        } else if (cu * cu + (cv / eyeOpen) ** 2 < 1) {
-          coat = false; feat = 1; p = P_EYE; b = 0.24; cc = C_AT;
-        }
+        }                                         // open eyes: drawn crisp on top by drawFace()
         break;
       }
       case K_MOUTH: {
@@ -894,35 +891,78 @@
     }
   }
 
-  // Light up a bright white catchlight in each open eye (a 2-cell glint when the eye is big enough).
-  function glint(C, want, chr, b) {
-    const x = C[0], y = C[1], z = C[2];
-    const vz = HV[8] * x + HV[9] * y + HV[10] * z + HV[11], f = CAM_D / (CAM_D - vz);
-    const px = ox + (HV[0] * x + HV[1] * y + HV[2] * z + HV[3]) * S * f;
-    const py = oy - (HV[4] * x + HV[5] * y + HV[6] * z + HV[7]) * S * f;
-    const col = (px / cw) | 0, row = (py / ch) | 0;
-    if (col < 0 || row < 0 || col >= cols || row >= rows) return;
-    const c = row * cols + col;
-    if (stampA[c] !== stamp || ckind[c] !== 1 || ((ccol[c] / LEVELS) | 0) !== want) return;
-    cchar[c] = chr; ccol[c] = P_CATCH * LEVELS + lvl(b);
-  }
+  // The button nose's shine: the shiniest nose cell becomes a small white '*'.
   function catchlights() {
     const nc = noseCell;
     if (nc >= 0 && ((ccol[nc] / LEVELS) | 0) === P_NOSE) { cchar[nc] = C_STAR; ccol[nc] = P_CATCH * LEVELS + 12; }
-    if (eyeOpen < 0.6 || happy > 0.35) return;
-    for (let e = 0; e < 2; e++) glint(CATCH2[e], P_EYE, C_DOT, 0.7);
+  }
+
+  // Face features drawn crisp on top of the bloom, so they keep hard edges: the black button nose and two
+  // round glossy black eyes, each with one big white highlight (upper left) and a tiny glint (lower right).
+  const EYE_BG = '#0d0806', EYE_FG = '#2a1a14', NOSE_FG = '#3a2721';
+  const eyeCells = new Int32Array(256);
+  function drawFace() {
+    ctx.font = cellFont;
+    ctx.textBaseline = 'top';
+    // nose cells
+    for (let r = rmin; r <= rmax; r++) for (let c = bmin; c <= bmax; c++) {
+      const k = r * cols + c;
+      if (stampA[k] !== stamp || ckind[k] !== 1) continue;
+      const pk = (ccol[k] / LEVELS) | 0;
+      if (pk !== P_NOSE && !(k === noseCell && cchar[k] === C_STAR)) continue;
+      ctx.fillStyle = EYE_BG; ctx.fillRect(c * cw, r * ch, cw, ch);
+      ctx.fillStyle = pk === P_NOSE ? NOSE_FG : '#ffffff';
+      ctx.fillText(pk === P_NOSE ? '@' : '*', c * cw, r * ch);
+    }
+    const joy = happy > 0.35;                      // ^ ^ : crisp dark arcs instead of the discs
+    if (eyeOpen < 0.22 && !joy) return;            // closed lids are glyphs in the splat
     for (let e = 0; e < 2; e++) {
-      const C = CATCH[e], x = C[0], y = C[1], z = C[2];
-      const vz = HV[8] * x + HV[9] * y + HV[10] * z + HV[11], f = CAM_D / (CAM_D - vz);
-      const px = ox + (HV[0] * x + HV[1] * y + HV[2] * z + HV[3]) * S * f;
-      const py = oy - (HV[4] * x + HV[5] * y + HV[6] * z + HV[7]) * S * f;
-      const col = (px / cw) | 0, row = (py / ch) | 0;
-      if (col < 0 || row < 0 || col >= cols || row >= rows) continue;
-      const c = row * cols + col;
-      if (stampA[c] !== stamp || cchar[c] !== C_AT || ((ccol[c] / LEVELS) | 0) !== P_EYE) continue;
-      cchar[c] = C_O; ccol[c] = P_CATCH * LEVELS + 15;
+      const E = EYES[e], C = E.c, N = E.n;
+      if (HV[8] * N[0] + HV[9] * N[1] + HV[10] * N[2] < 0.12) continue;   // turned away
+      const x = C[0], y = C[1], z = C[2];
+      const vz = HV[8] * x + HV[9] * y + HV[10] * z + HV[11], f = CAM_D / (CAM_D - vz) * S;
+      const cx = ox + (HV[0] * x + HV[1] * y + HV[2] * z + HV[3]) * f;
+      const cy = oy - (HV[4] * x + HV[5] * y + HV[6] * z + HV[7]) * f;
+      const U = E.u, V = E.v;
+      const ux = (HV[0] * U[0] + HV[1] * U[1] + HV[2] * U[2]) * f, uy = -(HV[4] * U[0] + HV[5] * U[1] + HV[6] * U[2]) * f;
+      const eo = joy ? 1 : eyeOpen;
+      const vx = (HV[0] * V[0] + HV[1] * V[1] + HV[2] * V[2]) * f * eo, vy = -(HV[4] * V[0] + HV[5] * V[1] + HV[6] * V[2]) * f * eo;
+      const det = ux * vy - uy * vx;
+      if (Math.abs(det) < 1) continue;
+      const rx = Math.hypot(ux, vx), ry = Math.hypot(uy, vy);
+      const c0 = Math.max(0, Math.floor((cx - rx) / cw)), c1 = Math.min(cols - 1, Math.floor((cx + rx) / cw));
+      const r0 = Math.max(0, Math.floor((cy - ry) / ch)), r1 = Math.min(rows - 1, Math.floor((cy + ry) / ch));
+      let n = 0;
+      for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+        const dx = (c + 0.5) * cw - cx, dy = (r + 0.5) * ch - cy;
+        const a = (dx * vy - dy * vx) / det, b = (ux * dy - uy * dx) / det;
+        if (a * a + b * b >= 0.92) continue;
+        if (joy && (Math.abs(a) > 0.95 || Math.abs(b - (0.45 - 0.85 * a * a)) > 0.3)) continue;
+        const k = r * cols + c;
+        if (stampA[k] !== stamp || ckind[k] !== 1 || zbuf[k] > vz + 0.04) continue;   // hidden by the muzzle
+        if (n < eyeCells.length) eyeCells[n++] = k;
+      }
+      if (!n) continue;
+      const hx = cx - 0.36 * rx, hy = cy - 0.36 * ry, hr = Math.max(0.3 * Math.min(rx, ry * 1.2), 0.5 * cw);
+      const gc = ((cx + 0.45 * rx) / cw) | 0, gr = ((cy + 0.42 * ry) / ch) | 0;
+      const hc0 = (hx / cw) | 0, hr0 = (hy / ch) | 0;
+      for (let i = 0; i < n; i++) {
+        const k = eyeCells[i], r = (k / cols) | 0, c = k - r * cols;
+        ctx.fillStyle = EYE_BG; ctx.fillRect(c * cw, r * ch, cw, ch);
+        if (joy) {
+          const dx = (c + 0.5) * cw - cx;
+          ctx.fillStyle = EYE_FG; ctx.fillText(dx < -0.3 * rx ? '/' : dx > 0.3 * rx ? '\\' : '^', c * cw, r * ch);
+          continue;
+        }
+        const dx = (c + 0.5) * cw - hx, dy = (r + 0.5) * ch - hy;
+        const hl = (c === hc0 && r === hr0) || dx * dx + dy * dy < hr * hr;
+        const g2 = c === gc && r === gr && !hl;
+        ctx.fillStyle = hl ? '#ffffff' : g2 ? '#e8e4ea' : EYE_FG;
+        ctx.fillText(hl ? '@' : g2 ? 'o' : '@', c * cw, r * ch);
+      }
     }
   }
+
   // ---------- Scenery layers ----------
   let scrollPx = 0;
   function putSky() {
@@ -1246,6 +1286,7 @@
     ctx.font = cellFont;
     drawCells();
     drawGlow();
+    drawFace();
     drawButterfly();
   }
 
