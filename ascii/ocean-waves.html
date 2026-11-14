@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>ASCII Ocean Waves | Alex Li (李翔緯)</title>
   <meta name="description" content="A moonlit open sea drawn entirely with ASCII characters: rolling swells in perspective, breaking crests with lingering foam and streaks of moonlight on the horizon. Vanilla JS on a single canvas.">
-  <meta name="theme-color" content="#030408">
+  <meta name="theme-color" content="#000000">
   <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,7 +13,7 @@
   <style>
     :root {
       --bg: #0b1120;
-      --sky: #030408;
+      --sky: #000000;
       --text: #e6edf6;
       --muted: #a3b1c6;
       --accent: #3b82f6;
@@ -110,12 +110,14 @@
   const CYCLE = 22 * 0.8;                  // scene time of one calm -> big swells -> calm loop (~22 s real)
 
   // ---------- Camera / world ----------
-  const HORIZON = 0.25;     // horizon at 25% of the screen height
+  const HORIZON = 0.35;     // horizon at 35% of the screen height
   const CAM_H = 3;          // camera height above mean sea level (world units)
   const NEAR_EXTRA = 2;     // sample this much closer than the bottom row (big swells rise into view)
   const FOAM_TAU = 1.4;     // seconds for foam to fade to 1/e
   const FOAM_THR = 0.22;    // crest curvature that starts to break
   const FOAM_GAIN = 7;
+  // Shading: lit faces only; FACE_DROP darkens rows below a crest's top edge.
+  const BRT_BASE = 0.65, BRT_SLOPE = 1.6, BRT_H = 0.9, HZ_LIFT = -0.02, FACE_DROP = 0.035;
   const CRASH_RATE = 0.12;  // foam coverage growth per second of sea time that sounds a crash
   const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
   // Moonlight from high up beyond the horizon (upper back), as seen from the camera.
@@ -161,18 +163,21 @@
   const AMP = new Float32Array(NW), PT = new Float32Array(NW);
 
   // ---------- Characters & colours ----------
-  const CH = [...' .,-~:;=+*#%@'];
-  const NRAMP = CH.length - 1;
-  const C_STAR = CH.indexOf('*'), C_PCT = CH.indexOf('%'), C_AT = CH.indexOf('@'), C_DASH = CH.indexOf('-');
+  // Lit faces use a mixed, code-like glyph set, brighter tiers denser; foam and spray use loose letters.
+  const CH = [];
+  const ci = s => { let i = CH.indexOf(s); if (i < 0) { CH.push(s); i = CH.length - 1; } return i; };
+  const tier = s => Uint8Array.from([...s].map(ci));
+  const TIERS = [tier('~-^+~*=^'), tier('+*~%^8$=x'), tier('$8&%#*+@&'), tier('@$&8#%$8')];
+  const T_LET = tier('xtrjfvczea[]{}()|');     // loose letters at crest edges
+  const T_SPRAY = tier('+xtt=+zvr+*');         // foam / spray
+  const C_PLUS = ci('+'), C_PEAK = ci('^');
+  const BTHR = 0.5;                            // cells dimmer than this stay black
 
   const LEVELS = 16;
   const PAL = [];
   const pal = (r, g, b) => { PAL.push([r, g, b]); return PAL.length - 1; };
-  const P_DEEP = pal(92, 112, 140);    // trough faces: dark steel blue
-  const P_SEA = pal(140, 158, 182);    // mid slopes
-  const P_CREST = pal(196, 205, 218);  // lit crests: grey-white
-  const P_GLINT = pal(214, 224, 240);  // moonlight streaks
-  const P_FOAM = pal(236, 241, 248);   // foam
+  const P_SEA = pal(207, 224, 255);    // pale moonlit blue-white (level 10 = #cfe0ff)
+  const P_FOAM = pal(228, 238, 255);   // spray, a touch whiter
   const NCOLOR = PAL.length * LEVELS;
   const COLSTR = new Array(NCOLOR);
   PAL.forEach(([r, g, b], p) => {
@@ -193,7 +198,7 @@
   let W = 0, H = 0, fs = 9, cw = 5, ch = 10, cols = 0, rows = 0, hr = 0, hyPx = 0, F = 500;
   let cellFont = '', bgGrad = null;
   let cchar, ccol, touched, order, nT = 0;
-  let nS = 0, ZS, ATT, FOAM, FHASH;
+  let nS = 0, ZS, ATT, FOAM, FHASH, GHASH, colDrawn;
   const counts = new Uint32Array(NCOLOR);
   let needResize = true, dirty = true;
 
@@ -206,7 +211,7 @@
     canvas.height = Math.round(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    fs = clamp(Math.round(Math.min(W, H * 1.2) / 105), 7, 12);
+    fs = clamp(Math.round(Math.min(W, H * 1.2) / 130), 7, 10);
     cellFont = `${fs}px ${MONO}`;
     ctx.font = cellFont;
     cw = ctx.measureText('M').width || fs * 0.6;
@@ -239,13 +244,12 @@
     FHASH = new Float32Array(nS * cols);
     const r = mulberry32(99);
     for (let i = 0; i < FHASH.length; i++) FHASH[i] = 0.45 + 0.9 * r();
+    // Glyph variety hashed per sea position: stable frame to frame, changes only as the water moves.
+    GHASH = new Uint8Array(nS * cols);
+    for (let i = 0; i < GHASH.length; i++) GHASH[i] = (r() * 256) | 0;
+    colDrawn = new Uint8Array(rows + 1);
 
-    bgGrad = ctx.createLinearGradient(0, 0, 0, H);
-    bgGrad.addColorStop(0, '#020305');
-    bgGrad.addColorStop(HORIZON * 0.9, '#070a11');
-    bgGrad.addColorStop(HORIZON, '#0c111a');
-    bgGrad.addColorStop(Math.min(1, HORIZON + 0.08), '#05070b');
-    bgGrad.addColorStop(1, '#030407');
+    bgGrad = '#000000'; // pure black sky and sea background
     dirty = true;
   }
 
@@ -265,6 +269,7 @@
     const zg = 72 - 75 * ph; // reaches the foreground late in the cycle
     const thr = FOAM_THR, decay = Math.exp(-dt / FOAM_TAU);
     const midC = cols >> 1;
+    const hrFar = Math.min(rows, hr + Math.round((rows - hr) * 0.3));
     const half = W / 2;
     nT = 0; swells = 0;
     let foamN = 0, seaN = 0, crestN = -1;
@@ -273,6 +278,7 @@
       const px = (c + 0.5) * cw - half;
       let top = rows;
       let prevH = -1e9, rising = false;
+      colDrawn.fill(0);
       for (let i = 0; i < nS; i++) {
         const z = ZS[i], x = px * z / F;
         const dz = (z - zg) / 16, env = 1 + gs * Math.exp(-dz * dz);
@@ -320,45 +326,62 @@
         let sp = (nx * hx2 + ny * hy2 + nz * hz2) * hl;
         sp = sp > 0 ? sp : 0;
         sp *= sp; sp *= sp; sp *= sp; sp *= sp; sp *= sp; // ^32
-        const near = z < 20 ? 0.12 * (1 - z / 20) : 0;
-        let b = 0.37 + near + 1.4 * (ndl - LY) + 0.8 * h / (1 + (h < 0 ? -h : h)) + 0.2 * sp + (K > 0 ? 1.1 * K : 0); // crest lines catch the light
-        // Distance haze: far rows blend toward a soft grey band with moonlit streaks.
-        const fog = clamp((z - 25) / 140, 0, 0.75);
-        b = b * (1 - fog) + fog * (0.4 + 1.2 * sp);
-        const bmax = 1 - 0.5 * fog; // far rows stay fine-grained (no @ blobs on the horizon)
-        if (b > bmax) b = bmax;
+        const near = z < 22 ? 0.12 * (1 - z / 22) : 0;
+        let b = BRT_BASE + near + BRT_SLOPE * (ndl - LY) + BRT_H * h / (1 + (h < 0 ? -h : h)) + 0.2 * sp + (K > 0 ? 1.1 * K : 0);
+        // Far rows: keep the contrast (crest lines vs black gaps) and lift them a little, so the
+        // horizon reads as thin dense bright lines.
+        const fog = clamp((z - 20) / 120, 0, 1);
+        b = BTHR + (b - BTHR) * (1 + 1.2 * fog) + HZ_LIFT * fog;
+        if (b > 1) b = 1;
 
         const foamy = f > 0.22;
-        let cc, pIdx, lv;
-        if (foamy) {
-          cc = f > 0.75 ? C_AT : f > 0.45 ? C_PCT : C_STAR;
-          if (z > 70) cc = C_DASH;
-          pIdx = P_FOAM; lv = 9 + ((f * 6.99) | 0);
-        } else {
-          pIdx = sp > 0.35 ? P_GLINT : b > 0.62 ? P_CREST : b > 0.32 ? P_SEA : P_DEEP;
-          lv = (b * 15.99) | 0;
-        }
+        if (foamy) foamN++;
+        const gh = GHASH[fi];
 
         for (let r = r0; r < top; r++) {
-          // Faces below the top edge face the camera and fall into the moon's shadow.
-          let bb = b;
-          if (r > r0) { bb = b - 0.025 * (r - r0); if (bb < 0.2) bb = 0.2; if (foamy && r - r0 < 2) bb = b; }
           if (r >= rows) continue;
-          const cell = r * cols + c;
-          if (foamy && (r - r0 < 2 || bb > 0.4)) {
-            cchar[cell] = cc; ccol[cell] = pIdx * LEVELS + lv; touched[nT++] = cell; foamN++; seaN++;
+          seaN++;
+          // Faces below the top edge face the camera and fall into the moon's shadow.
+          const bb = r > r0 ? b - FACE_DROP * (r - r0) : b;
+          const hsh = (gh + r * 37) & 255, cell = r * cols + c;
+          if (foamy && r - r0 < 2 && hsh < f * 150) {
+            // Spray: loose letters and + sparkles, a few twinkling bright.
+            const tw = (hsh & 31) === 0 && Math.sin(t * 5 + gh) > 0.6;
+            cchar[cell] = tw ? C_PLUS : T_SPRAY[hsh % T_SPRAY.length];
+            ccol[cell] = P_FOAM * LEVELS + (tw ? 15 : 10 + ((f * 4.99) | 0));
+            touched[nT++] = cell; colDrawn[r] = 1;
             continue;
           }
-          seaN++;
-          if (bb < 0.1) continue;
-          const k = (bb * (NRAMP - 0.01)) | 0;
-          if (k < 1) continue;
-          cchar[cell] = k;
-          ccol[cell] = (foamy ? P_SEA : pIdx) * LEVELS + (bb === b ? lv : (bb * 15.99) | 0);
-          touched[nT++] = cell;
+          if (bb < BTHR) {
+            // Just under the threshold at a crest edge: an occasional stray letter.
+            if (r === r0 && bb > BTHR - 0.14 && hsh < 10) {
+              cchar[cell] = T_LET[hsh % T_LET.length]; ccol[cell] = P_SEA * LEVELS + 6;
+              touched[nT++] = cell; colDrawn[r] = 1;
+            }
+            continue;
+          }
+          if (r - hr < 3) {
+            // The last rows before the horizon thin out into scattered peaks and sparkles.
+            if (hsh < 60) { cchar[cell] = hsh < 40 ? C_PEAK : C_PLUS; ccol[cell] = P_SEA * LEVELS + 8; touched[nT++] = cell; colDrawn[r] = 1; }
+            continue;
+          }
+          const u = (bb - BTHR) / (1 - BTHR);
+          const tr = TIERS[u < 0.3 ? 0 : u < 0.55 ? 1 : u < 0.8 ? 2 : 3];
+          if (sp > 0.5 && (hsh & 15) === 0) { cchar[cell] = C_PLUS; ccol[cell] = P_FOAM * LEVELS + 15; }
+          else {
+            cchar[cell] = (hsh & 7) === 0 ? T_LET[hsh % T_LET.length] : tr[hsh % tr.length];
+            ccol[cell] = P_SEA * LEVELS + 4 + ((u * 7.99) | 0); // mostly pale blue, only the brightest near white
+          }
+          touched[nT++] = cell; colDrawn[r] = 1;
         }
         top = r0;
         if (top <= hr) break;
+      }
+      // Little wave peaks: ^ on the empty cell above the top edge of far crest lines.
+      for (let r = hr + 1; r < hrFar; r++) {
+        if (!colDrawn[r] || colDrawn[r - 1]) continue;
+        const ph2 = (c * 131 + r * 71 + ((t * 0.7) | 0) * 17) & 255;
+        if (ph2 < 70) { const cell = (r - 1) * cols + c; cchar[cell] = C_PEAK; ccol[cell] = P_SEA * LEVELS + 9; touched[nT++] = cell; }
       }
     }
     foamCov = seaN ? Math.min(1, foamN / seaN * 4) : 0;
@@ -381,25 +404,17 @@
     }
   }
 
-  // Faint moon haze above the horizon and a thin horizon line.
+  // Pure black sky with two faint stars.
   function drawSky() {
-    const cx = W * 0.5, gw = W * 0.6, gh = H * 0.12;
-    ctx.save();
-    ctx.translate(cx, hyPx);
-    ctx.scale(1, gh / gw);
-    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, gw);
-    g.addColorStop(0, 'rgba(150,170,200,0.10)');
-    g.addColorStop(1, 'rgba(150,170,200,0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(-gw, -gw, gw * 2, gw);
-    ctx.restore();
-    ctx.fillStyle = 'rgba(170,185,210,0.18)';
-    ctx.fillRect(0, hyPx - 1, W, 1);
+    ctx.fillStyle = 'rgba(190,205,235,0.45)';
+    ctx.fillRect(Math.round(W * 0.07), Math.round(hyPx * 0.5), 1.5, 1.5);
+    ctx.fillStyle = 'rgba(190,205,235,0.3)';
+    ctx.fillRect(Math.round(W * 0.5), Math.round(hyPx * 0.64), 1.5, 1.5);
   }
 
   // Bloom: shrink the frame, remove the background with 'difference', blur, and add it back on top.
   const glow = document.createElement('canvas'), gctx = glow.getContext('2d');
-  const GLOW_DIV = 5, GLOW_A = 0.55;
+  const GLOW_DIV = 5, GLOW_A = 0.5;
   function drawGlow() {
     const gw = Math.ceil(W / GLOW_DIV), gh = Math.ceil(H / GLOW_DIV);
     if (glow.width !== gw || glow.height !== gh) { glow.width = gw; glow.height = gh; }
