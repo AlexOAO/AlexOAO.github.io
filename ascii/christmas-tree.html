@@ -99,6 +99,7 @@
   <div class="hud" id="hud" aria-hidden="true"></div>
   <div class="hint" id="hint"></div>
 
+<script src="ascii-audio.js"></script>
 <script>
 (() => {
   'use strict';
@@ -737,8 +738,10 @@
     last = now;
     if (needResize) resize();
     if (!paused) {
+      const t1 = t;
       t += dt; rot += dt * ROT_SPEED; skyT += dt;
       updateSnow(snowBack, dt); updateSnow(snowFront, dt);
+      soundCues(t1, t);
     }
     if (!paused || dirty) { render(); dirty = false; frames++; }
     if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
@@ -746,8 +749,22 @@
     requestAnimationFrame(frame);
   }
 
-  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); }
-  function replay() { t = 0; rot = ROT0; paused = false; dirty = true; }
+  // ---------- Music (ascii-audio.js) ----------
+  const music = (fn, ...a) => window.AsciiAudio && AsciiAudio[fn](...a);
+  // Fire a sound cue on the frame where the scene clock crosses an animation event.
+  const crossed = (a, b, x) => a < x && x <= b;
+  function soundCues(a, b) {
+    if (!window.AsciiAudio) return;
+    let nl = 0;
+    for (let i = 0; i < lightT0.length; i++) if (crossed(a, b, lightT0[i])) nl++;
+    if (nl) music('event', 'light', { n: nl });
+    if (crossed(a, b, T.STAR)) music('event', 'star');
+    for (let g = 0; g < GIFTS.length; g++) if (crossed(a, b, giftT0[g] + T.GIFT_DROP)) music('event', 'gift', { i: g });
+    for (let i = 0; i < LETTERS; i++) if (crossed(a, b, T.MSG + i * T.LETTER)) music('event', 'letter', { i, last: i === LETTERS - 1 });
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
+  function replay() { t = 0; rot = ROT0; paused = false; dirty = true; music('resume'); music('restart'); }
 
   addEventListener('resize', () => { needResize = true; });
   addEventListener('keydown', e => {
@@ -773,8 +790,58 @@
   // Touch screens have no keyboard, and the full hint would not fit on a phone.
   const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
   hintEl.textContent = touch ? (zh ? '點擊暫停 · 雙擊重播' : 'tap to pause · double-tap to replay')
-                             : (zh ? '空白鍵 暫停 · R 重播 · 點擊暫停 · 雙擊重播'
-                                   : 'Space pause · R replay · click to pause · double-click to replay');
+                             : (zh ? '空白鍵 暫停 · R 重播 · M 音樂 · 點擊暫停 · 雙擊重播'
+                                   : 'Space pause · R replay · M music · click to pause · double-click to replay');
+
+  // Score: "Deck the Halls" (traditional Welsh carol, public domain) for music box, after an
+  // original 4-bar intro. Celesta arpeggios, soft pad, sine bass and sleigh bells. 80-beat loop.
+  if (window.AsciiAudio) AsciiAudio.init({
+    bpm: 96, master: 0.8, reverb: 0.3, reverbTime: 2.6,
+    build(a) {
+      const N = AsciiAudio.notes, LOOP = 80, INTRO = 16;
+      const A = 'G5:1.5 F5:.5 E5:1 D5 | C5 D5 E5 C5 | D5:.5 E5 F5 D5 E5:1.5 D5:.5 | C5:1 B4 C5:2 |';
+      const tune = N(
+        'E5:.5 G5 C6:1 B5:.5 G5 E5:1 | A5:.5 C6 E6:1 D6:.5 C6 A5:1 | ' +           // intro (original)
+        'F5:.5 A5 C6:1 D6:.5 C6 A5:1 | G5:.5 B5 D6:1 F5:1 G5:1 | ' +
+        A + A +
+        'D5:1.5 E5:.5 F5:1 D5 | E5:1.5 F5:.5 G5:1 D5 | E5:.5 F#5 G5:1 A5:.5 B5 C6:1 | B5:1 A5 G5:2 | ' +
+        'G5:1.5 F5:.5 E5:1 D5 | C5 D5 E5 C5 | A5:.5 A5 A5 A5 G5:1.5 F5:.5 | E5:1 D5 C5:2');
+      a.part(tune, (t, e) => a.musicBox(t, e.note, Math.max(0.9, e.sec * 2), { vel: 0.62 }), { length: LOOP });
+
+      // One chord per half bar (2 beats), 40 slots per loop.
+      const CH = { C: ['C', 'E', 'G'], Am: ['A', 'C', 'E'], F: ['F', 'A', 'C'], G: ['G', 'B', 'D'],
+                   G7: ['G', 'B', 'D', 'F'], Em: ['E', 'G', 'B'], D: ['D', 'F#', 'A'] };
+      const SA = 'C C C C G7 C G C';
+      const PROG = ['C C Am Am F F G7 G7', SA, SA, 'G7 G7 C G Em D G G', 'C C C Am F C G C']
+        .join(' ').split(' ');
+      const chordAt = beat => CH[PROG[Math.floor((beat % LOOP) / 2)]];
+
+      // Celesta broken chords in 8ths: root, 3rd, 5th, 3rd (an octave below the tune).
+      const ARP = [0, 1, 2, 1];
+      a.every(0.5, (t, s) => {
+        const c = chordAt(s * 0.5), n = c[ARP[s % 4] % c.length];
+        a.celesta(t, n + '4', a.beats(1.2), { vel: s % 2 ? 0.22 : 0.3, pan: s % 4 === 1 ? -0.3 : 0.3 });
+      });
+      // Sine bass on each chord root; soft pad holding each chord.
+      a.every(2, (t, s) => {
+        const c = chordAt(s * 2);
+        a.bass(t, c[0] + '2', a.beats(1.8), { vel: 0.4 });
+        a.pad(t, [c[0] + '3', c[1] + '4', c[2] + '4'], a.beats(1.6), { vel: 0.35, attack: 0.35, release: 0.7, cutoff: 900 });
+      });
+      // Sleigh bells after the intro, accent on the off-beat 8ths.
+      a.every(0.5, (t, s) => {
+        const b = (s * 0.5) % LOOP;
+        if (b >= INTRO) a.jingle(t, s % 2 ? 0.32 : 0.18, { pan: 0.25 });
+      });
+
+      // Sound effects in sync with the animation.
+      const SP = AsciiAudio.scale('C6', 'pentatonic', 10);
+      a.on('light', (a, d, t) => a.sparkle(t, { count: Math.min(3, d.n), vel: 0.18, notes: SP }), { gap: 0.09 });
+      a.on('star', (a, d, t) => { a.whoosh(t, { dur: 0.7, vel: 0.3 }); a.chime(t + 0.05, 'C6', 3, { vel: 0.4 }); });
+      a.on('gift', (a, d, t) => { a.thud(t, { vel: 0.5, freq: 150 - d.i * 12 }); a.pop(t + 0.03, { freq: 380 + d.i * 60, vel: 0.25 }); });
+      a.on('letter', (a, d, t) => a.tick(t, { vel: 0.3, bell: d.last, note: 'C7' }));
+    }
+  });
 
   requestAnimationFrame(frame);
 })();

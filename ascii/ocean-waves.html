@@ -99,6 +99,7 @@
   <div class="hud" id="hud" aria-hidden="true"></div>
   <div class="hint" id="hint"></div>
 
+<script src="ascii-audio.js"></script>
 <script>
 (() => {
   'use strict';
@@ -115,6 +116,7 @@
   const FOAM_TAU = 1.4;     // seconds for foam to fade to 1/e
   const FOAM_THR = 0.22;    // crest curvature that starts to break
   const FOAM_GAIN = 7;
+  const CRASH_RATE = 0.12;  // foam coverage growth per second of sea time that sounds a crash
   const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
   // Moonlight from high up beyond the horizon (upper back), as seen from the camera.
   const LX0 = 0.1, LY0 = 0.5, LZ0 = 0.86;
@@ -248,7 +250,7 @@
   }
 
   // ---------- Sea: column-wise height-field ray march on the character grid ----------
-  let t = T_START, swells = 0, foamCov = 0, intensity = 0;
+  let t = T_START, swells = 0, foamCov = 0, intensity = 0, crest = 0; // crest: highest near swell (for the surf sound)
 
   function buildSea(dt) {
     const ph = ((t % CYCLE) + CYCLE) % CYCLE / CYCLE;
@@ -265,7 +267,7 @@
     const midC = cols >> 1;
     const half = W / 2;
     nT = 0; swells = 0;
-    let foamN = 0, seaN = 0;
+    let foamN = 0, seaN = 0, crestN = -1;
 
     for (let c = 0; c < cols; c++) {
       const px = (c + 0.5) * cw - half;
@@ -288,6 +290,7 @@
           h += g; hx += gp * KX[w]; hz += gp * KZ[w];
           if (GROW[w]) K -= gpp * KK[w]; // only swells break; chop curvature is noise
         }
+        if (c === midC && z < 14 && h > crestN) crestN = h;
 
         // Foam lives at fixed sea positions: steep crests deposit it, then it fades as waves pass.
         const fi = i * cols + c;
@@ -359,6 +362,7 @@
       }
     }
     foamCov = seaN ? Math.min(1, foamN / seaN * 4) : 0;
+    crest = crestN;
   }
 
   // Bucket by colour so fillStyle changes once per colour, not once per cell.
@@ -445,14 +449,27 @@
     const sdt = paused ? 0 : dt * TIME_SCALE;
     if (!paused) t += sdt;
     if (!paused || dirty) { render(sdt); dirty = false; frames++; }
+    if (!paused) soundCues(sdt);
     if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
     if (now - hudT >= 250) updateHud(now);
     requestAnimationFrame(frame);
   }
 
-  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); }
+  // ---------- Sound (ascii-audio.js) ----------
+  const music = (fn, ...a) => window.AsciiAudio && AsciiAudio[fn](...a);
+  // A crash when foam spreads fast (a big crest breaking); `foamRate` is coverage per second.
+  let foamPrev = 0, foamRate = 0, armed = true;
+  function soundCues(sdt) {
+    if (!window.AsciiAudio || sdt <= 0) return;
+    foamRate += ((foamCov - foamPrev) / sdt - foamRate) * Math.min(1, sdt * 6);
+    foamPrev = foamCov;
+    if (armed && foamRate > CRASH_RATE) { armed = false; music('event', 'crash', { v: intensity }); }
+    else if (!armed && foamRate < CRASH_RATE * 0.3) armed = true;
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
   // Reset the sea state: back to the calm start of the cycle with no foam.
-  function replay() { t = T_START; if (FOAM) FOAM.fill(0); paused = false; dirty = true; }
+  function replay() { t = T_START; if (FOAM) FOAM.fill(0); paused = false; dirty = true; music('resume'); music('restart'); }
 
   addEventListener('resize', () => { needResize = true; });
   addEventListener('keydown', e => {
@@ -478,8 +495,69 @@
   // Touch screens have no keyboard, and the full hint would not fit on a phone.
   const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
   hintEl.textContent = touch ? (zh ? '點擊暫停 · 雙擊重設海況' : 'tap to pause · double-tap to reset the sea')
-                             : (zh ? '空白鍵 暫停 · R 重設 · 點擊暫停 · 雙擊重設'
-                                   : 'Space pause · R reset · click to pause · double-click to reset');
+                             : (zh ? '空白鍵 暫停 · R 重設 · M 音樂 · 點擊暫停 · 雙擊重設'
+                                   : 'Space pause · R reset · M music · click to pause · double-click to reset');
+
+  // Sound: a soundscape more than a score. Endless surf from filtered noise that swells with
+  // each near crest, a crash of foam when a big wave breaks, a distant wind, and on top a very
+  // sparse, calm original melody (celesta and bell on D major pentatonic) over a soft pad. 60 bpm.
+  if (window.AsciiAudio) AsciiAudio.init({
+    bpm: 60, master: 0.9, reverb: 0.35, reverbTime: 4.5,
+    build(a) {
+      const c = a.ctx, N = AsciiAudio.notes, LOOP = 64;
+      // Soft pink-ish noise (one-pole filtered white), 4 s, looped.
+      const len = c.sampleRate * 4, buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
+      let b0 = 0, b1 = 0;
+      for (let i = 0; i < len; i++) {
+        const w = Math.random() * 2 - 1;
+        b0 = 0.97 * b0 + 0.03 * w; b1 = 0.6 * b1 + 0.4 * w;
+        d[i] = b0 * 3.2 + b1 * 0.35;
+      }
+      // An endless noise layer: source -> filter -> gain -> (pan) -> sfx bus, so replays never cut it.
+      function layer(type, f, q, pan, wet) {
+        const src = c.createBufferSource(), fl = c.createBiquadFilter(), g = c.createGain();
+        src.buffer = buf; src.loop = true;
+        fl.type = type; fl.frequency.value = f; fl.Q.value = q; g.gain.value = 0;
+        src.connect(fl); fl.connect(g); g.connect(a._out({ bus: 'sfx', pan }, wet));
+        src.start(a.time(0), Math.random() * 3.5);
+        return { fl, g };
+      }
+      const surfL = layer('lowpass', 500, 0.5, -0.45, 0.25), surfR = layer('lowpass', 500, 0.5, 0.45, 0.25);
+      const wash = layer('bandpass', 2400, 0.7, 0.1, 0.35);
+      const wind = layer('bandpass', 700, 1.6, -0.2, 0.5);
+      // Wind: a slow wandering whistle in the distance.
+      const lfo = c.createOscillator(), lg = c.createGain();
+      lfo.frequency.value = 0.07; lg.gain.value = 260;
+      lfo.connect(lg); lg.connect(wind.fl.frequency); lfo.start(a.time(0));
+
+      // Follow the sea four times a beat: near crest height drives the whoosh, foam the hiss.
+      a.every(0.25, (tt, k) => {
+        const sw = clamp((crest + 0.2) / 1.6, 0, 1), I = intensity;
+        const lvl = 0.05 + 0.11 * I + 0.22 * sw * sw, cut = 260 + 400 * I + 1500 * sw * sw;
+        surfL.g.gain.setTargetAtTime(lvl, tt, 0.35); surfR.g.gain.setTargetAtTime(lvl * (0.85 + 0.15 * Math.sin(k * 0.21)), tt, 0.4);
+        surfL.fl.frequency.setTargetAtTime(cut, tt, 0.35); surfR.fl.frequency.setTargetAtTime(cut * 1.1, tt, 0.4);
+        wash.g.gain.setTargetAtTime(0.006 + 0.04 * foamCov + 0.016 * sw, tt, 0.5);
+        wind.g.gain.setTargetAtTime(0.03 + 0.016 * Math.sin(k * 0.04) + 0.012 * I, tt, 1.5);
+      });
+
+      // Melody: two calm phrases, one note every 2-4 beats, long ringing tails.
+      const tune = N('r:2 A5:2 F#5:4 | E5:2 D5:2 r:4 | B4:2 D5:2 E5:4 | r:4 A4:4 | ' +
+                     'r:2 F#5:2 A5:3 B5:1 | A5:4 r:4 | E5:2 F#5:2 D5:4 | r:8');
+      a.part(tune, (tt, e, a) => {
+        a.celesta(tt, e.note, 3.5, { vel: 0.6, wet: 0.65, pan: 0.15 });
+        a.bell(tt + 0.01, e.note, 4, { vel: 0.16, wet: 0.8, pan: -0.15 });
+      }, { length: LOOP });
+      // Soft pad, one chord per 8 beats: Dadd9, Bm7, Gmaj7, Asus4 (twice).
+      const PROG = [['D3', 'A3', 'E4', 'F#4'], ['B2', 'F#3', 'A3', 'D4'], ['G2', 'D3', 'F#3', 'B3'], ['A2', 'D3', 'E3', 'A3']];
+      a.every(8, (tt, k) => a.pad(tt, PROG[k % 4], 7, { vel: 0.55, attack: 3, release: 4, cutoff: 650, wet: 0.6 }));
+
+      // A breaking crest: a white-noise burst that settles slowly into the surf.
+      a.on('crash', (a, d, t) => {
+        a.noise(t, { dur: 3.2, filter: 'lowpass', freq: 5200, freqEnd: 500, q: 0.5, attack: 0.12,
+          vel: 0.25 + 0.3 * d.v, wet: 0.45, pan: (Math.random() - 0.5) * 0.4, bus: 'sfx' });
+      }, { gap: 3 });
+    }
+  });
 
   requestAnimationFrame(frame);
 })();

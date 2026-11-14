@@ -98,6 +98,7 @@
   <div class="hud" id="hud" aria-hidden="true"></div>
   <div class="hint" id="hint"></div>
 
+<script src="ascii-audio.js"></script>
 <script>
 (() => {
   'use strict';
@@ -851,15 +852,35 @@
       warmed = true;
       for (let i = 0; i < Math.round(T_START * 30); i++) advance(1 / 30);
     }
-    if (!paused) advance(dt);
+    if (!paused) { const t1 = t; advance(dt); soundCues(t1, t); }
     if (!paused || dirty) { render(); dirty = false; frames++; }
     if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
     if (now - hudT >= 250) updateHud(now);
     requestAnimationFrame(frame);
   }
 
-  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); }
-  function replay() { t = 0; clearConf(); clearSmoke(); paused = false; dirty = true; }
+  // ---------- Music (ascii-audio.js) ----------
+  const music = (fn, ...a) => window.AsciiAudio && AsciiAudio[fn](...a);
+  // Fire a sound cue on the frame where the scene clock crosses an animation event.
+  const crossed = (a, b, x) => a < x && x <= b;
+  function soundCues(a, b) {
+    if (!window.AsciiAudio) return;
+    if (b < a) {
+      // The scene looped: the 36-beat score is exactly one loop long, so restart it in step.
+      if (AsciiAudio.state() === 'running') music('restart');
+      a = -1;
+    }
+    for (let k = 0; k < 12; k++) if (crossed(a, b, 0.01 + k * 0.25)) music('event', 'swirl', { k });
+    if (crossed(a, b, T.CANDLE + T.CANDLE_DUR * 0.7)) music('event', 'candle');
+    if (crossed(a, b, T.LIGHT)) music('event', 'light');
+    for (let i = 0; i < NLET; i++) if (crossed(a, b, T.WORDS + i * T.LETTER + T.DROP * 0.6)) music('event', 'letter', { i });
+    if (crossed(a, b, T.CONF)) music('event', 'popper');
+    for (let x = T.CONF + 0.6; x < T.CONF_END; x += 0.7) if (crossed(a, b, x)) music('event', 'tinkle');
+    if (crossed(a, b, T.BLOW)) music('event', 'blow');
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
+  function replay() { t = 0; clearConf(); clearSmoke(); paused = false; dirty = true; music('resume'); music('restart'); }
 
   addEventListener('resize', () => { needResize = true; });
   addEventListener('keydown', e => {
@@ -885,8 +906,77 @@
   // Touch screens have no keyboard, and the full hint would not fit on a phone.
   const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
   hintEl.textContent = touch ? (zh ? '點擊暫停 · 雙擊重播' : 'tap to pause · double-tap to replay')
-                             : (zh ? '空白鍵 暫停 · R 重播 · 點擊暫停 · 雙擊重播'
-                                   : 'Space pause · R replay · click to pause · double-click to replay');
+                             : (zh ? '空白鍵 暫停 · R 重播 · M 音樂 · 點擊暫停 · 雙擊重播'
+                                   : 'Space pause · R replay · M music · click to pause · double-click to replay');
+
+  // Score: "Happy Birthday to You" (public domain) in 3/4 for music box, after an original
+  // 3-bar intro. Oom-pah-pah: bouncy bass on 1, pluck chords on 2 and 3, light shaker.
+  // 36 beats at 1080/11 bpm = 22 s, one scene loop: the song's first downbeat lands as the
+  // flame grows, the words drop in on "birth-day", and the last note rings into the blow-out.
+  if (window.AsciiAudio) AsciiAudio.init({
+    bpm: 1080 / 11, master: 0.9, reverb: 0.25, reverbTime: 2.2,
+    build(a) {
+      const N = AsciiAudio.notes, LOOP = 36, SONG = 8;
+      const tune = N(
+        'C6:.5 E6 G6:1 E6:.5 C6 | A5:.5 C6 F6:1 C6:.5 A5 | B5:.5 D6 F6:1 ' +   // intro (original)
+        'G5:.75 G5:.25 | A5:1 G5 C6 | B5:2 G5:.75 G5:.25 | A5:1 G5 D6 | C6:2 G5:.75 G5:.25 | ' +
+        'G6:1 E6 C6 | B5 A5 F6:.75 F6:.25 | E6:1 C6 D6 | C6:3 | r:3');
+      a.part(tune, (t, e) => {
+        a.musicBox(t, e.note, Math.max(0.8, e.sec * 1.6), { vel: e.beat < SONG ? 0.42 : 0.55 });
+        if (e.beat >= SONG) a.celesta(t, AsciiAudio.transpose(e.note, -12), e.sec * 1.2, { vel: 0.16, pan: -0.2 });
+      }, { length: LOOP });
+
+      // One chord per beat (12 bars of 3).
+      const CH = { C: ['C', 'E', 'G'], F: ['F', 'A', 'C'], G7: ['G', 'B', 'F'], C7: ['C', 'E', 'Bb'] };
+      const BARS = ['C', 'F', 'G7', 'C', 'G7', 'G7', 'C', 'C7', 'F', 'C G7 G7', 'C', 'C'];
+      const PROG = BARS.map(b => (b.indexOf(' ') > 0 ? b : `${b} ${b} ${b}`).split(' ')).flat();
+      const chordAt = beat => CH[PROG[Math.floor(beat % LOOP)]];
+      a.every(1, (t, s) => {
+        const beat = s % LOOP, c = chordAt(beat), pos = beat % 3;
+        if (beat >= 34) return;                                  // let the last chord ring
+        if (pos === 0) a.bass(t, c[0] + '2', a.beats(0.7), { vel: 0.5 });
+        else {
+          [c[0] + '4', c[1] + '4', c[2] + '4'].forEach((n, i) =>
+            a.pluck(t + i * 0.012, n, a.beats(0.45), { vel: pos === 1 ? 0.3 : 0.24, type: 'triangle', pan: 0.25 }));
+          if (pos === 2 && beat > 8) a.bass(t, c[2] + '2', a.beats(0.3), { vel: 0.22 }); // bounce up to the fifth
+        }
+      });
+      // Shaker in 8ths from the song on, accent on the beat.
+      a.every(0.5, (t, s) => {
+        const b = (s * 0.5) % LOOP;
+        if (b >= SONG && b < 33) a.shaker(t, s % 2 ? 0.11 : 0.18, { pan: -0.3 });
+      });
+      a.at(33, t => a.bass(t, 'C2', a.beats(2.5), { vel: 0.35 }));
+
+      // Sound effects in sync with the animation.
+      const SP = AsciiAudio.scale('C6', 'pentatonic', 14), LET = AsciiAudio.scale('C3', 'major', 14);
+      a.on('swirl', (a, d, t) => {
+        if (d.k === 0) a.sweep(t, 2.9, { from: 500, to: 6000, vel: 0.18, bus: 'sfx' });
+        a.sparkle(t, { count: 2, vel: 0.14, notes: [SP[d.k % 10], SP[(d.k % 10) + 2]], spread: 0.07 });
+      }, { gap: 0.1 });
+      a.on('candle', (a, d, t) => { a.pop(t, { freq: 320, vel: 0.5 }); a.thud(t, { freq: 200, vel: 0.2 }); });
+      a.on('light', (a, d, t) => {
+        a.noise(t, { dur: 0.09, filter: 'bandpass', freq: 3200, q: 0.8, vel: 0.55, bus: 'sfx' });       // match strike
+        a.noise(t + 0.03, { dur: 0.22, filter: 'highpass', freq: 5000, vel: 0.22, bus: 'sfx' });
+        a.whoosh(t + 0.08, { dur: 0.7, freq: 250, freqEnd: 1400, vel: 0.32 });                          // flame catches
+        a.noise(t + 0.15, { dur: 1.1, filter: 'lowpass', freq: 900, freqEnd: 250, attack: 0.3, vel: 0.22, bus: 'sfx', wet: 0.2 });
+      });
+      a.on('letter', (a, d, t) => a.boing(t, { freq: AsciiAudio.freq(LET[d.i % LET.length]), vel: 0.24, pan: (d.i % 5) * 0.15 - 0.3 }), { gap: 0.05 });
+      a.on('popper', (a, d, t) => {
+        a.noise(t, { dur: 0.06, filter: 'bandpass', freq: 1400, q: 0.7, vel: 0.45, bus: 'sfx' });        // pop!
+        for (let i = 0; i < 9; i++)                                                                       // crackle
+          a.noise(t + 0.05 + Math.random() * 0.45, { dur: 0.02, filter: 'highpass', freq: 3500 + Math.random() * 3000,
+            vel: 0.18 + Math.random() * 0.14, bus: 'sfx', pan: Math.random() * 1.4 - 0.7 });
+        a.sparkle(t + 0.1, { count: 5, vel: 0.16, notes: SP });
+      });
+      a.on('tinkle', (a, d, t) => a.sparkle(t, { count: 1 + (Math.random() < 0.4), vel: 0.1, notes: SP.slice(5) }), { gap: 0.4 });
+      a.on('blow', (a, d, t) => {
+        a.noise(t, { dur: 0.75, filter: 'bandpass', freq: 1700, freqEnd: 800, q: 0.6, attack: 0.18, vel: 0.42, bus: 'sfx' }); // "fff"
+        ['G6', 'E6', 'C6', 'G5'].forEach((n, i) =>
+          a.bell(t + 0.4 + i * 0.16, n, 2.2, { vel: 0.26 - i * 0.03, bus: 'sfx', wet: 0.5, pan: 0.3 - i * 0.2 }));
+      });
+    }
+  });
 
   requestAnimationFrame(frame);
 })();

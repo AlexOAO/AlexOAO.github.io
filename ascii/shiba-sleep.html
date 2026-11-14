@@ -99,6 +99,7 @@
   <div class="hud" id="hud" aria-hidden="true"></div>
   <div class="hint" id="hint"></div>
 
+<script src="ascii-audio.js"></script>
 <script>
 (() => {
   'use strict';
@@ -1059,15 +1060,34 @@
     const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); // no jumps after a hidden tab
     last = now;
     if (needResize) resize();
-    if (!paused) step(dt);
+    if (!paused) { const t1 = t; step(dt); soundCues(t1, t); }
     if (!paused || dirty) { render(); dirty = false; frames++; }
     if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
     if (now - hudT >= 250) updateHud(now);
     requestAnimationFrame(frame);
   }
 
-  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); }
-  function replay() { resetState(); paused = false; dirty = true; }
+  // ---------- Music (ascii-audio.js) ----------
+  const music = (fn, ...a) => window.AsciiAudio && AsciiAudio[fn](...a);
+  // Fire a sound cue on the frame where the scene clock crosses an animation event.
+  const crossed = (a, b, x) => a < x && x <= b;
+  function soundCues(a, b) {
+    if (!window.AsciiAudio) return;
+    const sa = b - stirT, stirring = sa >= 0 && sa < STIR_LEN + 0.3;
+    if (b > INTRO && !stirring && Math.floor(b * BR_F) > Math.floor(a * BR_F)) music('event', 'breath');
+    if (b >= DREAM_T0) {
+      const t0 = DREAM_T0 + Math.floor((b - DREAM_T0) / DREAM_GAP) * DREAM_GAP;
+      if (crossed(a, b, t0 + 0.05)) music('event', 'bubble', { big: false });
+      if (crossed(a, b, t0 + 0.5)) music('event', 'bubble', { big: true });
+      if (crossed(a, b, t0 + 1.3)) music('event', 'dream');
+      if (crossed(a, b, t0 + DREAM_LEN - 0.6)) music('event', 'dreamPop');
+    }
+    if (crossed(a, b, shootT)) music('event', 'shoot');
+    if (crossed(a, b, stirT + 0.35)) music('event', 'wuf');
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
+  function replay() { resetState(); paused = false; dirty = true; music('resume'); music('restart'); }
   function onDog(x, y) {
     const c0 = (x / cw) | 0, r0 = (y / ch) | 0;
     for (let r = r0 - 1; r <= r0 + 1; r++) for (let c = c0 - 1; c <= c0 + 1; c++) {
@@ -1108,8 +1128,73 @@
   // Touch screens have no keyboard, and the full hint would not fit on a phone.
   const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
   hintEl.textContent = touch ? (zh ? '點狗狗 · 點空白暫停 · 雙擊重播' : 'tap the dog · tap sky to pause · double-tap replay')
-                             : (zh ? '點狗狗叫醒牠 · 空白鍵 暫停 · R 重播 · 雙擊重播'
-                                   : 'click the dog · Space pause · R replay · double-click to replay');
+                             : (zh ? '點狗狗叫醒牠 · 空白鍵 暫停 · R 重播 · M 音樂 · 雙擊重播'
+                                   : 'click the dog · Space pause · R replay · M music · double-click to replay');
+
+
+  // Score: an original lullaby in F major, 3/4 at 66 bpm, 16 bars (48 beats), for music box over
+  // a warm, quiet pad, a soft celesta waltz accompaniment and a low sine bass. Lots of reverb.
+  if (window.AsciiAudio) AsciiAudio.init({
+    bpm: 66, master: 0.78, reverb: 0.5, reverbTime: 4.2,
+    build(a) {
+      const N = AsciiAudio.notes, LOOP = 48;
+      const tune = N(
+        'C5:2 A4:1 | F5:1.5 E5:.5 D5:1 | D5:2 Bb4:1 | C5:3 | ' +
+        'A4:1 C5 F5 | E5:1.5 D5:.5 A4:1 | Bb4:1 D5 F5 | E5:3 | ' +
+        'D5:2 Bb4:1 | C5:1.5 E5:.5 G5:1 | F5:2 C5:1 | D5:1 E5 F5 | ' +
+        'D5:1.5 F5:.5 G5:1 | F5:1.5 A4:.5 C5:1 | E5:2 G4:1 | F5:3');
+      a.part(tune, (t, e) => a.musicBox(t, e.note, Math.max(1.4, e.sec * 2), { vel: 0.5 }), { length: LOOP });
+
+      // One chord per bar (3 beats), 16 bars.
+      const CH = { F: ['F', 'A', 'C'], Bb: ['Bb', 'D', 'F'], C: ['C', 'E', 'G'], Dm: ['D', 'F', 'A'],
+                   Gm: ['G', 'Bb', 'D'], C7: ['C', 'E', 'Bb'] };
+      const PROG = 'F F Bb C F Dm Bb C Gm C F Dm Bb F C7 F'.split(' ');
+      const chordAt = beat => CH[PROG[Math.floor((beat % LOOP) / 3)]];
+
+      // Warm pad and low bass, one per bar.
+      a.every(3, (t, s) => {
+        const c = chordAt(s * 3);
+        a.pad(t, [c[0] + '3', c[1] + '3', c[2] + '4'], a.beats(2.6), { vel: 0.26, attack: 1.2, release: 1.8, cutoff: 650 });
+        a.bass(t, c[0] + '2', a.beats(2.5), { vel: 0.2 });
+      });
+      // Celesta waltz: chord tones on beats 2 and 3, very soft.
+      a.every(1, (t, s) => {
+        if (s % 3 === 0) return;
+        const c = chordAt(s);
+        a.celesta(t, c[s % 3] + '4', a.beats(1.5), { vel: 0.13, pan: s % 3 === 1 ? -0.3 : 0.3 });
+      });
+
+      // Sound effects in sync with the animation.
+      a.on('breath', (a, d, t) => a.noise(t, { dur: 3.2, attack: 1.5, filter: 'bandpass', freq: 650, freqEnd: 420, q: 0.6,
+        vel: 0.16, bus: 'sfx', wet: 0.3 }), { gap: 1 });
+      a.on('bubble', (a, d, t) => a.pop(t, { freq: d.big ? 330 : 520, vel: d.big ? 0.22 : 0.16, wet: 0.4 }));
+      a.on('dream', (a, d, t) => a.chime(t, 'F6', 3.5, { vel: 0.22 }));
+      a.on('dreamPop', (a, d, t) => a.sparkle(t, { count: 3, vel: 0.12, notes: AsciiAudio.scale('F6', 'pentatonic', 8) }));
+      const SH = AsciiAudio.scale('C6', 'pentatonic', 10);
+      a.on('shoot', (a, d, t) => {
+        a.sparkle(t, { count: 6, spread: 0.09, vel: 0.18, notes: SH });
+        a.sweep(t, 1, { from: 2500, to: 7000, vel: 0.08, bus: 'sfx', attack: 0.3 });
+      });
+      // "wuf?": a soft low pitch-bent triangle woof, then a short rising question chirp.
+      const tone = (t, f0, f1, dur, vel) => {
+        const c = a.ctx, g = c.createGain(), lp = c.createBiquadFilter(), o = c.createOscillator();
+        lp.type = 'lowpass'; lp.frequency.value = 1400;
+        o.type = 'triangle';
+        o.frequency.setValueAtTime(f0, t);
+        o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(vel, t + 0.02);
+        g.gain.setTargetAtTime(0, t + dur * 0.6, dur * 0.25);
+        o.connect(lp); lp.connect(g); g.connect(a._out({ bus: 'sfx', pan: 0.15 }, 0.35));
+        o.start(t); o.stop(t + dur * 2 + 0.2);
+      };
+      a.on('wuf', (a, d, t) => {
+        tone(t, 330, 190, 0.16, 0.16);
+        a.noise(t, { dur: 0.12, filter: 'bandpass', freq: 500, q: 1, vel: 0.08, bus: 'sfx', wet: 0.3 });
+        tone(t + 0.22, 240, 380, 0.2, 0.12);
+      }, { gap: 1 });
+    }
+  });
 
   requestAnimationFrame(frame);
 })();

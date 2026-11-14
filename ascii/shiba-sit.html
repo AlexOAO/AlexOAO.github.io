@@ -99,6 +99,7 @@
   <div class="hud" id="hud" aria-hidden="true"></div>
   <div class="hint" id="hint"></div>
 
+<script src="ascii-audio.js"></script>
 <script>
 (() => {
   'use strict';
@@ -959,9 +960,11 @@
     last = now;
     if (needResize) resize();
     if (!paused) {
+      const t1 = t, w1 = wagPh;
       t += dt; skyT += dt;
       animate(dt);
       updateDust(dt); updateHearts(dt);
+      soundCues(t1, t, w1);
     }
     if (!paused || dirty) { render(); dirty = false; frames++; }
     if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
@@ -969,14 +972,36 @@
     requestAnimationFrame(frame);
   }
 
-  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); }
+  // ---------- Music (ascii-audio.js) ----------
+  const music = (fn, ...a) => window.AsciiAudio && AsciiAudio[fn](...a);
+  // Fire a sound cue on the frame where the scene clock crosses an animation event.
+  const crossed = (a, b, x) => a < x && x <= b;
+  function soundCues(a, b, w1) {
+    if (!window.AsciiAudio) return;
+    for (let k = 0; k < 14; k++) if (crossed(a, b, T.FLY + k * 0.15)) music('event', 'land', { k });
+    if (crossed(a, b, T.EARS)) music('event', 'ear', { i: 0 });
+    if (crossed(a, b, T.EARS + 0.07)) music('event', 'ear', { i: 1 });
+    if (crossed(a, b, T.EYES + 0.75)) music('event', 'blink');
+    if (b >= T.IDLE) {
+      const c0 = (a - T.IDLE) % T.CYCLE, c1 = (b - T.IDLE) % T.CYCLE;
+      for (let i = 0; i < BLINKS.length; i++)
+        if (c1 >= c0 ? crossed(c0, c1, BLINKS[i]) : BLINKS[i] <= c1) music('event', 'blink');
+    }
+    // Excited tail: a shaker on every swing while the pat lasts.
+    if (happy > 0.25 && Math.floor(wagPh / Math.PI) !== Math.floor(w1 / Math.PI))
+      music('event', 'wag', { v: happy, side: Math.floor(wagPh / Math.PI) & 1 });
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
   function replay() {
     t = T_START; patT = -99; hYaw = 0.05; hPitch = 0; hRoll = 0; wagF = WAG_F;
     for (let i = 0; i < NH; i++) hearts[i * 8 + 4] = 1e9;
     paused = false; animate(0); dirty = true;
+    music('resume'); music('restart');
   }
   function pat() {
     patT = t; pats++; paused = false; spawnHearts(); dirty = true; updateHud(performance.now());
+    music('resume'); music('event', 'pat', { n: pats });
   }
 
   // Did this point land on the dog in the last frame? (3x3 cells, so small fingers still hit)
@@ -1037,8 +1062,67 @@
   // Touch screens have no keyboard, and the full hint would not fit on a phone.
   const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
   hintEl.textContent = touch ? (zh ? '點柴犬摸摸 · 點擊暫停 · 雙擊重播' : 'tap the dog to pat · tap to pause · double-tap to replay')
-                             : (zh ? '點柴犬摸摸 · 空白鍵 暫停 · R 重播 · 點空白處暫停 · 雙擊重播'
-                                   : 'click the dog to pat · Space pause · R replay · click to pause · double-click to replay');
+                             : (zh ? '點柴犬摸摸 · 空白鍵 暫停 · R 重播 · M 音樂 · 點空白處暫停 · 雙擊重播'
+                                   : 'click the dog to pat · Space pause · R replay · M music · click to pause · double-click to replay');
+
+  // Score: an original bouncy pet theme in F major, 16 bars of 4/4 (AABA-ish, 64-beat loop).
+  // Pizzicato pluck melody, ukulele-style strums, sine bass, soft kick and shaker.
+  if (window.AsciiAudio) AsciiAudio.init({
+    bpm: 112, master: 0.8, reverb: 0.2, reverbTime: 1.8,
+    build(a) {
+      const N = AsciiAudio.notes, LOOP = 64;
+      const A1 = 'C5:.5 F5 A5 F5 C6:1 A5 | D5:.5 F5 A5 D6 C6:1 r | Bb4:.5 D5 F5 Bb5 A5 G5 F5:1 | E5:.5 G5 C6:1 Bb5:.5 A5 G5:1 | ';
+      const A2 = 'C5:.5 F5 A5 F5 C6:1 A5 | D6:.5 C6 A5 F5 D5:1 F5 | G5:.5 A5 Bb5 G5 E5 G5 C6:1 | F5:1 r:.5 C5 F5:1 r | ';
+      const B = 'D6:1.5 C6:.5 Bb5 A5 Bb5:1 | A5:1.5 G5:.5 F5 G5 A5:1 | Bb5:.5 A5 G5 A5 Bb5:1 D6 | C6:2 G5:.5 A5 Bb5 G5 | ' +
+                'D6:1.5 C6:.5 Bb5 A5 Bb5:1 | A5:.5 C6 F6:1 E6:.5 D6 C6:1 | Bb5:.5 A5 G5 Bb5 A5 G5 E5:1 | F5:1 A5:.5 C6 F6:1 r';
+      const tune = N(A1 + A2 + B);
+      a.part(tune, (t, e) => {
+        a.pluck(t, e.note, Math.min(0.35, e.sec * 0.8), { vel: 0.55, type: 'triangle', pan: -0.1 });
+        if (e.beat >= 32) a.celesta(t, e.note, 0.4, { vel: 0.14, pan: 0.2 });       // a little sparkle in the B part
+      }, { length: LOOP });
+
+      // Chords, one per half bar.
+      const CH = { F: ['F4', 'A4', 'C5'], Dm: ['D4', 'F4', 'A4'], Bb: ['Bb3', 'D4', 'F4'], C7: ['C4', 'E4', 'Bb4'],
+                   Gm: ['G3', 'Bb3', 'D4'], Gm7: ['G3', 'Bb3', 'F4'], C: ['C4', 'E4', 'G4'], FA: ['A3', 'C4', 'F4'] };
+      const ROOT = { F: 'F2', Dm: 'D2', Bb: 'Bb1', C7: 'C2', Gm: 'G1', Gm7: 'G1', C: 'C2', FA: 'A1' };
+      const BARS = ['F', 'Dm', 'Bb', 'C7', 'F', 'Dm', 'Gm7 C7', 'F', 'Bb', 'F', 'Gm', 'C', 'Bb', 'FA', 'Gm7 C7', 'F'];
+      const PROG = BARS.map(b => (b.indexOf(' ') > 0 ? b : b + ' ' + b).split(' ')).flat();
+      const chordAt = beat => PROG[Math.floor((beat % LOOP) / 2)];
+      // Ukulele strum in 8ths: D . D U . U D U, down strums low-to-high, up strums high-to-low.
+      const STRUM = [0.34, 0, 0.26, 0.18, 0, 0.2, 0.26, 0.16];
+      a.every(0.5, (t, s) => {
+        const v = STRUM[s % 8];
+        if (!v) return;
+        const ns = CH[chordAt(s * 0.5)], up = s % 2 === 1, order = up ? ns.slice().reverse() : ns;
+        order.forEach((n, i) => a.pluck(t + i * 0.014, n, a.beats(0.4), { vel: v, type: 'triangle', pan: 0.3 }));
+      });
+      // Bass on 1 and 3 (root, then the fifth), soft kick on 1 and 3, shaker in 8ths.
+      a.every(2, (t, s) => {
+        const r = ROOT[chordAt(s * 2)];
+        a.bass(t, s % 2 ? AsciiAudio.transpose(r, 7) : r, a.beats(0.8), { vel: 0.5 });
+        a.kick(t, s % 2 ? 0.28 : 0.36);
+      });
+      a.every(0.5, (t, s) => a.shaker(t, s % 4 === 2 ? 0.18 : 0.1, { pan: -0.3 }));
+
+      // Sound effects in sync with the animation.
+      const UP = AsciiAudio.scale('F5', 'pentatonic', 10);
+      a.on('land', (a, d, t) => a.pop(t, { freq: 260 + d.k * 35, vel: 0.22, pan: (d.k % 3 - 1) * 0.4 }), { gap: 0.06 });
+      a.on('ear', (a, d, t) => a.boing(t, { freq: d.i ? 392 : 330, vel: d.i ? 0.28 : 0.36, pan: d.i ? 0.3 : -0.3 }));
+      a.on('blink', (a, d, t) => a.tick(t, { vel: 0.07 }), { gap: 0.15 });
+      a.on('pat', (a, d, t) => {
+        // Happy two-note "yip": a quick upward chirp plus a short triangle tone, twice, a little higher each pat.
+        const k = (d.n - 1) % 4, f = AsciiAudio.freq;
+        [[0, UP[k + 2]], [0.12, UP[k + 4]]].forEach(([dt, n], i) => {
+          a.pop(t + dt, { freq: f(n) * 0.55, vel: 0.26 });
+          a.lead(t + dt, n, 0.07 + i * 0.03, { vel: 0.3, bus: 'sfx', wet: 0.15 });
+        });
+        a.heart(t + 0.22, { note: UP[k + 3], vel: 0.26 });
+        UP.slice(k + 3, k + 7).forEach((n, i) =>                                    // rising sparkle
+          a.bell(t + 0.3 + i * 0.07, AsciiAudio.transpose(n, 12), 0.9, { vel: 0.12, bus: 'sfx', wet: 0.45, pan: i * 0.2 - 0.3 }));
+      }, { gap: 0.12 });
+      a.on('wag', (a, d, t) => a.shaker(t, 0.1 + 0.1 * d.v, { bus: 'sfx', pan: d.side ? 0.35 : -0.35, freq: 5500 }), { gap: 0.07 });
+    }
+  });
 
   animate(0);
   requestAnimationFrame(frame);

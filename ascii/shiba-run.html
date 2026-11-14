@@ -100,6 +100,7 @@
   <div class="hud" id="hud" aria-hidden="true"></div>
   <div class="hint" id="hint"></div>
 
+<script src="ascii-audio.js"></script>
 <script>
 (() => {
   'use strict';
@@ -1048,6 +1049,7 @@
       if (bfT > 0) return;
       bfState = 1; bfAge = 0; bfX = W + bfW; bfVX = -(0.22 * W + 30);
       bfBase = headSY - S * 0.3; bfY = bfBase; bfYellow = Math.random() < 0.5 ? 1 : 0;
+      music('event', 'butterfly');
       return;
     }
     bfAge += dt;
@@ -1189,10 +1191,13 @@
   // ---------- Loop, HUD, controls ----------
   let paused = false, last = performance.now();
   let frames = 0, fpsT = last, fps = 0, hudT = 0;
+  // Music (ascii-audio.js): no-op when the engine is missing; sound cues fire where the motion happens.
+  const music = (fn, ...a) => window.AsciiAudio && AsciiAudio[fn](...a);
 
   function jump() {
     if (jt >= 0) return;
     jt = 0; jumps++;
+    music('event', 'jump');
     puff(pawX[2], LEG_Z, 5, 1);
     puff(pawX[3], -LEG_Z, 4, 1);
   }
@@ -1207,12 +1212,16 @@
       if (jt >= JUMP_DUR) {
         jt = -1;
         for (let l = 0; l < 4; l++) puff(pawX[l], (l & 1) ? -LEG_Z : LEG_Z, 4, 1.3);
+        music('event', 'land');
       }
     }
     pose(dt);
     if (jt < 0) {
       for (let l = 0; l < 4; l++) {
-        if (legP[l] < lastP[l] - 0.5) puff(pawX[l], (l & 1) ? -LEG_Z : LEG_Z, reduced ? 1 : 4, (l & 1) ? 0.7 : 1);
+        if (legP[l] < lastP[l] - 0.5) {
+          puff(pawX[l], (l & 1) ? -LEG_Z : LEG_Z, reduced ? 1 : 4, (l & 1) ? 0.7 : 1);
+          music('event', 'step', { l });
+        }
       }
     }
     for (let l = 0; l < 4; l++) lastP[l] = legP[l];
@@ -1244,12 +1253,13 @@
     requestAnimationFrame(frame);
   }
 
-  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); }
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
   function replay() {
     t = 0; skyT = 0; gph = 0; worldU = 0; dist = 0; jumps = 0; jt = -1; nDust = 0;
     bfState = 0; bfT = BF_FIRST; paused = false; dirty = true;
     pose(1);
     for (let l = 0; l < 4; l++) lastP[l] = legP[l];
+    music('resume'); music('restart');
   }
 
   addEventListener('resize', () => { needResize = true; });
@@ -1279,7 +1289,93 @@
   // Touch screens have no keyboard, and the full hint would not fit on a phone.
   const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
   hintEl.textContent = touch ? (zh ? '點擊跳躍 · 雙擊重新開始' : 'tap to jump · double-tap to restart')
-                             : (zh ? '點擊跳躍 · 空白鍵暫停 · R 重新開始' : 'tap to jump · Space pause · R restart');
+                             : (zh ? '點擊跳躍 · 空白鍵暫停 · R 重新開始 · M 音樂' : 'tap to jump · Space pause · R restart · M music');
+
+
+  // Score: an original sunny gallop in D major, 132 bpm, 16-bar (64-beat) loop. Plucked lead,
+  // glockenspiel counter line, driving octave bass, kick / snare / hat groove and a soft pad.
+  if (window.AsciiAudio) AsciiAudio.init({
+    bpm: 132, master: 0.78, reverb: 0.18, reverbTime: 1.8,
+    build(a) {
+      const N = AsciiAudio.notes, LOOP = 64;
+      const tune = N(
+        'F#5:.5 A5 D6:1 A5:.5 F#5 A5:1 | E5:.5 A5 C#6:1 B5:.5 A5 E5:1 | ' +
+        'F#5:.5 B5 D6:1 C#6:.5 B5 F#5:1 | G5:.5 A5 B5 G5 A5:2 | ' +
+        'F#5:.5 A5 D6:1 E6:.5 D6 C#6 B5 | A5:1 E5:.5 F#5 G5:1 E5 | ' +
+        'B5:.5 A5 G5 F#5 E5:1 G5 | E5:1 C#5 D5:2 | ' +
+        'B5:.5 B5 D6:1 B5:.5 A5 G5:1 | C#6:.5 C#6 E6:1 C#6:.5 B5 A5:1 | ' +
+        'A5:.5 F#5 A5 C#6 E6:1 C#6 | D6:.5 C#6 B5 A5 B5:2 | ' +
+        'G5:.5 B5 D6:1 E6:.5 D6 B5:1 | A5:.5 C#6 E6:1 F#6 E6 | ' +
+        'D6:.5 C#6 B5 A5 G5 A5 B5 C#6 | D6:2 r:2');
+      a.part(tune, (t, e) => a.pluck(t, e.note, Math.max(0.25, e.sec * 1.2), { vel: 0.5, pan: 0.1 }), { length: LOOP });
+
+      // One chord per half bar (2 beats), 32 slots per loop.
+      const CH = { D: ['D', 'F#', 'A'], A: ['A', 'C#', 'E'], Bm: ['B', 'D', 'F#'], G: ['G', 'B', 'D'], 'F#m': ['F#', 'A', 'C#'] };
+      const PROG = ('D D A A Bm Bm G G D D A A G G A D ' +
+                    'G G A A F#m F#m Bm Bm G G A A G A D D').split(' ');
+      const chordAt = beat => CH[PROG[Math.floor((beat % LOOP) / 2)]];
+
+      // Glockenspiel counter line: syncopated chord tones up high, answering the lead.
+      const GL = [null, null, 2, 1, null, 2, null, 0];
+      a.every(0.5, (t, s) => {
+        const k = GL[s % 8];
+        if (k == null || (s * 0.5) % LOOP >= LOOP - 2) return;
+        const c = chordAt(s * 0.5);
+        a.bell(t, c[k] + (k === 0 ? '7' : '6'), 0.7, { vel: 0.16, pan: -0.35, wet: 0.3 });
+      });
+      // Driving octave bass in 8ths and a soft pad on each chord.
+      a.every(0.5, (t, s) => {
+        const c = chordAt(s * 0.5);
+        a.bass(t, c[0] + (s % 4 === 3 ? '3' : '2'), a.beats(0.4), { vel: s % 2 ? 0.34 : 0.46 });
+      });
+      a.every(2, (t, s) => {
+        const c = chordAt(s * 2);
+        a.pad(t, [c[0] + '4', c[1] + '4', c[2] + '4'], a.beats(1.7), { vel: 0.22, attack: 0.08, release: 0.3, cutoff: 1500 });
+      });
+      // Drums: four-on-the-floor kick, backbeat snare, open 8th hats; a snare fill into the loop.
+      a.every(1, (t, s) => {
+        const b = s % LOOP;
+        a.kick(t, b % 4 === 0 ? 0.6 : 0.5);
+        if (b % 2 === 1 && b < LOOP - 2) a.snare(t, 0.36);
+      });
+      a.every(0.5, (t, s) => {
+        const b = (s * 0.5) % LOOP;
+        a.hat(t, s % 2 ? 0.34 : 0.16, { pan: 0.25 });
+        if (b >= LOOP - 2) a.snare(t, 0.16 + 0.07 * (b - (LOOP - 2)) * 2);
+      });
+
+      // Sound effects in sync with the animation.
+      const yip = t => {   // a short bright "yip": a quick rising-then-falling chirp
+        const c = a.ctx, g = c.createGain(), o = c.createOscillator();
+        g.connect(a._out({ bus: 'sfx', pan: 0.15 }, 0.12));
+        o.type = 'triangle';
+        o.frequency.setValueAtTime(820, t);
+        o.frequency.exponentialRampToValueAtTime(1480, t + 0.04);
+        o.frequency.exponentialRampToValueAtTime(1050, t + 0.13);
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.14, t + 0.01);
+        g.gain.setTargetAtTime(0, t + 0.07, 0.03);
+        o.connect(g); o.start(t); o.stop(t + 0.3);
+      };
+      a.on('jump', (a, d, t) => {
+        a.boing(t, { freq: 240, vel: 0.6 });
+        a.whoosh(t, { dur: 0.45, vel: 0.36, freq: 500, freqEnd: 2600 });
+        yip(t + 0.03);
+      }, { gap: 0.3 });
+      a.on('land', (a, d, t) => {
+        a.thud(t, { vel: 0.45, freq: 115 });
+        a.noise(t, { dur: 0.22, filter: 'lowpass', freq: 900, freqEnd: 300, vel: 0.14, bus: 'sfx', wet: 0.08 });
+      }, { gap: 0.3 });
+      a.on('step', (a, d, t) => a.noise(t, { dur: 0.035, filter: 'bandpass', freq: 900 + 500 * Math.random(), q: 1.4,
+        vel: 0.12, bus: 'sfx', wet: 0, pan: d.l & 1 ? -0.2 : 0.2 }), { gap: 0.07 });
+      const SP = AsciiAudio.scale('D6', 'pentatonic', 10);
+      a.on('butterfly', (a, d, t) => {
+        a.sparkle(t, { count: 5, spread: 0.07, vel: 0.13, notes: SP });
+        for (let i = 0; i < 8; i++)   // fluttering wings: soft airy ticks
+          a.noise(t + i * 0.045, { dur: 0.03, filter: 'highpass', freq: 4500, vel: 0.06 * (1 - i / 10), bus: 'sfx', wet: 0.2 });
+      });
+    }
+  });
 
   requestAnimationFrame(frame);
 })();

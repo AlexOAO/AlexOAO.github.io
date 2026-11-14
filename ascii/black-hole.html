@@ -99,6 +99,7 @@
   <div class="hud" id="hud" aria-hidden="true"></div>
   <div class="hint" id="hint"></div>
 
+<script src="ascii-audio.js"></script>
 <script>
 (() => {
   'use strict';
@@ -471,9 +472,11 @@
     last = now;
     if (needResize) resize();
     if (!paused) {
+      const t1 = t;
       t += dt; skyT += dt; rt += dt * SWIRL;
       if (reduced) { if (t > T.FADE) t = T.FADE; }   // reduced motion: hold the disk, no loop
       else if (t >= T.END) { t = 0; rt = 0; }        // stars keep twinkling across the loop
+      soundCues(t1, t);
     }
     if (!paused || dirty) { render(); dirty = false; frames++; }
     if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
@@ -481,8 +484,20 @@
     requestAnimationFrame(frame);
   }
 
-  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); }
-  function replay() { t = T_START; rt = T_START; paused = false; dirty = true; }
+  // ---------- Music (ascii-audio.js) ----------
+  const music = (fn, ...a) => window.AsciiAudio && AsciiAudio[fn](...a);
+  // Fire a sound cue on the frame where the scene clock crosses an animation event.
+  const crossed = (a, b, x) => a < x && x <= b;
+  function soundCues(a, b) {
+    if (!window.AsciiAudio) return;
+    if (crossed(a, b, T.RING)) music('event', 'ring');
+    if (crossed(a, b, T.THICK)) music('event', 'form');
+    if (crossed(a, b, T.SPREAD)) music('event', 'spread');
+    if (crossed(a, b, T.FADE)) music('event', 'fade');
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
+  function replay() { t = T_START; rt = T_START; paused = false; dirty = true; music('resume'); music('restart'); }
 
   addEventListener('resize', () => { needResize = true; });
   addEventListener('keydown', e => {
@@ -508,8 +523,101 @@
   // Touch screens have no keyboard, and the full hint would not fit on a phone.
   const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
   hintEl.textContent = touch ? (zh ? '點擊暫停 · 雙擊重播' : 'tap to pause · double-tap to replay')
-                             : (zh ? '空白鍵 暫停 · R 重播 · 點擊暫停 · 雙擊重播'
-                                   : 'Space pause · R replay · click to pause · double-click to replay');
+                             : (zh ? '空白鍵 暫停 · R 重播 · M 音樂 · 點擊暫停 · 雙擊重播'
+                                   : 'Space pause · R replay · M music · click to pause · double-click to replay');
+
+  // Score: original deep-space ambient in E minor at 60 bpm (one beat = one second of scene
+  // time). A slowly beating sub drone, organ-like chords whose filter opens as the disk heats up,
+  // a slow swell while the disk is full, a faint high shimmer and a quiet clock tick on each beat.
+  if (window.AsciiAudio) AsciiAudio.init({
+    bpm: 60, master: 0.8, reverb: 0.4, reverbTime: 5,
+    build(a) {
+      const c = a.ctx, F = AsciiAudio.freq;
+      // Scene state `n` beats ahead of now (the score schedules a little early and plays long notes).
+      const sceneAt = n => reduced ? Math.min(t + n, T.FADE) : (t + n) % T.END;
+      const formAt = s => smooth((s - T.THICK) / (T.HOLD - T.THICK));
+      const fadeAt = s => reduced ? 0 : smooth((s - T.FADE) / T.FADE_DUR);
+
+      // Organ-like voice: sine, detuned triangle, soft 2nd and 3rd partials per note, through a
+      // lowpass that glides from cut0 to cut1 across the note. Slow linear attack and release.
+      function organ(t, ns, dur, o) {
+        const out = a._out(o, o.wet), lp = c.createBiquadFilter(), g = c.createGain();
+        lp.type = 'lowpass'; lp.Q.value = 0.7;
+        lp.frequency.setValueAtTime(o.cut0, t);
+        lp.frequency.linearRampToValueAtTime(o.cut1, t + dur);
+        lp.connect(g); g.connect(out);
+        const peak = o.vel * 0.1 / Math.sqrt(ns.length), end = t + dur + o.release;
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(peak, t + o.attack);
+        g.gain.setValueAtTime(peak, t + dur);
+        g.gain.linearRampToValueAtTime(0, end);
+        for (const n of ns) {
+          const f = F(n);
+          [['sine', 1, 1, 0], ['triangle', 1, 0.45, 6], ['sine', 2, 0.22, -5], ['sine', 3, 0.08, 4]].forEach(([type, r, amp, det]) => {
+            const og = c.createGain(), osc = c.createOscillator();
+            og.gain.value = amp; og.connect(lp);
+            osc.type = type; osc.frequency.value = f * r; osc.detune.value = det;
+            osc.connect(og); osc.start(t); osc.stop(end + 0.05);
+          });
+        }
+      }
+
+      // Sub drone on E1 with a second sine 0.18 Hz sharp (a slow beat), a fifth and a faint
+      // triangle octave so small speakers hear it. It runs for good on the sfx bus, so a replay
+      // does not cut it; its level follows the heat.
+      const drone = c.createGain(), dlp = c.createBiquadFilter();
+      dlp.type = 'lowpass'; dlp.frequency.value = 220;
+      dlp.connect(drone); drone.connect(a._out({ bus: 'sfx' }, 0.15));
+      drone.gain.value = 0;
+      const E1 = F('E1');
+      [['sine', E1, 1], ['sine', E1 + 0.18, 0.8], ['sine', F('B1'), 0.25], ['triangle', E1 * 2, 0.12]].forEach(([type, f, amp]) => {
+        const og = c.createGain(), osc = c.createOscillator();
+        og.gain.value = amp; og.connect(dlp);
+        osc.type = type; osc.frequency.value = f; osc.connect(og); osc.start(a.time(0));
+      });
+      a.every(1, tt => {
+        const s = sceneAt(0.5), k = formAt(s) * (1 - 0.5 * fadeAt(s));
+        drone.gain.setTargetAtTime(0.1 + 0.06 * k, tt, 1.2);
+      });
+
+      // Chords, one per 8 beats, overlapping: Em(add9), Cmaj7, Am(add9), Bsus4.
+      const PROG = [['E3', 'B3', 'F#4', 'G4'], ['C3', 'G3', 'B3', 'E4'], ['A2', 'E3', 'B3', 'C4'], ['B2', 'F#3', 'B3', 'E4']];
+      a.every(8, (tt, k) => {
+        const s0 = sceneAt(0), s1 = sceneAt(8), fd = fadeAt(s0);
+        organ(tt, PROG[k % 4], 8, {
+          vel: 0.55 * (1 - 0.6 * fd), attack: 3, release: 4, wet: 0.55 + 0.4 * fd,
+          cut0: 280 + 1900 * formAt(s0) * (1 - fd), cut1: 280 + 1900 * formAt(s1 < s0 ? 0 : s1) * (1 - fadeAt(s1))
+        });
+      });
+      // Full disk: a slow swell every 4 beats on the top of the chord, an octave up.
+      a.every(4, (tt, k) => {
+        const s = sceneAt(0);
+        if (s < T.HOLD - 0.5 || s >= T.FADE) return;
+        const ch = PROG[Math.floor(k / 2) % 4];
+        organ(tt, [AsciiAudio.transpose(ch[2], 12), AsciiAudio.transpose(ch[3], 12)], 1.8,
+          { vel: 0.3, attack: 1.8, release: 2.4, wet: 0.75, cut0: 1200, cut1: 1800, pan: k % 2 ? 0.25 : -0.25 });
+      });
+      // Faint high shimmer, a little busier while the disk is hot.
+      const SH = ['E6', 'F#6', 'G6', 'B6', 'D7', 'E7'];
+      a.every(0.5, tt => {
+        const s = sceneAt(0), p = 0.05 + 0.2 * formAt(s) * (1 - fadeAt(s));
+        if (Math.random() < p) a.bell(tt, SH[(Math.random() * SH.length) | 0], 3,
+          { vel: 0.07 + 0.05 * Math.random(), wet: 0.9, pan: Math.random() * 1.2 - 0.6 });
+      });
+      // Clock: a filtered click on every beat, tick and tock.
+      a.every(1, (tt, k) => a.noise(tt, { dur: 0.03, filter: 'bandpass', freq: k % 2 ? 2500 : 3300, q: 6,
+        attack: 0.001, vel: 0.3, wet: 0.3, pan: k % 2 ? 0.12 : -0.12 }));
+
+      // Sound effects in sync with the animation.
+      a.on('ring', (a, d, t) => { a.chime(t, 'E6', 4.5, { vel: 0.26 }); a.bell(t + 0.45, 'B5', 5, { vel: 0.14, wet: 0.8, bus: 'sfx' }); });
+      a.on('form', (a, d, t) => a.sweep(t, T.HOLD - T.THICK, { from: 120, to: 2600, q: 2.5, vel: 0.22, wet: 0.6, bus: 'sfx' }));
+      a.on('spread', (a, d, t) => {
+        a.boom(t, { vel: 0.5 });
+        a.noise(t, { dur: 3, filter: 'lowpass', freq: 900, freqEnd: 60, attack: 0.04, vel: 0.22, wet: 0.7, bus: 'sfx' });
+      });
+      a.on('fade', (a, d, t) => { a.bell(t, 'E5', 7, { vel: 0.14, wet: 1, bus: 'sfx' }); a.bell(t + 0.7, 'B4', 7, { vel: 0.1, wet: 1, bus: 'sfx' }); });
+    }
+  });
 
   requestAnimationFrame(frame);
 })();

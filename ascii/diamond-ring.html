@@ -98,6 +98,7 @@
   <div class="hud" id="hud" aria-hidden="true"></div>
   <div class="hint" id="hint"></div>
 
+<script src="ascii-audio.js"></script>
 <script>
 (() => {
   'use strict';
@@ -586,6 +587,7 @@
         gB[slot] = skyT; gL[slot] = 0.35 + Math.random() * 0.5;
         gS[slot] = (k === K_GEM ? 6 : 3) + Math.random() * 5;
         gOn[slot] = 1;
+        music('event', 'glint', { x: gX[slot] / cols * 2 - 1, gem: k === K_GEM });
         break;
       }
     }
@@ -740,7 +742,9 @@
     if (needResize) resize();
     if (!paused) {
       skyT += dt;
+      const t1 = t;
       if (!reduced) { t += dt; if (t >= T.END) { t = 0; clearGlints(); } }
+      soundCues(t1, t);
     }
     if (!paused || dirty) { render(paused ? 0 : dt); dirty = false; frames++; }
     if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
@@ -748,8 +752,21 @@
     requestAnimationFrame(frame);
   }
 
-  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); }
-  function replay() { t = T_START; clearGlints(); paused = false; dirty = true; }
+  // ---------- Music (ascii-audio.js) ----------
+  const music = (fn, ...a) => window.AsciiAudio && AsciiAudio[fn](...a);
+  // Fire a sound cue on the frame where the scene clock crosses an animation event.
+  const crossed = (a, b, x) => a < x && x <= b;
+  function soundCues(a, b) {
+    if (!window.AsciiAudio) return;
+    if (b < a) a = -1;                         // the loop wrapped back to 0
+    if (crossed(a, b, 0.001)) music('event', 'converge');
+    if (crossed(a, b, T.FLASH)) music('event', 'flash');
+    if (crossed(a, b, T.ORBIT)) music('event', 'orbit');
+    if (crossed(a, b, T.FADE)) music('event', 'disperse');
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
+  function replay() { t = T_START; clearGlints(); paused = false; dirty = true; music('resume'); music('restart'); }
 
   addEventListener('resize', () => { needResize = true; });
   addEventListener('keydown', e => {
@@ -775,8 +792,84 @@
   // Touch screens have no keyboard, and the full hint would not fit on a phone.
   const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
   hintEl.textContent = touch ? (zh ? '點擊暫停 · 雙擊重播' : 'tap to pause · double-tap to replay')
-                             : (zh ? '空白鍵 暫停 · R 重播 · 點擊暫停 · 雙擊重播'
-                                   : 'Space pause · R replay · click to pause · double-click to replay');
+                             : (zh ? '空白鍵 暫停 · R 重播 · M 音樂 · 點擊暫停 · 雙擊重播'
+                                   : 'Space pause · R replay · M music · click to pause · double-click to replay');
+
+  // Score (original): a slow waltz in E major, 69 bpm in 3/4. Harp arpeggios in 8ths,
+  // a celesta melody touched with bell, and a high shimmering pad.
+  // Emaj9 | C#m9 | Amaj7 | B9sus | G#m7 | C#m7 | F#m9 | B7, twice under a 16-bar tune (48 beats).
+  if (window.AsciiAudio) AsciiAudio.init({
+    bpm: 69, master: 1.1, reverb: 0.4, reverbTime: 3.2,
+    build(a) {
+      const N = AsciiAudio.notes, LOOP = 48, BAR = 3;
+      const tune = N(
+        'G#5:1.5 F#5:.5 E5:1 | D#5:2 E5:.5 F#5 | E5:1.5 C#5:.5 E5:1 | F#5:3 | ' +
+        'B5:1.5 F#5:.5 D#5:1 | E5:2 F#5:.5 G#5 | A5:1.5 G#5:.5 F#5:1 | F#5:2 r:1 | ' +
+        'G#5:1.5 B5:.5 E6:1 | D#6:2 C#6:1 | C#6:1.5 B5:.5 A5:1 | G#5:3 | ' +
+        'B5:1 G#5 D#5 | E5:1.5 F#5:.5 G#5:1 | A5:1 F#5 D#5 | E5:3');
+      a.part(tune, (t, e) => {
+        a.celesta(t, e.note, Math.max(0.8, e.sec * 1.6), { vel: 0.6, pan: 0.1 });
+        if (e.beats >= 1.5) a.bell(t, AsciiAudio.transpose(e.note, 12), e.sec * 1.2, { vel: 0.1, pan: 0.2, wet: 0.55 });
+      }, { length: LOOP });
+
+      // Harp voicings, low to high.
+      const HARP = [
+        ['E3', 'B3', 'D#4', 'F#4', 'G#4'], ['C#3', 'G#3', 'B3', 'D#4', 'E4'],
+        ['A2', 'E3', 'G#3', 'C#4', 'E4'], ['B2', 'F#3', 'A3', 'C#4', 'E4'],
+        ['G#2', 'D#3', 'F#3', 'B3', 'D#4'], ['C#3', 'G#3', 'B3', 'E4', 'G#4'],
+        ['F#2', 'C#3', 'A3', 'E4', 'G#4'], ['B2', 'F#3', 'A3', 'D#4', 'F#4']
+      ];
+      const chordAt = beat => HARP[Math.floor((beat % 24) / BAR)];
+      // Rolling 8ths: up the chord and back, six per bar.
+      const ARP = [0, 1, 2, 3, 4, 3];
+      a.every(0.5, (t, s) => {
+        const c = chordAt(s * 0.5), i = ARP[s % 6];
+        a.pluck(t, c[i], i ? 1.2 : 2.2, { type: 'triangle', vel: i ? 0.4 : 0.48, pan: (i - 2) * 0.22, wet: 0.45 });
+      });
+      // Soft bass on the downbeat; a pad an octave above the voicing, one bar each.
+      a.every(BAR, (t, s) => {
+        const c = chordAt(s * BAR);
+        a.bass(t, c[0], a.beats(2.6), { vel: 0.22 });
+        a.pad(t, c.slice(2).map(n => AsciiAudio.transpose(n, 12)), a.beats(BAR) - 0.2,
+          { vel: 0.28, attack: 0.9, release: 1.4, cutoff: 2400 });
+      });
+
+      // Sound effects, in sync with the scene.
+      const PENTA = AsciiAudio.scale('E6', 'pentatonic', 10);       // E6 .. C#8
+      const RISE = AsciiAudio.scale('E5', 'pentatonic', 14);
+      a.on('converge', (a, d, t) => {                                 // dust swirls inward over 3 s
+        a.sweep(t, 3, { from: 400, to: 5000, vel: 0.12, bus: 'sfx', wet: 0.5 });
+        for (let i = 0; i < 18; i++) {
+          const p = i / 17;
+          a.bell(t + 2.9 * Math.pow(p, 0.75), RISE[Math.min(13, Math.round(p * 13))], 0.7,
+            { vel: 0.06 + 0.08 * p, pan: Math.sin(i * 1.3) * 0.7, bus: 'sfx', wet: 0.55 });
+        }
+      });
+      a.on('flash', (a, d, t) => {                                    // the diamond flashes, halo ring
+        a.whoosh(t, { dur: 1.4, freq: 600, freqEnd: 6000, vel: 0.22 });
+        a.chime(t + 0.02, 'E5', 3.5, { vel: 0.42 });
+        a.pad(t, ['E5', 'G#5', 'B5', 'D#6'], 1.2, { vel: 0.22, attack: 0.05, release: 2, cutoff: 3200, bus: 'sfx' });
+        ['B6', 'E7', 'G#7', 'D#7', 'F#7', 'B7'].forEach((n, i) =>
+          a.bell(t + 0.08 + i * 0.05, n, 1.4, { vel: 0.14 - i * 0.012, pan: (i % 2 ? 1 : -1) * (0.2 + i * 0.1), bus: 'sfx', wet: 0.6 }));
+      });
+      a.on('glint', (a, d, t) => {
+        const n = PENTA[(Math.random() * (d.gem ? 10 : 7)) | 0];
+        a.bell(t, n, 0.6, { vel: d.gem ? 0.13 : 0.09, pan: clamp(d.x || 0, -1, 1) * 0.8, bus: 'sfx', wet: 0.55 });
+      }, { gap: 0.15 });
+      a.on('orbit', (a, d, t) => {                                    // orbits trace in: airy hum
+        a.pad(t, ['E4', 'B4', 'E5'], 1.6, { vel: 0.18, attack: 0.8, release: 1.6, cutoff: 1500, bus: 'sfx' });
+        a.noise(t, { dur: 2.6, filter: 'bandpass', freq: 900, freqEnd: 2400, q: 5, attack: 1.2, vel: 0.1, bus: 'sfx', wet: 0.5 });
+      });
+      a.on('disperse', (a, d, t) => {                                 // back to dust: falling tinkles
+        a.sweep(t, 2.4, { from: 5000, to: 500, attack: 0.3, vel: 0.1, bus: 'sfx', wet: 0.5 });
+        for (let i = 0; i < 16; i++) {
+          const p = i / 15;
+          a.bell(t + 2.6 * Math.pow(p, 0.8) + Math.random() * 0.05, RISE[13 - Math.round(p * 11)], 0.8,
+            { vel: 0.13 - 0.07 * p, pan: (Math.random() - 0.5) * 1.4, bus: 'sfx', wet: 0.6 });
+        }
+      });
+    }
+  });
 
   requestAnimationFrame(frame);
 })();

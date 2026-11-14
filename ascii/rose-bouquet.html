@@ -98,6 +98,7 @@
   <div class="hud" id="hud" aria-hidden="true"></div>
   <div class="hint" id="hint"></div>
 
+<script src="ascii-audio.js"></script>
 <script>
 (() => {
   'use strict';
@@ -685,6 +686,7 @@
           FVY[i] = -(0.09 + 0.07 * Math.random());
           FAMP[i] = 0.03 + 0.05 * Math.random(); FFRQ[i] = 1.4 + 1.4 * Math.random();
           FPH[i] = Math.random() * 6; FPAL[i] = R.face + (Math.random() < 0.5 ? 0 : 1);
+          window.AsciiAudio && AsciiAudio.event('petal');
           break;
         }
       }
@@ -899,11 +901,13 @@
     last = now;
     if (needResize) resize();
     if (!paused) {
+      const t1 = t;
       t += dt; skyT += dt;
       if (reduced) { if (t > T.FADE) t = T.FADE; }   // reduced motion: hold the bouquet, no loop
-      else if (t >= T.END) { t = 0; clearFall(); }     // stars keep twinkling across the loop
+      else if (t >= T.END) { t = 0; clearFall(); music('restart'); } // stars keep twinkling across the loop
       rot = SWAY_A * Math.sin(skyT * SWAY_W);
       updateFall(dt);
+      soundCues(t1, t);
     }
     if (!paused || dirty) { render(); dirty = false; frames++; }
     if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
@@ -911,8 +915,25 @@
     requestAnimationFrame(frame);
   }
 
-  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); }
-  function replay() { t = 0; clearFall(); paused = false; dirty = true; }
+  // ---------- Music (ascii-audio.js) ----------
+  const music = (fn, ...a) => window.AsciiAudio && AsciiAudio[fn](...a);
+  // Fire a sound cue on the frame where the scene clock crosses an animation event.
+  const crossed = (a, b, x) => a < x && x <= b;
+  const budRank = new Uint8Array(NR); // order in which the buds appear, for rising pitches
+  [...budT0.keys()].sort((p, q) => budT0[p] - budT0[q]).forEach((r, k) => { budRank[r] = k; });
+  function soundCues(a, b) {
+    if (!window.AsciiAudio) return;
+    if (crossed(a, b, T.STEM)) music('event', 'grow');
+    for (let r = 0; r < NR; r++) {
+      if (crossed(a, b, budT0[r])) music('event', 'bud', { k: budRank[r], x: roses[r].hx });
+      if (crossed(a, b, bloomT0[r])) music('event', 'bloom', { k: perm[r], x: roses[r].hx });
+    }
+    for (let i = 0; i < LETTERS; i++) if (crossed(a, b, T.MSG + i * T.LETTER)) music('event', 'letter', { i, last: i === LETTERS - 1 });
+    if (crossed(a, b, T.FADE)) music('event', 'fade');
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
+  function replay() { t = 0; clearFall(); paused = false; dirty = true; music('resume'); music('restart'); }
 
   addEventListener('resize', () => { needResize = true; });
   addEventListener('keydown', e => {
@@ -938,8 +959,69 @@
   // Touch screens have no keyboard, and the full hint would not fit on a phone.
   const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
   hintEl.textContent = touch ? (zh ? '點擊暫停 · 雙擊重播' : 'tap to pause · double-tap to replay')
-                             : (zh ? '空白鍵 暫停 · R 重播 · 點擊暫停 · 雙擊重播'
-                                   : 'Space pause · R replay · click to pause · double-click to replay');
+                             : (zh ? '空白鍵 暫停 · R 重播 · M 音樂 · 點擊暫停 · 雙擊重播'
+                                   : 'Space pause · R replay · M music · click to pause · double-click to replay');
+
+  // Score: an original waltz in F major, 3/4. Music-box melody over a harp arpeggio, warm pad
+  // and soft bass. The tempo makes one 10-bar pass last exactly one 22 s loop of the bouquet:
+  // the tune opens as the stems grow, peaks while the roses bloom, settles on F for the message
+  // and ends on a rolled F chord as the bouquet fades. The page restarts it on every loop.
+  if (window.AsciiAudio) AsciiAudio.init({
+    bpm: 60 * 30 / T.END, master: 0.8, reverb: 0.32, reverbTime: 2.8,
+    build(a) {
+      const N = AsciiAudio.notes, LOOP = 30, m = AsciiAudio.midi, mtof = AsciiAudio.mtof;
+      const tune = N(
+        'A4:1 C5 F5 | E5:2 D5:1 | D5:1.5 C5:.5 Bb4:1 | C5:3 | ' +
+        'A5:1 G5 F5 | F5:2 D5:1 | D5:1 E5 F5 | G5:2 E5:1 | F5:3 | r:3');
+      a.part(tune, (t, e) => a.musicBox(t, e.note, Math.max(1.2, e.sec * 1.6), { vel: 0.5, pan: 0.1 }), { length: LOOP });
+      // A soft celesta echo an octave down in the second phrase.
+      a.part(N('r:12 | F4:2 A4:1 | Bb4:3 | Bb4:2 A4:1 | C5:3 | A4:3 | r:3'),
+             (t, e) => a.celesta(t, e.note, e.sec * 1.2, { vel: 0.26, pan: -0.25 }), { length: LOOP });
+
+      // One chord per bar: [root, minor?, seventh?]. Harp tones: root, fifth, octave (or 7th), tenth.
+      const BARS = [['F3'], ['A2', 1], ['Bb2'], ['C3'], ['D3', 1], ['Bb2'], ['G2', 1], ['C3', 0, 1], ['F3'], ['F3']];
+      const tones = ([r, mi, sev]) => { const x = m(r); return [x, x + 7, x + (sev ? 10 : 12), x + (mi ? 15 : 16)]; };
+      const ARP = [0, 1, 2, 3, 2, 1];
+      // Harp in 8ths; the last bar is one rising roll that rings into the fade.
+      a.every(0.5, (t, s) => {
+        const b = (s * 0.5) % LOOP, bar = Math.floor(b / 3), i = s % 6, c = tones(BARS[bar]);
+        if (bar === 9) {
+          const roll = [c[0], c[1], c[2], c[3], c[2] + 7, c[2] + 12];
+          a.pluck(t, mtof(roll[i]), 1.6, { vel: 0.3 - i * 0.02, pan: -0.3 + i * 0.12, type: 'triangle' });
+          return;
+        }
+        a.pluck(t, mtof(c[ARP[i]]), a.beats(1.4), { vel: i ? 0.26 : 0.34, pan: i % 2 ? -0.3 : 0.25, type: 'triangle' });
+      });
+      // Warm pad and a soft bass note on each downbeat.
+      a.every(3, (t, s) => {
+        const bar = s % 10, c = tones(BARS[bar]);
+        a.bass(t, mtof(c[0] - 12 * (c[0] > 50 ? 1 : 0)), a.beats(2.6), { vel: 0.3 });
+        a.pad(t, [mtof(c[0] + 12), mtof(c[3]), mtof(c[1] + 12)], a.beats(bar === 9 ? 2.4 : 2.9),
+              { vel: 0.32, attack: 0.5, release: bar === 9 ? 1.6 : 0.8, cutoff: 1000 });
+      });
+
+      // Sound effects in sync with the animation (F major pentatonic, so they sit in the key).
+      const PENT = AsciiAudio.scale('F4', 'pentatonic', 13);
+      const pan = x => Math.max(-0.7, Math.min(0.7, x * 1.6));
+      a.on('grow', (a, d, t) => {
+        a.sweep(t, T.STEM_DUR, { from: 400, to: 5000, q: 3, vel: 0.14, bus: 'sfx', wet: 0.5 });
+        a.sparkle(t + 0.2, { count: 3, vel: 0.09, spread: 0.12 });
+      });
+      a.on('bud', (a, d, t) => a.pop(t, { freq: AsciiAudio.freq(PENT[Math.floor(d.k * 8 / NR)]), vel: 0.22, pan: pan(d.x) }), { gap: 0.05 });
+      a.on('bloom', (a, d, t) => {
+        const n = PENT[Math.floor(d.k * 13 / NR)];
+        a.celesta(t, n, 1.4, { vel: 0.25, bus: 'sfx', pan: pan(d.x), wet: 0.4 });
+        a.pluck(t, AsciiAudio.transpose(n, 12), 0.5, { vel: 0.12, bus: 'sfx', pan: pan(d.x), type: 'triangle' });
+      }, { gap: 0.08 });
+      a.on('letter', (a, d, t) => {
+        if (d.i === 0) a.chime(t, 'F5', 3, { vel: 0.24 });
+        a.tick(t, { vel: 0.16 });
+        if (d.last) a.heart(t + 0.05, { note: 'A6', vel: 0.22 });
+      });
+      a.on('petal', (a, d, t) => a.sparkle(t, { count: 2, vel: 0.1, spread: 0.11, notes: ['C7', 'A6', 'F6', 'D6', 'C6'] }), { gap: 0.3 });
+      a.on('fade', (a, d, t) => a.whoosh(t, { dur: T.FADE_DUR, freq: 2600, freqEnd: 300, attack: 0.6, vel: 0.16, wet: 0.5 }));
+    }
+  });
 
   requestAnimationFrame(frame);
 })();

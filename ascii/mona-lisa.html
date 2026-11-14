@@ -101,6 +101,7 @@
 
 <!-- Image source: "Mona Lisa, by Leonardo da Vinci, from C2RMF retouched.jpg", Wikimedia Commons, public domain.
      Downsampled to 96 x 78 RGB cells (monospace cell aspect ~0.55) and embedded below as base64. -->
+<script src="ascii-audio.js"></script>
 <script>
 (() => {
   'use strict';
@@ -529,7 +530,9 @@
     if (needResize) resize();
     if (needInit) initAssemble();
     if (!paused) {
+      const t1 = t;
       step(dt);
+      soundCues(t1, t);
       if (!reduced && t >= T.END) t = T.LOOP;   // later loops: short hold, sweep, shatter again
     } else if (qAny || ptrOn) {
       pushStep(dt); dirty = true;               // pointer still pushes while paused
@@ -540,8 +543,26 @@
     requestAnimationFrame(frame);
   }
 
-  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); }
-  function replay() { t = T_START; paused = false; needInit = true; dirty = true; }
+  // ---------- Music (ascii-audio.js) ----------
+  const music = (fn, ...a) => window.AsciiAudio && AsciiAudio[fn](...a);
+  // Fire a sound cue on the frame where the scene clock crosses an animation event.
+  const crossed = (a, b, x) => a < x && x <= b;
+  const SHARD_DUR = 1.6;   // the crack front takes up to ~1.5 s to cross the painting
+  function soundCues(a, b) {
+    if (!window.AsciiAudio) return;
+    if (crossed(a, b, 0.25)) music('event', 'assemble');
+    if (b > 0.6 && a < T.ASM_END - 0.3) music('event', 'fly', { k: b / T.ASM_END });
+    if (crossed(a, b, T.ASM_END)) music('event', 'whole');
+    for (let s = 0; s < T.SWEEPS.length; s++) if (crossed(a, b, T.SWEEPS[s])) music('event', 'sweep', { i: s });
+    if (crossed(a, b, T.SHATTER)) music('event', 'crack');
+    if (b > T.SHATTER && a < T.SHATTER + SHARD_DUR) music('event', 'shard', { k: (b - T.SHATTER) / SHARD_DUR });
+    if (crossed(a, b, T.DRIFT)) music('event', 'wind');
+    if (crossed(a, b, T.RETURN)) music('event', 'return');
+    if (crossed(a, b, T.RETURN + 3.2)) music('event', 'home');
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
+  function replay() { t = T_START; paused = false; needInit = true; dirty = true; music('resume'); music('restart'); }
 
   addEventListener('resize', () => { needResize = true; });
   addEventListener('keydown', e => {
@@ -561,6 +582,10 @@
   });
   canvas.addEventListener('pointermove', e => {
     setPtr(e);
+    if (ptrOn && window.AsciiAudio) {   // soft glass tinkle when the pointer brushes the painting
+      const mx = (ptrX - ox) / ch, my = (ptrY - oy) / ch;
+      if (mx > 0 && mx < PW * ASP && my > 0 && my < PH) music('event', 'push', { x: mx / (PW * ASP) });
+    }
     if (pressed && Math.hypot(e.clientX - downX, e.clientY - downY) >= 8) dragged = true;
   });
   const ptrOff = () => { ptrOn = false; pressed = false; };
@@ -587,8 +612,71 @@
   // Touch screens have no keyboard, and the full hint would not fit on a phone.
   const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
   hintEl.textContent = touch ? (zh ? '點擊暫停 · 雙擊重播' : 'tap to pause · double-tap to replay')
-                             : (zh ? '空白鍵 暫停 · R 重播 · 點擊暫停 · 雙擊重播'
-                                   : 'Space pause · R replay · click to pause · double-click to replay');
+                             : (zh ? '空白鍵 暫停 · R 重播 · M 音樂 · 點擊暫停 · 雙擊重播'
+                                   : 'Space pause · R replay · M music · click to pause · double-click to replay');
+
+  // Score: "Greensleeves" (English, 16th century, public domain) on a recorder-like lead, after a
+  // 2-bar lute intro. Lute arpeggios, an open-fifth drone and a soft pad, A Dorian, 3/4. 102-beat loop.
+  if (window.AsciiAudio) AsciiAudio.init({
+    bpm: 72, master: 1, reverb: 0.35, reverbTime: 3.2,
+    build(a) {
+      const N = AsciiAudio.notes, mtof = AsciiAudio.mtof, LOOP = 102, INTRO = 6;
+      const A1 = 'C5:2 D5:1 | E5:1.5 F#5:.5 E5:1 | D5:2 B4:1 | G4:1.5 A4:.5 B4:1 | ';
+      const B1 = 'C5:2 A4:1 | A4:1.5 G#4:.5 A4:1 | B4:2 G#4:1 | ';
+      const END = 'C5:1.5 B4:.5 A4:1 | G#4:1.5 F#4:.5 G#4:1 | A4:3 | A4:3 | ';
+      const A2 = 'G5:3 | G5:1.5 F#5:.5 E5:1 | D5:2 B4:1 | G4:1.5 A4:.5 B4:1 | ';
+      const tune = N('r:5 A4:1 | ' +
+        A1 + B1 + 'E4:2 A4:1 | ' + A1 + END +
+        A2 + B1 + 'E4:3 | ' + A2 + END);
+      a.part(tune, (t, e) => a.lead(t, e.note, e.sec * 0.92, { vel: 0.6, cutoff: 2400, wet: 0.4 }), { length: LOOP });
+
+      // One chord per bar (3 beats), 34 bars: 2 intro + two 16-bar strains.
+      const CH = { Am: [57, 3], G: [55, 4], Em: [52, 3], E: [52, 4], C: [48, 4] }; // [root midi, third]
+      const S = ' Am G G Em Am E E E Am G G Em Am E Am Am';
+      const PROG = ('Am Am' + S + S.replace(/^ Am/, ' C').replace(' E E E Am', ' E E E C')).trim().split(' ');
+      const chordAt = beat => CH[PROG[Math.floor((beat % LOOP) / 3)]];
+
+      // Lute: plucked broken chord in 8ths, rising and falling across the bar.
+      const ARP = [0, 7, 12, 'th', 19, 'th'];
+      a.every(0.5, (t, s) => {
+        const [r, th] = chordAt(s * 0.5), k = s % 6, iv = ARP[k] === 'th' ? 12 + th : ARP[k];
+        a.pluck(t, mtof(r + iv), a.beats(1.2), { vel: k ? 0.36 : 0.5, pan: k % 2 ? 0.25 : -0.15 });
+      });
+      // Drone: open fifth on A, renewed every two bars; soft pad on each chord.
+      a.every(6, t => a.bass(t, 'A2', a.beats(5.8), { vel: 0.38 }));
+      a.every(3, (t, s) => {
+        const [r, th] = chordAt(s * 3);
+        a.pad(t, [mtof(r), mtof(r + th + 12), mtof(r + 19)], a.beats(2.6), { vel: 0.36, attack: 0.8, release: 1.2, cutoff: 800 });
+      });
+
+      // Sound effects in sync with the animation (glassy, quiet, in key).
+      const GL = AsciiAudio.scale('A5', 'minorPentatonic', 9), pick = arr => arr[(Math.random() * arr.length) | 0];
+      a.on('assemble', (a, d, t) => a.sweep(t, 3.6, { from: 1800, to: 7000, q: 5, vel: 0.14, wet: 0.6, bus: 'sfx' }));
+      a.on('fly', (a, d, t) => a.sparkle(t, { count: 1, vel: 0.08 + 0.06 * d.k, notes: GL }), { gap: 0.16 });
+      a.on('whole', (a, d, t) => a.chime(t, 'A5', 2.5, { vel: 0.22 }));
+      a.on('sweep', (a, d, t) => {
+        a.pad(t, ['A3', 'E4', 'A4', 'C5'], 1.6, { vel: 0.5, attack: 1.1, release: 1.5, cutoff: 1500, bus: 'sfx', wet: 0.7 });
+        a.chime(t + 1.3, d.i ? 'E6' : 'C6', 2.8, { vel: 0.22 });
+      });
+      a.on('crack', (a, d, t) => {
+        a.noise(t, { dur: 0.09, filter: 'bandpass', freq: 3200, q: 0.8, vel: 0.5, bus: 'sfx', wet: 0.3 });
+        a.noise(t + 0.01, { dur: 0.25, filter: 'lowpass', freq: 900, freqEnd: 120, vel: 0.35, bus: 'sfx', wet: 0.2 });
+        a.bell(t, 'E7', 1.2, { vel: 0.18, bus: 'sfx', wet: 0.5 });
+      });
+      a.on('shard', (a, d, t) => a.bell(t + Math.random() * 0.03, pick(GL), 0.6,
+        { vel: 0.16 * (1 - 0.6 * d.k), bus: 'sfx', pan: (Math.random() - 0.5) * 1.4, wet: 0.55 }), { gap: 0.05 });
+      a.on('wind', (a, d, t) => {
+        a.noise(t, { dur: 3.4, filter: 'bandpass', freq: 450, freqEnd: 900, q: 0.9, attack: 1.4, vel: 0.2, pan: -0.4, bus: 'sfx', wet: 0.5 });
+        a.noise(t + 0.6, { dur: 3.0, filter: 'bandpass', freq: 700, freqEnd: 380, q: 1.2, attack: 1.2, vel: 0.16, pan: 0.4, bus: 'sfx', wet: 0.5 });
+      });
+      a.on('return', (a, d, t) => a.sweep(t, 3.2, { from: 250, to: 4500, q: 1.4, attack: 3.0, vel: 0.24, bus: 'sfx', wet: 0.4 }));
+      a.on('home', (a, d, t) => {
+        a.pad(t, ['A2', 'E3', 'A3', 'C4', 'E4'], 1.4, { vel: 0.4, attack: 0.15, release: 2.2, cutoff: 1300, bus: 'sfx', wet: 0.6 });
+        ['A5', 'C6', 'E6', 'A6'].forEach((n, i) => a.bell(t + i * 0.06, n, 2.6, { vel: 0.2 - i * 0.03, bus: 'sfx', pan: (i - 1.5) * 0.25, wet: 0.5 }));
+      });
+      a.on('push', (a, d, t) => a.bell(t, pick(GL), 0.5, { vel: 0.07, bus: 'sfx', pan: d.x * 1.2 - 0.6, wet: 0.5 }), { gap: 0.14 });
+    }
+  });
 
   requestAnimationFrame(frame);
 })();

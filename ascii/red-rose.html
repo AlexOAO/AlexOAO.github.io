@@ -99,6 +99,7 @@
   <div class="hint" id="hint"></div>
 
 
+<script src="ascii-audio.js"></script>
 <script>
 (() => {
   'use strict';
@@ -791,10 +792,12 @@
     last = now;
     if (needResize) resize();
     if (!paused) {
+      const t1 = t, s1 = skyT;
       t += dt; skyT += dt;
       if (reduced) { if (t > T.FADE) t = T.FADE; }   // reduced motion: hold the open rose, no loop
-      else if (t >= T.END) t = 0;
+      else if (t >= T.END) { t = 0; music('restart'); }
       pose();
+      soundCues(t1, t, s1, skyT);
     }
     if (!paused || dirty) { render(); dirty = false; frames++; }
     if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
@@ -802,8 +805,28 @@
     requestAnimationFrame(frame);
   }
 
-  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); }
-  function replay() { t = 0; pose(); paused = false; dirty = true; }
+  // ---------- Music (ascii-audio.js) ----------
+  const music = (fn, ...a) => window.AsciiAudio && AsciiAudio[fn](...a);
+  // Fire a sound cue on the frame where the scene clock crosses an animation event.
+  const crossed = (a, b, x) => a < x && x <= b;
+  function soundCues(a, b, sa, sb) {
+    if (!window.AsciiAudio) return;
+    if (crossed(a, b, T.SPROUT)) music('event', 'sprout');
+    if (crossed(a, b, T.STEM)) music('event', 'stem');
+    for (let i = 0; i < LEAVES.length; i++) if (crossed(a, b, LEAVES[i][7])) music('event', 'leaf', { side: LEAVES[i][1] });
+    if (crossed(a, b, T.BUD)) music('event', 'bud');
+    if (crossed(a, b, T.BLOOM)) music('event', 'bloom');
+    // Sparkles: one twinkle when a visible sparkle reaches the peak of its flare.
+    if (!sparks || b >= T.FADE + 1) return;
+    for (let o = 0; o < sparks.length; o += 6) {
+      if (b < sparks[o + 5] + 0.3) continue;
+      const per = sparks[o + 2], ph = sparks[o + 3] - FLARE / 2;
+      if (Math.floor((sb + ph) / per) > Math.floor((sa + ph) / per)) music('event', 'spark');
+    }
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
+  function replay() { t = 0; pose(); paused = false; dirty = true; music('resume'); music('restart'); }
 
   addEventListener('resize', () => { needResize = true; });
   addEventListener('keydown', e => {
@@ -828,8 +851,56 @@
   document.documentElement.lang = zh ? 'zh-Hant' : 'en';
   const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
   hintEl.textContent = touch ? (zh ? '點擊暫停 · 雙擊重播' : 'tap to pause · double-tap to replay')
-                             : (zh ? '空白鍵 暫停 · R 重播 · 點擊暫停 · 雙擊重播'
-                                   : 'Space pause · R replay · click to pause · double-click to replay');
+                             : (zh ? '空白鍵 暫停 · R 重播 · M 音樂 · 點擊暫停 · 雙擊重播'
+                                   : 'Space pause · R replay · M music · click to pause · double-click to replay');
+
+  // Score: an original slow piano-like piece, A minor turning to C major as the rose opens.
+  // Celesta melody, plucked broken chords and a soft pad and bass. Six 4/4 bars last exactly one 22 s
+  // loop of the scene (about 65 bpm), so the page restarts the music on every loop.
+  if (window.AsciiAudio) AsciiAudio.init({
+    bpm: 60 * 24 / T.END, master: 1, reverb: 0.35, reverbTime: 3,
+    build(a) {
+      const N = AsciiAudio.notes, LOOP = 24;
+      const tune = N(
+        'E5:1.5 D5:.5 C5:1 B4:1 | A4:2 C5:1 F5:1 | F5:1.5 E5:.5 D5:1 B4:1 | ' +
+        'C5:1 E5:1 G5:2 | A5:1.5 G5:.5 F5:1 D5:1 | E5:4');
+      a.part(tune, (t, e) => a.celesta(t, e.note, Math.max(1, e.sec * 1.5), { vel: 0.6, pan: 0.1 }), { length: LOOP });
+
+      // One chord per half bar (2 beats): left-hand tones low to high.
+      const CH = { Am: 'A2 E3 A3 C4', F: 'F2 C3 F3 A3', Dm7: 'D3 A3 C4 F4', G: 'G2 D3 G3 B3', C: 'C3 G3 C4 E4' };
+      const PROG = 'Am Am F F Dm7 G C C F G C C'.split(' ').map(k => CH[k].split(' '));
+      const chordAt = beat => PROG[Math.floor((beat % LOOP) / 2)];
+      // Broken chords in 8ths, softer on the off-beats; the last bar thins to quarters.
+      a.every(0.5, (t, s) => {
+        const b = (s * 0.5) % LOOP, c = chordAt(b), i = s % 4;
+        if (b >= 20 && i % 2) return;
+        a.pluck(t, c[i], a.beats(i ? 1.2 : 1.8), { vel: i ? 0.3 : 0.42, pan: -0.2 + i * 0.1, type: 'triangle' });
+      });
+      a.every(2, (t, s) => {
+        const c = chordAt(s * 2);
+        a.bass(t, c[0], a.beats(1.7), { vel: 0.38 });
+        a.pad(t, [c[1], c[2], c[3]], a.beats(1.8), { vel: 0.32, attack: 0.6, release: 0.9, cutoff: 800 });
+      });
+
+      // Sound effects in sync with the animation.
+      const SP = AsciiAudio.scale('A6', 'minorPentatonic', 6);
+      a.on('sprout', (a, d, t) => a.pop(t, { freq: 300, vel: 0.28 }));
+      a.on('stem', (a, d, t) => a.sweep(t, T.STEM_DUR, { from: 250, to: 3000, q: 2.5, vel: 0.16, bus: 'sfx', wet: 0.45 }));
+      a.on('leaf', (a, d, t) => {
+        // Rustle: a few short filtered-noise brushes that drift up as the leaf opens.
+        for (let k = 0; k < 4; k++)
+          a.noise(t + k * 0.11 + Math.random() * 0.04, { dur: 0.18 + Math.random() * 0.1, filter: 'bandpass',
+            freq: 1600 + k * 500 + Math.random() * 400, q: 0.9, attack: 0.04, vel: 0.26 - k * 0.04,
+            pan: d.side * 0.4, bus: 'sfx', wet: 0.2 });
+      });
+      a.on('bud', (a, d, t) => a.pop(t, { freq: 520, vel: 0.18 }));
+      a.on('bloom', (a, d, t) => {
+        ['C6', 'E6', 'G6', 'C7'].forEach((n, i) =>
+          a.bell(t + i * 0.12, n, 2.6, { vel: 0.36 - i * 0.04, bus: 'sfx', pan: (i - 1.5) * 0.25, wet: 0.5 }));
+      });
+      a.on('spark', (a, d, t) => a.sparkle(t, { count: 2, vel: 0.14, spread: 0.07, notes: SP }), { gap: 0.35 });
+    }
+  });
 
   requestAnimationFrame(frame);
 })();

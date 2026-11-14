@@ -99,6 +99,7 @@
   <div class="hud" id="hud" aria-hidden="true"></div>
   <div class="hint" id="hint"></div>
 
+<script src="ascii-audio.js"></script>
 <script>
 (() => {
   'use strict';
@@ -561,11 +562,13 @@
     rty[i] = H * (0.07 + 0.3 * Math.random());
     rvy[i] = -Math.sqrt(2 * H * 0.45 * (ry[i] - rty[i]));
     rp[i] = P_FW[(Math.random() * P_FW.length) | 0];
+    music('event', 'launch', { x: rx[i] / W, dur: Math.sqrt(2 * (ry[i] - rty[i]) / (H * 0.45)) });
   }
   function burst(x, y, p) {
     const n = 120 + ((Math.random() * 80) | 0);
     const p2 = Math.random() < 0.35 ? P_FW[(Math.random() * P_FW.length) | 0] : p;
     const sp = H * (0.12 + 0.08 * Math.random());
+    music('event', 'burst', { x: x / W });
     for (let j = 0; j < n && np < MAXP; j++) {
       const z = 2 * Math.random() - 1, a = Math.random() * 6.2832, rr = Math.sqrt(1 - z * z);
       const v = sp * (0.85 + 0.15 * Math.random());
@@ -746,14 +749,16 @@
     last = now;
     if (needResize) resize();
     if (!paused) {
+      const t1 = t, s1 = skyT;
       skyT += dt;
       if (!reduced) {
         t += dt;
-        if (t >= T.END) { t = 0; clearFireworks(); }
+        if (t >= T.END) { t = 0; clearFireworks(); musicLoop++; music('restart'); } // music re-syncs to the loop
       }
       frameNo++;
       updateCars(dt);
       updateFireworks(dt);
+      soundCues(t1, t, s1, skyT);
     }
     if (!paused || dirty) { render(); dirty = false; frames++; }
     if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
@@ -761,8 +766,25 @@
     requestAnimationFrame(frame);
   }
 
-  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); }
-  function replay() { t = T_START; clearFireworks(); paused = false; dirty = true; }
+  // ---------- Music (ascii-audio.js) ----------
+  // The score is one 23 s scene loop long (20 waltz bars), restarted on every loop.
+  const music = (fn, ...a) => window.AsciiAudio && AsciiAudio[fn](...a);
+  let musicLoop = 0;   // alternates the two waltz tunes
+  // Fire a sound cue on the frame where the scene clock crosses an animation event.
+  const crossed = (a, b, x) => a < x && x <= b;
+  // Phase at which a searchlight points straight up at the viewer (sin = 1), modulo pi for the pair.
+  const beamPh = s => ((s - T.BEAM) * BEAM_W + 0.4 - Math.PI / 2) / Math.PI;
+  function soundCues(a, b, sa, sb) {
+    if (!window.AsciiAudio) return;
+    if (crossed(a, b, T.BUILD)) music('event', 'build');
+    if (crossed(a, b, T.GOLD)) music('event', 'gold');
+    if (b >= T.BEAM && b < T.FADE && Math.floor(beamPh(sa)) !== Math.floor(beamPh(sb))) music('event', 'beam');
+    if (!reduced && b >= T.SHOW && b < T.SHOW_END && nSpark > 0) music('event', 'sparkle', { n: nSpark });
+    if (crossed(a, b, T.FADE)) music('event', 'fade');
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
+  function replay() { t = T_START; clearFireworks(); paused = false; dirty = true; music('resume'); music('restart'); }
 
   addEventListener('resize', () => { needResize = true; });
   addEventListener('keydown', e => {
@@ -788,8 +810,78 @@
   // Touch screens have no keyboard, and the full hint would not fit on a phone.
   const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
   hintEl.textContent = touch ? (zh ? '點擊暫停 · 雙擊重播' : 'tap to pause · double-tap to replay')
-                             : (zh ? '空白鍵 暫停 · R 重播 · 點擊暫停 · 雙擊重播'
-                                   : 'Space pause · R replay · click to pause · double-click to replay');
+                             : (zh ? '空白鍵 暫停 · R 重播 · M 音樂 · 點擊暫停 · 雙擊重播'
+                                   : 'Space pause · R replay · M music · click to pause · double-click to replay');
+
+  // Score: an original musette waltz in D minor, 3/4. Tempo set so 20 bars = the 23 s scene loop:
+  // bar 0 intro as the city fades in, bars 1-16 tune (two alternating melodies), 17-18 fade-out
+  // coda during the end fade, 19 silent. Accordion lead (detuned square + saw), oom-pah bass,
+  // chord plucks and a brush shaker.
+  if (window.AsciiAudio) AsciiAudio.init({
+    bpm: 20 * 3 * 60 / T.END, master: 1, reverb: 0.22, reverbTime: 2.2,
+    build(a) {
+      const N = AsciiAudio.notes, mtof = AsciiAudio.mtof, freq = AsciiAudio.freq, LOOP = 60;
+      const DYN = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.6, 0.35, 0];
+      const dyn = beat => DYN[Math.floor((beat % LOOP) / 3)];
+      // Accordion: two reeds a few cents apart for the musette beating, through the lead's vibrato.
+      const acc = (t, note, dur, vel) => {
+        const f = freq(note);
+        a.lead(t, f, dur, { type: 'square', vel, cutoff: 2100, pan: -0.1, wet: 0.25 });
+        a.lead(t, f * 1.0045, dur, { type: 'sawtooth', vel: vel * 0.32, cutoff: 1700, pan: 0.15, wet: 0.25 });
+      };
+      const TUNES = [
+        'A4:1 D5 F5 | A5:2 G5:.5 F5 | E5:1 G5 C#5 | D5:2 A4:1 | Bb4 D5 G5 | F5:1.5 E5:.5 D5:1 | G#4 B4 D5 | E5 C#5 A4 | ' +
+        'C5 F5 A5 | G5:1.5 F5:.5 E5:1 | F5 A5 C6 | A5:1.5 F#5:.5 D5:1 | G5:.5 A5 Bb5:1 G5 | F5:.5 E5 G5:1 C#5 | D5 F5 A5 | D5:2 r:1',
+        'D5:.5 E5 F5 E5 D5:1 | A5:2 F5:1 | G5:.5 F5 E5 F5 E5:1 | D5:2 A4:1 | Bb4:.5 C5 D5 G5 Bb5:1 | A5:1.5 F5:.5 D5:1 | ' +
+        'E5:.5 G#4 B4 D5 E5:1 | C#5:.5 E5 A5:1 G5 | F5:.5 G5 A5 C6 A5:1 | G5:.5 A5 Bb5 G5 E5:1 | F5:.5 E5 F5 A5 C6:1 | ' +
+        'D6:.5 C6 A5 F#5 D5:1 | Bb5:1.5 A5:.5 G5:1 | E5:.5 F5 G5 F5 E5 C#5 | D5:.5 F5 A5 F5 D5:1 | D5:2 r:1'
+      ];
+      TUNES.forEach((src, k) => a.part(N(src), (t, e) => {
+        if (musicLoop % 2 === k) acc(t, e.note, e.sec * 0.9, 0.58);
+      }, { length: LOOP, offset: 3 }));
+      a.part(N('A4:1 D5 F5 | D5:3'), (t, e) => acc(t, e.note, e.sec * 0.9, 0.42), { length: LOOP, offset: 51 });
+
+      // One chord per bar: [root midi, intervals].
+      const CH = { Dm: [38, [0, 3, 7]], A7: [45, [0, 4, 7, 10]], Gm: [43, [0, 3, 7]], E7: [40, [0, 4, 7, 10]],
+                   F: [41, [0, 4, 7]], C7: [36, [0, 4, 7, 10]], D7: [38, [0, 4, 7, 10]] };
+      const PROG = 'Dm Dm Dm A7 Dm Gm Dm E7 A7 F C7 F D7 Gm A7 Dm Dm Dm Dm Dm'.split(' ');
+      const chordAt = beat => CH[PROG[Math.floor((beat % LOOP) / 3)]];
+      const up = m => { while (m < 57) m += 12; while (m >= 69) m -= 12; return m; }; // voice in A3-G#4
+
+      // Oom-pah-pah: bass on 1 (root, fifth below on odd bars), chord plucks on 2 and 3.
+      a.every(1, (t, s) => {
+        const beat = s % LOOP, v = dyn(beat);
+        if (!v) return;
+        const [r, iv] = chordAt(beat), k = s % 3, bar = Math.floor(beat / 3);
+        if (k === 0) a.bass(t, mtof(bar % 2 ? r - 5 : r), a.beats(0.8), { vel: 0.55 * v });
+        else iv.slice(0, 3).forEach((x, j) =>
+          a.pluck(t + j * 0.008, mtof(up(r + x)), 0.22, { type: 'triangle', vel: (k === 1 ? 0.32 : 0.26) * v, pan: 0.2 - j * 0.2 }));
+        // Brush: band-passed noise (the high-passed a.shaker clicks; see the engine notes).
+        const brush = (tt, vel) => a.noise(tt, { dur: 0.07, filter: 'bandpass', freq: 7000, q: 0.7, attack: 0.008, vel, pan: 0.3, wet: 0.08 });
+        brush(t, (k ? 0.13 : 0.2) * v);
+        if (k === 2) brush(t + a.beats(0.5), 0.08 * v);   // swish on the "and" of 3
+      });
+
+      // Sound effects in sync with the animation.
+      const SP = AsciiAudio.scale('D6', 'minorPentatonic', 10);
+      const pan = x => (x * 2 - 1) * 0.8;
+      a.on('build', (a, d, t) => a.sweep(t, T.BUILD_DUR, { from: 70, to: 800, q: 2.5, attack: T.BUILD_DUR * 0.9, vel: 0.42, bus: 'sfx', wet: 0.3 }));
+      a.on('gold', (a, d, t) => { a.chime(t, 'F5', 3, { vel: 0.38 }); a.sparkle(t + 0.25, { count: 4, vel: 0.14, notes: SP }); });
+      a.on('beam', (a, d, t) => a.whoosh(t, { dur: 1.6, freq: 250, freqEnd: 1400, q: 0.9, vel: 0.2, wet: 0.5 }), { gap: 1 });
+      a.on('sparkle', (a, d, t) => a.sparkle(t, { count: Math.min(2, d.n), vel: 0.13, notes: SP, spread: 0.07 }), { gap: 0.16 });
+      a.on('launch', (a, d, t) => {
+        const dur = Math.max(0.6, Math.min(2, d.dur || 1.4));
+        a.noise(t, { dur, filter: 'bandpass', freq: 700, freqEnd: 2600, q: 16, attack: dur * 0.85, vel: 0.5, pan: pan(d.x), bus: 'sfx', wet: 0.25 });
+      }, { gap: 0.25 });
+      a.on('burst', (a, d, t) => {
+        const p = pan(d.x);
+        a.boom(t, { vel: 0.34, pan: p });
+        for (let i = 0; i < 10; i++) a.noise(t + 0.25 + Math.random() * 0.9, { dur: 0.02 + Math.random() * 0.03, filter: 'highpass',
+          freq: 3000 + Math.random() * 3000, vel: 0.1 + Math.random() * 0.1, pan: p + (Math.random() - 0.5) * 0.4, bus: 'sfx', wet: 0.2 });
+      }, { gap: 0.2 });
+      a.on('fade', (a, d, t) => a.sweep(t, T.FADE_DUR, { from: 3000, to: 400, q: 1.2, attack: 0.8, vel: 0.12, bus: 'sfx', wet: 0.6 }));
+    }
+  });
 
   requestAnimationFrame(frame);
 })();
