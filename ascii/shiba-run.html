@@ -96,7 +96,7 @@
 <body>
   <h1 class="sr-only">ASCII Running Shiba</h1>
   <a class="back" href="./">← ASCII</a>
-  <canvas id="c" role="img" aria-label="Animated cute Shiba Inu drawn with ASCII characters, galloping through a sunset meadow with parallax hills, trees, swaying grass and drifting clouds, and jumping after a butterfly"></canvas>
+  <canvas id="c" role="img" aria-label="Animated cute Shiba Inu drawn with ASCII characters, bouncing along through a sunset meadow with parallax hills, trees, swaying grass and drifting clouds, and jumping after a butterfly"></canvas>
   <div class="hud" id="hud" aria-hidden="true"></div>
   <div class="hint" id="hint"></div>
 
@@ -109,22 +109,21 @@
   const TAU = Math.PI * 2;
   const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
 
-  // ---------- Gait (stride phase in cycles; leg order: front near, front far, hind near, hind far) ----------
-  // Full motion: rotary gallop, ~2.2 strides/s. Reduced motion: a slow diagonal trot.
+  // ---------- Gait: a happy puppy bound (front pair, then hind pair) with bob, squash and stretch ----------
+  // Leg order: front far, front near, hind far, hind near (far = the dog's left, away from the camera).
   const GAIT = reduced
-    ? { f: 1.2, ds: 0.52, af: 0.32, ah: 0.3, fx: 0.55, pitch: 0.012, bob: 0.008, off: [0, 0.5, 0.5, 0], speed: 0.5, mps: 1.8 }
-    : { f: 2.2, ds: 0.4, af: 0.62, ah: 0.55, fx: 1, pitch: 0.075, bob: 0.03, off: [0.58, 0.5, 0.06, 0.0], speed: 1.45, mps: 5.4 };
-  const JUMP_DUR = 0.8, JUMP_H = 0.3;          // seconds, body units
+    ? { f: 1.3, amp: 0.3, lift: 0.025, bob: 0.012, sq: 0.012, pitch: 0.02, speed: 0.5, mps: 1.6 }
+    : { f: 2.6, amp: 0.55, lift: 0.06, bob: 0.045, sq: 0.045, pitch: 0.06, speed: 1.3, mps: 4.6 };
+  const LEG_OFF = [0.07, 0, 0.57, 0.5];
+  const JUMP_DUR = 0.8, JUMP_H = 0.27;          // seconds, body units
   const BF_FIRST = 4.0, BF_MIN = 8, BF_MAX = 12; // butterfly schedule (s)
 
-  // ---------- Camera (side view, turned a little toward the viewer, looking slightly down) ----------
-  const CAM_D = 4.5, PIVOT = 0.45, TILT = 0.08, YAW = -0.3;
-  const ct = Math.cos(TILT), st = Math.sin(TILT), cyw = Math.cos(YAW), syw = Math.sin(YAW);
+  // ---------- Camera: a 3/4 view from the front-right (the dog runs to the right), looking a little down ----------
+  const CAM_D = 4.2, PIVOT = 0.5, TILT = 0.14, YAW = 0.72;
   // Warm light from the low sun ahead (upper right, in front), in view space.
   const LX0 = 0.32, LY0 = 0.55, LZ0 = 0.78;
   const LN = Math.hypot(LX0, LY0, LZ0);
   const LX = LX0 / LN, LY = LY0 / LN, LZ = LZ0 / LN;
-
   function mulberry32(a) {
     return function () {
       a |= 0; a = a + 0x6D2B79F5 | 0;
@@ -164,6 +163,7 @@
   const P_EYE = pal(34, 20, 16), P_CATCH = pal(255, 255, 255);
   const P_NOSE = pal(44, 30, 28), P_MOUTH = pal(120, 58, 38), P_MIN = pal(150, 40, 55);
   const P_TONGUE = pal(250, 120, 140), P_TONGUE_D = pal(214, 80, 106);
+  const P_COLLAR = pal(150, 44, 62), P_BELL = pal(255, 200, 80);
   // Scenery
   const P_HILL = pal(146, 98, 178), P_HILLRIM = pal(230, 140, 172);
   const P_TREE = pal(58, 112, 72), P_TREERIM = pal(240, 158, 84);
@@ -194,143 +194,169 @@
     }
   });
   const lvl = b => { const l = (b * 15.99) | 0; return l < 0 ? 0 : l > 15 ? 15 : l; };
+  // ---------- The Shiba: the same character model as shiba-sit (big round head, short muzzle, cupped ears,
+  // cream urajiro mask), on a plump bean-shaped puppy body with short stubby legs. Built facing +z, y up,
+  // ground y = 0; x > 0 is the dog's left (the far side). Rigid parts get one 3x4 matrix each per frame.
+  const rng = mulberry32(20260801);
+  const smooth = v => { v = clamp(v, 0, 1); return v * v * (3 - 2 * v); };
+  const K_COAT = 0, K_EARIN = 1, K_EYE = 2, K_MOUTH = 3, K_NOSE = 4, K_TONGUE = 5, K_COLLAR = 6, K_BELL = 7;
+  const R_BODY = 0, R_HEAD = 1, R_EARL = 2, R_EARR = 3, R_TONGUE = 4, R_TAIL = 5, R_BELL = 6, R_LEG = 7, NPART = 11;
 
-  // ---------- The Shiba: smooth parts sampled as surface point clouds with normals ----------
-  // Side view, x forward (right), y up, z toward the viewer; ground at y = 0. Bones are rotations
-  // about z (the sagittal plane) plus a translation; points live in bone space. Proportions follow
-  // the breed: body length ~1.1x the withers height, chest depth ~half of it, short sturdy legs,
-  // short thick neck, wedge-shaped fox head. Face, palette, ramp and shading match shiba-sit.
-  const NB = 22, B_BODY = 0, B_HEAD = 1, B_EAR = 2, B_TONGUE = 4, B_TAIL = 5, B_LEG = 6;
-  const BODY_Y = 0.46, LEG_Z = 0.082, PAW_DROP = 0.03;
-  const FRONT_L = [0.16, 0.19, 0.05], FRONT_R0 = [0.07, 0.046, 0.036], FRONT_R1 = [0.05, 0.038, 0.034];
-  const HIND_L = [0.18, 0.18, 0.12], HIND_R0 = [0.088, 0.048, 0.035], HIND_R1 = [0.056, 0.036, 0.031];
-  const FRONT_ROOT = [0.16, -0.05], HIND_ROOT = [-0.2, -0.01];
-  const HEAD_AT = [0.37, 0.25], TAIL_AT = [-0.31, 0.11];   // body-local bone origins
-  const SPACING = 0.006, DENS = 1.25 / (SPACING * SPACING);
-  const GOLDEN = Math.PI * (3 - Math.sqrt(5));
-  // Kinds of dog points (how the splat shades them).
-  const K_COAT = 0, K_EARIN = 1, K_EYE = 2, K_MOUTH = 3, K_NOSE = 4, K_TONGUE = 5;
-  const jr = mulberry32(20260801);
-  const jit = () => (jr() - 0.5) * 0.08;   // ragged cream/ginger borders
+  const H0 = [0, 0.76, 0.31];            // head centre (before the cute big-head scaling)
+  const NP = [0, 0.64, 0.265];          // neck pivot
+  const EX = 0.078, EY = 0.024, EW = 0.032, EH = 0.03;   // big round eyes (head-local)
+  const TONGUE_A = [0, -0.09, 0.24];
+  const HSC = 1.24;                     // big head = cute: head parts are scaled about the neck pivot
+  const hsc = (v, j) => NP[j] + (v - NP[j]) * HSC;
+  const H0S = [hsc(H0[0], 0), hsc(H0[1], 1), hsc(H0[2], 2)];
+  // Eye catchlights: a bright white highlight, upper-right in each eye (toward the sun), on the head surface.
+  const CATCH = [1, -1].map(sd => {
+    const lx = sd * EX + 0.3 * EW, ly = EY + 0.38 * EH;
+    const lz = 0.165 * Math.sqrt(1 - (lx / 0.19) ** 2 - ((ly - 0.01) / 0.165) ** 2) + 0.004;
+    return [hsc(H0[0] + lx, 0), hsc(H0[1] + ly, 1), hsc(H0[2] + lz, 2)];
+  });
+  const CATCH2 = [1, -1].map(sd => {
+    const lx = sd * EX - 0.45 * EW, ly = EY - 0.45 * EH;
+    const lz = 0.165 * Math.sqrt(1 - (lx / 0.19) ** 2 - ((ly - 0.01) / 0.165) ** 2) + 0.004;
+    return [hsc(H0[0] + lx, 0), hsc(H0[1] + ly, 1), hsc(H0[2] + lz, 2)];
+  });
+  const TAS = [hsc(H0[0] + TONGUE_A[0], 0), hsc(H0[1] + TONGUE_A[1], 1), hsc(H0[2] + TONGUE_A[2], 2)];
 
-  const MB = { x: [], y: [], z: [], nx: [], ny: [], nz: [], b: [], p: [], f: [], k: [], a1: [], a2: [] };
-  function addPt(b, x, y, z, nx, ny, nz, p, f, k, a1, a2) {
+  const sol = (cx, cy, cz, rx, ry, rz, ax, name) => ({ c: [cx, cy, cz], r: [rx, ry, rz], ax: ax || 0, name });
+  const BODY = [
+    sol(0, 0.42, -0.06, 0.2, 0.185, 0.31, 0, 'torso'),       // round "bean" belly
+    sol(0, 0.47, 0.15, 0.18, 0.195, 0.165, 0, 'chest'),      // fluffy chest
+    sol(0, 0.43, -0.26, 0.19, 0.18, 0.165, 0, 'rump'),
+    sol(0, 0.585, 0.22, 0.14, 0.13, 0.13, 0, 'neck'),
+    sol(0.115, 0.37, -0.27, 0.1, 0.14, 0.135, 0, 'haunch'),
+    sol(-0.115, 0.37, -0.27, 0.1, 0.14, 0.135, 0, 'haunch')
+  ];
+  const LEGS = [[0.092, 0.33, 0.165], [-0.092, 0.33, 0.165], [0.108, 0.33, -0.27], [-0.108, 0.33, -0.27]]; // hip pivots
+  const PAW_B = 0.33;                   // pivot -> bottom of the paw
+  const hs = (x, y, z, rx, ry, rz, ax, name) => sol(H0[0] + x, H0[1] + y, H0[2] + z, rx, ry, rz, ax, name);
+  const HEAD = [
+    hs(0, 0.01, 0, 0.19, 0.165, 0.165, 0, 'cranium'),
+    hs(0.094, -0.07, 0.045, 0.112, 0.084, 0.105, 0, 'cheek'),
+    hs(-0.094, -0.07, 0.045, 0.112, 0.084, 0.105, 0, 'cheek'),
+    hs(0, -0.068, 0.15, 0.092, 0.068, 0.115, 0.12, 'muzzle'),
+    hs(0, -0.032, 0.258, 0.03, 0.022, 0.019, 0, 'nose')
+  ];
+
+  function inside(s, x, y, z, lim) {
+    const ca = Math.cos(s.ax), sa = Math.sin(s.ax);
+    const dx = x - s.c[0], dy0 = y - s.c[1], dz0 = z - s.c[2];
+    const dy = dy0 * ca + dz0 * sa, dz = -dy0 * sa + dz0 * ca;
+    return (dx / s.r[0]) ** 2 + (dy / s.r[1]) ** 2 + (dz / s.r[2]) ** 2 < lim;
+  }
+  const insideAny = (list, self, x, y, z) => {
+    for (let j = 0; j < list.length; j++) if (list[j] !== self && inside(list[j], x, y, z, 0.985)) return true;
+    return false;
+  };
+
+  const BUF = { x: [], y: [], z: [], nx: [], ny: [], nz: [], k: [], p: [], r: [], a1: [], a2: [] };
+  function add(x, y, z, nx, ny, nz, k, p, part, a1, a2) {
     const l = Math.hypot(nx, ny, nz) || 1;
-    nx /= l; ny /= l; nz /= l;
-    if (nz < -0.42) return; // faces away from the camera in every pose: never visible
-    MB.x.push(x); MB.y.push(y); MB.z.push(z); MB.nx.push(nx); MB.ny.push(ny); MB.nz.push(nz);
-    MB.b.push(b); MB.p.push(p); MB.f.push(f); MB.k.push(k); MB.a1.push(a1); MB.a2.push(a2);
+    if (part >= R_HEAD && part <= R_TONGUE) { x = hsc(x, 0); y = hsc(y, 1); z = hsc(z, 2); }
+    BUF.x.push(x); BUF.y.push(y); BUF.z.push(z);
+    BUF.nx.push(nx / l); BUF.ny.push(ny / l); BUF.nz.push(nz / l);
+    BUF.k.push(k); BUF.p.push(p); BUF.r.push(part); BUF.a1.push(a1 || 0); BUF.a2.push(a2 || 0);
   }
-  // Ellipsoid with optional rotation about z and a taper toward its local +x end.
-  function shape(cx, cy, cz, rx, ry, rz, rot, tp) {
-    return { cx, cy, cz, rx, ry, rz, tp, c: Math.cos(rot), s: Math.sin(rot) };
+
+  // Area-uniform samples on a (pitched) ellipsoid surface, skipping points buried in other solids.
+  function sampleSolid(s, dens, others, emit) {
+    const [rx, ry, rz] = s.r, ca = Math.cos(s.ax), sa = Math.sin(s.ax);
+    const area = 4 * Math.PI * Math.pow((Math.pow(rx * ry, 1.6) + Math.pow(rx * rz, 1.6) + Math.pow(ry * rz, 1.6)) / 3, 1 / 1.6);
+    const n = Math.round(area * dens), maxS = Math.max(ry * rz, rx * rz, rx * ry);
+    let made = 0, guard = 0;
+    while (made < n && guard++ < n * 30) {
+      const u = rng() * 2 - 1, ph = rng() * TAU, q = Math.sqrt(1 - u * u);
+      const dx = q * Math.cos(ph), dy = u, dz = q * Math.sin(ph);
+      const sc = Math.hypot(ry * rz * dx, rx * rz * dy, rx * ry * dz);
+      if (rng() * maxS > sc) continue;
+      made++;
+      const lx = rx * dx, ly = ry * dy, lz = rz * dz;
+      const nx = dx / rx, ny0 = dy / ry, nz0 = dz / rz;
+      const x = s.c[0] + lx, y = s.c[1] + ly * ca - lz * sa, z = s.c[2] + ly * sa + lz * ca;
+      const ny = ny0 * ca - nz0 * sa, nz = ny0 * sa + nz0 * ca;
+      if (others && insideAny(others, s, x, y, z)) continue;
+      const nl = Math.hypot(nx, ny, nz);
+      emit(x, y, z, nx / nl, ny / nl, nz / nl, s);
+    }
   }
-  function inside(E, x, y, z) {
-    const dx = x - E.cx, dy = y - E.cy;
-    const lx = dx * E.c + dy * E.s, ly = -dx * E.s + dy * E.c, lz = z - E.cz;
-    const s = 1 - E.tp * Math.max(0, lx / E.rx);
-    const a = lx / E.rx, b = ly / (E.ry * s), c = lz / (E.rz * s);
-    return a * a + b * b + c * c < 0.96;
-  }
-  function ellArea(a, b, c) {
-    const p = 1.6;
-    return 4 * Math.PI * Math.pow((Math.pow(a * b, p) + Math.pow(a * c, p) + Math.pow(b * c, p)) / 3, 1 / p);
-  }
-  // Fibonacci-sample the surface; skip points buried inside sibling parts (clean union).
-  function sampleEllE(E, others, emit) {
-    const n = Math.ceil(ellArea(E.rx, E.ry, E.rz) * DENS);
-    for (let j = 0; j < n; j++) {
-      const ux = 1 - 2 * (j + 0.5) / n, rr = Math.sqrt(1 - ux * ux), ph = j * GOLDEN;
-      const uy = rr * Math.cos(ph), uz = rr * Math.sin(ph);
-      const s = 1 - E.tp * Math.max(0, ux);
-      const lx = ux * E.rx, ly = uy * E.ry * s, lz = uz * E.rz * s;
-      const nlx = ux / E.rx + (ux > 0 ? E.tp * rr * 0.6 / E.rx : 0), nly = uy / (E.ry * s), nlz = uz / (E.rz * s);
-      const x = E.cx + lx * E.c - ly * E.s, y = E.cy + lx * E.s + ly * E.c, z = E.cz + lz;
-      if (others) {
-        let hid = false;
-        for (let k = 0; k < others.length; k++) if (others[k] !== E && inside(others[k], x, y, z)) { hid = true; break; }
-        if (hid) continue;
+
+  // Body: ginger coat, cream "urajiro" on the fluffy chest, throat, belly and the backs of the thighs.
+  const jit = () => (rng() - 0.5) * 0.08;
+  BODY.forEach(s => sampleSolid(s, 21000, BODY, (x, y, z, nx, ny, nz, s) => {
+    let cream = false;
+    const ax = Math.abs(x);
+    switch (s.name) {
+      case 'torso': cream = ny < -0.5 + jit(); break;
+      case 'chest': cream = (nz > 0.5 + jit() && ax < 0.09 + jit() * 0.6) || ny < -0.4 + jit(); break;
+      case 'neck': cream = nz > 0.35 + jit() && ax < 0.1 + jit() * 0.6; break;
+      case 'rump': cream = ny < -0.45 + jit() || nz < -0.75 + jit(); break;
+      default: cream = ny < -0.45 + jit() || (nz < -0.55 + jit() && y < 0.4); // haunch
+    }
+    add(x, y, z, nx, ny, nz, K_COAT, cream ? P_CR : P_OR, R_BODY);
+  }));
+
+  // Legs: short stubby columns with round cream paws; cream socks and inner sides.
+  LEGS.forEach((L, l) => {
+    const sd = L[0] > 0 ? 1 : -1, hind = l >= 2;
+    const leg = sol(L[0], L[1] - 0.13, L[2], hind ? 0.064 : 0.058, 0.16, hind ? 0.07 : 0.062, 0, 'leg');
+    const paw = sol(L[0], L[1] - PAW_B + 0.038, L[2] + 0.026, 0.066, 0.04, 0.082, 0, 'paw');
+    const pair = [leg, paw];
+    pair.forEach(s => sampleSolid(s, 26000, pair, (x, y, z, nx, ny, nz, s) => {
+      const u = L[1] - y, j = jit();
+      const cream = s === paw || u > 0.2 + j || nx * sd < -0.35 + j || (hind ? nz < -0.3 + j : nz > 0.55 + j && u > 0.1);
+      add(x, y, z, nx, ny, nz, K_COAT, cream ? P_CR : P_OR, R_LEG + l);
+    }));
+  });
+
+  // Head: shiba-sit's round fox face with a short muzzle, but with big round eyes, a button nose and a big
+  // cream mask sweeping from the chin up over the cheeks. Eyes and mouth are decided per frame.
+  HEAD.forEach(s => sampleSolid(s, s.name === 'nose' ? 90000 : 46000, HEAD, (x, y, z, nx, ny, nz, s) => {
+    const lx = x - H0[0], ly = y - H0[1], lz = z - H0[2], ax = Math.abs(lx);
+    if (s.name === 'nose') { add(x, y, z, nx, ny, nz, K_NOSE, P_NOSE, R_HEAD); return; }
+    if (s.name !== 'cranium' && ax < 0.07 && ly < -0.045 && ly > -0.15 && lz > 0.12 && nz > 0.15) {
+      add(x, y, z, nx, ny, nz, K_MOUTH, P_CR, R_HEAD, lx, ly); return;
+    }
+    let cream = false;
+    if (s.name === 'cranium') {
+      const side = lx > 0 ? 1 : -1, cu = (lx - side * EX) / EW, cv = (ly - EY) / EH;
+      if (lz > 0.04 && Math.abs(cu) < 1.45 && Math.abs(cv) < 1.6) {
+        add(x, y, z, nx, ny, nz, K_EYE, side > 0 ? 0 : 1, R_HEAD, cu, cv); return;
       }
-      const nx = nlx * E.c - nly * E.s, ny = nlx * E.s + nly * E.c;
-      emit(x, y, z, nx, ny, nlz);
+      const bu = (ax - 0.068) / 0.022, bv = (ly - 0.094) / 0.014;   // cream eyebrow dots
+      // the mask: up from the muzzle and sweeping toward the cheeks in a curve
+      const ex = ax > 0.06 ? ax - 0.06 : 0, edge = -0.03 + 4.5 * ex * ex;
+      cream = (lz > 0.04 && bu * bu + bv * bv < 1) ||
+              (lz > 0.02 + jit() * 0.5 && ly < edge + jit() * 0.25 && ax < 0.17) ||
+              (ly < -0.09 + jit() * 0.5);
+    } else if (s.name === 'cheek') {
+      cream = ly < -0.075 + 0.5 * (lz - 0.02) + jit() * 0.3;   // the mask sweeps up toward the front
+    } else { // muzzle: cream with a little ginger bridge
+      cream = !(ly > -0.026 + jit() * 0.2 && ax < 0.03 + jit() * 0.2 && lz < 0.2);
     }
-  }
+    add(x, y, z, nx, ny, nz, K_COAT, cream ? P_CR : P_OR_L, R_HEAD);
+  }));
 
-  const sampleEll = (bone, E, region, f, others) =>
-    sampleEllE(E, others, (x, y, z, nx, ny, nz) => addPt(bone, x, y, z, nx, ny, nz, region(x, y, z, nx, ny, nz), f, K_COAT, 0, 0));
-
-  // Torso (body bone, origin at the body centre): deep chest, level back, slight tuck, round rump,
-  // and a short thick neck flowing up from the chest and shoulders.
-  const CHEST = shape(0.12, 0, 0, 0.21, 0.16, 0.14, 0, 0);
-  const BELLY = shape(-0.04, 0.045, 0, 0.2, 0.11, 0.128, 0, 0);
-  const RUMP = shape(-0.19, 0.03, 0, 0.16, 0.14, 0.135, 0, 0);
-  const NECK = shape(0.27, 0.15, 0, 0.15, 0.125, 0.118, 0.95, 0);
-  const TORSO = [CHEST, BELLY, RUMP, NECK];
-  // Cream "urajiro" on the belly, chest and throat.
-  const bodyRegion = (x, y, z, nx, ny) => (ny < -0.62 + jit() || (x > 0.2 + jit() && nx > 0.25 && y < 0.06 + jit())) ? P_CR : P_OR;
-  const neckRegion = (x, y, z, nx, ny) => (nx - 0.75 * ny > 0.38 + jit() * 2) ? P_CR : P_OR;
-  sampleEll(B_BODY, CHEST, bodyRegion, 1, TORSO);
-  sampleEll(B_BODY, BELLY, bodyRegion, 1, TORSO);
-  sampleEll(B_BODY, RUMP, bodyRegion, 1, TORSO);
-  sampleEll(B_BODY, NECK, neckRegion, 1, TORSO);
-
-  // Head (head bone, origin at the skull centre): rounded skull, fluffy cheeks, a defined stop and a
-  // tapering muzzle with the black nose at its tip, pointing forward and a little down.
-  const SKULL = shape(0, 0, 0, 0.105, 0.098, 0.098, 0, 0);
-  const CHEEK = shape(0.03, -0.045, 0, 0.1, 0.072, 0.112, 0, 0);
-  const MUZ = shape(0.13, -0.045, 0, 0.098, 0.05, 0.058, -0.08, 0.42);
-  const NOSE = shape(0.222, -0.03, 0, 0.022, 0.019, 0.022, 0, 0);
-  const HEADP = [SKULL, CHEEK, MUZ];
-  const EXC = 0.052, EYC = 0.022, EW = 0.024, EH = 0.015;   // eye (head-local, on the side of the skull)
-  // Mouth line: the smile rises toward the cheek; the gap under it opens toward the front.
-  const lipY = x => -0.062 + (x < 0.17 ? 1.15 * (0.17 - x) * (0.17 - x) : 0);
-  function headPoint(E, x, y, z, nx, ny, nz) {
-    const zs = z < 0 ? -z : z, f = z < 0 ? 0.85 : 1;
-    if (E === SKULL && zs > 0.04) {
-      const cu = (x - EXC) / EW, cv = (y - EYC) / EH;
-      if (Math.abs(cu) < 1.45 && Math.abs(cv + 0.3 * cu) < 1.9) { addPt(B_HEAD, x, y, z, nx, ny, nz, 1, f, K_EYE, cu, cv); return; }
-    }
-    if (E !== SKULL && zs > 0.02 && x > 0.035 && x < 0.225 && y > -0.11 && y < -0.02 && Math.abs(y - lipY(x)) < 0.04) {
-      addPt(B_HEAD, x, y, z, nx, ny, nz, P_CR, f, K_MOUTH, x, y); return;
-    }
-    let cream;
-    if (E === SKULL) {
-      const bu = (x - 0.03) / 0.02, bv = (y - 0.056) / 0.012;          // cream "eyebrow" dot
-      cream = (zs > 0.04 && bu * bu + bv * bv < 1) || y < -0.06 + jit() * 0.5;
-    } else if (E === CHEEK) cream = y < -0.022 + jit() * 0.4 || x > 0.1;
-    else cream = y < -0.03 + jit() * 0.25 || x > 0.2;                    // ginger bridge on the muzzle
-    addPt(B_HEAD, x, y, z, nx, ny, nz, cream ? P_CR : P_OR_L, f, K_COAT, 0, 0);
-  }
-  sampleEllE(SKULL, HEADP, (x, y, z, nx, ny, nz) => headPoint(SKULL, x, y, z, nx, ny, nz));
-  sampleEllE(CHEEK, HEADP, (x, y, z, nx, ny, nz) => headPoint(CHEEK, x, y, z, nx, ny, nz));
-  sampleEllE(MUZ, HEADP, (x, y, z, nx, ny, nz) => headPoint(MUZ, x, y, z, nx, ny, nz));
-  sampleEllE(NOSE, null, (x, y, z, nx, ny, nz) => addPt(B_HEAD, x, y, z, nx, ny, nz, P_NOSE, 1, K_NOSE, 0, 0));
-  // Catchlight: upper front of each eye, just above the skull surface (head-local).
-  const CATCH = new Float32Array(6);
-  for (let e = 0; e < 2; e++) {
-    const cx = EXC + 0.3 * EW, cy = EYC + 0.4 * EH;
-    CATCH[e * 3] = cx; CATCH[e * 3 + 1] = cy;
-    CATCH[e * 3 + 2] = (e ? -1 : 1) * (SKULL.rz * Math.sqrt(1 - (cx / SKULL.rx) ** 2 - (cy / SKULL.ry) ** 2) + 0.004);
-  }
-
-  // Ears: small erect triangles tilted a little back, cupped in front (pink inside, cream fluff).
-  const EAR_O = new Float32Array(6);
-  [1, -1].forEach((sd, e) => {
-    const bx = -0.025 + (sd < 0 ? 0.02 : 0), by = 0.07, bz = sd * 0.06;
-    const tx = -0.05 + (sd < 0 ? 0.02 : 0), ty = 0.18, tz = sd * 0.095;
-    EAR_O[e * 3] = bx; EAR_O[e * 3 + 1] = by; EAR_O[e * 3 + 2] = bz;
+  // Ears: erect triangles, cupped on the front (pink inside, cream fluff), ginger behind.
+  const EARS = [];
+  [1, -1].forEach((s, e) => {
+    const bx = H0[0] + s * 0.105, by = H0[1] + 0.115, bz = H0[2] - 0.025;
+    const tx = H0[0] + s * 0.162, ty = H0[1] + 0.27, tz = H0[2] - 0.01;
     let dx = tx - bx, dy = ty - by, dz = tz - bz;
     const h = Math.hypot(dx, dy, dz); dx /= h; dy /= h; dz /= h;
-    let n0x = 1, n0z = sd * 0.45;
+    let n0x = s * 0.25, n0z = 1;
     const n0l = Math.hypot(n0x, n0z); n0x /= n0l; n0z /= n0l;
-    let axx = dy * n0z, axy = -dx * n0z, axz = -dy * n0x;   // A = D x N0 (N0 has no y)
-    axy = dz * n0x - dx * n0z;
+    let axx = dy * n0z, axy = dz * n0x - dx * n0z, axz = -dy * n0x;   // A = D x N0
     const al = Math.hypot(axx, axy, axz); axx /= al; axy /= al; axz /= al;
     const fx = axy * dz - axz * dy, fy = axz * dx - axx * dz, fz = axx * dy - axy * dx; // Nf = A x D
-    const f = sd > 0 ? 1 : 0.8, bone = B_EAR + e, hw = 0.05;
-    const n = Math.round(h * hw * DENS * 1.4);
-    for (let i = 0; i < n * 2 + 200; i++) {
-      const u = 1 - Math.sqrt(jr()), v = jr() * 2 - 1, w = Math.pow(1 - u, 0.85) * (1 + 0.12 * Math.sin(Math.PI * u));
+    EARS.push([hsc(bx, 0), hsc(by, 1), hsc(bz, 2), dx, dy, dz, axx, axy, axz]);
+    const hw = 0.074, part = e ? R_EARR : R_EARL, cran = [HEAD[0]];
+    const n = Math.round(h * hw * 64000);
+    for (let i = 0; i < n * 2 + 260; i++) {
+      const u = 1 - Math.sqrt(rng()), v = rng() * 2 - 1, w = Math.pow(1 - u, 0.85) * (1 + 0.12 * Math.sin(Math.PI * u));
       const off = v * hw * w;
       let x = bx + dx * h * u + axx * off, y = by + dy * h * u + axy * off, z = bz + dz * h * u + axz * off;
       const bulge = (1 - v * v) * (1 - u);
@@ -338,91 +364,115 @@
       if (i >= n * 2) {               // rim along both edges
         const sv = v < 0 ? -1 : 1;
         x = bx + dx * h * u + axx * sv * hw * w; y = by + dy * h * u + axy * sv * hw * w; z = bz + dz * h * u + axz * sv * hw * w;
-        x -= fx * 0.006; y -= fy * 0.006; z -= fz * 0.006;
+        x -= fx * 0.008; y -= fy * 0.008; z -= fz * 0.008;
         nx = axx * sv + fx * 0.2; ny = axy * sv + fy * 0.2; nz = axz * sv + fz * 0.2;
       } else if (i & 1) {             // front: cupped
-        const d = 0.005 - 0.014 * bulge;
+        const d = 0.006 - 0.02 * bulge;
         x += fx * d; y += fy * d; z += fz * d;
         nx = fx + axx * v * 0.5; ny = fy + axy * v * 0.5; nz = fz + axz * v * 0.5;
         if (Math.abs(v) < 0.8 && u < 0.84) { k = K_EARIN; a1 = Math.abs(v) / 0.8 + jit(); }
       } else {                        // back: convex
-        const d = -0.01 - 0.01 * bulge;
+        const d = -0.014 - 0.014 * bulge;
         x += fx * d; y += fy * d; z += fz * d;
         nx = -fx + axx * v * 0.5; ny = -fy + axy * v * 0.5; nz = -fz + axz * v * 0.5;
       }
-      if (inside(SKULL, x, y, z)) continue;
-      addPt(bone, x - bx, y - by, z - bz, nx, ny, nz, P_OR, f, k, a1, 0);
+      if (insideAny(cran, null, x, y, z)) continue;
+      add(x, y, z, nx, ny, nz, k, P_OR, part, a1, 0);
     }
   });
 
-  // Tongue: pink, hanging out of the open mouth on the near side (flaps with the stride).
-  const TONGUE_O = [0.13, -0.07, 0.03];
-  sampleEllE(shape(0.0, -0.03, 0.01, 0.022, 0.034, 0.012, -0.35, 0), null,
-    (x, y, z, nx, ny, nz) => addPt(B_TONGUE, x, y, z, nx, ny, nz, P_TONGUE, 1, K_TONGUE, z / 0.012, 0));
-
-  // Tail: thick and fluffy, curled into a ring lying on top of the rump; ginger outside,
-  // cream on the inside of the curl. Tail-local origin = the root at the top back of the rump.
-  (function sampleTail() {
-    const CX = 0.04, CY = 0.095, R0 = Math.hypot(CX, CY), R1 = 0.05;
-    const TH0 = Math.atan2(-CY, -CX) + TAU, SWEEP = 5.2;
-    const ns = Math.ceil(R0 * SWEEP / SPACING * 1.4);
-    for (let i = 0; i < ns; i++) {
-      const s = (i + 0.5) / ns, th = TH0 - SWEEP * s, Rc = R0 + (R1 - R0) * s;
-      const ox = Math.cos(th), oy = Math.sin(th);
-      let r = 0.058 * (1 - 0.35 * s) * (1 + 0.2 * Math.sin(Math.PI * s));
-      if (s > 0.9) r *= Math.sqrt(Math.max(0.02, 1 - ((s - 0.9) / 0.1) ** 2));
-      const px = CX + Rc * ox, py = CY + Rc * oy, pz = 0.02;
-      const na = Math.max(8, Math.ceil(TAU * r / SPACING * 1.4));
-      for (let j = 0; j < na; j++) {
-        const a = (j + (i & 1) * 0.5) / na * TAU, ca = Math.cos(a), sa = Math.sin(a);
-        const nx = ca * ox, ny = ca * oy, nz = sa;
-        const x = px + r * nx, y = py + r * ny, z = pz + r * nz;
-        let hid = false;
-        for (let q = 0; q < 3 && !hid; q++) if (inside(TORSO[q], x + TAIL_AT[0], y + TAIL_AT[1], z)) hid = true;
-        if (hid) continue;
-        addPt(B_TAIL, x, y, z, nx, ny, nz, ca < -0.25 + jit() ? P_CR : P_OR, 1, K_COAT, 0, 0);
-      }
+  // Tail: a thick torus segment curled up over the rump; ginger outside, cream underneath.
+  const TB = [-0.03, 0.58, -0.38];      // wag pivot
+  const TAX = (() => { const l = Math.hypot(0.15, 0.3, 1); return [-0.15 / l, 0.3 / l, 1 / l]; })();
+  {
+    const CT = [-0.04, 0.67, -0.33], R = 0.1;
+    let nlx = -0.85, nly = 0.2, nlz = 0.45;
+    const nl = Math.hypot(nlx, nly, nlz); nlx /= nl; nly /= nl; nlz /= nl;
+    let e2x = -nly * nlx, e2y = 1 - nly * nly, e2z = -nly * nlz;
+    const e2l = Math.hypot(e2x, e2y, e2z); e2x /= e2l; e2y /= e2l; e2z /= e2l;
+    const e1x = e2y * nlz - e2z * nly, e1y = e2z * nlx - e2x * nlz, e1z = e2x * nly - e2y * nlx;
+    const SWEEP = 1.78 * Math.PI, TH0 = -Math.PI / 2;
+    const rad = s => {
+      let r = 0.058 * (1 - 0.32 * s) * (1 + 0.18 * Math.sin(Math.PI * s));
+      if (s > 0.9) r *= Math.sqrt(Math.max(0, 1 - ((s - 0.9) / 0.1) ** 2));
+      return r;
+    };
+    for (let i = 0; i < 9000; i++) {
+      const s = rng(), r = rad(s);
+      if (rng() * 0.075 > r) continue;
+      const th = TH0 + s * SWEEP, ph = rng() * TAU;
+      const rx = Math.cos(th) * e1x + Math.sin(th) * e2x, ry = Math.cos(th) * e1y + Math.sin(th) * e2y,
+            rz = Math.cos(th) * e1z + Math.sin(th) * e2z;
+      const cp = Math.cos(ph), sp = Math.sin(ph);
+      const nx = cp * rx + sp * nlx, ny = cp * ry + sp * nly, nz = cp * rz + sp * nlz;
+      const x = CT[0] + R * rx + r * nx, y = CT[1] + R * ry + r * ny, z = CT[2] + R * rz + r * nz;
+      if (insideAny(BODY, null, x, y, z)) continue;
+      add(x, y, z, nx, ny, nz, K_COAT, cp < -0.3 + jit() ? P_CR : P_OR, R_TAIL);
     }
-  })();
-
-  // Legs: thick shoulder / thigh masses, then tapering segments hanging along -y from each joint,
-  // and a round paw. Cream on the inner/back side and the lower legs; far legs darker.
-  function legRegion(front, s, y, nx, L) {
-    const u = -y / L, j = jit();
-    if (front) {
-      if (s === 0) return nx < -0.55 + j ? P_CR : P_OR;
-      if (s === 1) return (nx < -0.2 + j || u > 0.6 + j) ? P_CR : P_OR;
-      return P_CR;
-    }
-    if (s === 0) return (nx < -0.6 + j && u > 0.4) ? P_CR : P_OR;
-    if (s === 1) return nx < -0.15 + j ? P_CR : P_OR;
-    return P_CR;
-  }
-  for (let l = 0; l < 4; l++) {
-    const front = l < 2, far = (l & 1) === 1, f = far ? 0.62 : 1;
-    const Ls = front ? FRONT_L : HIND_L, R0 = front ? FRONT_R0 : HIND_R0, R1 = front ? FRONT_R1 : HIND_R1;
-    const b0 = B_LEG + l * 4;
-    // shoulder / thigh mass on the upper segment
-    sampleEll(b0, front ? shape(0.0, -0.03, 0, 0.062, 0.085, 0.055, 0, 0) : shape(0.012, -0.055, 0, 0.082, 0.1, 0.062, 0, 0),
-              (x, y, z, nx) => (front ? P_OR : (nx < -0.6 + jit() && y < -0.09 ? P_CR : P_OR)), f, null);
-    for (let s = 0; s < 3; s++) {
-      const L = Ls[s], r0 = R0[s], r1 = R1[s];
-      const E = shape(0, -L / 2, 0, L / 2 + r1 * 0.7, r0, r0 * 0.86, -Math.PI / 2, 1 - r1 / r0);
-      sampleEll(b0 + s, E, (x, y, z, nx) => legRegion(front, s, y, nx, L), f, null);
-      if (s > 0) sampleEll(b0 + s, shape(0, 0, 0, r0 * 1.05, r0 * 1.05, r0 * 0.9, 0, 0),
-                           (x, y, z, nx) => legRegion(front, s, -0.5 * L, nx, L), f, null);
-    }
-    sampleEll(b0 + 3, shape(0.02, -0.004, 0, 0.05, 0.03, 0.042, 0, 0), () => P_CR, f, null);
   }
 
-  const NP = MB.x.length;
-  const PX = Float32Array.from(MB.x), PY = Float32Array.from(MB.y), PZ = Float32Array.from(MB.z);
-  const NX = Float32Array.from(MB.nx), NY = Float32Array.from(MB.ny), NZ = Float32Array.from(MB.nz);
-  const PB = Uint8Array.from(MB.b), PP = Uint16Array.from(MB.p), PF = Float32Array.from(MB.f);
-  const PK = Uint8Array.from(MB.k), A1 = Float32Array.from(MB.a1), A2 = Float32Array.from(MB.a2);
-  const FJ = new Float32Array(NP);
-  for (let i = 0; i < NP; i++) FJ[i] = (jr() - 0.5) * 0.14;   // fur texture
-  const BO = new Float32Array(NB * 5); // per bone: ox, oy, oz, cos, sin
+  // Collar: a dark band around the neck, just under the cheeks, with a little gold bell hanging in front.
+  const COL_C = [0, 0.56, 0.245], COL_R = [0.15, 0.15], COL_TILT = 0.5;  // centre, radii (x, z), tilt (front down)
+  {
+    const ct0 = Math.cos(COL_TILT), st0 = Math.sin(COL_TILT);
+    for (let i = 0; i < 2600; i++) {
+      const a = rng() * TAU, v = rng() * 2 - 1;
+      const cx = Math.sin(a), cz = Math.cos(a);
+      const r = 1.06 + 0.07 * Math.sqrt(1 - v * v);
+      let x = cx * COL_R[0] * r, y = v * 0.03, z = cz * COL_R[1] * r;
+      // tilt about x so the front sits lower
+      const y2 = y * ct0 - z * st0, z2 = y * st0 + z * ct0;
+      const nx = cx, ny0 = v * 0.6, nz0 = cz;
+      add(COL_C[0] + x, COL_C[1] + y2, COL_C[2] + z2, nx, ny0 * ct0 - nz0 * st0, ny0 * st0 + nz0 * ct0, K_COLLAR, P_COLLAR, R_BODY);
+    }
+  }
+  const BELL_P = [0, 0.49, 0.4];     // bell hanging point (swing pivot)
+  sampleSolid(sol(0, 0.455, 0.41, 0.03, 0.03, 0.03, 0, 'bell'), 90000, null,
+    (x, y, z, nx, ny, nz) => add(x, y, z, nx, ny, nz, K_BELL, P_BELL, R_BELL, nx, ny));
+
+  // Tongue: a flat pink ellipsoid hanging out of the open mouth.
+  sampleSolid({ c: [H0[0], H0[1] - 0.118, H0[2] + 0.255], r: [0.025, 0.036, 0.01], ax: 0.45 }, 70000, null,
+    (x, y, z, nx, ny, nz) => add(x, y, z, nx, ny, nz, K_TONGUE, P_TONGUE, R_TONGUE, (x - H0[0]) / 0.025, 0));
+
+  const NP_ = BUF.x.length;
+  const PX = Float32Array.from(BUF.x), PY = Float32Array.from(BUF.y), PZ = Float32Array.from(BUF.z);
+  const NX = Float32Array.from(BUF.nx), NY = Float32Array.from(BUF.ny), NZ = Float32Array.from(BUF.nz);
+  const KD = Uint8Array.from(BUF.k), PP = Uint8Array.from(BUF.p), PR = Uint8Array.from(BUF.r);
+  const A1 = Float32Array.from(BUF.a1), A2 = Float32Array.from(BUF.a2);
+  const FJ = new Float32Array(NP_);
+  for (let i = 0; i < NP_; i++) FJ[i] = (rng() - 0.5) * 0.14;   // fur texture
+  BUF.x = BUF.y = BUF.z = null;
+
+  // ---------- 3x4 matrices (no per-frame allocation) ----------
+  function mAxis(o, x, y, z, ang) {          // rotation about a unit axis
+    const c = Math.cos(ang), s = Math.sin(ang), C = 1 - c;
+    o[0] = c + x * x * C;     o[1] = x * y * C - z * s; o[2] = x * z * C + y * s;  o[3] = 0;
+    o[4] = y * x * C + z * s; o[5] = c + y * y * C;     o[6] = y * z * C - x * s;  o[7] = 0;
+    o[8] = z * x * C - y * s; o[9] = z * y * C + x * s; o[10] = c + z * z * C;     o[11] = 0;
+  }
+  function mMul(o, a, b) {                   // o = a * b (b applied first); o must not alias
+    for (let r = 0; r < 12; r += 4) {
+      const a0 = a[r], a1 = a[r + 1], a2 = a[r + 2];
+      o[r] = a0 * b[0] + a1 * b[4] + a2 * b[8];
+      o[r + 1] = a0 * b[1] + a1 * b[5] + a2 * b[9];
+      o[r + 2] = a0 * b[2] + a1 * b[6] + a2 * b[10];
+      o[r + 3] = a0 * b[3] + a1 * b[7] + a2 * b[11] + a[r + 3];
+    }
+  }
+  function mPivot(o, px, py, pz) {           // make the linear part of o act about point p
+    o[3] += px - (o[0] * px + o[1] * py + o[2] * pz);
+    o[7] += py - (o[4] * px + o[5] * py + o[6] * pz);
+    o[11] += pz - (o[8] * px + o[9] * py + o[10] * pz);
+  }
+  function mScale(o, sx, sy, sz) { o.fill(0); o[0] = sx; o[5] = sy; o[10] = sz; }
+  const VIEW = new Float32Array(12), MA = new Float32Array(12), MB = new Float32Array(12), MC = new Float32Array(12),
+        BM = new Float32Array(12), BS = new Float32Array(12), HM = new Float32Array(12), HW = new Float32Array(12),
+        HV = new Float32Array(12), LM = new Float32Array(48), PM = new Float32Array(NPART * 12);
+  {
+    mAxis(MA, 0, 1, 0, YAW); MA[7] = -PIVOT;   // turn the dog, then centre on the pivot
+    mAxis(MB, 1, 0, 0, TILT);
+    mMul(VIEW, MB, MA);
+  }
 
   // ---------- Canvas, grid, layout ----------
   const canvas = document.getElementById('c');
@@ -472,10 +522,10 @@
     portrait = H > W * 1.1;
     horizonRow = Math.round(H * (portrait ? 0.55 : 0.6) / ch);
     horizonY = horizonRow * ch;
-    groundY = H * (portrait ? 0.79 : 0.86);
-    S = portrait ? Math.min(W * 0.66, H * 0.32) : Math.min(W * 0.38, H * 0.55);
-    ox = W * (portrait ? 0.46 : 0.4) - 0.12 * S;
-    oy = groundY - PIVOT * ct * S;
+    groundY = H * (portrait ? 0.79 : 0.87);
+    S = portrait ? Math.min(W * 0.71, H * 0.34) : Math.min(W * 0.44, H * 0.57);
+    ox = W * (portrait ? 0.48 : 0.42);
+    oy = groundY - Math.cos(TILT) * PIVOT * S * CAM_D / (CAM_D + Math.sin(TILT) * PIVOT);
     mref = Math.max(Math.min(W, H), H * 0.6);
 
     bfFont = `700 ${Math.round(fs * 2)}px ${MONO}`;
@@ -586,203 +636,246 @@
   }
 
   // ---------- State ----------
-  let t = 0, skyT = 0, gph = 0, worldU = 0, dist = 0, jumps = 0, jt = -1, yGround = 0, letters = 0;
-  const legP = new Float32Array(4), lastP = new Float32Array(4), pawX = new Float32Array(4);
+  let t = 0, skyT = 0, gph = 0, worldU = 0, dist = 0, jumps = 0, jt = -1, landT = -9, yGround = 0, letters = 0;
+  const legP = new Float32Array(4), lastP = new Float32Array(4), pwX = new Float32Array(4), pwZ = new Float32Array(4);
   let headSX = 0, headSY = 0, shadowX = 0, liftNow = 0;
-  let eyeOpen = 1, happy = 0, mouthOpen = 0;
+  let eyeOpen = 1, happy = 0, mouthOpen = 0, earFold0 = 0, earFold1 = 0, earTw0 = 0, earTw1 = 0;
   let projX = 0, projY = 0;
 
+  // World (dog frame, ground y = 0) -> screen.
   function project(x, y, z) {
-    const rx = x * cyw + z * syw, rz = z * cyw - x * syw, yy = y - PIVOT;
-    const y2 = yy * ct - rz * st, z2 = yy * st + rz * ct;
-    const f = CAM_D / (CAM_D - z2);
-    projX = ox + rx * S * f; projY = oy - y2 * S * f;
+    const V = VIEW;
+    const vx = V[0] * x + V[1] * y + V[2] * z + V[3], vy = V[4] * x + V[5] * y + V[6] * z + V[7];
+    const vz = V[8] * x + V[9] * y + V[10] * z + V[11], f = CAM_D / (CAM_D - vz);
+    projX = ox + vx * S * f; projY = oy - vy * S * f;
   }
+  const BC = [0, 0.4, -0.03];   // body rock centre
 
-  function setBone(b, x, y, z, a) {
-    const o = b * 5;
-    BO[o] = x; BO[o + 1] = y; BO[o + 2] = z; BO[o + 3] = Math.cos(a); BO[o + 4] = Math.sin(a);
-  }
-
-  // Pose every bone for the current stride phase and jump.
+  // Pose every part for the current stride phase and jump.
   function pose(dt) {
-    let w = 0, u = 0, jy = 0;
-    if (jt >= 0) { u = jt / JUMP_DUR; w = Math.sin(Math.PI * u); jy = JUMP_H * 4 * u * (1 - u); }
-    const fr = gph - Math.floor(gph);
-    let pb = GAIT.pitch * Math.sin(TAU * (fr + 0.15));
-    pb += (0.22 * Math.cos(Math.PI * u) - pb) * w;    // leap: nose up on take-off, down to land
-    const cb = Math.cos(pb), sb = Math.sin(pb);
-    setBone(B_BODY, 0, BODY_Y, 0, pb);
-
-    let minY = 9, any = false;
-    for (let l = 0; l < 4; l++) {
-      const front = l < 2;
-      let p = gph - GAIT.off[l]; p -= Math.floor(p);
-      legP[l] = p;
-      let a, fl;
-      const ds = GAIT.ds;
-      if (p < ds) { a = 1 - 2 * p / ds; fl = 0; }
-      else { const v = (p - ds) / (1 - ds); a = -Math.cos(Math.PI * v); fl = Math.sin(Math.PI * v) * GAIT.fx; }
-      let s0, s1, s2, sp;
-      if (front) {
-        // front: elbow folds the forearm back under the chest in swing, reaches forward to land
-        s0 = -0.5 + GAIT.af * a; s1 = 0.5 - 1.5 * fl; s2 = 0.15 + 0.45 * fl; sp = -0.7 * fl;
-        s0 += (0.95 - s0) * w; s1 += (0.05 - s1) * w; s2 += (0.1 - s2) * w; sp += (-0.2 - sp) * w;
-      } else {
-        // hind: stifle and hock fold the paw up under the belly in swing, stretch back on push-off
-        s0 = 0.55 + GAIT.ah * a; s1 = -1.25 - 0.65 * fl; s2 = 0.8 + 0.85 * fl; sp = -0.6 * fl;
-        s0 += (-0.35 - s0) * w; s1 += (-0.45 - s1) * w; s2 += (0.45 - s2) * w; sp += (-0.6 - sp) * w;
-      }
-      const rt = front ? FRONT_ROOT : HIND_ROOT, rx = rt[0], ry = rt[1], rz = (l & 1) ? -LEG_Z : LEG_Z;
-      let jx = rx * cb - ry * sb, jyy = BODY_Y + rx * sb + ry * cb;
-      const Ls = front ? FRONT_L : HIND_L, b0 = B_LEG + l * 4;
-      let ang = pb + s0;
-      setBone(b0, jx, jyy, rz, ang); jx += Math.sin(ang) * Ls[0]; jyy -= Math.cos(ang) * Ls[0];
-      ang += s1;
-      setBone(b0 + 1, jx, jyy, rz, ang); jx += Math.sin(ang) * Ls[1]; jyy -= Math.cos(ang) * Ls[1];
-      ang += s2;
-      setBone(b0 + 2, jx, jyy, rz, ang); jx += Math.sin(ang) * Ls[2]; jyy -= Math.cos(ang) * Ls[2];
-      setBone(b0 + 3, jx, jyy, rz, sp);
-      pawX[l] = jx;
-      if (p < ds && jyy - PAW_DROP < minY) { minY = jyy - PAW_DROP; any = true; }
+    const fr = gph - Math.floor(gph), ph2 = TAU * 2 * fr;
+    let u = 0, w = 0, jy = 0;
+    if (jt >= 0) {
+      u = jt / JUMP_DUR; jy = JUMP_H * 4 * u * (1 - u);
+      w = smooth(u / 0.15) * (1 - smooth((u - 0.82) / 0.18));   // legs tucked while airborne
     }
-    // Keep a planted paw on the ground; add a little lift in the gallop's suspension phase.
+    const r = 1 - w;
+    // Rock: nose dips as the front pair lands, rises as the hind pair lands; nose up on a leap.
+    const up = -GAIT.pitch * Math.cos(TAU * fr) * r + 0.12 * Math.cos(Math.PI * u) * w;
+    // Squash on each landing, stretch at the top of each bounce; a stretch on take-off, a squash on landing.
+    let sy = 1 - GAIT.sq * Math.cos(ph2) * r;
+    if (jt >= 0 && u < 0.25) sy += 0.1 * Math.sin(Math.PI * u / 0.25);
+    const ld = t - landT;
+    if (ld >= 0 && ld < 0.3 && !reduced) sy -= 0.11 * Math.sin(Math.PI * ld / 0.3);
+    const sxz = 1 / Math.sqrt(sy);
+    mAxis(BM, 1, 0, 0, -up); mPivot(BM, BC[0], BC[1], BC[2]);
+    mScale(MA, sxz, sy, sxz); mPivot(MA, 0, 0.33, -0.03);   // squash about the hips: legs stay put
+    mMul(BS, BM, MA);
+
+    // Legs: quick little paddles; each paw lifts in a small arc as it swings forward.
+    let minY = 9;
+    for (let l = 0; l < 4; l++) {
+      const L = LEGS[l], hind = l >= 2;
+      let p = gph - LEG_OFF[l]; p -= Math.floor(p);
+      legP[l] = p;
+      let th = GAIT.amp * Math.cos(TAU * p), lift = p > 0.5 ? GAIT.lift * Math.sin(TAU * (p - 0.5)) : 0;
+      th += ((hind ? -0.8 : 0.9) - th) * w; lift += ((hind ? 0.05 : 0.07) - lift) * w;
+      mAxis(MA, 1, 0, 0, -th); mPivot(MA, L[0], L[1], L[2]); MA[7] += lift;
+      mMul(MB, BM, MA);
+      LM.set(MB, l * 12);
+      const px = L[0], py = L[1] - PAW_B, pz = L[2] + 0.026;
+      const yb = MB[4] * px + MB[5] * py + MB[6] * pz + MB[7];
+      if (yb < minY) minY = yb;
+      pwX[l] = MB[0] * px + MB[1] * py + MB[2] * pz + MB[3];
+      pwZ[l] = MB[8] * px + MB[9] * py + MB[10] * pz + MB[11];
+    }
+    // Keep the planted paws on the ground; hop up between landings.
     if (jt < 0) {
-      const target = any ? -minY : yGround + GAIT.bob;
-      yGround += (target - yGround) * Math.min(1, dt * 22);
+      const hop = GAIT.bob * Math.pow(Math.sin(TAU * fr), 2);
+      yGround += (-minY + hop - yGround) * Math.min(1, dt * 25);
     }
     const yo = yGround + jy;
     liftNow = jy;
-
-    // Head stays steady (counter-pitches the body); ears flop back a little; mouth open, tongue out.
-    const hx = HEAD_AT[0] * cb - HEAD_AT[1] * sb, hy = BODY_Y + HEAD_AT[0] * sb + HEAD_AT[1] * cb;
-    const hA = -0.7 * pb - 0.08 + 0.035 * Math.sin(TAU * (fr + 0.35)) * (1 - w) + 0.06 * w;
-    const ch2 = Math.cos(hA), sh2 = Math.sin(hA);
-    setBone(B_HEAD, hx, hy, 0, hA);
-    const earBack = (reduced ? 0.03 : 0.08) + 0.07 * Math.sin(TAU * fr * 2 + 0.8) + 0.25 * w;
-    for (let k = 0; k < 2; k++) {
-      const ex = EAR_O[k * 3], ey = EAR_O[k * 3 + 1];
-      setBone(B_EAR + k, hx + ex * ch2 - ey * sh2, hy + ex * sh2 + ey * ch2, EAR_O[k * 3 + 2], hA + earBack);
+    BM[7] += yo; BS[7] += yo;
+    mMul(MA, VIEW, BS); PM.set(MA, R_BODY * 12);
+    for (let l = 0; l < 4; l++) {
+      LM[l * 12 + 7] += yo;
+      mMul(MA, VIEW, LM.subarray(l * 12, l * 12 + 12)); PM.set(MA, (R_LEG + l) * 12);
     }
-    setBone(B_TONGUE, hx + TONGUE_O[0] * ch2 - TONGUE_O[1] * sh2, hy + TONGUE_O[0] * sh2 + TONGUE_O[1] * ch2, TONGUE_O[2],
-            hA + 0.25 * Math.sin(TAU * fr * 2 + 1.5) - 0.3 * w);
-    // Face: panting "w" mouth, ^ ^ eyes in the air, the odd blink.
-    happy = w;
-    mouthOpen = (reduced ? 0.5 : 0.62) + 0.3 * Math.sin(TAU * fr * 2);
+
+    // Head: rides on the squashed neck, nods a beat behind the bounce, wobbles a little; cheeks jiggle.
+    const nod = (reduced ? 0.02 : 0.06) * Math.sin(ph2 - 1.3) * r;
+    const hPitch = 0.6 * up + nod + 0.04 * w, hRoll = (reduced ? 0.02 : 0.05) * Math.sin(TAU * fr) * r;
+    mAxis(MA, 0, 1, 0, -0.2); mAxis(MB, 1, 0, 0, hPitch); mMul(MC, MA, MB);
+    mAxis(MA, 0, 0, 1, hRoll); mMul(HM, MC, MA);
+    const jg = 1 + (reduced ? 0.006 : 0.022) * Math.sin(ph2 - 2.2) * r;
+    mScale(MA, jg, 1 / jg, 1); mMul(MB, HM, MA);
+    mPivot(MB, NP[0], NP[1], NP[2]);
+    mMul(HW, BM, MB);
+    // follow the neck as the body squashes
+    const nyS = BS[4] * NP[0] + BS[5] * NP[1] + BS[6] * NP[2] + BS[7], nyB = BM[4] * NP[0] + BM[5] * NP[1] + BM[6] * NP[2] + BM[7];
+    HW[7] += nyS - nyB;
+    mMul(HV, VIEW, HW); PM.set(HV, R_HEAD * 12);
+
+    // Ears: swept back a touch, bouncing with the hop; flapping in a leap.
+    const eb = reduced ? 0.04 : 0.13;
+    earFold0 = -0.12 + eb * Math.sin(ph2 - 2) * r + w * (-0.3 + 0.28 * Math.sin(jt * 30));
+    earFold1 = -0.12 + eb * Math.sin(ph2 - 2.4) * r + w * (-0.3 + 0.28 * Math.sin(jt * 30 + 1));
+    earTw0 = 0.07 * Math.sin(TAU * fr) * r; earTw1 = -earTw0;
+    for (let e = 0; e < 2; e++) {
+      const E = EARS[e];
+      mAxis(MA, E[6], E[7], E[8], e ? earFold1 : earFold0);
+      mAxis(MB, E[3], E[4], E[5], e ? earTw1 : earTw0);
+      mMul(MC, MA, MB); mPivot(MC, E[0], E[1], E[2]);
+      mMul(MA, HV, MC);
+      PM.set(MA, (R_EARL + e) * 12);
+    }
+    // Tongue: out in a happy pant, bouncing with each hop.
+    mAxis(MA, 1, 0, 0, (reduced ? 0.05 : 0.22) * Math.sin(ph2 - 1.6) * r + 0.15 * w);
+    mPivot(MA, TAS[0], TAS[1], TAS[2]);
+    mMul(MB, HV, MA); PM.set(MB, R_TONGUE * 12);
+    // Tail: the curl wiggles side to side.
+    mAxis(MA, TAX[0], TAX[1], TAX[2], (reduced ? 0.08 : 0.22) * Math.sin(ph2 + 1) + 0.15 * w * Math.sin(jt * 24));
+    mPivot(MA, TB[0], TB[1], TB[2]);
+    mMul(MB, BS, MA); mMul(MA, VIEW, MB); PM.set(MA, R_TAIL * 12);
+    // Bell: a little pendulum under the collar, swinging behind the bounce.
+    mAxis(MA, 1, 0, 0, (reduced ? 0.1 : 0.45) * Math.sin(ph2 - 2.6) * r + 0.6 * w);
+    mAxis(MB, 0, 0, 1, (reduced ? 0.05 : 0.2) * Math.sin(TAU * fr));
+    mMul(MC, MA, MB); mPivot(MC, BELL_P[0], BELL_P[1], BELL_P[2]);
+    mMul(MB, BS, MC); mMul(MA, VIEW, MB); PM.set(MA, R_BELL * 12);
+
+    // Face: happy pant, ^ ^ eyes in a leap and now and then while running, the odd blink.
+    const hc = t % 7.3;
+    happy = Math.max(w, hc > 5.6 && hc < 6.9 && !reduced ? 1 : 0);
+    mouthOpen = happy > 0.35 ? 0.85 : (reduced ? 0.5 : 0.6) + 0.3 * Math.sin(ph2);
     const bt = t % 4.3;
     eyeOpen = bt > 4.1 ? 1 - Math.sin(Math.PI * (bt - 4.1) / 0.2) : 1;
-    const tx = TAIL_AT[0] * cb - TAIL_AT[1] * sb, ty = BODY_Y + TAIL_AT[0] * sb + TAIL_AT[1] * cb;
-    setBone(B_TAIL, tx, ty, 0, pb + 0.09 * Math.sin(TAU * fr + 2.2) - 0.1 * w);
 
-    for (let b = 0; b < NB; b++) BO[b * 5 + 1] += yo;
-    project(hx + 0.15 * ch2, hy + yo + 0.15 * sh2, 0);
-    headSX = projX; headSY = projY;
-    project(0.02, 0, 0);
+    // Screen anchors: head centre (butterfly), and the shadow under the body.
+    const hx = H0S[0], hy = H0S[1], hz = H0S[2];
+    const vz = HV[8] * hx + HV[9] * hy + HV[10] * hz + HV[11], f = CAM_D / (CAM_D - vz);
+    headSX = ox + (HV[0] * hx + HV[1] * hy + HV[2] * hz + HV[3]) * S * f;
+    headSY = oy - (HV[4] * hx + HV[5] * hy + HV[6] * hz + HV[7]) * S * f;
+    project(0, 0, 0.02);
     shadowX = projX;
   }
 
-  // ---------- Dog splat (z-buffered, lit, coloured by region) ----------
+  // ---------- Dog splat (z-buffered, lit, coloured by region; inputs in view space) ----------
+  function splat(x, y, z, nx, ny, nz, k, p, i) {
+    const f = CAM_D / (CAM_D - z);
+    const px = ox + x * S * f, py = oy - y * S * f;
+    if (px < 0 || py < 0) return;
+    const col = (px / cw) | 0, row = (py / ch) | 0;
+    if (col >= cols || row >= rows) return;
+    const c = row * cols + col;
+    const fresh = stampA[c] !== stamp || ckind[c] !== 1;
+    if (!fresh && zbuf[c] >= z + 0.03) return; // cannot win even with the feature bias
+
+    let lam = nx * LX + ny * LY + nz * LZ;
+    const lam2 = lam < 0 ? -lam : lam;
+    if (lam < 0) lam = 0;
+    let dd = (z + 0.6) / 1.2;
+    dd = 0.62 + 0.38 * (dd < 0 ? 0 : dd > 1 ? 1 : dd);
+    const rim = nz < 0.35 ? (0.35 - (nz < 0 ? 0 : nz)) * 0.35 : 0;   // warm rim glow on silhouettes
+
+    let b = 0, cc = 0, feat = 0, coat = false;
+    switch (k) {
+      case K_EYE: {                               // big round glossy eyes
+        const cu = A1[i], cv = A2[i];
+        coat = true; p = P_OR_L;
+        if (happy > 0.35) {                       // ^ ^ happy eyes
+          const arc = 0.9 * (1 - Math.abs(cu)) - 0.35;
+          if (Math.abs(cu) < 1.2 && Math.abs(cv - arc) < 0.42) {
+            coat = false; feat = 1; p = P_MOUTH; b = 0.8;
+            cc = cu < -0.3 ? C_SL : cu > 0.3 ? C_BS : C_CARET;
+          }
+        } else if (eyeOpen < 0.22) {              // closed: a lid line
+          if (Math.abs(cu) < 1.05 && Math.abs(cv + 0.1) < 0.3) {
+            coat = false; feat = 1; p = P_EYE; b = 0.24; cc = C_DASH;
+          }
+        } else if (cu * cu + (cv / eyeOpen) ** 2 < 1) {
+          coat = false; feat = 1; p = P_EYE; b = 0.24; cc = C_AT;
+        }
+        break;
+      }
+      case K_MOUTH: {
+        const lx = A1[i], ly = A2[i];
+        coat = true;
+        if (Math.abs(lx) < 0.048) {
+          // A small "w" smile under the nose, with a short philtrum; open in a happy pant.
+          const ph = TAU * lx / 0.048, yc = -0.086 + 0.008 * Math.cos(ph) - 0.01 * mouthOpen;
+          const open = mouthOpen * 0.045 * (1 - (lx / 0.04) ** 2);
+          if (Math.abs(ly - yc) < 0.0045) {
+            coat = false; feat = 1; p = P_MOUTH; b = 0.55;
+            const sl = 1.05 * Math.sin(ph);
+            cc = sl > 0.45 ? C_SL : sl < -0.45 ? C_BS : C_US;
+          } else if (Math.abs(lx) < 0.004 && ly > yc && ly < -0.05) {
+            coat = false; feat = 1; p = P_MOUTH; b = 0.55; cc = C_BAR;
+          } else if (open > 0 && ly < yc && ly > yc - open) {
+            coat = false; feat = 1; p = P_MIN; b = 0.4; cc = C_HASH;
+          }
+        }
+        break;
+      }
+      case K_NOSE:
+        feat = 1;
+        p = P_NOSE; b = 0.2 + 0.25 * lam; cc = C_AT;
+        // remember the shiniest spot of the button nose (lit, facing up and toward us) for its highlight
+        if (lam + ny + nz > noseBest) { noseBest = lam + ny + nz; noseCell = c; }
+        break;
+      case K_EARIN: {
+        const v = A1[i];
+        b = clamp((0.45 + 0.5 * lam2) * dd, 0, 0.82);
+        if (v > 0.55) { p = P_CR; cc = C_FUR[(b * (NFUR - 0.01)) | 0]; }
+        else { p = P_EARIN; cc = b > 0.6 ? C_PCT : C_COLON; }
+        break;
+      }
+      case K_TONGUE:
+        b = clamp(0.5 + 0.5 * lam, 0, 0.85);
+        p = Math.abs(A1[i]) < 0.14 ? P_TONGUE_D : P_TONGUE;
+        cc = b > 0.7 ? C_O : C_o; feat = 2;
+        break;
+      case K_COLLAR:
+        b = clamp(0.45 + 0.45 * lam, 0, 0.85); cc = b > 0.62 ? C_HASH : C_EQ; feat = 1;
+        break;
+      case K_BELL:
+        feat = 2;
+        if (lam > 0.8) { p = P_CATCH; b = 0.8; cc = C_STAR; }
+        else { b = clamp(0.35 + 0.55 * lam, 0, 0.9); cc = lam > 0.35 ? C_O : C_o; }
+        break;
+      default:
+        coat = true;
+    }
+    if (coat) {
+      // key light + camera fill + warm bounce from below + rim, as in shiba-sit
+      b = clamp((0.26 + 0.5 * lam + 0.26 * (nz > 0 ? nz : 0) + 0.2 * (ny < 0 ? -ny : 0) + rim) * dd + FJ[i], 0, p === P_CR ? 0.7 : 0.8);
+      if (p === P_OR || p === P_OR_L) p = b < 0.36 ? P_OR_D : b > 0.66 ? P_OR_L : P_OR;
+      else if (p === P_CR && b < 0.38) p = P_CR_D;
+      cc = C_FUR[(b * (NFUR - 0.01)) | 0];
+    }
+    const zb = z + 0.012 * feat;
+    if (!fresh && zbuf[c] >= zb) return; // keep nearest (larger z = closer)
+    if (stampA[c] !== stamp) { stampA[c] = stamp; touched[nT++] = c; }
+    zbuf[c] = zb; cchar[c] = cc; ccol[c] = p * LEVELS + lvl(b); ckind[c] = 1;
+    if (col < bmin) bmin = col; if (col > bmax) bmax = col;
+    if (row < rmin) rmin = row; if (row > rmax) rmax = row;
+  }
+
+  let noseBest = -9, noseCell = -1;
   function splatDog() {
+    noseBest = -9; noseCell = -1;
     bmin = cols; bmax = -1; rmin = rows; rmax = -1;
-    for (let i = 0; i < NP; i++) {
-      const o = PB[i] * 5, bc = BO[o + 3], bs = BO[o + 4];
-      const lx = PX[i], ly = PY[i];
-      const x = BO[o] + lx * bc - ly * bs, y = BO[o + 1] + lx * bs + ly * bc, z = BO[o + 2] + PZ[i];
-      const rx = x * cyw + z * syw, rz = z * cyw - x * syw, yy = y - PIVOT;
-      const y2 = yy * ct - rz * st;
-      const z2 = yy * st + rz * ct;
-      const f = CAM_D / (CAM_D - z2);
-      const px = ox + rx * S * f, py = oy - y2 * S * f;
-      if (px < 0 || py < 0) continue;
-      const col = (px / cw) | 0, row = (py / ch) | 0;
-      if (col >= cols || row >= rows) continue;
-      const c = row * cols + col;
-      const fresh = stampA[c] !== stamp;
-      if (!fresh && zbuf[c] >= z2 + 0.035) continue; // cannot win even with the feature bias
-
-      const k = PK[i];
-      let p = PP[i];
-      const nxl = NX[i], nyl = NY[i], nz = NZ[i];
-      const nx = nxl * bc - nyl * bs, ny = nxl * bs + nyl * bc;
-      const rnx = nx * cyw + nz * syw, rnz = nz * cyw - nx * syw;
-      const ny2 = ny * ct - rnz * st, nz2 = ny * st + rnz * ct;
-      let lam = rnx * LX + ny2 * LY + nz2 * LZ;
-      const lam2 = lam < 0 ? -lam : lam;
-      if (lam < 0) lam = 0;
-      let dd = (z2 + 0.6) / 1.2;
-      dd = 0.62 + 0.38 * (dd < 0 ? 0 : dd > 1 ? 1 : dd);
-      const rim = nz2 < 0.35 ? (0.35 - (nz2 < 0 ? 0 : nz2)) * 0.35 : 0;   // warm rim glow on silhouettes
-
-      let b = 0, cc = 0, feat = 0, coat = false;
-      switch (k) {
-        case K_EYE: {
-          const sd = p ? -1 : 1, cu = A1[i], cv = A2[i], eu = cu * sd, ev = cv - 0.3 * eu;
-          coat = true; p = P_OR_L;
-          if (happy > 0.35) {                       // ^ ^ happy eyes while leaping
-            const arc = 0.9 * (1 - Math.abs(cu)) - 0.35;
-            if (Math.abs(cu) < 1.2 && Math.abs(cv - arc) < 0.42) {
-              coat = false; feat = 1; p = P_MOUTH; b = 0.8;
-              cc = cu < -0.3 ? C_SL : cu > 0.3 ? C_BS : C_CARET;
-            }
-          } else if (eyeOpen < 0.22) {              // closed: a lid line
-            if (Math.abs(eu) < 1.05 && Math.abs(ev + 0.15) < 0.3) {
-              coat = false; feat = 1; p = P_EYE; b = 0.24; cc = C_DASH;
-            }
-          } else if (Math.abs(eu) < 1) {
-            const hh = Math.pow(1 - eu * eu, 0.55) * eyeOpen;
-            if (Math.abs(ev) < hh) { coat = false; feat = 1; p = P_EYE; b = 0.24; cc = C_AT; }
-          }
-          break;
-        }
-        case K_MOUTH: {
-          // Profile smile from the nose back to the cheek, dropping open (dark) toward the front.
-          const mx = A1[i], my = A2[i], yc = lipY(mx);
-          const open = mouthOpen * 0.03 * clamp((mx - 0.07) / 0.11, 0, 1);
-          coat = true;
-          if (Math.abs(my - yc) < 0.0055) {
-            coat = false; feat = 1; p = P_MOUTH; b = 0.55; cc = mx < 0.1 ? C_BS : C_US;
-          } else if (open > 0 && my < yc && my > yc - open) {
-            coat = false; feat = 1; p = P_MIN; b = 0.42; cc = C_HASH;
-          }
-          break;
-        }
-        case K_NOSE:
-          feat = 1;
-          if (lam > 0.86 && ny2 > 0.3) { p = P_CATCH; b = 0.7; cc = C_STAR; }
-          else { p = P_NOSE; b = 0.2 + 0.25 * lam; cc = C_AT; }
-          break;
-        case K_EARIN: {
-          const v = A1[i];
-          b = clamp((0.45 + 0.5 * lam2) * dd * PF[i], 0, 0.82);
-          if (v > 0.55) { p = P_CR; cc = C_FUR[(b * (NFUR - 0.01)) | 0]; }
-          else { p = P_EARIN; cc = b > 0.6 ? C_PCT : C_COLON; }
-          break;
-        }
-        case K_TONGUE:
-          b = clamp(0.5 + 0.5 * lam, 0, 0.85);
-          p = A1[i] < -0.4 ? P_TONGUE_D : P_TONGUE;
-          cc = b > 0.7 ? C_O : C_o; feat = 2;
-          break;
-        default:
-          coat = true;
-      }
-      if (coat) {
-        // key light + camera fill + warm bounce from below + rim, as in shiba-sit
-        b = clamp((0.26 + 0.5 * lam + 0.26 * (nz2 > 0 ? nz2 : 0) + 0.2 * (ny2 < 0 ? -ny2 : 0) + rim) * dd * PF[i] + FJ[i],
-                  0, p === P_CR ? 0.7 : 0.8);
-        if (p === P_OR || p === P_OR_L) p = b < 0.36 ? P_OR_D : b > 0.66 ? P_OR_L : P_OR;
-        else if (p === P_CR && b < 0.38) p = P_CR_D;
-        cc = C_FUR[(b * (NFUR - 0.01)) | 0];
-      }
-      const zb = z2 + 0.015 * feat;
-      if (!fresh && zbuf[c] >= zb) continue; // keep nearest (larger z = closer)
-      if (fresh) { stampA[c] = stamp; touched[nT++] = c; }
-      zbuf[c] = zb; cchar[c] = cc; ccol[c] = p * LEVELS + lvl(b); ckind[c] = 1;
-      if (col < bmin) bmin = col; if (col > bmax) bmax = col;
-      if (row < rmin) rmin = row; if (row > rmax) rmax = row;
+    for (let i = 0; i < NP_; i++) {
+      const m = PR[i] * 12, x = PX[i], y = PY[i], z = PZ[i], nx = NX[i], ny = NY[i], nz = NZ[i];
+      splat(PM[m] * x + PM[m + 1] * y + PM[m + 2] * z + PM[m + 3],
+            PM[m + 4] * x + PM[m + 5] * y + PM[m + 6] * z + PM[m + 7],
+            PM[m + 8] * x + PM[m + 9] * y + PM[m + 10] * z + PM[m + 11],
+            PM[m] * nx + PM[m + 1] * ny + PM[m + 2] * nz,
+            PM[m + 4] * nx + PM[m + 5] * ny + PM[m + 6] * nz,
+            PM[m + 8] * nx + PM[m + 9] * ny + PM[m + 10] * nz, KD[i], PP[i], i);
     }
     catchlights();
-    // Horizontal runs of dog cells, for a solid dark underlay behind the glyphs.
+    // Horizontal runs of interior dog cells (all four neighbours are dog too), for a dark underlay.
     nRun = 0;
     for (let r = rmin; r <= rmax; r++) {
       let start = -1;
@@ -801,22 +894,35 @@
     }
   }
 
-  // Light up one catchlight cell inside each open eye (head surface point, head bone).
+  // Light up a bright white catchlight in each open eye (a 2-cell glint when the eye is big enough).
+  function glint(C, want, chr, b) {
+    const x = C[0], y = C[1], z = C[2];
+    const vz = HV[8] * x + HV[9] * y + HV[10] * z + HV[11], f = CAM_D / (CAM_D - vz);
+    const px = ox + (HV[0] * x + HV[1] * y + HV[2] * z + HV[3]) * S * f;
+    const py = oy - (HV[4] * x + HV[5] * y + HV[6] * z + HV[7]) * S * f;
+    const col = (px / cw) | 0, row = (py / ch) | 0;
+    if (col < 0 || row < 0 || col >= cols || row >= rows) return;
+    const c = row * cols + col;
+    if (stampA[c] !== stamp || ckind[c] !== 1 || ((ccol[c] / LEVELS) | 0) !== want) return;
+    cchar[c] = chr; ccol[c] = P_CATCH * LEVELS + lvl(b);
+  }
   function catchlights() {
+    const nc = noseCell;
+    if (nc >= 0 && ((ccol[nc] / LEVELS) | 0) === P_NOSE) { cchar[nc] = C_STAR; ccol[nc] = P_CATCH * LEVELS + 12; }
     if (eyeOpen < 0.6 || happy > 0.35) return;
-    const o = B_HEAD * 5, bc = BO[o + 3], bs = BO[o + 4];
+    for (let e = 0; e < 2; e++) glint(CATCH2[e], P_EYE, C_DOT, 0.7);
     for (let e = 0; e < 2; e++) {
-      const lx = CATCH[e * 3], ly = CATCH[e * 3 + 1];
-      const x = BO[o] + lx * bc - ly * bs, y = BO[o + 1] + lx * bs + ly * bc, z = BO[o + 2] + CATCH[e * 3 + 2];
-      project(x, y, z);
-      const col = (projX / cw) | 0, row = (projY / ch) | 0;
+      const C = CATCH[e], x = C[0], y = C[1], z = C[2];
+      const vz = HV[8] * x + HV[9] * y + HV[10] * z + HV[11], f = CAM_D / (CAM_D - vz);
+      const px = ox + (HV[0] * x + HV[1] * y + HV[2] * z + HV[3]) * S * f;
+      const py = oy - (HV[4] * x + HV[5] * y + HV[6] * z + HV[7]) * S * f;
+      const col = (px / cw) | 0, row = (py / ch) | 0;
       if (col < 0 || row < 0 || col >= cols || row >= rows) continue;
       const c = row * cols + col;
       if (stampA[c] !== stamp || cchar[c] !== C_AT || ((ccol[c] / LEVELS) | 0) !== P_EYE) continue;
-      cchar[c] = C_o; ccol[c] = P_CATCH * LEVELS + 15;
+      cchar[c] = C_O; ccol[c] = P_CATCH * LEVELS + 15;
     }
   }
-
   // ---------- Scenery layers ----------
   let scrollPx = 0;
   function putSky() {
@@ -1153,8 +1259,8 @@
     if (jt >= 0) return;
     jt = 0; jumps++;
     music('event', 'jump');
-    puff(pawX[2], LEG_Z, 5, 1);
-    puff(pawX[3], -LEG_Z, 4, 1);
+    puff(pwX[2], pwZ[2], 5, 1);
+    puff(pwX[3], pwZ[3], 4, 1);
   }
 
   function update(dt) {
@@ -1165,17 +1271,19 @@
     if (jt >= 0) {
       jt += dt;
       if (jt >= JUMP_DUR) {
-        jt = -1;
-        for (let l = 0; l < 4; l++) puff(pawX[l], (l & 1) ? -LEG_Z : LEG_Z, 4, 1.3);
+        jt = -1; landT = t;
+        for (let l = 0; l < 4; l++) puff(pwX[l], pwZ[l], 4, 1.3);
         music('event', 'land');
+        music('event', 'jingle', { v: 1 });
       }
     }
     pose(dt);
     if (jt < 0) {
       for (let l = 0; l < 4; l++) {
         if (legP[l] < lastP[l] - 0.5) {
-          puff(pawX[l], (l & 1) ? -LEG_Z : LEG_Z, reduced ? 1 : 4, (l & 1) ? 0.7 : 1);
+          puff(pwX[l], pwZ[l], reduced ? 1 : 4, (l & 1) ? 1 : 0.7);
           music('event', 'step', { l });
+          if (l === 1) music('event', 'jingle', { v: 0.5 });   // the collar bell, once per stride
         }
       }
     }
@@ -1323,6 +1431,11 @@
       }, { gap: 0.3 });
       a.on('step', (a, d, t) => a.noise(t, { dur: 0.035, filter: 'bandpass', freq: 900 + 500 * Math.random(), q: 1.4,
         vel: 0.12, bus: 'sfx', wet: 0, pan: d.l & 1 ? -0.2 : 0.2 }), { gap: 0.07 });
+      // The little collar bell: a quiet two-partial tinkle, throttled.
+      a.on('jingle', (a, d, t) => {
+        a.bell(t, 'A6', 0.35, { vel: 0.035 * d.v, bus: 'sfx', wet: 0.3, pan: 0.1 });
+        a.bell(t + 0.04, 'E7', 0.3, { vel: 0.025 * d.v, bus: 'sfx', wet: 0.3, pan: 0.15 });
+      }, { gap: 0.35 });
       const SP = AsciiAudio.scale('D6', 'pentatonic', 10);
       a.on('butterfly', (a, d, t) => {
         a.sparkle(t, { count: 5, spread: 0.07, vel: 0.13, notes: SP });
