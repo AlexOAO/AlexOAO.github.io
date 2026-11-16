@@ -56,91 +56,91 @@
       {
         "short": "業務服務 AI：成本與效益",
         "slug": "agent-cost-roi",
-        "title": "AI Agent 成本模型與三年 TCO／ROI",
-        "summary": "量化 4 大 Agent 的成本與效益，作為資源配置依據。",
+        "title": "四大 AI Agent 成本效益管理機制",
+        "summary": "為 4 大 Agent 建立成本效益基準，上線後用比率追蹤實現程度。",
         "sdlc": ["plan"],
         "ownership": "主責",
         "period": "2026/07 ~ Now",
         "milestones": [
-          {"date": "2026 Q3", "text": "問題定義：4 種成本結構", "status": "done"},
-          {"date": "2026 Q3", "text": "框架設計：空間 × 時間", "status": "done"},
-          {"date": "2026/10", "text": "資料蒐集：廠商與 BU", "status": "doing"},
-          {"date": "2026/10/30", "text": "試算：Agent 算力估算", "status": "doing"},
-          {"date": "TBD", "text": "制度化：TCO／ROI 配額", "status": "todo"}
+          {"date": "2026 Q3", "text": "問題定義：成本結構不一", "status": "done"},
+          {"date": "2026 Q3", "text": "框架設計：業務與實現比率", "status": "done"},
+          {"date": "2026/10", "text": "資料蒐集：BU 業務量", "status": "doing"},
+          {"date": "2026/10/30", "text": "試算：三年基準", "status": "doing"},
+          {"date": "TBD", "text": "制度化：實現率追蹤", "status": "todo"}
         ],
-        "tags": ["TCO", "ROI", "GPU Capacity", "Token Cost", "Cost Model"],
+        "tags": ["ROI", "TCO", "Benefit Realization", "KPI", "Cost Model"],
         "source": "S2,S4,S5"
       },
       {
         "short": "貸款助理",
         "slug": "agent-loan-assistant",
         "parent": "agent-cost-roi",
-        "title": "貸款助理（Sales Agent）成本與效益評估",
-        "summary": "為貸款申辦 Agent 建立成本與效益的評估基準。",
+        "title": "貸款助理（Sales Agent）成本效益管理",
+        "summary": "以申辦轉換率與效益實現率，衡量貸款 Agent 的價值。",
         "sdlc": ["plan"],
         "ownership": "主責",
         "period": "2026/07 ~ Now",
         "milestones": [
-          {"date": "2026 Q3", "text": "框架設計：拆解元件", "status": "done"},
+          {"date": "2026 Q3", "text": "框架設計：轉換率指標", "status": "done"},
           {"date": "2026/10", "text": "資料蒐集：BU 業務量", "status": "doing"},
-          {"date": "TBD", "text": "試算：Token 成本", "status": "todo"},
-          {"date": "TBD", "text": "制度化：TCO／ROI", "status": "todo"}
+          {"date": "TBD", "text": "試算：三年基準", "status": "todo"},
+          {"date": "TBD", "text": "制度化：實現率追蹤", "status": "todo"}
         ],
-        "tags": ["Sales Agent", "Cost Model", "Loan"],
+        "tags": ["Sales Agent", "ROI", "Loan"],
         "source": "S5"
       },
       {
         "short": "智能徵審",
         "slug": "agent-credit-review",
         "parent": "agent-cost-roi",
-        "title": "智能徵審（Credit Agent）成本與效益評估",
-        "summary": "試算徵審 Agent 的每件成本，作為三年預算依據。",
+        "title": "智能徵審（Credit Agent）成本效益管理",
+        "summary": "完成單件成本與三年基準，以 AI 處理率追蹤效益。",
         "sdlc": ["plan"],
         "ownership": "主責",
         "period": "2026/07 ~ Now",
         "milestones": [
-          {"date": "2026 Q3", "text": "框架設計：拆解 OCR 流程", "status": "done"},
-          {"date": "2026 Q3", "text": "資料蒐集：月案件量", "status": "done"},
-          {"date": "2026 Q3", "text": "試算：每件 Token 成本", "status": "done"},
-          {"date": "2026/10", "text": "試算：正式 GPU 1 張", "status": "done"},
-          {"date": "TBD", "text": "制度化：TCO／ROI", "status": "todo"}
+          {"date": "2026 Q3", "text": "框架設計：流程拆解", "status": "done"},
+          {"date": "2026 Q3", "text": "資料蒐集：案件量預估", "status": "done"},
+          {"date": "2026 Q3", "text": "試算：單件成本", "status": "done"},
+          {"date": "2026/10", "text": "試算：正式環境配置", "status": "done"},
+          {"date": "TBD", "text": "制度化：實現率追蹤", "status": "todo"}
         ],
-        "tags": ["Credit Agent", "OCR", "Token Cost"],
+        "tags": ["Credit Agent", "ROI", "Unit Cost"],
         "source": "S4,S5"
       },
       {
         "short": "客服助理",
         "slug": "agent-customer-service",
         "parent": "agent-cost-roi",
-        "title": "客服助理（Service Agent）成本與效益評估",
-        "summary": "以通話量估算客服 Agent 的語音辨識算力。",
+        "title": "客服助理（Service Agent）成本效益管理",
+        "summary": "以 AI 承接率、轉人工率與每通成本，衡量客服 Agent。",
         "sdlc": ["plan"],
         "ownership": "協作",
         "period": "2026/07 ~ Now",
         "milestones": [
-          {"date": "2026 Q3", "text": "框架設計：分鐘＋Token", "status": "done"},
-          {"date": "2026 Q3", "text": "資料蒐集：月通話量", "status": "done"},
+          {"date": "2026 Q3", "text": "框架設計：每通服務成本", "status": "done"},
+          {"date": "2026 Q3", "text": "資料蒐集：通話量", "status": "done"},
           {"date": "2026/10/16", "text": "試算：廠商算力會議", "status": "done"},
           {"date": "2026/10/23", "text": "試算：廠商更新評估", "status": "todo"},
-          {"date": "TBD", "text": "制度化：TCO／ROI", "status": "todo"}
+          {"date": "TBD", "text": "制度化：實現率追蹤", "status": "todo"}
         ],
-        "tags": ["Service Agent", "STT", "GPU Capacity"],
+        "tags": ["Service Agent", "ROI", "Contact Center"],
         "source": "S4,S5"
       },
       {
         "short": "智富管家",
         "slug": "agent-wealth-assistant",
         "parent": "agent-cost-roi",
-        "title": "智富管家（App 2.0）PoC 與成本評估",
-        "summary": "驗證理財 App 的 AI 問答，並規劃上線算力。",
+        "title": "智富管家（App 2.0）PoC 與上線規劃",
+        "summary": "驗證理財 App 的 AI 問答，上線後以活躍率衡量價值。",
         "sdlc": ["plan"],
         "ownership": "主責",
         "period": "2026/07 ~ Now",
         "milestones": [
           {"date": "2026 Q3", "text": "PoC：問答功能測試", "status": "done"},
           {"date": "2026 Q3", "text": "開發：架構圖與移交", "status": "done"},
-          {"date": "2026/10", "text": "上線準備：GPU 配置", "status": "done"},
-          {"date": "TBD", "text": "上線", "status": "todo"}
+          {"date": "2026/10", "text": "上線準備：資源配置", "status": "done"},
+          {"date": "TBD", "text": "上線：活躍率追蹤", "status": "todo"}
         ],
         "tags": ["App 2.0", "PoC", "Wealth Management"],
         "source": "S2,S4,S5"

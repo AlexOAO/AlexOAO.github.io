@@ -4,26 +4,29 @@ title: agent-loan-assistant
 
 ## Results
 
-**The Loan Assistant needs no GPU: on premises it uses only CPUs for data masking, so all of its cost is in cloud tokens.** The monthly volume is still pending from the business unit, so TCO and ROI cannot be calculated yet.
+**The Loan Assistant's value must be measured in business terms: how many applications the AI helped complete, and how much of the estimated benefit came true.** The framework is done; the baseline waits for volume data from the BU.
 
-## Why this project
+## Why it mattered
 
-The Loan Assistant (Sales Agent) helps customers apply for loans. To compare it with the other three Agents on one baseline, the first step is to know which resources it uses.
+The Loan Assistant (Sales Agent) helps customers apply for loans. Its benefit is not hours saved but applications gained, so cost alone cannot measure it.
 
 ## My role
 
-I add the Loan Assistant to the 4-Agent cost model.
+I brought the Loan Assistant into the 4-Agent cost-benefit framework.
 
 ## What I did
 
-**Phase 1 | Framework design.** The Loan Assistant has one on-premises part: CPU-based data masking. It takes no space in the GPU pool, so its cost follows the cloud token model: volume × tokens per journey × unit price.
+**Phase 1 | Framework design.** First confirm where its cost sits, then define its metrics:
 
-**Phase 2 | Data collection.** I requested the monthly volume from the business unit and am waiting for the reply.
+- Business ratios: applications completed with AI help ÷ all applications; application conversion rate.
+- Realization ratios: actual applications ÷ baseline applications; benefit realization.
 
-**Phase 3 | Estimate.** When the volume arrives, estimate the cloud token cost.
+**Phase 2 | Data collection.** I requested volume data from the BU and am waiting for the reply.
 
-**Phase 4 | Institutionalize.** Add the Loan Assistant's TCO and ROI to the 4-Agent comparison.
+**Phase 3 | Estimate.** When the volume arrives, build the 3-year baseline of volume, cost, and benefit.
+
+**Phase 4 | Institutionalize.** After launch, track conversion and realization ratios regularly and add them to the 4-Agent comparison.
 
 ## Next steps
 
-Calculate the Loan Assistant's TCO and ROI and add them to the 4-Agent comparison.
+When the volume arrives, finish the Loan Assistant's baseline.

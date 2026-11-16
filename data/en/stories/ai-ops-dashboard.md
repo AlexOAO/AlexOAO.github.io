@@ -27,7 +27,7 @@ Contributor. I take part in designing the metric framework, and I plan to connec
 - Adoption: is anyone using it? Licenses, activation rate, active users, department coverage.
 - Quality: does it work well? Answer accuracy, hand-over-to-human rate, user feedback.
 - Value: what did it save or add? Hours saved, plus business measures such as volume handled and conversion rate.
-- Cost: what did it cost? License fees, token use, GPU card-seconds.
+- Cost: what did it cost? License fees, token use, GPU use.
 - Risk: is it safe? Guardrail miss and false-block rates, incidents.
 
 Adoption and quality answer "is it being used"; value, cost, and risk answer "is it worth it". The AI ROI metrics for the four AI projects and new projects are being designed on this framework, in response to the DDT request.

@@ -56,91 +56,91 @@
       {
         "short": "Business AI services: cost & benefit",
         "slug": "agent-cost-roi",
-        "title": "AI Agent Cost Model & 3-Year TCO / ROI",
-        "summary": "Quantify the cost and benefit of 4 Agents to guide resource allocation.",
+        "title": "Cost-Benefit Management for the Four AI Agents",
+        "summary": "Set cost-benefit baselines for 4 Agents and track realization with ratios after launch.",
         "sdlc": ["plan"],
         "ownership": "Lead",
         "period": "2026/07 ~ Now",
         "milestones": [
-          {"date": "2026 Q3", "text": "Problem: 4 cost structures", "status": "done"},
-          {"date": "2026 Q3", "text": "Framework: space × time", "status": "done"},
-          {"date": "2026/10", "text": "Data: vendors and BUs", "status": "doing"},
-          {"date": "2026/10/30", "text": "Estimate: Agent compute", "status": "doing"},
-          {"date": "TBD", "text": "Institutionalize: quotas", "status": "todo"}
+          {"date": "2026 Q3", "text": "Problem: different cost structures", "status": "done"},
+          {"date": "2026 Q3", "text": "Framework: business & realization ratios", "status": "done"},
+          {"date": "2026/10", "text": "Data: BU volumes", "status": "doing"},
+          {"date": "2026/10/30", "text": "Estimate: 3-year baseline", "status": "doing"},
+          {"date": "TBD", "text": "Institutionalize: realization tracking", "status": "todo"}
         ],
-        "tags": ["TCO", "ROI", "GPU Capacity", "Token Cost", "Cost Model"],
+        "tags": ["ROI", "TCO", "Benefit Realization", "KPI", "Cost Model"],
         "source": "S2,S4,S5"
       },
       {
         "short": "Loan Assistant",
         "slug": "agent-loan-assistant",
         "parent": "agent-cost-roi",
-        "title": "Loan Assistant (Sales Agent): Cost & Benefit",
-        "summary": "Set a cost and benefit baseline for the loan application Agent.",
+        "title": "Loan Assistant (Sales Agent): Cost-Benefit Management",
+        "summary": "Measure the loan Agent by conversion rate and benefit realization.",
         "sdlc": ["plan"],
         "ownership": "Lead",
         "period": "2026/07 ~ Now",
         "milestones": [
-          {"date": "2026 Q3", "text": "Framework: list the parts", "status": "done"},
+          {"date": "2026 Q3", "text": "Framework: conversion metrics", "status": "done"},
           {"date": "2026/10", "text": "Data: BU volume", "status": "doing"},
-          {"date": "TBD", "text": "Estimate: token cost", "status": "todo"},
-          {"date": "TBD", "text": "Institutionalize: TCO / ROI", "status": "todo"}
+          {"date": "TBD", "text": "Estimate: 3-year baseline", "status": "todo"},
+          {"date": "TBD", "text": "Institutionalize: realization tracking", "status": "todo"}
         ],
-        "tags": ["Sales Agent", "Cost Model", "Loan"],
+        "tags": ["Sales Agent", "ROI", "Loan"],
         "source": "S5"
       },
       {
         "short": "Credit Review",
         "slug": "agent-credit-review",
         "parent": "agent-cost-roi",
-        "title": "Credit Review (Credit Agent): Cost & Benefit",
-        "summary": "Estimated the cost per case of the credit review Agent for the 3-year budget.",
+        "title": "Credit Review (Credit Agent): Cost-Benefit Management",
+        "summary": "Unit cost and 3-year baseline done; track value by AI handling rate.",
         "sdlc": ["plan"],
         "ownership": "Lead",
         "period": "2026/07 ~ Now",
         "milestones": [
-          {"date": "2026 Q3", "text": "Framework: OCR flow", "status": "done"},
-          {"date": "2026 Q3", "text": "Data: monthly cases", "status": "done"},
-          {"date": "2026 Q3", "text": "Estimate: token cost per case", "status": "done"},
-          {"date": "2026/10", "text": "Estimate: 1 production GPU", "status": "done"},
-          {"date": "TBD", "text": "Institutionalize: TCO / ROI", "status": "todo"}
+          {"date": "2026 Q3", "text": "Framework: process split", "status": "done"},
+          {"date": "2026 Q3", "text": "Data: volume forecast", "status": "done"},
+          {"date": "2026 Q3", "text": "Estimate: unit cost", "status": "done"},
+          {"date": "2026/10", "text": "Estimate: production setup", "status": "done"},
+          {"date": "TBD", "text": "Institutionalize: realization tracking", "status": "todo"}
         ],
-        "tags": ["Credit Agent", "OCR", "Token Cost"],
+        "tags": ["Credit Agent", "ROI", "Unit Cost"],
         "source": "S4,S5"
       },
       {
         "short": "Customer Service",
         "slug": "agent-customer-service",
         "parent": "agent-cost-roi",
-        "title": "Customer Service (Service Agent): Cost & Benefit",
-        "summary": "Estimated speech recognition compute for the customer service Agent from call volume.",
+        "title": "Customer Service (Service Agent): Cost-Benefit Management",
+        "summary": "Measure the service Agent by AI handling, hand-over rate, and cost per call.",
         "sdlc": ["plan"],
         "ownership": "Contributor",
         "period": "2026/07 ~ Now",
         "milestones": [
-          {"date": "2026 Q3", "text": "Framework: minutes + tokens", "status": "done"},
-          {"date": "2026 Q3", "text": "Data: monthly calls", "status": "done"},
+          {"date": "2026 Q3", "text": "Framework: cost per call", "status": "done"},
+          {"date": "2026 Q3", "text": "Data: call volume", "status": "done"},
           {"date": "2026/10/16", "text": "Estimate: vendor meeting", "status": "done"},
           {"date": "2026/10/23", "text": "Estimate: vendor update", "status": "todo"},
-          {"date": "TBD", "text": "Institutionalize: TCO / ROI", "status": "todo"}
+          {"date": "TBD", "text": "Institutionalize: realization tracking", "status": "todo"}
         ],
-        "tags": ["Service Agent", "STT", "GPU Capacity"],
+        "tags": ["Service Agent", "ROI", "Contact Center"],
         "source": "S4,S5"
       },
       {
         "short": "Wealth Assistant",
         "slug": "agent-wealth-assistant",
         "parent": "agent-cost-roi",
-        "title": "Wealth Assistant (App 2.0): PoC & Cost",
-        "summary": "Verified AI Q&A for the wealth app and planned compute for launch.",
+        "title": "Wealth Assistant (App 2.0): PoC and Launch Planning",
+        "summary": "Verified AI Q&A for the wealth app; after launch, value is measured by engagement.",
         "sdlc": ["plan"],
         "ownership": "Lead",
         "period": "2026/07 ~ Now",
         "milestones": [
           {"date": "2026 Q3", "text": "PoC: Q&A testing", "status": "done"},
           {"date": "2026 Q3", "text": "Build: architecture, handover", "status": "done"},
-          {"date": "2026/10", "text": "Launch readiness: GPUs", "status": "done"},
-          {"date": "TBD", "text": "Launch", "status": "todo"}
+          {"date": "2026/10", "text": "Launch readiness: resources", "status": "done"},
+          {"date": "TBD", "text": "Launch: engagement tracking", "status": "todo"}
         ],
         "tags": ["App 2.0", "PoC", "Wealth Management"],
         "source": "S2,S4,S5"

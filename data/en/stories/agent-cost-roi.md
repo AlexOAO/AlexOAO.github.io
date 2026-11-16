@@ -4,37 +4,40 @@ title: agent-cost-roi
 
 ## Results
 
-**I put four Agents with completely different cost structures into one formula: number of events × resources per event × unit price.** For the first time, the Loan Assistant, Credit Review, Customer Service, and Wealth Assistant can be compared in one table.
+**I put four Agents with different cost structures into one management mechanism: before launch, each writes down a baseline for volume, cost, and benefit; after launch, ratios track how much of that baseline came true.**
 
-- 3 cost models (capacity, on-premises amortization, cloud tokens) and 1 benefit model.
-- The GPU pool model, the peak estimate, and a data request form for four vendors.
-- A 3-year TCO, TBE, and ROI comparison format for the 4 Agents. Each Agent's estimate is in the sub-projects below.
+- Built a shared cost-benefit framework. For the first time, the four Agents can be compared in one table.
+- Defined two kinds of observable metrics: business ratios show how much work the AI actually handles; realization ratios show whether the original estimates came true.
+- Each Agent's baseline is in progress; see the sub-projects below.
 
-## Why this project
+## Why it mattered
 
-The four business AI Agents were getting ready to launch, and the bank had to decide how to split GPUs and budgets. But their costs look completely different: some use on-premises GPUs, some use cloud tokens, one uses only CPUs. Without a shared model, they cannot be compared, and nobody can decide who gets resources first.
+Four business-service Agents were preparing to launch, and the bank had to decide which got resources first. Build cost alone cannot answer that: some Agents cost on premises, some in the cloud, and each describes its benefit in different terms. The bigger problem comes after launch: if nobody checks whether the estimates came true, the assessment is only an application form.
 
 ## My role
 
-I led the cost model and the 3-year TCO / ROI. Business units supplied volumes and benefits; I designed the models, did the math, and compared the results.
+I led the design of the cost-benefit framework and the management mechanism. Business units (BUs) provide volumes and benefits; I own the framework, calculation, and comparison.
 
 ## What I did
 
-**Phase 1 | Problem definition.** Some of the four Agents use on-premises GPUs, some use cloud tokens, one uses only CPUs. To compare them in one table, the first step is a shared unit of measure.
+**Phase 1 | Problem definition.** The four Agents have completely different cost structures. To compare them in one table, the first step is a shared way to measure.
 
-**Phase 2 | Framework design.** I explain the GPU pool as a building: floor area decides how many AI models can move in; operating hours decide how many Agents can be served. Space is GPU memory: it holds models, is never given back, and is a fixed cost. Time is GPU compute: it runs requests, is reused, and is a variable cost. On this framework I built three cost models and one benefit model: a capacity model, an on-premises amortization model (a shared part counts once and is split by time share), a cloud token model (volume × tokens per journey × unit price), and a benefit model (volume × improvement per unit × value per unit). One key point in the space model: KV cache memory depends on how many requests run at the same time, not on how many run in a day.
+**Phase 2 | Framework design.** One pair of formulas describes every Agent: cost = volume × resource use per case × resource unit price; benefit = volume × benefit per case × value per unit. Both start from volume, so they give comparable unit cost and ROI. On this framework I defined two kinds of observable metrics:
 
-**Phase 3 | Data collection.** I designed a vendor form that asks the four vendors only for on-premises specs (model size, quantization, memory per token, concurrent requests) plus representative test samples. Business units supply volumes and benefits. Collection is in progress.
+- Business ratios: work handled by AI ÷ total volume, such as AI handling rate, automation rate, and hand-over-to-human rate. They answer "is the AI actually doing the work?"
+- Realization ratios: actual ÷ baseline, such as volume realization, cost execution, and benefit realization. They answer "did the original estimate come true?"
 
-**Phase 4 | Estimate.** I placed the four Agents' parts in the bank's pool (5 RTX PRO 6000 cards at 96 GB each: 480 GB and 432,000 card-seconds per day) and estimated peak use. The AI Agent compute estimate is in progress.
+**Phase 3 | Data collection.** BUs provide volumes and benefits; vendors provide technical specs. Collection is in progress.
 
-**Phase 5 | Institutionalize.** When the estimates settle, deliver the final 3-year TCO / ROI and GPU quotas as the basis for resource allocation.
+**Phase 4 | Estimate.** With the collected data, build a 3-year baseline of volume, cost, and benefit for each Agent. This baseline is the denominator of every realization ratio after launch. In progress.
+
+**Phase 5 | Institutionalize.** The plan is to connect the metrics to resource allocation: submit a baseline before launch, track business and realization ratios regularly after launch, and start a review to adjust resources or scope when a realization ratio falls below the threshold.
 
 ## Next steps
 
-- Collect the four vendors' forms and the business units' benefit data.
-- Finish the AI Agent compute estimate, then deliver the final TCO / ROI and GPU quotas.
+- Collect the BUs' volume and benefit data and finish the four baselines.
+- Connect to the AI operations dashboard so realization ratios are produced regularly.
 
 ## Further reading
 
-I wrote up the method of this project in a post (Chinese): [How to price AI Agent compute: split the GPU into space and time](posts/ai-agent-gpu-cost.html).
+How the metrics appear on a dashboard (Chinese): [How to read AI operations performance: one dashboard that answers "is AI worth it?"](posts/ai-ops-dashboard.html).

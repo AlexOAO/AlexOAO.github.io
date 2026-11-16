@@ -4,18 +4,17 @@ title: agent-wealth-assistant
 
 ## Results
 
-**The Wealth Assistant PoC is done and handed over, and the launch GPUs are confirmed: 2 in production, 1 in test.**
+**The Wealth Assistant PoC is done and handed over, and the resources for launch are confirmed.** After launch, its value depends on whether customers actually use it.
 
-- It has the most use of the four Agents: 324,959 logins per month, forecast to reach 495,000 in year 3.
-- Its API was also tested in the Guardrails PoC: 1,100 cases across 10 business areas.
+- It is the highest-volume of the four Agents; its 3-year usage forecast is in the baseline.
 
-## Why this project
+## Why it mattered
 
-The Wealth Assistant is the bank's AI wealth management app (App 2.0). Two questions came before launch: does Q&A work? And will the GPUs be enough as usage grows?
+The Wealth Assistant is the bank's AI wealth app (App 2.0). Before launch: does Q&A work, and will resources keep up as usage grows? After launch: do customers use the app more because of it?
 
 ## My role
 
-I led the PoC tests and the compute planning.
+I led PoC testing and launch resource planning.
 
 ## What I did
 
@@ -23,10 +22,13 @@ I led the PoC tests and the compute planning.
 
 **Phase 2 | Build.** Draw the first system architecture, document the results, and hand over to a senior colleague for development.
 
-**Phase 3 | Launch readiness.** I forecast usage for years 1 to 3 from monthly logins. Its SLM runs all day, so its card-seconds fall in both the peak and off-peak windows. The GPU allocation was confirmed at 2 production GPUs and 1 test GPU.
+**Phase 3 | Launch readiness.** Forecast 3-year usage from logins and confirm production and test resources.
 
-**Phase 4 | Launch.** Driven by the receiving team.
+**Phase 4 | Launch.** Driven by the receiving team. After launch, track two kinds of metrics:
+
+- Business ratios: users of AI Q&A ÷ users who log in (engagement rate).
+- Realization ratios: actual usage ÷ baseline usage; benefit realization measured by engagement and AUM.
 
 ## Next steps
 
-The A2UI research will start its business scenarios with the Wealth Assistant.
+The A2UI technology research will start from the Wealth Assistant's business cases.

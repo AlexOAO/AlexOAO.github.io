@@ -4,26 +4,29 @@ title: agent-customer-service
 
 ## Results
 
-**Customer Service is the only one of the four Agents measured in two units: minutes for speech, tokens for text.** Its workload is counted in the business-hour peak from 43,000 calls per month; the GPU allocation follows the vendor's updated estimate.
+**Customer Service must be measured in service terms: how many calls the AI handles, how many go to a human, and the service cost per call.** The framework and the call-volume baseline are done; resource allocation waits for the vendor's updated estimate.
 
-## Why this project
+## Why it mattered
 
-The Customer Service Agent handles service calls: on premises, STT turns speech into text, then an SLM processes it. Speech recognition is one of the heaviest GPU loads, and calls come during business hours. A wrong estimate means congestion at peak time.
+Customer Service (Service Agent) handles customer calls. Calls cluster in business hours and need answers in real time. Too few resources and the peak jams; too many and money is wasted.
 
 ## My role
 
-Contributor. A colleague leads the compute estimate; I provide the cost model.
+Contributor. A colleague led the compute estimate; I provided the cost-benefit framework.
 
 ## What I did
 
-**Phase 1 | Framework design.** Tokens look like the obvious unit, but they do not fit speech: in the same 3-minute call, fast and slow speakers can differ almost two times in tokens, while GPU time is about the same. So STT is measured in minutes and the SLM in tokens, multiplied separately and then added.
+**Phase 1 | Framework design.** Speech and text work are measured in different units, then converted into one unit cost: service cost per call.
 
-**Phase 2 | Data collection.** From 43,000 calls per month, I placed the workload in the business-hour peak: customer service must answer in real time and cannot move to off-peak like a batch job.
+**Phase 2 | Data collection.** The BU provided monthly call volume, and the workload was placed in the business-hour peak.
 
 **Phase 3 | Estimate.** We held the first compute meeting with the vendor, aligned the assumptions, and asked for an updated estimate. Waiting for the vendor.
 
-**Phase 4 | Institutionalize.** With the updated estimate, confirm the GPU allocation and calculate the Customer Service TCO.
+**Phase 4 | Institutionalize.** After launch, track two kinds of metrics:
+
+- Business ratios: calls handled by AI ÷ all calls; hand-over-to-human rate.
+- Realization ratios: actual service cost per call ÷ baseline; benefit realization.
 
 ## Next steps
 
-With the updated estimate, confirm the GPU allocation and calculate the Customer Service TCO.
+With the vendor's updated estimate, confirm resources and finish the Customer Service baseline.

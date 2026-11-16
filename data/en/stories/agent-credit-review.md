@@ -4,29 +4,32 @@ title: agent-credit-review
 
 ## Results
 
-**Credit Review costs about NT$1.92 in cloud tokens per case; over three years, the annual token cost grows from about NT$346,591 to NT$427,034.**
+**Credit Review's unit cost and 3-year cost baseline are done; the next step is to turn them into trackable metrics: how many cases the AI handled, and whether the estimates came true.**
 
-- Production uses 1 GPU.
-- The on-premises parts run as off-peak batches and take no peak business-hour compute.
+- The production resource allocation is confirmed.
+- Processing runs as off-peak batches and takes no peak business-hour resources.
 
-## Why this project
+## Why it mattered
 
-Credit Review (Credit Agent) handles credit review documents. Case volume grows every year: 13,513 cases per month today, 18,480 forecast in year 3. A budget based on today's cost will be wrong next year. I had two questions: what does one case cost, and what is the 3-year total?
+Credit Review (Credit Agent) processes credit review documents. Case volume grows every year, so a budget based only on today's cost will miss next year. Management needs two answers: what does one case cost, and how is the 3-year budget actually executing?
 
 ## My role
 
-I estimate Credit Review's cost and GPU allocation.
+I owned the cost-benefit assessment for Credit Review.
 
 ## What I did
 
-**Phase 1 | Framework design.** I split the flow in two: on premises, two OCR models read the documents and an SLM checks inconsistencies; a cloud LLM processes the results. OCR work is measured in pages, not tokens: a dense table page and a one-line title differ ten times in tokens but take similar scan time. The on-premises parts run as off-peak batches and take no peak business-hour compute.
+**Phase 1 | Framework design.** I split the flow into on-premises recognition and review, then cloud processing; each part is costed in the unit closest to its work, then combined into a unit cost.
 
-**Phase 2 | Data collection.** From 13,513 cases per month today, the business unit forecasts 14,999, 16,649, and 18,480 in years 1 to 3.
+**Phase 2 | Data collection.** The BU provided current case volume and a 3-year growth forecast.
 
-**Phase 3 | Estimate.** Each case uses 11,250 input and 2,500 output tokens. With a GPT5.5 price assumption ($2.5 input / $15 output), that is about NT$1.92 per case; multiplied by the growing volume, it gives the 3-year token cost. Production GPU allocation was also confirmed at 1.
+**Phase 3 | Estimate.** Finished the unit cost and the 3-year cost baseline, and confirmed the production resource allocation.
 
-**Phase 4 | Institutionalize.** Add build and maintenance costs, then deliver the full 3-year TCO and ROI.
+**Phase 4 | Institutionalize.** After launch, track two kinds of metrics:
+
+- Business ratios: cases handled by AI ÷ all cases; human review rate.
+- Realization ratios: actual volume ÷ baseline volume; cost execution; benefit realization.
 
 ## Next steps
 
-Add build and maintenance costs, then deliver the full 3-year TCO and ROI.
+Add build and maintenance costs to finish the 3-year TCO and ROI baseline.
