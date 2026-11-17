@@ -446,6 +446,23 @@
       font-size: 0.85rem; font-weight: 600; color: #3b82f6; transition: gap 0.3s;
     }
     .pcard:hover .pcard-more { gap: 0.7rem; }
+    /* The title link covers the whole card; links in .pcard-links sit above it. */
+    .pcard-main { color: inherit; }
+    .pcard-main::after { content: ''; position: absolute; inset: 0; border-radius: inherit; z-index: 1; }
+    .pcard:has(.pcard-main:focus-visible) { outline: 2px solid #3b82f6; outline-offset: 3px; }
+    .pcard-main:focus-visible { outline: none; }
+    .pcard-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1.25rem; margin-top: auto; }
+    .pcard-foot .pcard-more { margin-top: 0; }
+    .pcard-links { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .pcard-links a {
+      position: relative; z-index: 2; display: inline-flex; align-items: center; gap: 0.35rem;
+      font-size: 0.8rem; font-weight: 600; color: #e2e8f0; padding: 0.3rem 0.75rem; border-radius: 20px;
+      border: 1px solid rgba(148,163,184,0.25); background: rgba(15,23,42,0.4); transition: border-color 0.3s, color 0.3s;
+    }
+    .pcard-links a:hover { border-color: #3b82f6; color: #60a5fa; }
+    .pcard-links a.demo { color: #10b981; border-color: rgba(16,185,129,0.35); }
+    .pcard-links a.demo:hover { border-color: #10b981; color: #34d399; }
+    .pcard .project-tags { margin-bottom: 1.25rem; }
     .other-exp { margin-top: 0.5rem; padding-left: 2rem; }
     /* Chapter index: on wide screens a sticky list of companies sits beside the timeline. */
     .exp-layout { display: block; }
@@ -477,30 +494,13 @@
     .other-row .n { grid-column: 1 / -1; color: #94a3b8; font-size: 0.85rem; }
 
     /* ── Projects ── */
-    .side-list { border-top: 1px solid rgba(148,163,184,0.12); }
-    .side-item {
-      display: grid; grid-template-columns: 56px 1fr auto; gap: 1.5rem; align-items: start;
-      padding: 1.5rem 0.5rem; border-bottom: 1px solid rgba(148,163,184,0.12);
-      transition: background 0.3s, padding 0.3s;
-    }
-    .side-item:hover { background: rgba(30,41,59,0.5); padding-left: 1rem; padding-right: 1rem; }
-    .side-item { scroll-margin-top: 90px; }
-    .side-item.child { margin-left: 56px; border-left: 2px solid rgba(59,130,246,0.35); padding-left: 1rem; }
-    .side-item.child .side-num { color: #64748b; }
     .sdlc-bar.child { border-left-width: 3px; }
     .sdlc-family {
       display: grid; grid-template-columns: subgrid; grid-template-rows: subgrid;
       border-radius: 10px; background: rgba(59,130,246,0.07);
       box-shadow: 0 0 0 0.4rem rgba(59,130,246,0.07);
     }
-    .side-item.flash { background: rgba(59,130,246,0.15); box-shadow: inset 3px 0 0 #3b82f6; }
     #quantMap { margin-bottom: 3rem; }
-    .side-num { font-family: var(--display); font-size: 0.85rem; font-weight: 600; letter-spacing: 0.06em; color: var(--accent-2); padding-top: 0.2rem; }
-    .side-arrow { align-self: center; }
-    .side-item h3 { font-size: 1.05rem; font-weight: 700; color: #e2e8f0; margin-bottom: 0.25rem; }
-    .side-item p { color: #94a3b8; font-size: 0.9rem; line-height: 1.6; margin-bottom: 0.6rem; }
-    .side-arrow { color: #64748b; transition: color 0.3s, transform 0.3s; }
-    .side-item:hover .side-arrow { color: #3b82f6; transform: translateX(4px); }
     .project-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; }
     .project-tags span {
       font-size: 0.75rem; padding: 0.25rem 0.65rem; border-radius: 20px;
@@ -698,9 +698,6 @@
       .company { padding-left: 1.5rem; }
       .company-head .period { margin-left: 0; width: 100%; }
       .other-exp { padding-left: 1.5rem; }
-      .side-item { grid-template-columns: 36px 1fr; gap: 1rem; }
-      .side-item.child { margin-left: 1.25rem; }
-      .side-arrow { display: none; }
     }
   </style>
 </head>
@@ -715,7 +712,7 @@
       <div class="nav-links" id="navLinks">
         <a href="#about">Proof</a>
         <a href="#experience">Experience</a>
-        <a href="#projects">Side Projects</a>
+        <a href="#projects">Quant Lab</a>
         <a href="#blog">Blog</a>
         <a href="ascii/">ASCII</a>
       </div>
@@ -789,7 +786,7 @@
         <h2 class="section-title" data-i18n="t02">Experience</h2>
         <p class="section-subtitle" data-i18n="expSub">Open a card for the full project story and its milestones.</p>
       </div>
-      <div id="expList"><!-- static:experience --><ul class="static-note"><li><strong>KGI Bank · Technology Innovation Dept.</strong> · PM &amp; System Analyst · 2026/07 ~ Now: Guardrails PoC (CyCraft); Enterprise Agentic Platform Evaluation (Agatha / Dify); AI Agent Cost Model &amp; 3-Year TCO / ROI; Loan Assistant (Sales Agent): Cost &amp; Benefit; Credit Review (Credit Agent): Cost &amp; Benefit; Customer Service (Service Agent): Cost &amp; Benefit; Wealth Assistant (App 2.0): PoC &amp; Cost; AI Agent Technical Specifications &amp; Governance; FSC FinLLM Data Cleaning &amp; Model Evaluation; Gemini Training Program; A2UI Technical Research</li><li><strong>KGI Financial Holding</strong> · AI Developer Intern · 2026/02 ~ 2026/06: Webai Finance Module (Kinance AI Market / Stock Assistant); AI Governance Automated Review System</li><li><strong>Taiwan Economic Journal (TEJ)</strong> · Quant Trading &amp; Data Science Intern · 2025/07 ~ 2025/12: AI Customer Service Bot &quot;Little t&quot;; Multi-Agent Investment Advisory Architecture; ASR Earnings Call Transcription</li><li><strong>Ministry of Digital Affairs, Administration for Digital Industries</strong> · 6th Digital Youth T-Ambassador · 2025/09 ~ 2025/12: Helping Companies Adopt Generative AI (Digital Youth T-Ambassador)</li><li><strong>TMBA 26th, Algorithmic Trading</strong> · Quant strategy developer · 2025/07 ~ 2025/12: CTA Strategy: TAIEX Futures; Event Trading Strategy: Earnings Calls</li><li><strong>National Taiwan University of Science and Technology, Graduate Institute of Finance</strong> · M.A. in Finance · 2024/09 ~ 2026: Stock Price Return Prediction Combining Retrieval-Augmented Generation and Panel Data Models: Taiwan Electronics Industry; Fubon Asset Management Campus Talent Program: ESG Portfolio Allocation</li><li><strong>Tunghai University, Global MBA (GMBA)</strong> · Master&#x27;s · 2023/09 ~ 2024/06: The Effect of ESG Risk Scores on the Capital Structure of Taiwanese Companies; Teaching Assistant for English-Taught Courses: Statistics, Economics, Financial Management</li></ul><!-- /static:experience --></div>
+      <div id="expList"><!-- static:experience --><ul class="static-note"><li><strong>KGI Bank · Technology Innovation Dept.</strong> · PM &amp; System Analyst · 2026/07 ~ Now: Guardrails PoC (CyCraft); Enterprise Agentic Platform Evaluation (Agatha / Dify); AI Agent Cost Model &amp; 3-Year TCO / ROI; Loan Assistant (Sales Agent): Cost &amp; Benefit; Credit Review (Credit Agent): Cost &amp; Benefit; Customer Service (Service Agent): Cost &amp; Benefit; Wealth Assistant (App 2.0): PoC &amp; Cost; AI Agent Technical Specifications &amp; Governance; FSC FinLLM Data Cleaning &amp; Model Evaluation; Gemini Training Program; A2UI Technical Research</li><li><strong>KGI Financial Holding</strong> · AI Developer Intern · 2026/02 ~ 2026/06: Webai Finance Module (Kinance AI Market / Stock Assistant); AI Governance Automated Review System</li><li><strong>Taiwan Economic Journal (TEJ)</strong> · Quant Trading &amp; Data Science Intern · 2025/07 ~ 2025/12: AI Customer Service Bot &quot;Little t&quot;; Multi-Agent Investment Advisory Architecture; ASR Earnings Call Transcription</li><li><strong>Ministry of Digital Affairs, Administration for Digital Industries</strong> · 6th Digital Youth T-Ambassador · 2025/09 ~ 2025/12: Helping Companies Adopt Generative AI (Digital Youth T-Ambassador)</li><li><strong>TMBA 26th, Algorithmic Trading</strong> · Quant strategy developer · 2025/07 ~ 2025/12: CTA Strategy: TAIEX Futures; Event Trading Strategy: Earnings Calls</li><li><strong>National Taiwan University of Science and Technology, Graduate Institute of Finance</strong> · M.A. in Finance · 2024/09 ~ 2026: Stock Price Return Prediction Combining Retrieval-Augmented Generation and Panel Data Models: Taiwan Electronics Industry; Fubon Asset Management Campus Talent Program: ESG Portfolio Allocation</li><li><strong>Tunghai University, Global MBA (GMBA)</strong> · Master&#x27;s · 2023/09 ~ 2024/06: The Effect of ESG Risk Scores on the Capital Structure of Taiwanese Companies; Teaching Assistant for English-Taught Courses: Statistics, Economics, Financial Management</li><li><strong>Independent</strong> · Product, development &amp; operations · 2026/11 ~ Now: FinJourney, an AI personal finance app</li></ul><!-- /static:experience --></div>
     </div>
   </section>
 
@@ -797,12 +794,12 @@
   <section id="projects">
     <div class="section-container">
       <div class="sec-head rv">
-        <p class="sec-idx">03 — Side Projects</p>
-        <h2 class="section-title" data-i18n="t03">Side Projects</h2>
+        <p class="sec-idx">03 — Quant Lab</p>
+        <h2 class="section-title" data-i18n="t03">Quant Lab</h2>
         <p class="section-subtitle" data-i18n="sideSub">Things I've built or contributed to</p>
       </div>
       <div class="sdlc" id="quantMap"></div>
-      <div class="side-list" id="projectsList"></div>
+      <div class="card-grid" id="projectsList"></div>
     </div>
   </section>
 
@@ -936,38 +933,41 @@
     });
 
     const { esc, dataPath, getJSON, STAGE_COLOR, stageNames, stageSpan, isGov, stagePills, visibleGroups, arrowSvg } = Site;
+    const outSvg = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="8 7 17 7 17 16"/></svg>';
     const I18N = {
       en: {
         heroDesc: 'PM and System Analyst at KGI Bank. I define the problem of each AI project, verify the solution, measure cost and benefit, and take it to production.',
         eyebrow: 'PM & System Analyst · KGI Bank', heroRole: 'Taking AI in finance from <em>governance</em> to <em>production</em>.',
-        nItems: '{n} projects', unit: 'projects', nowK: 'Now', nowV: 'KGI Bank · Tech Innovation', st1: 'Business Planning', st2: 'Model Tuning', st3: 'Development & Deployment', st4: 'Operations & Monitoring', t01: 'Proof', t02: 'Experience', t03: 'Side Projects', t04: 'Blog',
+        nItems: '{n} projects', unit: 'projects', nowK: 'Now', nowV: 'KGI Bank · Tech Innovation', st1: 'Business Planning', st2: 'Model Tuning', st3: 'Development & Deployment', st4: 'Operations & Monitoring', t01: 'Proof', t02: 'Experience', t03: 'Quant Lab', t04: 'Blog',
         sign: 'Let\'s take AI <span class="grad">to production.</span>', toTop: 'Back to top',
         readBlog: 'Blog',
         expSub: 'Open a card for the full project story and its milestones.',
-        sideSub: "Things I've built or contributed to",
+        sideSub: 'Quant tools I built, or adapted from open source',
+        demo: 'Live demo', upstream: 'Upstream',
         blogSub: 'Notes, learnings & things I find interesting',
         postCount: '{n} posts · swipe or use the arrows',
         footer: 'Personal website · Built with curiosity.',
         current: 'Current', readCase: 'Read the project story', chapters: 'chapters', otherExp: 'Other experience & education',
         read: 'Read', soon: 'Coming soon...',
         loadError: 'Content failed to load. A network filter may block this site.',
-        toggle: '中文', loop: 'Continuous loop: operations feed the next plan', sideLane: 'Side Projects',
+        toggle: '中文', loop: 'Continuous loop: operations feed the next plan', sideLane: 'Personal repos',
       },
       zh: {
         heroDesc: '凱基銀行科技創新部 PM 兼 SA。我定義 AI 專案的問題、驗證方案、量化成本與效益，再把它推到上線。',
         eyebrow: 'PM 兼 SA · 凱基銀行', heroRole: '把金融業的 AI，從<em>治理</em>一路推到<em>上線</em>。',
-        nItems: '{n} 個專案', unit: '個專案', nowK: '現職', nowV: '凱基銀行 科技創新部', st1: '業務規劃', st2: '模型調教', st3: '開發部署', st4: '營運監控', t01: 'Proof', t02: 'Experience', t03: 'Side Projects', t04: 'Blog',
+        nItems: '{n} 個專案', unit: '個專案', nowK: '現職', nowV: '凱基銀行 科技創新部', st1: '業務規劃', st2: '模型調教', st3: '開發部署', st4: '營運監控', t01: 'Proof', t02: 'Experience', t03: 'Quant Lab', t04: 'Blog',
         sign: '一起把 AI<br><span class="grad">推到上線。</span>', toTop: '回到頂端',
         readBlog: 'Blog',
         expSub: '點卡片看完整的專案說明與 Milestone。',
-        sideSub: '我做過或參與的專案',
+        sideSub: '量化研究的工具：我自己寫的，或改自開源專案',
+        demo: '線上試用', upstream: '原始 repo',
         blogSub: '筆記、學習心得與有趣的事',
         postCount: '共 {n} 篇 · 左右滑動或點箭頭看更多',
         footer: '個人網站 · Built with curiosity.',
         current: '現職', readCase: '閱讀專案說明', chapters: '段經歷', otherExp: '其他經歷與學歷',
         read: '閱讀', soon: '即將推出...',
         loadError: '內容載入失敗。可能是網路過濾設備封鎖了本站。',
-        toggle: 'EN', loop: '持續迭代：營運回饋下一輪規劃', sideLane: 'Side Projects',
+        toggle: 'EN', loop: '持續迭代：營運回饋下一輪規劃', sideLane: '個人 repo',
       },
     };
     const T = k => I18N[Site.getLang()][k];
@@ -1074,7 +1074,7 @@
       });
     }
 
-    // Side Projects: quant trading pipeline. Items use "layers": the TMBA strategies and the side projects.
+    // Quant Lab: quant trading pipeline. Items use "layers": the TMBA strategies and the side projects.
     const QUANT_COLOR = { data: '#3b82f6', research: '#8b5cf6', test: '#06b6d4', alloc: '#10b981', trade: '#f43f5e' };
     function renderQuant(cfg, groups, side) {
       if (!cfg) return '';
@@ -1100,15 +1100,40 @@
       });
     }
 
+    // Links that open in a new tab, shown as chips at the bottom of a card.
+    const outLink = (href, text, cls = '') =>
+      `<a class="${cls}" href="${esc(href)}" target="_blank" rel="noopener">${esc(text)} ${outSvg}</a>`;
+
+    // The title link covers the card (project page); "demo" adds a live-site chip above it.
     function renderCard(p, id, names) {
       const pills = stagePills(p, names);
       return `
-        <a class="pcard spot-card rv ${p.parent ? 'child' : ''}" id="${id}" href="project.html?id=${encodeURIComponent(p.slug)}">
+        <article class="pcard spot-card rv ${p.parent ? 'child' : ''}" id="${id}">
           <div class="pcard-top">${pills}<span class="pcard-own">${esc(p.ownership)}</span></div>
-          <h3>${esc((p.sdlc || []).length ? (p.short || p.title) : p.title)}</h3>
+          <h3><a class="pcard-main" href="project.html?id=${encodeURIComponent(p.slug)}">${esc((p.sdlc || []).length ? (p.short || p.title) : p.title)}</a></h3>
           <p class="pcard-sum">${esc(p.summary)}</p>
-          <span class="pcard-more">${esc(T('readCase'))} ${arrowSvg}</span>
-        </a>`;
+          <div class="pcard-foot">
+            <span class="pcard-more">${esc(T('readCase'))} ${arrowSvg}</span>
+            ${p.demo ? `<div class="pcard-links">${outLink(p.demo, T('demo'), 'demo')}</div>` : ''}
+          </div>
+        </article>`;
+    }
+
+    // Quant Lab card: layer range, how I built or changed it, and links to my repo (public only) and the upstream.
+    function renderRepo(p, i, names) {
+      const keys = Object.keys(names), idx = (p.layers || []).map(k => keys.indexOf(k)).filter(x => x >= 0).sort((a, b) => a - b);
+      const [a, b] = [keys[idx[0]], keys[idx[idx.length - 1]]];
+      const pill = idx.length ? `<span class="stage-pill" style="--c:${QUANT_COLOR[a]};--c2:${QUANT_COLOR[b]}">${esc(names[a])}${a !== b ? ` → ${esc(names[b])}` : ''}</span>` : '';
+      const upstream = p.upstream && p.upstream.replace(/^https:\/\/github\.com\//, '');
+      const links = [p.url && outLink(p.url, 'GitHub'), upstream && outLink(p.upstream, `${T('upstream')}：${upstream}`)].filter(Boolean);
+      return `
+        <article class="pcard spot-card rv ${p.parent ? 'child' : ''}" id="side-${i}">
+          ${pill ? `<div class="pcard-top">${pill}</div>` : ''}
+          <h3>${esc(p.name)}</h3>
+          <p class="pcard-sum">${esc(p.desc)}</p>
+          <div class="project-tags">${(p.tags || []).map(t => `<span>${esc(t)}</span>`).join('')}</div>
+          ${links.length ? `<div class="pcard-foot"><div class="pcard-links">${links.join('')}</div></div>` : ''}
+        </article>`;
     }
 
     function render() {
@@ -1118,10 +1143,11 @@
     document.getElementById('langToggle').textContent = T('toggle');
 
     const sideP = getJSON(dataPath('projects.json'));
+    const aboutP = getJSON(dataPath('about.json'));
 
     // Proof (SDLC map) + Experience (companies, project cards, other experience) + quant map
     Promise.all([
-      getJSON(dataPath('about.json')),
+      aboutP,
       getJSON(dataPath('work.json')),
       getJSON(dataPath('experience.json')),
     ]).then(([d, all, other]) => {
@@ -1166,22 +1192,16 @@
       observeReveal(document.getElementById('expList'));
     }).catch(() => { showError('expList'); showError('sdlcMap'); });
 
-    // ── Side Projects: load from data/projects.json ──
-    sideP.then(list => {
+    // ── Quant Lab: cards from data/projects.json; a repo with "parent" sits indented under it ──
+    Promise.all([aboutP, sideP]).then(([d, list]) => {
+      const names = Object.fromEntries(((d.quant || {}).stages || []).map(st => [st.key, st.name]));
       const items = list.map((p, i) => ({ p, i }));
-      const ordered = items.filter(x => !x.p.parent).flatMap(x => [x, ...items.filter(c => c.p.parent === x.p.name)]);
-      let n = 0;
-      document.getElementById('projectsList').innerHTML = ordered.map(({ p, i }) => `
-        <a href="${esc(p.url)}" target="_blank" rel="noopener" class="side-item rv ${p.parent ? 'child' : ''}" id="side-${i}">
-          <span class="side-num">${p.parent ? '↳' : String(++n).padStart(2, '0')}</span>
-          <div>
-            <h3>${esc(p.name)}</h3>
-            <p>${esc(p.desc)}</p>
-            <div class="project-tags">${p.tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>
-          </div>
-          <span class="side-arrow">${arrowSvg}</span>
-        </a>
-      `).join('');
+      document.getElementById('projectsList').innerHTML = items.filter(x => !x.p.parent).map(({ p, i }) => {
+        const kids = items.filter(c => c.p.parent === p.name);
+        if (!kids.length) return renderRepo(p, i, names);
+        return `<div class="card-family">${renderRepo(p, i, names)}
+          <div class="kids">${kids.map(c => renderRepo(c.p, c.i, names)).join('')}</div></div>`;
+      }).join('');
       observeReveal(document.getElementById('projectsList'));
     }).catch(() => showError('projectsList'));
 

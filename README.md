@@ -17,7 +17,7 @@ Alex Li's portfolio & blog.
 │   ├── about.json              # 01. Proof (AI SDLC chart text)
 │   ├── work.json               # 02. Experience: companies and projects
 │   ├── experience.json         # 02. Experience: other experience & education
-│   └── projects.json           # 03. Side Projects
+│   └── projects.json           # 03. Quant Lab
 ├── ascii/
 │   ├── index.html              # ASCII gallery (cards from the PIECES array in its script)
 │   └── christmas-tree.html     # Spinning 3D ASCII Christmas tree
@@ -59,7 +59,7 @@ The token stays in your browser. Treat it like a password; revoke it on GitHub i
 
 Local editing without a token: run a local server in the repo, open `/admin/` in Chrome or Edge, and choose **使用本機倉庫** (Work with Local Repository). Commit and push with git yourself.
 
-What you can edit: project stories, experience and project cards, Side Projects, chart text, other experience, and the blog list, all in Chinese. English is translated automatically after each save. Blog posts themselves are HTML files in `posts/` and are not edited in the admin. The admin config is `admin/config.yml`.
+What you can edit: project stories, experience and project cards, Quant Lab, chart text, other experience, and the blog list, all in Chinese. English is translated automatically after each save. Blog posts themselves are HTML files in `posts/` and are not edited in the admin. The admin config is `admin/config.yml`.
 
 Images: in a story, use the editor's image button. Files go to `assets/images/uploads/` and appear as `![caption](/assets/images/uploads/name.jpg)` on their own line.
 
@@ -105,7 +105,7 @@ The story file is the only source for the project page. `work.json` holds only w
 
 Stage keys: `plan`, `tune`, `build`, `ops`. The governance band uses the key `gov`.
 
-`quant` holds the quant trading pipeline chart above Side Projects: title, note, and 5 layers with keys `data`, `research`, `test`, `alloc`, `trade`.
+`quant` holds the quant trading pipeline chart above Quant Lab: title, note, and 5 layers with keys `data`, `research`, `test`, `alloc`, `trade`.
 
 ### 02. Experience (`data/work.json`)
 
@@ -137,6 +137,7 @@ Companies, newest first. Each company has its projects:
 - `slug`: unique; the project page URL is `project.html?id=<slug>`. Use the same `slug` and `sdlc` in both languages.
 - `sdlc`: the stages the project covers. The chart draws one bar from the earliest to the latest stage, so `["plan", "build"]` also covers `tune`. Add `gov` to place the project in the governance band instead of a lane. Use `[]` to keep the project off the chart.
 - `ownership`: 主責 / 協作 (English: Lead / Contributor).
+- `demo`: optional URL of the live site (for example on Cloudflare). The card then shows a **線上試用 / Live demo** link next to "read the project story". Leave it empty (`""`) until the site is up; an empty value shows nothing.
 - `parent`: optional `slug` of another project in the same company. The project becomes a sub-project: it shows inside the parent's frame on the AI SDLC chart, as an indented card under the parent card, and both project pages link to each other. Put sub-projects right after their parent in the file.
 - Card title: a project on the AI SDLC chart shows its `short` label as the card title, so the chart and the card match. The project page shows the full `title`.
 - `kind`: optional neutral tag for a project with no AI stage (for example 量化策略). Use `"sdlc": []` to keep it off the AI SDLC chart.
@@ -166,21 +167,25 @@ Experience and education without a project card:
 [{ "title": "Role or degree", "org": "Organization", "date": "2025/09 ~ 12", "note": "One line, optional" }]
 ```
 
-### 03. Side Projects (`data/projects.json`)
+### 03. Quant Lab (`data/projects.json`)
 
-Shown as a numbered list (`icon` is kept but no longer displayed):
+Shown as cards, like the Experience cards (`icon` is kept but not displayed):
 
 ```json
 [
   {
     "icon": "\uD83E\uDD16",
     "name": "Project Name",
-    "desc": "One-line description.",
+    "desc": "What I built, or for a fork: what I changed.",
     "tags": ["Tag1", "Tag2"],
-    "url": "https://github.com/AlexOAO/repo-name"
+    "url": "https://github.com/AlexOAO/repo-name",
+    "upstream": "https://github.com/owner/repo-name"
   }
 ]
 ```
+
+- `url`: my repo. Fill it only when the repo is public; a private repo would show visitors a 404. Empty or missing: no GitHub link.
+- `upstream`: the original repo, for a fork. The card links to it as 原始 repo：owner/name.
 
 Emoji reference for `icon`: use any emoji character or unicode escape.
 

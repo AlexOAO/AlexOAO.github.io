@@ -136,6 +136,7 @@
         "sdlc": ["plan"],
         "ownership": "主責",
         "period": "2026/07 ~ Now",
+        "demo": "",
         "milestones": [
           {"date": "2026 Q3", "text": "PoC：問答功能測試", "status": "done"},
           {"date": "2026 Q3", "text": "開發：架構圖與移交", "status": "done"},
@@ -299,6 +300,7 @@
         "sdlc": ["build", "tune"],
         "ownership": "主責",
         "period": "2025/07 ~ 2025/12",
+        "demo": "",
         "milestones": [
           {"date": "Phase 1", "text": "需求分析：手冊難查", "status": "done"},
           {"date": "Phase 2", "text": "PoC：RAG＋Qdrant", "status": "done"},
@@ -317,6 +319,7 @@
         "sdlc": ["build"],
         "ownership": "協作",
         "period": "2025/07 ~ 2025/12",
+        "demo": "",
         "milestones": [
           {"date": "Phase 1", "text": "需求分析：單一 LLM 盲點", "status": "done"},
           {"date": "Phase 2", "text": "設計：5 個 Agent 分工", "status": "done"},
@@ -334,6 +337,7 @@
         "sdlc": ["build"],
         "ownership": "協作",
         "period": "2025/07 ~ 2025/12",
+        "demo": "",
         "milestones": [
           {"date": "Phase 1", "text": "需求分析：人工聽打", "status": "done"},
           {"date": "Phase 2", "text": "PoC：Whisper 辨識", "status": "done"},
@@ -509,6 +513,35 @@
         ],
         "tags": ["Teaching Assistant", "Statistics", "Economics", "Financial Management"],
         "source": "resume.pdf；時間依 GMBA 期間推定"
+      }
+    ]
+  },
+  {
+    "org": "獨立開發",
+    "short": "獨立開發",
+    "role": "產品、開發與營運",
+    "period": "2026/11 ~ Now",
+    "scope": "一個人從規劃、調教、開發到營運的 AI 產品",
+    "other": [],
+    "projects": [
+      {
+        "short": "AI 理財產品：FinJourney",
+        "slug": "finjourney",
+        "title": "FinJourney 個人理財全貌",
+        "summary": "一個人從規劃做到上線營運的 AI 理財產品。",
+        "sdlc": ["plan", "tune", "build", "ops"],
+        "ownership": "主責",
+        "period": "2026/11 ~ Now",
+        "demo": "https://finjourney.xiang-wei-li.com",
+        "milestones": [
+          {"date": "2026/11/02", "text": "規劃：十個管理專案", "status": "done"},
+          {"date": "2026/11/11", "text": "開發：AI 理財顧問", "status": "done"},
+          {"date": "2026/11/12", "text": "上線：Tunnel＋Access", "status": "done"},
+          {"date": "2026/11/13", "text": "調教：AI 提案、系統驗算", "status": "done"},
+          {"date": "2026/11/14", "text": "營運：AI 同意與上限", "status": "done"}
+        ],
+        "tags": ["FastAPI", "React", "OpenAI", "Structured Outputs", "Cloudflare"],
+        "source": "FinJourney README.md, docs/DEPLOY.md, backend/src/finjourney/api/ai.py, git log"
       }
     ]
   }

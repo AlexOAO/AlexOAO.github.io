@@ -4,7 +4,6 @@
     "name": "Vibe-Edge",
     "desc": "從 0 打造的一條龍交易想法落地系統：八層流程從資料到交易清單，以固定的統計驗證引擎防止過擬合與前視偏差。",
     "tags": ["Quant Research", "Validation", "Factor Mining", "CLI Agent"],
-    "url": "https://github.com/AlexOAO/Vibe-Edge",
     "layers": ["data", "trade"]
   },
   {
@@ -12,7 +11,6 @@
     "name": "FinCLI",
     "desc": "Vibe-Edge 的資料層：台股財經資料 CLI，從證交所、櫃買、MOPS、TEJ 等來源抓取原始資料，並每日增量更新。",
     "tags": ["Python", "Data Pipeline", "TWSE", "PostgreSQL"],
-    "url": "https://github.com/AlexOAO/FinCLI",
     "layers": ["data"],
     "parent": "Vibe-Edge"
   },
@@ -30,7 +28,6 @@
     "name": "AI Financial Agent",
     "desc": "金融 AI Agent，整合多種數據源進行投資研究與智能決策。",
     "tags": ["LLM", "LangGraph", "Finance"],
-    "url": "https://github.com/AlexOAO/ai-financial-agent",
     "layers": ["data", "research"]
   },
   {
@@ -38,7 +35,6 @@
     "name": "AI Hedge Fund",
     "desc": "Multi-Agent 系統模擬基金經理人協作，進行投資組合管理與交易決策。",
     "tags": ["Multi-Agent", "Trading", "Python"],
-    "url": "https://github.com/AlexOAO/ai-hedge-fund",
     "layers": ["research", "trade"]
   },
   {
@@ -46,7 +42,6 @@
     "name": "Dexter",
     "desc": "自主式深度金融研究 Agent，自動搜集與整合金融資訊產出報告。",
     "tags": ["Agent", "Research", "NLP"],
-    "url": "https://github.com/AlexOAO/dexter",
     "layers": ["research"]
   },
   {
@@ -54,7 +49,6 @@
     "name": "Barra Multifactor Model",
     "desc": "Barra 多因子模型，用於風險分析與投資組合因子分解。",
     "tags": ["Factor Model", "Risk", "Finance"],
-    "url": "https://github.com/AlexOAO/Barra",
     "layers": ["alloc"]
   },
   {
@@ -62,23 +56,20 @@
     "name": "PyQt Stock Backtesting",
     "desc": "PyQt GUI 回測工具，整合 Yahoo API 與多策略回測。",
     "tags": ["PyQt", "Backtesting", "Yahoo API"],
-    "url": "https://github.com/AlexOAO/pyQt_stock_backtesting",
     "layers": ["data", "test"]
   },
   {
     "icon": "🧬",
     "name": "Transformer",
-    "desc": "PyTorch 實現 \"Attention Is All You Need\" 的 Transformer 架構。",
-    "tags": ["PyTorch", "Deep Learning"],
-    "url": "https://github.com/AlexOAO/transformer",
-    "layers": []
+    "desc": "以 PyTorch 實作 Transformer，作為從市場資料挖掘因子的研究工具。",
+    "tags": ["PyTorch", "Deep Learning", "Factor Mining"],
+    "layers": ["research"]
   },
   {
     "icon": "📄",
     "name": "EDGAR Crawler",
     "desc": "SEC 財報爬蟲，提取特定章節文字資料至結構化 JSON。",
     "tags": ["Web Scraping", "SEC", "JSON"],
-    "url": "https://github.com/AlexOAO/edgar-crawler",
     "layers": ["data"]
   }
 ]

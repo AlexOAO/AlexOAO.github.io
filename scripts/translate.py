@@ -30,7 +30,7 @@ POSTS = os.path.join(ROOT, 'posts', 'posts.json')                             # 
 CJK = re.compile(r'[㐀-鿿＀-￯]')
 
 # Values that are codes, paths, or dates: copied as they are.
-KEEP_KEYS = {'track', 'slug', 'parent', 'sdlc', 'layers', 'status', 'url', 'file', 'id', 'icon', 'lane', 'key', 'period'}
+KEEP_KEYS = {'track', 'slug', 'parent', 'sdlc', 'layers', 'status', 'url', 'demo', 'upstream', 'file', 'id', 'icon', 'lane', 'key', 'period'}
 
 # Fixed wording, used before any machine translation.
 GLOSSARY = {
