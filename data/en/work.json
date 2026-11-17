@@ -165,10 +165,10 @@
         "source": "S2,S3"
       },
       {
-        "short": "Business AI services: cost & benefit",
+        "short": "Business Services AI: The Four Agents",
         "slug": "agent-cost-roi",
-        "title": "Cost-Benefit Management for the Four AI Agents",
-        "summary": "Set cost-benefit baselines for 4 Agents and track realization with ratios after launch.",
+        "title": "Four AI Agents: From Prototypes to Cost-Benefit Management",
+        "summary": "Create prototypes for four agents and use the same mechanism to measure costs and benefits.",
         "sdlc": [
           "plan"
         ],
@@ -202,11 +202,11 @@
           }
         ],
         "tags": [
+          "Prototype",
           "ROI",
           "TCO",
           "Benefit Realization",
-          "KPI",
-          "Cost Model"
+          "Customer Journey"
         ],
         "source": "S2,S4,S5"
       },
@@ -214,8 +214,8 @@
         "short": "Loan Assistant",
         "slug": "agent-loan-assistant",
         "parent": "agent-cost-roi",
-        "title": "Loan Assistant (Sales Agent): Cost-Benefit Management",
-        "summary": "Measure the loan Agent by conversion rate and benefit realization.",
+        "title": "Loan Assistant (Sales Agent): Smart Customer Acquisition",
+        "summary": "Engage in conversations with customers on the application platform and social media, guide them through the application process, and negotiate within authorized limits.",
         "sdlc": [
           "plan"
         ],
@@ -254,8 +254,8 @@
         "short": "Credit Review",
         "slug": "agent-credit-review",
         "parent": "agent-cost-roi",
-        "title": "Credit Review (Credit Agent): Cost-Benefit Management",
-        "summary": "Unit cost and 3-year baseline done; track value by AI handling rate.",
+        "title": "Credit Review (Credit Agent): Smart Transactions",
+        "summary": "Assist underwriters in identifying documents, checking for reasonableness, and calculating annual income to expedite loan approval.",
         "sdlc": [
           "plan"
         ],
@@ -299,8 +299,8 @@
         "short": "Customer Service",
         "slug": "agent-customer-service",
         "parent": "agent-cost-roi",
-        "title": "Customer Service (Service Agent): Cost-Benefit Management",
-        "summary": "Measure the service Agent by AI handling, hand-over rate, and cost per call.",
+        "title": "Customer Service Assistant (Service Agent): Smart Service",
+        "summary": "Copilot for Customer Service Representatives: Search the knowledge base, draft replies, write post-call summaries, and perform initial quality checks.",
         "sdlc": [
           "plan"
         ],
@@ -344,8 +344,8 @@
         "short": "Wealth Assistant",
         "slug": "agent-wealth-assistant",
         "parent": "agent-cost-roi",
-        "title": "Wealth Assistant (App 2.0): PoC and Launch Planning",
-        "summary": "Verified AI Q&A for the wealth app; after launch, value is measured by engagement.",
+        "title": "Wealth Assistant (App 2.0): Smart Wealth Management",
+        "summary": "In-app financial management conversations: Check accounts, analyze assets, and confirm risk levels before making recommendations.",
         "sdlc": [
           "plan"
         ],
@@ -361,6 +361,11 @@
           {
             "date": "2026 Q3",
             "text": "Build: architecture, handover",
+            "status": "done"
+          },
+          {
+            "date": "2026/10",
+            "text": "Prototype: Mobile Banking MVP",
             "status": "done"
           },
           {

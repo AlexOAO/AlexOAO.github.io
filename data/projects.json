@@ -2,14 +2,16 @@
   {
     "icon": "🏭",
     "name": "Vibe-Edge",
-    "desc": "從 0 打造的一條龍交易想法落地系統：八層流程從資料到交易清單，以固定的統計驗證引擎防止過擬合與前視偏差。",
+    "slug": "vibe-edge",
+    "desc": "從 0 打造的台股量化研究平台：五層流程從原始資料到紙上交易清單，以代理人改不到的統計驗證引擎防止過擬合與前視偏差。",
     "tags": ["Quant Research", "Validation", "Factor Mining", "CLI Agent"],
     "layers": ["data", "trade"]
   },
   {
     "icon": "🗄️",
     "name": "FinCLI",
-    "desc": "Vibe-Edge 的資料層：台股財經資料 CLI，從證交所、櫃買、MOPS、TEJ 等來源抓取原始資料，並每日增量更新。",
+    "slug": "fincli",
+    "desc": "Vibe-Edge 的原始資料層：財經資料 CLI，從證交所、櫃買、MOPS、TEJ、期交所與 SEC 等 23 個來源抓取原始資料，每日自動更新。",
     "tags": ["Python", "Data Pipeline", "TWSE", "PostgreSQL"],
     "layers": ["data"],
     "parent": "Vibe-Edge"
@@ -17,8 +19,9 @@
   {
     "icon": "📊",
     "name": "OpenStrategy",
-    "desc": "開放式量化交易策略框架，支援回測與參數最佳化。",
-    "tags": ["Python", "Quant", "Backtesting"],
+    "slug": "openstrategy",
+    "desc": "法說會事件研究：以 CAR 與迴歸找出解釋異常報酬的因子，再組成選股訊號。",
+    "tags": ["Python", "Event Study", "CAR", "Regression"],
     "url": "https://github.com/AlexOAO/OpenStrategy",
     "layers": ["research", "test"],
     "parent": "Vibe-Edge"
@@ -46,10 +49,10 @@
   },
   {
     "icon": "📉",
-    "name": "Barra Multifactor Model",
-    "desc": "Barra 多因子模型，用於風險分析與投資組合因子分解。",
-    "tags": ["Factor Model", "Risk", "Finance"],
-    "layers": ["alloc"]
+    "name": "Barra Style Factors",
+    "desc": "參考 Barra 的風格因子，在 Vibe-Edge 計算台股五大風格的多空報酬，分析策略的風格曝險。",
+    "tags": ["Style Factors", "Attribution", "Risk"],
+    "layers": ["research", "alloc"]
   },
   {
     "icon": "💻",
@@ -61,15 +64,15 @@
   {
     "icon": "🧬",
     "name": "Transformer",
-    "desc": "以 PyTorch 實作 Transformer，作為從市場資料挖掘因子的研究工具。",
+    "desc": "參考 Transformer 的注意力架構，在 Vibe-Edge 實作因子合成節點，並和其他方法比較 walk-forward IC。",
     "tags": ["PyTorch", "Deep Learning", "Factor Mining"],
     "layers": ["research"]
   },
   {
     "icon": "📄",
     "name": "EDGAR Crawler",
-    "desc": "SEC 財報爬蟲，提取特定章節文字資料至結構化 JSON。",
-    "tags": ["Web Scraping", "SEC", "JSON"],
+    "desc": "參考 edgar-crawler，在 FinCLI 串接 SEC 的申報清單、XBRL 財報、13F 持股與內部人交易，存入 PostgreSQL。",
+    "tags": ["SEC EDGAR", "XBRL", "PostgreSQL"],
     "layers": ["data"]
   }
 ]

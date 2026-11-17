@@ -148,6 +148,14 @@ Companies, newest first. Each company has its projects:
 - `milestones` feed the progress bar on the homepage card only. In the story, describe them as phases (第一階段, 第二階段…) without dates.
 - Add a new project to `sitemap.xml` as `https://xiang-wei-li.com/project?id=<slug>`.
 
+### AI SDLC stage pages (`data/stories/stage-<key>.md`)
+
+Each stage box on the AI SDLC chart (and the governance band) opens `project.html?id=stage-<key>`: `stage-plan`, `stage-tune`, `stage-build`, `stage-ops`, `stage-gov`.
+
+- The title and lead come from `about.json` (`sdlc.stages[].name` / `desc`, `sdlc.governance`). The list of projects in the stage is generated from `work.json`.
+- The body is the story file `data/stories/stage-<key>.md`. Outline: 這個階段在做什麼 → 誰參與 (by role: AIBU, AIBA, SA, IT PM, TPM, Infra, PMO, 資安, 法遵／風控, 資料團隊) → 交接與檢核 → 我在這個階段做什麼.
+- The roles are described as common practice in financial AI projects, not as any bank's official split.
+
 ### Project stories (`data/stories/<slug>.md`)
 
 Each project page shows a blog-style story, plus links to sub-projects if it has any.
@@ -155,6 +163,7 @@ Each project page shows a blog-style story, plus links to sub-projects if it has
 - Chinese: `data/stories/<slug>.md`. English `data/en/stories/<slug>.md` is generated. The file name is the project's `slug`. The file starts with a small front matter block (`title: <slug>`) that the admin needs.
 - Supported Markdown: `## ` and `### ` headings, paragraphs, `- ` lists, `> ` quotes, `**bold**`, `` `code` ``, `[text](url)`, and images `![caption](path)` on their own line.
 - Outline: `## 結果` first, then 為什麼要做 → 我的角色 → 我怎麼做 (phases, no dates) → 下一步. English: Results → Why this project → My role → What I did → Next steps.
+- Optional `## 它做什麼` after 為什麼要做: what the product does, who uses it, its limits (does alone / hands to a person / never does) and its architecture. Used by the four Agent sub-projects.
 - Write only what a source supports. Mark missing facts as 待補充 / to be added.
 - Every project needs a story file. Without one, the page shows "the story is not written yet".
 - Images: put the file in `assets/images/`, then write `![caption](assets/images/name.jpg)` on its own line.
@@ -186,6 +195,7 @@ Shown as cards, like the Experience cards (`icon` is kept but not displayed):
 
 - `url`: my repo. Fill it only when the repo is public; a private repo would show visitors a 404. Empty or missing: no GitHub link.
 - `upstream`: the original repo, for a fork. The card links to it as 原始 repo：owner/name.
+- `slug`: optional. Set it when the repo has a story file `data/stories/<slug>.md`; the card then opens `project.html?id=<slug>`, which shows the quant layers instead of the AI stages. Without a slug the card does not open anything. Add the page to `sitemap.xml` too.
 
 Emoji reference for `icon`: use any emoji character or unicode escape.
 

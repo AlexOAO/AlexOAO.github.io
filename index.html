@@ -326,6 +326,19 @@
     .sdlc-name { font-size: 1rem; font-weight: 700; color: #e2e8f0; }
     .sdlc-desc { font-size: 0.8rem; color: #94a3b8; line-height: 1.6; margin-top: 0.4rem; }
     .sdlc-desc .why { display: block; color: #cbd5e1; }
+    /* Stage pages: the stage name link covers the whole stage box. */
+    .sdlc-link { color: #e2e8f0; }
+    .sdlc-link::after { content: ''; position: absolute; inset: 0; border-radius: inherit; z-index: 1; }
+    .sdlc-stage:has(.sdlc-link:focus-visible) { outline: 2px solid var(--c); outline-offset: 3px; }
+    .sdlc-link:focus-visible { outline: none; }
+    .sdlc-more {
+      display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 0.55rem;
+      font-size: 0.75rem; font-weight: 600; color: color-mix(in srgb, var(--c) 75%, #fff); transition: gap 0.3s;
+    }
+    .sdlc-stage:hover .sdlc-more { gap: 0.55rem; }
+    .sdlc-more svg, a.gov-name svg { width: 13px; height: 13px; }
+    a.gov-name { display: inline-flex; align-items: center; gap: 0.3rem; }
+    a.gov-name:hover { text-decoration: underline; text-underline-offset: 3px; }
     .sdlc-gov {
       position: relative; z-index: 1; border-radius: 14px; padding: 0.85rem 1rem;
       background: linear-gradient(90deg, rgba(245,158,11,0.14), rgba(245,158,11,0.05));
@@ -659,7 +672,7 @@
       .sdlc-legend .sdlc-stage { padding: 0.75rem 0.8rem; grid-column: auto !important; grid-row: auto !important; }
       .sdlc-legend .sdlc-stage-top { flex-wrap: wrap; row-gap: 0.35rem; }
       .sdlc-legend .sdlc-count { width: 100%; margin-left: 0; }
-      .sdlc-legend .sdlc-desc { display: none; }
+      .sdlc-legend .sdlc-desc, .sdlc-legend .sdlc-more { display: none; }
       .sdlc-legend .sdlc-name { font-size: 0.9rem; }
       .sdlc-legend .sdlc-count { font-size: 1.1rem; }
       .sdlc-bar .cov { display: inline-flex; }
@@ -932,7 +945,7 @@
       });
     });
 
-    const { esc, dataPath, getJSON, STAGE_COLOR, stageNames, stageSpan, isGov, stagePills, visibleGroups, arrowSvg } = Site;
+    const { esc, dataPath, getJSON, STAGE_COLOR, stageNames, stageSpan, isGov, stagePills, visibleGroups, QUANT_COLOR, quantPill, arrowSvg } = Site;
     const outSvg = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="8 7 17 7 17 16"/></svg>';
     const I18N = {
       en: {
@@ -943,7 +956,7 @@
         readBlog: 'Blog',
         expSub: 'Open a card for the full project story and its milestones.',
         sideSub: 'Quant tools I built, or adapted from open source',
-        demo: 'Live demo', upstream: 'Upstream',
+        demo: 'Live demo', upstream: 'Upstream', stageMore: 'Roles in this stage',
         blogSub: 'Notes, learnings & things I find interesting',
         postCount: '{n} posts · swipe or use the arrows',
         footer: 'Personal website · Built with curiosity.',
@@ -960,7 +973,7 @@
         readBlog: 'Blog',
         expSub: '點卡片看完整的專案說明與 Milestone。',
         sideSub: '量化研究的工具：我自己寫的，或改自開源專案',
-        demo: '線上試用', upstream: '原始 repo',
+        demo: '線上試用', upstream: '原始 repo', stageMore: '看這個階段的分工',
         blogSub: '筆記、學習心得與有趣的事',
         postCount: '共 {n} 篇 · 左右滑動或點箭頭看更多',
         footer: '個人網站 · Built with curiosity.',
@@ -975,7 +988,8 @@
     const cardId = (gi, pi) => `proj-${gi}-${pi}`;
     // Generic phase map: stages are columns, an optional band sits under them,
     // each lane is one row, and each item is a bar that spans its stages.
-    function renderPhaseMap({ title, note, stages, band, lanes, loop }) {
+    // "href" (optional) links each stage and the band to a page: href(key).
+    function renderPhaseMap({ title, note, stages, band, lanes, loop, href }) {
       const n = stages.length, parts = [];
       let barK = 0;
       // How many items touch each stage (band items count for every stage they sit over: none here).
@@ -990,14 +1004,15 @@
           <a class="sdlc-chip" href="#${x.target}" data-target="${x.target}" style="--c:${band.color}" title="${esc(x.title)}">
             ${esc(x.label)} ${x.tag ? `<span class="org-tag">${esc(x.tag)}</span>` : ''}</a>`).join('');
         parts.push(`<div class="sdlc-gov" style="grid-row:1;grid-column:2 / -1">
-          <div class="gov-head"><span class="gov-name">${esc(band.name)}</span><span class="gov-desc">${esc(band.desc)}</span></div>
+          <div class="gov-head">${href ? `<a class="gov-name" href="${href('gov')}">${esc(band.name)} ${arrowSvg}</a>` : `<span class="gov-name">${esc(band.name)}</span>`}<span class="gov-desc">${esc(band.desc)}</span></div>
           <div class="gov-chips">${chips}</div></div>`);
       }
       parts.push('<div class="sdlc-legend">');
       stages.forEach((st, si) => parts.push(`
         <div class="sdlc-stage ${si === n - 1 ? 'last' : ''}" data-si="${si}" style="grid-row:${stageRow};grid-column:${si + 2};--c:${st.color};--k:${si}">
-          <div class="sdlc-stage-top"><span class="sdlc-num">${si + 1}</span><span class="sdlc-name">${esc(st.name)}</span><span class="sdlc-count" title="${esc(T('nItems').replace('{n}', counts[si]))}">${counts[si]}<small>${esc(T('unit'))}</small></span></div>
+          <div class="sdlc-stage-top"><span class="sdlc-num">${si + 1}</span>${href ? `<a class="sdlc-name sdlc-link" href="${href(st.key)}">${esc(st.name)}</a>` : `<span class="sdlc-name">${esc(st.name)}</span>`}<span class="sdlc-count" title="${esc(T('nItems').replace('{n}', counts[si]))}">${counts[si]}<small>${esc(T('unit'))}</small></span></div>
           <div class="sdlc-desc">${desc(st.desc)}</div>
+          ${href ? `<span class="sdlc-more">${esc(T('stageMore'))} ${arrowSvg}</span>` : ''}
         </div>`));
       parts.push('</div>');
       // Column guides: one tinted band per stage behind all lanes, so every bar lines up with its stage.
@@ -1071,11 +1086,11 @@
         band: cfg.governance && { ...cfg.governance, color: STAGE_COLOR.gov, items: projects.filter(x => isGov(x.p)) },
         lanes: toLanes(projects.filter(x => x.span && !isGov(x.p))),
         loop: T('loop'),
+        href: key => `project.html?id=stage-${key}`,
       });
     }
 
     // Quant Lab: quant trading pipeline. Items use "layers": the TMBA strategies and the side projects.
-    const QUANT_COLOR = { data: '#3b82f6', research: '#8b5cf6', test: '#06b6d4', alloc: '#10b981', trade: '#f43f5e' };
     function renderQuant(cfg, groups, side) {
       if (!cfg) return '';
       const keys = cfg.stages.map(st => st.key);
@@ -1119,20 +1134,23 @@
         </article>`;
     }
 
-    // Quant Lab card: layer range, how I built or changed it, and links to my repo (public only) and the upstream.
+    // Quant Lab card: layer range and what I built. With a "slug" the card opens its story page;
+    // links go to my repo (public only) and the upstream.
     function renderRepo(p, i, names) {
-      const keys = Object.keys(names), idx = (p.layers || []).map(k => keys.indexOf(k)).filter(x => x >= 0).sort((a, b) => a - b);
-      const [a, b] = [keys[idx[0]], keys[idx[idx.length - 1]]];
-      const pill = idx.length ? `<span class="stage-pill" style="--c:${QUANT_COLOR[a]};--c2:${QUANT_COLOR[b]}">${esc(names[a])}${a !== b ? ` → ${esc(names[b])}` : ''}</span>` : '';
+      const pill = quantPill(p, names);
       const upstream = p.upstream && p.upstream.replace(/^https:\/\/github\.com\//, '');
       const links = [p.url && outLink(p.url, 'GitHub'), upstream && outLink(p.upstream, `${T('upstream')}：${upstream}`)].filter(Boolean);
+      const title = p.slug ? `<a class="pcard-main" href="project.html?id=${encodeURIComponent(p.slug)}">${esc(p.name)}</a>` : esc(p.name);
       return `
         <article class="pcard spot-card rv ${p.parent ? 'child' : ''}" id="side-${i}">
           ${pill ? `<div class="pcard-top">${pill}</div>` : ''}
-          <h3>${esc(p.name)}</h3>
+          <h3>${title}</h3>
           <p class="pcard-sum">${esc(p.desc)}</p>
           <div class="project-tags">${(p.tags || []).map(t => `<span>${esc(t)}</span>`).join('')}</div>
-          ${links.length ? `<div class="pcard-foot"><div class="pcard-links">${links.join('')}</div></div>` : ''}
+          ${p.slug || links.length ? `<div class="pcard-foot">
+            ${p.slug ? `<span class="pcard-more">${esc(T('readCase'))} ${arrowSvg}</span>` : ''}
+            ${links.length ? `<div class="pcard-links">${links.join('')}</div>` : ''}
+          </div>` : ''}
         </article>`;
     }
 

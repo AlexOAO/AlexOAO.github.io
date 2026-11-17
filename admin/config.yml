@@ -26,7 +26,7 @@ collections:
     sortable_fields: [title]
     create: true
     fields:
-      - { name: title, label: "專案代碼（檔名，要和 work.json 的 slug 相同）", widget: string, pattern: ["^[a-z0-9-]+$", "只能用小寫英文、數字、連字號"] }
+      - { name: title, label: "專案代碼（檔名，要和 work.json 或 projects.json 的 slug 相同；AI SDLC 階段頁用 stage-plan 等）", widget: string, pattern: ["^[a-z0-9-]+$", "只能用小寫英文、數字、連字號"] }
       - { name: body, label: "文章：## 結果 → ## 為什麼要做 → ## 我的角色 → ## 我怎麼做（第一階段…）→ ## 下一步", widget: markdown }
   - name: data_zh
     label: "首頁資料（中文）"
@@ -95,6 +95,7 @@ collections:
             fields:
               - { name: icon, label: "圖示（emoji）", widget: string, required: false }
               - { name: name, label: "名稱", widget: string }
+              - { name: slug, label: "專案代碼（有專案說明時才填，和 data/stories/ 的檔名相同）", widget: string, required: false, pattern: ["^[a-z0-9-]+$", "只能用小寫英文、數字、連字號"] }
               - { name: desc, label: "說明", widget: text }
               - { name: tags, label: "標籤", widget: list, required: false, field: { name: tag, label: "標籤", widget: string } }
               - { name: url, label: "GitHub 網址（只有公開 repo 才填；私人 repo 留空）", widget: string, required: false }

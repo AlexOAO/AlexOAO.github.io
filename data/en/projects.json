@@ -2,7 +2,8 @@
   {
     "icon": "🏭",
     "name": "Vibe-Edge",
-    "desc": "An end-to-end system I built from scratch to turn trading ideas into trades: an 8-layer flow from data to trade lists, with a fixed statistical validation engine that blocks overfitting and look-ahead bias.",
+    "slug": "vibe-edge",
+    "desc": "A quantitative research platform for Taiwanese stocks built from the ground up: a five-layer process, from raw data to paper trading lists, with a statistical validation engine that cannot be altered by agents to prevent overfitting and look-ahead bias.",
     "tags": [
       "Quant Research",
       "Validation",
@@ -17,7 +18,8 @@
   {
     "icon": "🗄️",
     "name": "FinCLI",
-    "desc": "The data layer of Vibe-Edge: a Taiwan market data CLI that fetches raw data from TWSE, TPEx, MOPS, TEJ, and more, with daily incremental updates.",
+    "slug": "fincli",
+    "desc": "Vibe-Edge's raw data layer: Financial Data CLI extracts raw data from 23 sources, including the Taiwan Stock Exchange, the Taipei Exchange, MOPS, TEJ, the Taiwan Futures Exchange, and the SEC, and updates it automatically on a daily basis.",
     "tags": [
       "Python",
       "Data Pipeline",
@@ -32,11 +34,13 @@
   {
     "icon": "📊",
     "name": "OpenStrategy",
-    "desc": "An open quant trading strategy framework with backtesting and parameter optimization.",
+    "slug": "openstrategy",
+    "desc": "An event study on earnings calls: CAR and regression find the factors that explain abnormal returns, which are then combined into a stock-selection signal.",
     "tags": [
       "Python",
-      "Quant",
-      "Backtesting"
+      "Event Study",
+      "CAR",
+      "Regression"
     ],
     "url": "https://github.com/AlexOAO/OpenStrategy",
     "layers": [
@@ -88,14 +92,15 @@
   },
   {
     "icon": "📉",
-    "name": "Barra Multifactor Model",
-    "desc": "A Barra multifactor model for risk analysis and portfolio factor decomposition.",
+    "name": "Barra Style Factors",
+    "desc": "Inspired by Barra's style factors: in Vibe-Edge I compute long-short returns for five style factors in Taiwan stocks and analyze each strategy's style exposure.",
     "tags": [
-      "Factor Model",
-      "Risk",
-      "Finance"
+      "Style Factors",
+      "Attribution",
+      "Risk"
     ],
     "layers": [
+      "research",
       "alloc"
     ]
   },
@@ -116,7 +121,7 @@
   {
     "icon": "🧬",
     "name": "Transformer",
-    "desc": "Implemented Transformer using PyTorch as a research tool for mining factors from market data.",
+    "desc": "Inspired by the Transformer's attention architecture: I built a factor-synthesis node in Vibe-Edge and compared its walk-forward IC with other methods.",
     "tags": [
       "PyTorch",
       "Deep Learning",
@@ -129,11 +134,11 @@
   {
     "icon": "📄",
     "name": "EDGAR Crawler",
-    "desc": "An SEC filing crawler that extracts selected sections into structured JSON.",
+    "desc": "Inspired by edgar-crawler: FinCLI pulls SEC filing lists, XBRL financials, 13F holdings and insider trades into PostgreSQL.",
     "tags": [
-      "Web Scraping",
-      "SEC",
-      "JSON"
+      "SEC EDGAR",
+      "XBRL",
+      "PostgreSQL"
     ],
     "layers": [
       "data"
