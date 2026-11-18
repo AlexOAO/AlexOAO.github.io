@@ -4,7 +4,7 @@ title: financial-statement-vlm
 
 ## Results
 
-**Scanned pages in listed companies' financial statements are now read with Gemini's vision-language model (VLM), and it is in production.** Traditional OCR only turns an image into text; a vision-language model understands the layout, tables and text together, and reads each figure with the line item it belongs to.
+**Scanned pages in listed companies' financial statements are now read with Gemini's vision-language model (VLM) in the cloud, and it is in production.** Traditional OCR only turns an image into text; a vision-language model understands the layout, tables and text together, and reads each figure with the line item it belongs to.
 
 Recognition accuracy, volume and time saved: to be added.
 
@@ -20,7 +20,7 @@ Contributor. I worked on the advanced image recognition built with Gemini. My ex
 
 **Phase 1 | Requirements.** Confirmed the target: the scanned pages in listed companies' statements, and where traditional OCR falls short on tables and figures.
 
-**Phase 2 | PoC.** Used Gemini's vision-language model to read scanned pages, so the model understands layout, tables and text together instead of recognizing characters one by one. Validation details: to be added.
+**Phase 2 | PoC.** Sent scanned pages to Gemini in the cloud and read them with its vision-language model, so the model understands layout, tables and text together instead of recognizing characters one by one. Validation details: to be added.
 
 **Phase 3 | Launch.** Connected the vision-language recognition to the financial-data processing flow; it is in production.
 

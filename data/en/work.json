@@ -853,7 +853,7 @@
         "short": "AI Image Recognition: Scanned Statements",
         "slug": "financial-statement-vlm",
         "title": "AI Image Recognition for Scanned Financial Statements of Listed Companies (Gemini Vision-Language Model)",
-        "summary": "Reads scanned financial statements with Gemini's vision-language model, beyond traditional OCR.",
+        "summary": "Reads scanned financial statements with Gemini's vision-language model in the cloud, beyond traditional OCR.",
         "sdlc": [
           "tune",
           "build"
