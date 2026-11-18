@@ -9,10 +9,10 @@ title: stage-plan
 Traditional system development follows a downward trajectory: the business department presents its requirements, which are then analyzed, designed, developed, tested, and launched. The process concludes when the system is handed over to the users. AI projects are different. There are three areas that need to be changed:
 
 - **More roles.** Data engineers (DE), data scientists (DS), ML engineers (MLE), AI evaluation and MLOps don't exist in traditional projects; they're purple in the diagram.
-- **Some roles come in earlier.** Information security, compliance, and risk management need to set red lines during the planning stage. Infrastructure needs to estimate capacity during the planning stage because GPUs have long lead times. The unit responsible for IT application systems needs to arrange the integration beforehand.
+- **Some roles come in earlier.** Security, compliance and risk set the red lines during planning; the IT PM and TA join at planning too, and the TA estimates compute early because GPUs take months to arrive; the application owner (AP) lines up the integration in advance.
 - **The end connects back to the start.** The performance figures after going live should be used to inform business planning and decide whether to increase or adjust the budget for the next round.
 
-The division of labor process above, along with the other four stage pages, incorporates these three points into each stage. A full comparison of traditional development and AI development can be found in this article: [Traditional vs. AI Development: How the Team Chart Changes](posts/traditional-vs-ai-development.html) 。
+The role chart above and the other four stage pages put these three points into each stage; every role is explained on the [roles page](roles.html). The full comparison of traditional and AI development is in this post: [Traditional vs. AI Development: How the Team Chart Changes](posts/traditional-vs-ai-development.html).
 
 ## How to drive it: needs first, top-down
 

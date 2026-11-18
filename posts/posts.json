@@ -3,7 +3,7 @@
     "id": "traditional-vs-ai-development",
     "title": "傳統開發 vs. AI 開發：分工圖哪裡不一樣",
     "date": "2026-11-18",
-    "summary": "把傳統系統開發和 AI SDLC 的分工圖放在一起比較：AI 專案多了調教與評測的角色，資安、法遵與 Infra 要提早進來，營運數字也要接回起點。",
+    "summary": "把傳統系統開發和 AI SDLC 的分工圖放在一起比較：AI 專案多了調教與評測的角色，資安、法遵與 IT 要提早進來，營運數字要接回起點；也談 AI BA 從哪裡來、怎麼推動。",
     "tags": [
       "AI SDLC",
       "專案管理",
@@ -11,7 +11,7 @@
     ],
     "file": "posts/traditional-vs-ai-development.html",
     "title_en": "Traditional vs. AI Development: How the Team Chart Changes",
-    "summary_en": "Traditional system development and the AI SDLC, side by side: AI projects add tuning and evaluation roles, bring security, compliance and infrastructure in earlier, and feed operating results back to the start."
+    "summary_en": "Traditional system development and the AI SDLC, side by side: AI projects add tuning and evaluation roles, bring security, compliance and IT in earlier, and feed operating results back to the start; plus where AI BAs come from and how to drive adoption."
   },
   {
     "id": "ai-agent-gpu-cost",

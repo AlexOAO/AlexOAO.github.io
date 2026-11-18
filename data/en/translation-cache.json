@@ -29,7 +29,7 @@
   "data/stories/stage-build.md": "7fac4dcf226b08f980b0a075a8867d70b574685069fe980af50b7e070a738c40",
   "data/stories/stage-gov.md": "e0bfd63a597424fb4f2bb6a4e5cabb309d72676dc154de074da71fda528353ba",
   "data/stories/stage-ops.md": "daaad7cf99d44737344c8dec5ec4ec68bbdb49773347e4fedcabfea9c2662250",
-  "data/stories/stage-plan.md": "aa6ae67ca587aad6424341da1a273b2d73115685e68cc0687f7d4d3047e0ce68",
+  "data/stories/stage-plan.md": "afb47d8c9800d74bdba48293277b2e1ec6b3ad6e35c4d6a5989f0a64a9fffa69",
   "data/stories/stage-tune.md": "bc2d1c736a04eb459e9555ea577ff772a90c956c831991095a4f69dfe1712db4",
   "data/stories/thesis-esg-capital-structure.md": "23befa72ee0ea8a45cdd921bc6da78b30e1b2125c9de9a5c0dc49f4b0b5e479d",
   "data/stories/thesis-rag-panel.md": "acad4c37570acdec485efcc3332c9a764cac2284f4b36d3538989b9044fd7197",
@@ -39,7 +39,7 @@
   "data/stories/vibe-edge.md": "ec823364ca629f26b8c35901091bc43ca470487ed0cd6f6079f71c7013e0becc",
   "data/stories/webai-finance.md": "4070f71e1c79bff50b535a55878dd7c2f9dc0d85d7444da9a0ee4a320c2089f7",
   "data/work.json": "f2071d5ba2043f15af309931e2b1451735cd3f2eac62bb226e263d889827751c",
-  "posts/posts.json": "c10a751afe32038c44fbe7f1ccdcec7fced91dc03b2ff820fe365d67e12a8cfd"
+  "posts/posts.json": "3f8ad688183b48f56c935c6ffe9b2001503d2d7c1fb3d5dff7490bd5c71e1443"
  },
  "lines": {
   "## 下一步": "## Next steps",
@@ -494,6 +494,7 @@
   "- **採購單位**：把需求變成 RFP、比價、簽約。AI 的模型與平台要先 PoC 實測，再決定買誰。": "- **(Purchasing Unit)**: Transform requirements into an RFP, compare prices, and sign the contract. AI models and platforms must first undergo PoC testing before deciding which one to purchase.",
   "- **效益**（BA 填）：影響人數、每月使用次數、每次節省的工時、節省的預算。": "- **Benefit** (BA): people affected, uses per month, hours saved per use, budget saved.",
   "- **最後要接回起點。** 上線後的成效數字，要回到業務規劃，決定下一輪加碼還是調整。": "- **The end connects back to the start.** The performance figures after going live should be used to inform business planning and decide whether to increase or adjust the budget for the next round.",
+  "- **有些角色要提早進來。** 資安、法遵與風控要在規劃時就訂紅線；IT PM 和 TA 要在規劃時就進來，TA 先估算力，因為 GPU 的交期很長；應用系統負責單位（AP）要先排好串接。": "- **Some roles come in earlier.** Security, compliance and risk set the red lines during planning; the IT PM and TA join at planning too, and the TA estimates compute early because GPUs take months to arrive; the application owner (AP) lines up the integration in advance.",
   "- **有些角色要提早進來。** 資安、法遵與風控要在規劃時就訂紅線；Infra 要在規劃時就估算力，因為 GPU 的交期很長；IT 的應用系統負責單位要先排好串接。": "- **Some roles come in earlier.** Information security, compliance, and risk management need to set red lines during the planning stage. Infrastructure needs to estimate capacity during the planning stage because GPUs have long lead times. The unit responsible for IT application systems needs to arrange the integration beforehand.",
   "- **決策中樞。** 交易資料加上和 Agent 的互動記憶，形成客戶 360 的樣貌，再由傾向模型判斷下一步適合提供什麼。": "- **Decision-making hub.** Transaction data, combined with the memory of interactions with agents, forms a 360-degree view of the customer, and the propensity model then determines what is appropriate to offer next.",
   "- **法遵／風控**：判斷適用哪些法規，和業務單位一起訂出 AI 的紅線，決定風險等級。": "- **Compliance/Risk Management**: Determine which regulations apply, work with business units to establish AI red lines, and decide on risk levels.",
@@ -670,6 +671,7 @@
   "上線前要經過檢核關卡。業務單位寫規則，科技單位出測題並執行，工作小組初審，風險較高的再由委員會核准。可以先放行 UAT 或小範圍上線，再全面上線。": "A review process must be completed before going live. The business unit writes the rules, the technology unit prepares and conducts the tests, the working group performs the initial review, and higher-risk items are further approved by the committee. UAT or a limited rollout can be approved first, followed by a full rollout.",
   "上線門檻要事先和業務單位約好。生成式 AI 不可能每次一字不漏地回答，如果沒有約好，測試會沒完沒了、上線一再延後。做法是請業務單位訂驗收標準：要測幾題、正確率要多少。達到共識門檻就上線，之後持續迭代。": "Agree the launch bar with the business unit up front. Generative AI will never give word-for-word identical answers; without an agreed bar, testing never ends and the launch keeps slipping. Ask the business unit to set the acceptance criteria: how many test questions and what accuracy. Once the agreed bar is met, launch and keep iterating.",
   "上面的分工流程，以及其他四個階段頁，就是把這三點放進每個階段。傳統開發和 AI 開發的完整比較，寫在這篇文章：[傳統開發 vs. AI 開發：分工圖哪裡不一樣](posts/traditional-vs-ai-development.html)。": "The division of labor process above, along with the other four stage pages, incorporates these three points into each stage. A full comparison of traditional development and AI development can be found in this article: [Traditional vs. AI Development: How the Team Chart Changes](posts/traditional-vs-ai-development.html) 。",
+  "上面的分工流程，以及其他四個階段頁，就是把這三點放進每個階段；每個角色的詳細說明，請看[角色說明頁](roles.html)。傳統開發和 AI 開發的完整比較，寫在這篇文章：[傳統開發 vs. AI 開發：分工圖哪裡不一樣](posts/traditional-vs-ai-development.html)。": "The role chart above and the other four stage pages put these three points into each stage; every role is explained on the [roles page](roles.html). The full comparison of traditional and AI development is in this post: [Traditional vs. AI Development: How the Team Chart Changes](posts/traditional-vs-ai-development.html).",
   "但四個 Agent 的服務對象、部署方式與成本結構都不一樣。要決定資源先給誰，就要先回答兩個問題：它實際會怎麼運作？它值不值得？": "However, the four agents differ in terms of their target clientele, deployment methods, and cost structures. To decide who should receive resources first, we must first answer two questions: How will it actually work? Is it worth it?",
   "使用者人數與使用回饋：待補充。": "Number of users and user feedback: To be added.",
   "傳統的系統開發，是一條往下交棒的線：業務提需求，分析、設計、開發、測試、上線，交到使用者手上就結束。AI 專案不一樣，有三個地方要改：": "Traditional system development follows a downward trajectory: the business department presents its requirements, which are then analyzed, designed, developed, tested, and launched. The process concludes when the system is handed over to the users. AI projects are different. There are three areas that need to be changed:",
@@ -1483,6 +1485,7 @@
   "技術架構師，屬於基礎架構（Infra）。設計系統底層的技術架構：主機、網路、容器平台、高可用與備援，以及雲端或地端的部署方式；AI 專案還要規劃 GPU 算力。和 SA 搭配：SA 設計應用層，TA 設計基礎設施層。": "Technical architect, part of Infrastructure. Designs the layer underneath: servers, network, container platform, high availability and disaster recovery, and cloud or on-prem deployment; for AI projects, GPU compute too. Works alongside the SA: the SA designs the application layer, the TA the infrastructure layer.",
   "技術研究：A2UI": "Tech research: A2UI",
   "把 AI 使用報告的人工審查改為自動化。": "Automated the manual review of AI usage reports.",
+  "把傳統系統開發和 AI SDLC 的分工圖放在一起比較：AI 專案多了調教與評測的角色，資安、法遵與 IT 要提早進來，營運數字要接回起點；也談 AI BA 從哪裡來、怎麼推動。": "Traditional system development and the AI SDLC, side by side: AI projects add tuning and evaluation roles, bring security, compliance and IT in earlier, and feed operating results back to the start; plus where AI BAs come from and how to drive adoption.",
   "把傳統系統開發和 AI SDLC 的分工圖放在一起比較：AI 專案多了調教與評測的角色，資安、法遵與 Infra 要提早進來，營運數字也要接回起點。": "Traditional system development and the AI SDLC, side by side: AI projects add tuning and evaluation roles, bring security, compliance and infrastructure in earlier, and feed operating results back to the start.",
   "把成本結構完全不同的四個 AI Agent 放進同一個公式：GPU 拆成空間與時間，工作量依元件改用頁、分鐘或 Token，再把尖峰與離峰分開估算。": "Four AI Agents with very different cost structures, one formula: split the GPU into space and time, measure work in pages, minutes, or tokens by component, and estimate peak and off-peak separately.",
   "把流程拆成地端辨識與複核、雲端處理兩段，每一段用最貼近工作量的單位計算成本，再合成單件成本。": "The process is divided into two stages: on-premises identification and review, and cloud processing. The cost of each stage is calculated using the unit that most closely reflects the workload, and then the unit costs are combined to determine the cost per item.",
