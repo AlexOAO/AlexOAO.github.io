@@ -139,6 +139,8 @@ p, li { text-wrap: pretty; }
 .post-body .flow p { margin: 0 0 0.6rem; }
 .flow-title { font-family: var(--display); font-size: 0.78rem; letter-spacing: 0.06em; color: var(--dim); margin-bottom: 1rem; justify-self: start; }
 .flow-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; width: 100%; }
+.flow-row + .flow-row { margin-top: 0.75rem; }
+.flow-row { row-gap: 0.75rem; }
 .flow-box {
   position: relative; flex: 1 1 0; min-width: min(9.5rem, 100%); max-width: 15rem; padding: 0.7rem 0.85rem;
   border-radius: 12px; border: 1px solid rgba(148,163,184,0.28); background: rgba(30,41,59,0.6);
