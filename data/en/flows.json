@@ -3,31 +3,27 @@
     {
       "boxes": [
         {
-          "key": "cxo",
-          "does": "AI strategy, budget approval, KPIs"
-        }
-      ]
-    },
-    {
-      "split": [
-        "Strategy, budget ceiling",
-        "",
-        "AI strategy, product goals"
-      ]
-    },
-    {
-      "boxes": [
-        {
           "key": "pmo",
           "does": "Priorities, resources, process"
         },
         {
-          "ghost": true
+          "key": "cxo",
+          "does": "AI strategy, budget approval, KPIs"
         },
         {
           "key": "po",
           "does": "Joins prioritization with a strategic view; allocates BA and SA resources"
         }
+      ],
+      "links": [
+        [
+          "← Budget",
+          "Report →"
+        ],
+        [
+          "Strategy →",
+          "← Goals"
+        ]
       ]
     },
     {
@@ -508,26 +504,6 @@
         {
           "key": "bu",
           "does": "First line: fills in the risk rating, head approves, writes the rules"
-        },
-        {
-          "key": "iso",
-          "does": "Second line: data protection, red team",
-          "tag": "gate"
-        },
-        {
-          "key": "cco",
-          "does": "Second line: rules and red lines",
-          "tag": "gate"
-        },
-        {
-          "key": "cro",
-          "does": "Second line: risk rating and monitoring",
-          "tag": "gate"
-        },
-        {
-          "key": "ia",
-          "does": "Third line: independent review",
-          "tag": "gate"
         }
       ]
     },
@@ -550,6 +526,40 @@
           "key": "sa",
           "does": "Writes technical governance documents and system controls",
           "tag": "me"
+        }
+      ]
+    },
+    {
+      "arrow": "Second-line review"
+    },
+    {
+      "boxes": [
+        {
+          "key": "iso",
+          "does": "Second line: data protection, red team",
+          "tag": "gate"
+        },
+        {
+          "key": "cco",
+          "does": "Second line: rules and red lines",
+          "tag": "gate"
+        },
+        {
+          "key": "cro",
+          "does": "Second line: risk rating and monitoring",
+          "tag": "gate"
+        }
+      ]
+    },
+    {
+      "arrow": "Third-line independent review"
+    },
+    {
+      "boxes": [
+        {
+          "key": "ia",
+          "does": "Third line: independent review",
+          "tag": "gate"
         }
       ]
     }
