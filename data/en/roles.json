@@ -1070,6 +1070,15 @@
     "about": "Procurement. Runs bids, negotiation and contracts.",
     "uses": [
       {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "① Business planning",
+            "duty": "RFP, bids, contract; for AI, a PoC first"
+          }
+        ]
+      },
+      {
         "side": "Outsourced: traditional",
         "items": [
           {

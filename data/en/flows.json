@@ -9,7 +9,11 @@
       ]
     },
     {
-      "arrow": "Strategy and budget ceiling"
+      "split": [
+        "Strategy, budget ceiling",
+        "",
+        "AI strategy, product goals"
+      ]
     },
     {
       "boxes": [
@@ -18,13 +22,20 @@
           "does": "Priorities, resources, process"
         },
         {
+          "ghost": true
+        },
+        {
           "key": "po",
           "does": "Product roadmap; agrees with BU on acceptable accuracy and the human-AI split"
         }
       ]
     },
     {
-      "arrow": "Project start, product vision"
+      "split": [
+        "Project start, priorities",
+        "",
+        "Product vision"
+      ]
     },
     {
       "boxes": [
@@ -77,7 +88,7 @@
     },
     {
       "split": [
-        "",
+        "RFP, budget",
         "Technical plan",
         "In-house resources"
       ]
@@ -85,7 +96,8 @@
     {
       "boxes": [
         {
-          "ghost": true
+          "key": "pr",
+          "does": "RFP, bids, contract; for AI, a PoC first"
         },
         {
           "key": "sa",
