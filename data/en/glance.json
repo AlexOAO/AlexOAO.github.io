@@ -1,302 +1,306 @@
 {
   "guardrails-poc": {
-    "purpose": "Check that AI safety guardrails really stop attacks aimed at our bank",
-    "who": "Bank AI team and security reviewers",
-    "asis_user": "Vendor reports looked good, but none tested our own bank business",
-    "tobe_user": "A 3,600-question test shows which rule stopped which kind of attack",
-    "asis_biz": "Papers only proved the process was followed, not that AI answers were safe",
-    "tobe_biz": "Advice: skip the add-on guardrail; the question set can check every AI assistant",
-    "metric": {
-      "value": "3,600",
-      "label": "reusable test questions"
-    }
+    "before": "Vendor reports looked good, but none of them tested our own bank's business",
+    "after": "One guardrail fully tested on 3,600 questions; advice: skip the add-on guardrail for now",
+    "status": "In progress",
+    "proofs": [
+      {
+        "value": "3,600",
+        "label": "test questions every AI assistant can reuse"
+      },
+      {
+        "value": "20 of 30",
+        "label": "normal questions the add-on wrongly blocked"
+      }
+    ],
+    "did": "Led the bank's side of the PoC: built the question set, ran the tests, analysed them, made the call"
   },
   "agentic-platform-eval": {
-    "purpose": "Pick an AI agent platform that will not fail us, before we buy it",
-    "who": "Bank selection team and management",
-    "asis_user": "Teams often found missing key features only halfway through",
-    "tobe_user": "26 hands-on tests found 4 problems that would block launch",
-    "asis_biz": "A wrong pick was costly, and security holes could surface after launch",
-    "tobe_biz": "Both platforms scored side by side on one sheet, the basis for the final pick",
-    "metric": {
-      "value": "12",
-      "label": "issues found before purchase"
-    }
+    "before": "With the wrong AI platform, teams found missing key features only halfway through",
+    "after": "Both platforms tested before purchase and scored side by side on one sheet to make the pick",
+    "status": null,
+    "proofs": [
+      {
+        "value": "12",
+        "label": "platform issues found before purchase"
+      },
+      {
+        "value": "4",
+        "label": "of those issues would have blocked launch"
+      }
+    ],
+    "did": "Led the platform evaluation: designed and ran the tests, logged issues, filled in the scores"
   },
   "agent-cost-roi": {
-    "purpose": "Decide which of four AI assistants should get resources first",
-    "who": "Business units and decision makers",
-    "asis_user": "Before spending, business units could not see how an assistant would work",
-    "tobe_user": "Four working prototypes, one per stage from winning customers to wealth care",
-    "asis_biz": "The four served different people at different costs, so none could be compared",
-    "tobe_biz": "One cost-benefit table compares them, and estimates can be tracked after launch",
-    "metric": {
-      "value": "4",
-      "label": "AI assistant prototypes"
-    }
+    "before": "The four AI assistants served different people at different costs, so none could be compared",
+    "after": "Four working prototypes share one cost-benefit method; their baselines are being built",
+    "status": "In progress",
+    "proofs": [
+      {
+        "value": "4",
+        "label": "working AI assistant prototypes"
+      }
+    ],
+    "did": "Built all four prototypes and led the shared cost-benefit framework"
   },
   "agent-loan-assistant": {
-    "purpose": "Make sure loan applicants always get their questions answered",
-    "who": "Loan applicants and the business unit",
-    "asis_user": "Customers with questions often left when no one replied in time",
-    "tobe_user": "Prototype built; once live, AI answers at once and guides the application",
-    "asis_biz": "There was no way to measure how many extra applications AI could win",
-    "tobe_biz": "Value measured by conversion rate; the baseline awaits business volume data",
-    "metric": null
+    "before": "Loan applicants with questions often left when no one replied in time",
+    "after": "The prototype chats with customers, explains products, guides the application and negotiates within limits",
+    "status": "Prototype",
+    "proofs": [],
+    "did": "Built the prototype and brought it into the shared cost-benefit framework"
   },
   "agent-credit-review": {
-    "purpose": "Help underwriters spend less time checking documents, so loans are approved faster",
-    "who": "Underwriters and management",
-    "asis_user": "Underwriters checked income papers one by one, slowly and unevenly",
-    "tobe_user": "Prototype built; AI reads papers, checks them and works out income, with reasons",
-    "asis_biz": "Case volume grew every year, yet no one knew the cost of each case",
-    "tobe_biz": "Cost per case and a three-year cost baseline are set, with work run off-peak",
-    "metric": null
+    "before": "Underwriters checked income papers one by one, slowly and unevenly",
+    "after": "The prototype reads papers, checks them and works out income with reasons; cost per case is set",
+    "status": "Prototype",
+    "proofs": [],
+    "did": "Built the prototype and led its cost-benefit assessment"
   },
   "agent-customer-service": {
-    "purpose": "Let call agents focus on customers while an AI sidekick handles the busywork",
-    "who": "Call agents and call center managers",
-    "asis_user": "Agents looked things up while listening, then wrote notes after every call",
-    "tobe_user": "Prototype built; an AI sidekick finds facts, drafts replies and sums up calls",
-    "asis_biz": "Calls bunch at peak hours: too few resources jam, too many waste money",
-    "tobe_biz": "A call volume baseline and cost per call are set; resources await the vendor",
-    "metric": null
+    "before": "Call agents looked things up while listening, then wrote notes after every call",
+    "after": "In the prototype, an AI sidekick finds facts, drafts replies and sums up each call",
+    "status": "Prototype",
+    "proofs": [],
+    "did": "Built the prototype and supplied the cost framework; a colleague led the computing estimate"
   },
   "agent-wealth-assistant": {
-    "purpose": "Customers learn where their assets stand by asking one question",
-    "who": "App customers and the bank",
-    "asis_user": "Customers dug through many accounts to piece together what they own",
-    "tobe_user": "Prototype built: ask once in the app to check accounts or money questions",
-    "asis_biz": "No one knew if the Q&A worked or if resources would hold as use grew",
-    "tobe_biz": "Q&A proven to work; launch resources and three-year usage are estimated",
-    "metric": {
-      "value": "118",
-      "label": "working app pages"
-    }
+    "before": "Customers dug through many accounts to piece together what they own",
+    "after": "A working mobile banking prototype: ask once in the app to check accounts or money questions",
+    "status": "Prototype",
+    "proofs": [
+      {
+        "value": "118",
+        "label": "working banking pages in the prototype"
+      },
+      {
+        "value": "36",
+        "label": "account lookup tools the AI can call"
+      }
+    ],
+    "did": "Led the PoC and launch resource planning, and built the prototype myself"
   },
   "agent-governance": {
-    "purpose": "Give every AI a clear compliance check before it goes live",
-    "who": "AI project teams and compliance leaders",
-    "asis_user": "Project teams did not know what to check before an AI went live",
-    "tobe_user": "Framework designed: fill all nine boxes with proof and the AI passes",
-    "asis_biz": "Existing rules covered paperwork only; no one checked AI answers or actions",
-    "tobe_biz": "Planned for the bank rulebook: no check report, no launch",
-    "metric": null
+    "before": "Project teams did not know what to check before an AI went live",
+    "after": "A nine-box checklist is designed: fill every box with proof and the AI passes",
+    "status": "Planning",
+    "proofs": [],
+    "did": "Led the design of the bank's pre-launch check for AI"
   },
   "finllm": {
-    "purpose": "Make sure a finance-only AI model learns from correct data",
-    "who": "The finance industry and FinLLM program",
-    "asis_user": "Raw data had to be checked and fixed item by item, with no shortcut",
-    "tobe_user": "A fixed-step cleaning process now applies to more items",
-    "asis_biz": "Flawed data could teach the model errors, even answers that break rules",
-    "tobe_biz": "Batch 2-1 cleaning and batch 4 regulation scoring are done",
-    "metric": null
+    "before": "Flawed training data could teach a finance AI model errors, even answers that break rules",
+    "after": "Cleaning now follows fixed steps; batch 2-1 cleaning and batch 4 scoring are done",
+    "status": "In progress",
+    "proofs": [],
+    "did": "Contributor: cleaned the data and scored how well the model reads regulations"
   },
   "gemini-training": {
-    "purpose": "Help staff see how AI fits their own work, and use it safely",
-    "who": "All staff and business units",
-    "asis_user": "Staff got the tool but did not know which tasks suit AI",
-    "tobe_user": "Outline set; classes will practise on each unit's own work",
-    "asis_biz": "The bank pushed AI use without knowing if staff used it safely",
-    "tobe_biz": "Attendance and the AI use ideas learners bring back will be tracked",
-    "metric": null
+    "before": "Staff got the AI tool but did not know which tasks suit it",
+    "after": "The outline is set; classes will practise safe AI use on each unit's own work",
+    "status": "Planning",
+    "proofs": [],
+    "did": "Led the course design and gathered real work cases from each unit"
   },
   "ai-ops-dashboard": {
-    "purpose": "Answer leaders' top question: are our AI investments worth it?",
-    "who": "Bank leaders and AI owners",
-    "asis_user": "Each AI effort kept its own numbers, and one had no dashboard at all",
-    "tobe_user": "In planning: one five-part metric set for internal tools and customer AI",
-    "asis_biz": "No single view showed whether AI spending was worth it",
-    "tobe_biz": "Once built, leaders can compare results and costs side by side",
-    "metric": null
+    "before": "Each AI effort kept its own numbers, and no single view showed if AI was worth it",
+    "after": "A five-part metric set is designed, shared by internal tools and customer-facing AI",
+    "status": "Planning",
+    "proofs": [],
+    "did": "Contributor: helped design the metrics and planned how cost and safety data feed in"
   },
   "a2ui-research": {
-    "purpose": "Let AI reply with bank-approved charts and forms instead of long text",
-    "who": "Wealth app customers and the bank",
-    "asis_user": "Money answers in long text were hard for customers to read",
-    "tobe_user": "In research: asset overview, product comparison and form filling picked",
-    "asis_biz": "Letting AI write web page code would never pass security review",
-    "tobe_biz": "By design, AI lays out the screen while the bank approves the parts",
-    "metric": null
+    "before": "Money answers came as long text that customers found hard to read",
+    "after": "Three uses picked: asset overview, product comparison and form filling; resources being confirmed",
+    "status": "Research",
+    "proofs": [],
+    "did": "Led the research into whether this technology can become a bank product feature"
   },
   "webai-finance": {
-    "purpose": "Let researchers spend time on research, not on gathering data",
-    "who": "Group researchers and all group staff",
-    "asis_user": "Researchers first had to gather reports, economic data and news daily",
-    "tobe_user": "Live: pick a market or stock, ask AI, then ask follow-ups",
-    "asis_biz": "The tool had to open to the whole group while keeping fund data apart",
-    "tobe_biz": "One permission design keeps it open yet separated, inside the usual screen",
-    "metric": null
+    "before": "Researchers first had to gather reports, economic data and news every day",
+    "after": "Live: pick a market or stock, ask the AI, then ask follow-ups",
+    "status": null,
+    "proofs": [],
+    "did": "Owned the module and took it from requirements to launch on my own"
   },
   "ai-governance-review": {
-    "purpose": "Make reviews of the group's AI usage reports faster and consistent",
-    "who": "Group AI office reviewers",
-    "asis_user": "Reviewers read each report, redid risk levels and matched asset lists by hand",
-    "tobe_user": "Live: the system judges, recalculates and cross-checks before reviewers look",
-    "asis_biz": "Each reviewer judged differently, so subsidiary reports were held unevenly",
-    "tobe_biz": "Every subsidiary is reviewed to one standard, with suggested fixes",
-    "metric": {
-      "value": "3",
-      "label": "review checks the system does"
-    }
+    "before": "Reviewers read each report, redid risk levels and matched asset lists by hand",
+    "after": "The system judges, recalculates and cross-checks each report before reviewers look",
+    "status": null,
+    "proofs": [
+      {
+        "value": "3",
+        "label": "review tasks the system now does"
+      }
+    ],
+    "did": "Led development of the automated review system and took it live"
   },
   "rag-support-bot": {
-    "purpose": "Let members find answers in the technical manuals with one question",
-    "who": "TEJ members and admins",
-    "asis_user": "Answers were scattered across manuals, so members waited for support",
-    "tobe_user": "Live: ask in everyday words and get an answer in about 2 to 3 seconds",
-    "asis_biz": "Manuals changed often, and retraining an AI model each time cost too much",
-    "tobe_biz": "Accuracy rose from 60% to 85%, and admins update the knowledge base themselves",
-    "metric": {
-      "value": "60%→85%",
-      "label": "answer accuracy"
-    }
+    "before": "Answers were scattered across manuals, so members waited for support",
+    "after": "Members ask in everyday words and get an answer in about 2 to 3 seconds",
+    "status": null,
+    "proofs": [
+      {
+        "value": "60%→85%",
+        "label": "answer accuracy after re-splitting the manuals"
+      },
+      {
+        "value": "2 to 3 sec",
+        "label": "from question to answer"
+      }
+    ],
+    "did": "Owned the AI search design, the database and both front and back end, start to finish"
   },
   "multi-agent-advisory": {
-    "purpose": "Have AI split work like a fund team to make investment calls that can be checked",
-    "who": "Investment research and decision teams",
-    "asis_user": "One AI struggled to cover charts, news mood and company basics at once",
-    "tobe_user": "Five AI roles split the work and debate, then give a buy or sell signal",
-    "asis_biz": "Advice came with no visible reasoning, so decisions could not be checked",
-    "tobe_biz": "Tested on three years of Taiwan stock history, giving the team confidence",
-    "metric": null
+    "before": "One AI could not cover every angle, and its advice showed no reasoning",
+    "after": "AI splits work like a fund team, debates, and gives buy or sell signals that can be tested",
+    "status": null,
+    "proofs": [],
+    "did": "Contributor on the design: defined each role's job and connected TEJ data"
   },
   "asr-transcription": {
-    "purpose": "Cut the time the research team spends writing up earnings calls",
-    "who": "The research team",
-    "asis_user": "Someone typed up each call by ear, then pulled out the key points",
-    "tobe_user": "Live: recordings turn into transcripts and a key-point table automatically",
-    "asis_biz": "Transcripts alone were not enough; key points were hard to compare or quote",
-    "tobe_biz": "Write-ups take less time, and key points compare across firms and quarters",
-    "metric": null
+    "before": "Someone typed up each earnings call by ear, then pulled out the key points",
+    "after": "Recordings turn into transcripts and a key-point table that compares easily",
+    "status": null,
+    "proofs": [],
+    "did": "Contributor: automated the speech-to-text and summary steps"
   },
   "financial-statement-vlm": {
-    "purpose": "Read every figure accurately, even from scanned financial statements",
-    "who": "TEJ financial data users",
-    "asis_user": "Scanned statements were images, and old text recognition missed the tables",
-    "tobe_user": "Live: AI reads layout, tables and words together",
-    "asis_biz": "Figures were hard to match to the right line item and period",
-    "tobe_biz": "Now part of the statement data flow, matching figures to items and periods",
-    "metric": null
+    "before": "Scanned statements were images, and old text recognition missed the tables",
+    "after": "AI reads layout, tables and words together, now part of the statement data flow",
+    "status": null,
+    "proofs": [],
+    "did": "Contributor: helped build the Gemini-based reading of scanned statements"
   },
   "moda-t-ambassador": {
-    "purpose": "Help rural groups and small firms use generative AI too",
-    "who": "Rural groups and small firms",
-    "asis_user": "Without AI talent, they struggled to adopt new tools alone",
-    "tobe_user": "Ambassadors work with firms to turn real problems into digital solutions",
-    "asis_biz": "A digital gap and an industry talent shortage needed closing",
-    "tobe_biz": "Helped bring in generative AI and smart devices, and promoted the policy",
-    "metric": null
+    "before": "Rural groups and small firms lacked AI talent and struggled to adopt it alone",
+    "after": "Worked with firms to turn real problems into digital solutions and bring in AI",
+    "status": null,
+    "proofs": [],
+    "did": "Served as a 6th-cohort Digital Youth T Ambassador, helping firms adopt AI"
   },
   "tmba-cta-taiex": {
-    "purpose": "Build a futures trading strategy that can be reproduced, measured and tested",
-    "who": "TMBA trading club and judges",
-    "asis_user": "A strategy that cannot be rerun may give different results on the same data",
-    "tobe_user": "A test setup now gives the same result every run",
-    "asis_biz": "Looking at returns alone hid how much risk was taken",
-    "tobe_biz": "Returns and risk are judged together, and it won 3rd at the showcase",
-    "metric": {
-      "value": "3rd place",
-      "label": "club final showcase"
-    }
+    "before": "A strategy that cannot be rerun may give different results on the same data",
+    "after": "A test setup that gives the same result every run, judging return and risk together",
+    "status": null,
+    "proofs": [
+      {
+        "value": "3rd place",
+        "label": "TMBA trading club final showcase"
+      }
+    ],
+    "did": "Led development of the futures strategy and its test setup"
   },
   "tmba-event-earnings-call": {
-    "purpose": "Test whether earnings calls can become trading opportunities",
-    "who": "TMBA trading club",
-    "asis_user": "Whether earnings calls offer trades was only a hunch",
-    "tobe_user": "A Taiwan stock strategy built around earnings calls and tested on history",
-    "asis_biz": "No data showed the return or risk of such trades",
-    "tobe_biz": "Return and risk were measured on history, and the research carried on",
-    "metric": null
+    "before": "Whether earnings calls offer trading chances was only a hunch",
+    "after": "A Taiwan stock strategy built around earnings calls and tested on history",
+    "status": null,
+    "proofs": [],
+    "did": "Led development and testing of this event trading strategy"
   },
   "thesis-rag-panel": {
-    "purpose": "Let AI read financial reports to find signals that classic ratios miss",
-    "who": "Finance researchers and investors",
-    "asis_user": "Reports hold lots of text that common methods left unused",
-    "tobe_user": "AI reads reports of 592 companies and gives six scores",
-    "asis_biz": "Common ratios explained only a small part of stock price moves",
-    "tobe_biz": "The share of returns explained rose from 5.14% to 63.73%",
-    "metric": {
-      "value": "5.14%→63.73%",
-      "label": "share of returns explained"
-    }
+    "before": "Common financial ratios explained only a small part of stock price moves",
+    "after": "AI reads financial reports and gives six scores, greatly raising how much the model explains",
+    "status": null,
+    "proofs": [
+      {
+        "value": "5.14%→63.73%",
+        "label": "share of stock returns the model explains"
+      },
+      {
+        "value": "592",
+        "label": "listed electronics firms studied"
+      }
+    ],
+    "did": "Master's thesis author: built the AI scoring system and ran the analysis"
   },
   "fubon-esg-portfolio": {
-    "purpose": "Answer whether ESG really pays off in stock investing",
-    "who": "Program trainees and investment pros",
-    "asis_user": "Trainees needed hands-on experience of researcher and fund manager work",
-    "tobe_user": "A three-month course with assignments and group talks every class",
-    "asis_biz": "Whether ESG truly helps stock picking still needed testing",
-    "tobe_biz": "ESG factors went into a Taiwan stock portfolio, reviewed by fund managers",
-    "metric": null
+    "before": "Whether ESG truly helps stock picking still needed testing",
+    "after": "ESG factors went into a Taiwan stock portfolio, presented to fund managers for feedback",
+    "status": null,
+    "proofs": [],
+    "did": "Team member who completed the final ESG project with my group"
   },
   "thesis-esg-capital-structure": {
-    "purpose": "Find out whether ESG risk scores affect how Taiwanese companies are financed",
-    "who": "Investors and finance researchers",
-    "asis_user": "Investors often use ESG risk scores to judge a company",
-    "tobe_user": "The thesis links ESG scores to how much companies fund by debt or equity",
-    "asis_biz": "Few people linked ESG scores to how companies raise money",
-    "tobe_biz": "Thesis completed and degree earned; findings still to be added",
-    "metric": null
+    "before": "Few people linked ESG risk scores to how companies raise money",
+    "after": "Thesis completed, testing how ESG scores relate to how companies are financed",
+    "status": null,
+    "proofs": [],
+    "did": "Thesis author; completed the research and earned the master's degree"
   },
   "tunghai-english-ta": {
-    "purpose": "Help students learn core business courses well in English",
-    "who": "Tunghai GMBA students",
-    "asis_user": "Students learning statistics, economics and finance in English needed help",
-    "tobe_user": "In three English-taught courses, a teaching assistant helps students keep up",
-    "asis_biz": "The school ran core business courses in English and needed TA support",
-    "tobe_biz": "English-taught statistics, economics and finance courses run smoothly",
-    "metric": {
-      "value": "3",
-      "label": "English-taught courses"
-    }
+    "before": "Students learning statistics, economics and finance in English needed help",
+    "after": "In three English-taught courses, a teaching assistant helps students keep up",
+    "status": null,
+    "proofs": [
+      {
+        "value": "3",
+        "label": "English-taught business courses I assisted"
+      }
+    ],
+    "did": "Teaching assistant for three English-taught courses: statistics, economics, finance"
   },
   "finjourney": {
-    "purpose": "Let anyone see their whole financial picture and where the problems are",
-    "who": "Everyday people managing their money",
-    "asis_user": "Spending, investments and insurance sat in separate sheets and apps",
-    "tobe_user": "Live: one map shows it all, and an AI adviser flags problems and fixes",
-    "asis_biz": "AI gets numbers wrong most easily, making money advice hard to trust",
-    "tobe_biz": "The system does all the math, AI only suggests plans, and 656 tests guard it",
-    "metric": {
-      "value": "< 2 weeks",
-      "label": "from zero to launch"
-    }
+    "before": "Spending, investments and insurance sat in separate sheets and apps, hiding the problems",
+    "after": "One map shows your whole financial picture, and an AI adviser flags problems and fixes",
+    "status": null,
+    "proofs": [
+      {
+        "value": "< 2 weeks",
+        "label": "from first commit to launch"
+      },
+      {
+        "value": "656",
+        "label": "automated tests guarding the math and AI"
+      }
+    ],
+    "did": "Built it alone: product planning, AI tuning, development, launch and operations"
   },
   "vibe-edge": {
-    "purpose": "Let one person do institution-grade quant research with results you can trust",
-    "who": "Solo quant researchers",
-    "asis_user": "AI makes strategy versions far faster than a person can check them",
-    "tobe_user": "AI writes research steps, and five layers run through to a paper trade list",
-    "asis_biz": "If AI could edit the tests or skip counting tries, results could not be trusted",
-    "tobe_biz": "Fixed tests AI cannot touch, with every try and every AI cost logged",
-    "metric": {
-      "value": "12 weeks",
-      "label": "from zero to 0.6.0"
-    }
+    "before": "AI makes strategy versions far faster than a person can check them",
+    "after": "Runs from raw data to a paper trade list, with tests the AI cannot change",
+    "status": null,
+    "proofs": [
+      {
+        "value": "12 weeks",
+        "label": "from zero to version 0.6.0"
+      },
+      {
+        "value": "3,749",
+        "label": "automated tests, all passing"
+      }
+    ],
+    "did": "Built it alone: vision, specs, architecture and daily operations"
   },
   "fincli": {
-    "purpose": "Give quant research raw, traceable Taiwan stock data to work with",
-    "who": "Quant researchers and their platform",
-    "asis_user": "Much Taiwan market data had no ready tool, so each site was wired by hand",
-    "tobe_user": "After each close, 23 sources are fetched automatically, no manual work",
-    "asis_biz": "Changing data while fetching would lose the original numbers for good",
-    "tobe_biz": "Raw data is stored as is and traceable, with a health check every night",
-    "metric": {
-      "value": "23",
-      "label": "sources updated daily"
-    }
+    "before": "Much Taiwan market data had no ready tool, so each source was wired by hand",
+    "after": "After each close, 23 sources are fetched automatically and stored exactly as received",
+    "status": null,
+    "proofs": [
+      {
+        "value": "23",
+        "label": "data sources updated daily"
+      },
+      {
+        "value": "141/141",
+        "label": "data sets matching row by row, old vs new"
+      }
+    ],
+    "did": "Built the Taiwan data fetching tool and its daily schedule on my own"
   },
   "openstrategy": {
-    "purpose": "Find unusual stock moves around earnings calls and turn them into stock picks",
-    "who": "TMBA researchers and stock pickers",
-    "asis_user": "Each variable fetched its own data, and the research code was scattered",
-    "tobe_user": "Organised into ten steps that fetch data once and share it",
-    "asis_biz": "Whether prices moved unusually around earnings calls had no statistical basis",
-    "tobe_biz": "Four significant factors form the picks; 2025 slightly trailed the market",
-    "metric": {
-      "value": "4",
-      "label": "significant explaining factors"
-    }
+    "before": "Whether prices moved unusually around earnings calls had no statistical basis",
+    "after": "Four significant factors form the stock picks; in 2025 they slightly trailed the market",
+    "status": null,
+    "proofs": [
+      {
+        "value": "4",
+        "label": "factors that significantly explain unusual returns"
+      },
+      {
+        "value": "0.94 vs 0.99",
+        "label": "2025 Sharpe ratio, strategy vs market"
+      }
+    ],
+    "did": "Led the research design, coding and testing"
   }
 }

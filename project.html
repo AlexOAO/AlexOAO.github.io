@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/post.css?v=20261118p">
+  <link rel="stylesheet" href="assets/css/post.css?v=20261118q">
   <style>
     .post-nav { display: flex; justify-content: space-between; align-items: center; }
     .lang-toggle {
@@ -116,7 +116,7 @@
   </article>
   <div class="post-footer"><div class="pager" id="pager"></div></div>
 
-  <script src="assets/js/common.js?v=20261118p"></script>
+  <script src="assets/js/common.js?v=20261118q"></script>
   <script>
     const { esc, dataPath, getJSON, stageNames, stagePills, visibleGroups, STAGE_ORDER, STAGE_COLOR, stageSpan, isGov, QUANT_ORDER, QUANT_COLOR, quantSpan, quantPill } = Site;
     const I18N = {
@@ -126,7 +126,7 @@
         notFound: 'This project does not exist.', home: 'Back to the homepage', lc: 'Where it sits in the AI lifecycle', ms: 'Milestones',
         lcQuant: 'Where it sits in the quant pipeline', quantRole: 'Personal project',
         stageNo: 'Stage {n}', prevStage: 'Previous stage', nextStage: 'Next stage',
-        glance: 'At a glance', gPurpose: 'Purpose', gWho: 'Who benefits', gUser: 'Users & work', gBiz: 'Business',
+        glance: 'At a glance', gBefore: 'Before', gAfter: 'Now', gDid: 'What I did',
         flowTitle: 'Who does what in this stage', flowAi: 'Role added by AI projects', flowGate: 'Checkpoint', flowMe: 'Where I work', meLabel: 'Me', flowVendor: 'Outsourced vendor', vendorLabel: 'Vendor', stageProjects: 'My projects in this stage', stageAt: 'This stage in the AI lifecycle',
         loadError: 'Content failed to load. A network filter may block this site.',
       },
@@ -136,7 +136,7 @@
         notFound: '找不到這個專案。', home: '回到首頁', lc: '在 AI 生命週期的位置', ms: '專案進度',
         lcQuant: '在量化交易流程的位置', quantRole: '個人專案',
         stageNo: '第 {n} 階段', prevStage: '上一個階段', nextStage: '下一個階段',
-        glance: '專案摘要', gPurpose: '目的', gWho: '受益對象', gUser: '使用者／作業面', gBiz: '商業／管理面',
+        glance: '專案摘要', gBefore: '以前', gAfter: '現在', gDid: '我做了什麼',
         flowTitle: '這個階段的分工流程', flowAi: 'AI 專案新增的角色', flowGate: '檢核關卡', flowMe: '我的位置', meLabel: '我', flowVendor: '委外廠商', vendorLabel: '委外', stageProjects: '我在這個階段的專案', stageAt: '這個階段在 AI 生命週期的位置',
         loadError: '內容載入失敗。可能是網路過濾設備封鎖了本站。',
       },
@@ -216,20 +216,20 @@
       }).catch(() => { root.innerHTML = `<p class="lead error">${esc(T('loadError'))}</p>`; });
     }
 
-    // Summary panel (data/glance.json): purpose and who benefits on top, then a 2x2 quadrant:
-    // columns AS-IS / TO-BE, rows the users' side / the business side; a real headline number below, if any.
+    // Before -> After card (data/glance.json): the original pain, the new state with up to two proofs, and what I did.
     function glancePanel(g) {
-      if (!g || !g.asis_user) return '';
-      const cell = (cls, text) => `<div class="quad-cell ${cls}"><p>${esc(text)}</p></div>`;
-      const metric = g.metric ? `<div class="quad-metric"><b>${esc(g.metric.value)}</b><span>${esc(g.metric.label)}</span></div>` : '';
-      return `<section class="glance" aria-label="${esc(T('glance'))}">
-        <div class="quad-head"><div><span class="quad-k">${esc(T('gPurpose'))}</span><p>${esc(g.purpose)}</p></div>
-          <div><span class="quad-k">${esc(T('gWho'))}</span><p>${esc(g.who)}</p></div></div>
-        <div class="quad">
-          <div class="quad-corner"></div><div class="quad-col asis">AS-IS</div><div class="quad-col tobe">TO-BE</div>
-          <div class="quad-row">${esc(T('gUser'))}</div>${cell('asis', g.asis_user)}${cell('tobe', g.tobe_user)}
-          <div class="quad-row">${esc(T('gBiz'))}</div>${cell('asis', g.asis_biz)}${cell('tobe', g.tobe_biz)}
-        </div>${metric}</section>`;
+      if (!g || !g.before) return '';
+      const proofs = (g.proofs || []).length ? `<div class="ba-proofs">${g.proofs.map(p =>
+        `<div class="ba-proof"><b>${esc(p.value)}</b><span>${esc(p.label)}</span></div>`).join('')}</div>` : '';
+      const status = g.status ? `<span class="ba-status">${esc(g.status)}</span>` : '';
+      return `<section class="ba" aria-label="${esc(T('glance'))}">
+        <div class="ba-grid">
+          <div class="ba-before"><p class="ba-k">${esc(T('gBefore'))}</p><p class="ba-v">${esc(g.before)}</p></div>
+          <div class="ba-arrow" aria-hidden="true">→</div>
+          <div class="ba-after"><p class="ba-k">${esc(T('gAfter'))}${status}</p><p class="ba-v">${esc(g.after)}</p>${proofs}</div>
+        </div>
+        <div class="ba-did"><span class="ba-k">${esc(T('gDid'))}</span><span>${esc(g.did)}</span></div>
+      </section>`;
     }
 
     // One row of segments: which stages (or layers) the project covers. "band" goes above the row (AI governance).
