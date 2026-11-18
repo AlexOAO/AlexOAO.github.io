@@ -8,21 +8,21 @@ title: multi-agent-advisory
 
 ## Why this project
 
-One person making investment decisions has blind spots, so fund companies use analysts with different roles. A single LLM is similar: it struggles to handle technicals, news sentiment, and fundamentals at once, and its advice has no reasoning trail to check. What if AI split the work too?
+A single LLM, like a single person making investment decisions, has blind spots. That is why fund companies use analysts with different roles. A single LLM struggles to handle technicals, news sentiment, and fundamentals at once, and its advice has no reasoning trail to check. What if AI split the work too?
 
 ## My role
 
-Architecture contributor: Agent roles, and MCP tools to connect TEJ data.
+Architecture contributor: Agent roles, and MCP tools to connect TEJ data. MCP is a standard way for AI to call outside tools and data.
 
 ## What I did
 
 **Phase 1 | Requirements.** A single LLM struggles to handle technicals, news sentiment, and fundamentals at once, and its advice has no reasoning trail to check.
 
-**Phase 2 | Design.** Five Agents, five jobs: a technical analyst reads indicators and trends; a news sentiment analyst scores market sentiment; a fundamental analyst values the company from its statements; a bull-bear debater argues both sides; a trader turns the debate into a buy or sell signal. We compared CrewAI, AutoGen, and LangGraph, and chose LangGraph: data passing, branches, and error handling between Agents are all defined clearly as a graph. In finance, control matters more than autonomy.
+**Phase 2 | Design.** Five Agents, five jobs: a technical analyst reads indicators and trends; a news sentiment analyst scores market sentiment; a fundamental analyst values the company from its statements; a bull-bear debater argues both sides; a trader turns the debate into a buy or sell signal. We compared CrewAI, AutoGen, and LangGraph, and chose LangGraph, because in finance control matters more than autonomy. Data passing, branches, and error handling between Agents are all defined clearly as a flow chart.
 
-**Phase 3 | Build.** With MCP, each Agent calls the TEJ API directly. The system does not just chat; it decides from data.
+**Phase 3 | Build.** The system does not just chat; it decides from data. With MCP, each Agent calls the TEJ API directly.
 
-**Phase 4 | Validation.** The signals went into the Zipline backtest engine and were tested over 3 years of Taiwan stock history.
+**Phase 4 | Validation.** The signals went into the Zipline backtest engine and were tested on 3 years of Taiwan stock history.
 
 ## What I learned
 

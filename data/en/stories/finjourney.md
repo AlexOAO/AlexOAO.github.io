@@ -4,13 +4,13 @@ title: finjourney
 
 ## Results
 
-**FinJourney is now live ([finjourney.xiang-wei-li.com](https://finjourney.xiang-wei-li.com)), it took less than two weeks from the first commit to the launch, and I did it all by myself.** It presents personal finances as a "comprehensive overview of personal financial management," with each box displaying the user's real-time figures. The AI financial advisor in the lower-right corner analyzes the user's data to provide assessments, identify risks, and recommend actions for improvement. The backend features 656 tests, covering formulas, APIs, and AI processes.
+**FinJourney is now live ([finjourney.xiang-wei-li.com](https://finjourney.xiang-wei-li.com)), it took less than two weeks from the first commit to the launch, and I did it all by myself.** It draws personal finances as one "personal financial overview," with each box showing the user's real-time figures. The AI financial advisor in the lower-right corner reads the user's data and gives a diagnosis, risks and actions for improvement. For quality, the backend has 656 automated tests covering formulas, APIs and AI flows.
 
 Number of users and user feedback: To be added.
 
 ## Why this project
 
-The concept of financial management is not difficult to understand; the challenge lies in applying it to your own numbers. There are different calculation methods for income and expenses, reserves, investments, liabilities, insurance, and retirement, and they are scattered across various spreadsheets and apps, making it difficult to quickly identify where the overall problem lies.
+Financial concepts are not hard to understand; the hard part is applying them to your own numbers. Income and expenses, reserves, investments, liabilities, insurance and retirement each have their own calculation, and they are scattered across different spreadsheets and apps. As a result, it is hard to see at a glance where the overall problem lies.
 
 I want to create a product that puts all of these on the same chart: first, view the overall picture, then click on the problematic section.
 
@@ -20,13 +20,13 @@ I worked on my own. I was responsible for product planning, model tuning, front-
 
 ## What I did
 
-**Phase 1 | Business planning.** Using the "Personal Financial Overview" diagram from "Investment 101" as a framework, personal finances are broken down into ten management projects: income and expenses, reserves, net worth, investments, liabilities, taxes, insurance, retirement funds, wealth transfer, and goals. Each project follows the same management process: Set goals → Develop an action plan → Compare actual results with targets monthly → Revise the plan or goals.
+**Phase 1 | Business planning.** I broke personal finances into ten management projects, using the "Personal Financial Overview" diagram from "Investment 101" as the framework. The ten are income and expenses, reserves, net worth, investments, liabilities, taxes, insurance, retirement funds, wealth transfer, and goals. Each project follows the same management process: Set goals → Develop an action plan → Compare actual results with targets monthly → Revise the plan or goals.
 
-**Phase 2 | Model tuning.** The area where AI is most prone to errors is with numbers, so I have the AI only propose solutions, while the system calculates the numbers. The AI's "adjustment plan" is output using a strict JSON schema and can only be selected from the leverage and change types provided by the system. The system first checks the fields and scopes referenced by each change, then runs the plan through a lifetime income and expense simulation and each stress scenario. The prompts are also adjusted based on the card the user is looking at, allowing the AI to act as an advisor for that card.
+**Phase 2 | Model tuning.** The core rule is that the AI only proposes plans and the system calculates the numbers, because numbers are where AI makes the most mistakes. The AI's "adjustment plan" must follow a strict JSON schema format and can only choose from the levers and change types the system provides. The system first checks the fields and ranges each change refers to, then runs the plan through a lifetime income and expense simulation and every stress scenario. The prompts also adapt to the card the user is looking at, so the AI acts as the advisor for that card.
 
-**Phase 3 | Development and deployment.** The backend uses FastAPI, SQLModel, and SQLite, with all formulas concentrated in the domain layer. The frontend uses React and TypeScript, displaying only the results from the API without performing calculations itself. There is also a data-receiving API that allows other apps to push balances and transactions, eliminating the need for monthly manual entry. It is deployed on my own Mac and exposed to the outside world via Cloudflare Tunnel. The user interface and the backend are separated into two URLs, with the backend additionally protected by Cloudflare Access.
+**Phase 3 | Development and deployment.** The backend uses FastAPI, SQLModel and SQLite, with all formulas kept in the domain layer, the core module. The frontend uses React and TypeScript and only displays the API's results, without calculating anything itself. A data-receiving API lets other apps push balances and transactions, so users don't have to enter them by hand every month. The system runs on my own Mac and is exposed to the internet through Cloudflare Tunnel. The user site and the admin back office have two separate URLs, and the back office has an extra login layer from Cloudflare Access.
 
-**Phase 4 | Operations and monitoring.** Users register with an invitation code, and each user has one database file, which is automatically backed up daily and retained for 14 days. Before using AI for the first time, the system will ask the user to consent to sending financial data to OpenAI and will record the version and time of consent. Without consent, the data will not be read and the model will not be called. The free version has a monthly limit on the number of AI uses, and only one use is deducted when the model successfully provides an answer.
+**Phase 4 | Operations and monitoring.** Accounts and data are protected: users register with an invitation code, each user has one database file, and it is backed up automatically every day and kept for 14 days. Before using AI for the first time, the system asks the user to consent to sending financial figures to OpenAI, and records the version and time of consent. Without consent, it reads no data and does not call the model. The free version has a monthly limit on AI uses, and a use is counted only when the model answers successfully.
 
 ## Next steps
 

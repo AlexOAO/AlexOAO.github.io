@@ -8,7 +8,7 @@ title: tmba-event-earnings-call
 
 ## Why this project
 
-An earnings call is when a company explains its operations and outlook. An event trading strategy asks one question: does this event give a signal you can trade?
+An event trading strategy asks one question: does this event give a signal you can trade? An earnings call is when a company explains its operations and outlook.
 
 ## My role
 
@@ -18,7 +18,7 @@ I led this strategy.
 
 **Phase 1 | Hypothesis.** Earnings calls release information about operations and outlook, which may give a tradable signal.
 
-**Phase 2 | Backtest.** Design a Taiwan stock strategy around earnings calls, and evaluate its return and risk with a backtest.
+**Phase 2 | Backtest.** Design a Taiwan stock strategy around earnings calls, then backtest it on historical data to evaluate its return and risk.
 
 **Phase 3 | Result.** Entry and exit rules, backtest period, and results: to be added.
 

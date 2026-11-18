@@ -8,11 +8,11 @@ title: asr-transcription
 
 ## Why this project
 
-The research team needs the text and key points of earnings calls. Someone used to transcribe each video by hand and then summarize it, which took a long time.
+Someone used to transcribe each video by hand and then summarize it, which took a long time. What the research team needs is the text and key points of earnings calls.
 
 ## My role
 
-Contributor. I built the automated processing and summary flow with Whisper.
+Contributor. I built the automated processing and summary flow with Whisper, a speech recognition tool.
 
 ## What I did
 
@@ -20,9 +20,9 @@ Contributor. I built the automated processing and summary flow with Whisper.
 
 **Phase 2 | PoC.** Whisper turns earnings call audio into transcripts.
 
-**Phase 3 | Build.** There are many calls, so the file processing runs automatically instead of one by one.
+**Phase 3 | Build.** There are many calls, so I automated the file processing instead of handling them one by one.
 
-**Phase 4 | Launch.** Each transcript is summarized into a structured table, so researchers can compare companies and quarters.
+**Phase 4 | Launch.** Researchers can compare key points across companies and quarters. The system summarizes each transcript into a structured table.
 
 ## Next steps
 

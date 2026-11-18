@@ -4,29 +4,29 @@ title: openstrategy
 
 ## Results
 
-**I organized the research process for the TMBA investor conference event strategy into a Python script consisting of 10 stages. Using a composite factor composed of in-sample weights, the Sharpe ratio for 2025 was 0.94, slightly lower than the market's 0.99, and did not meet the target.** This is an event study: we calculate the cumulative abnormal return (CAR) before and after the earnings conference call, identify the factors that explain it, and then formulate stock selection signals.
+**I organized the research code for the TMBA investor conference event strategy into Python scripts in 10 stages. Using a composite factor built with in-sample weights, the Sharpe ratio for 2025 was 0.94, slightly below the market's 0.99, and did not meet the target.** This is an event study. I test the cumulative abnormal return (CAR) around investor conferences, meaning the sum of price moves beyond what would normally be expected. I then identify the factors that explain it and combine them into stock selection signals.
 
 ## Why this project
 
-When a company proactively holds an investor conference, it may be signaling its confidence in its operations to the market. The question I want to answer is: Are there any abnormal returns before and after the investor conference? Which companies have higher abnormal returns? Can this become a tradable signal?
+When a company proactively holds an investor conference, it may be signaling confidence in its operations to the market. I wanted to answer three questions: Are there abnormal returns around the investor conference? Which companies have larger abnormal returns? Can this become a tradable signal?
 
 ## My role
 
-I was responsible for TMBA's research project. I was responsible for the research design, programming, and backtesting.
+TMBA research project that I led. I did the research design, programming, and backtesting.
 
 ## What I did
 
-**Phase 1 | Events and extraordinary items.** Obtain investor conference events from TEJ, with the investor conference date as the event date. Daily abnormal return = Individual stock return − CAPM expected return; Beta is weighted and adjusted using 1-year and 3-year periods (0.7 × 1 year + 0.3 × 3 years). Then, the abnormal returns within the event window are summed to obtain the CAR.
+**Phase 1 | Events and extraordinary items.** Investor conference events come from TEJ, with the conference date as the event date. Daily abnormal return = individual stock return − CAPM expected return, which removes the normal move driven by the market. Beta is a weighted shrinkage of the 1-year and 3-year betas: 0.7 × 1 year + 0.3 × 3 years. Finally, the abnormal returns within the event window are summed into the CAR.
 
-**Phase 2 | Explanatory variables and regression.** Nine variables were created: whether a public video recording was provided, the turnover rate in the 20 days prior to the event, the return in the 10 days prior to the event, changes in the shareholdings of the top ten shareholders, the number of days since the previous investor conference (logarithm), changes in retail investor shareholdings, market capitalization (logarithm), the price-to-book ratio, and industry. We used OLS regression testing and examined the correlation coefficients and VIF. In the [-3, 3] window, four variables – prior returns, number of days since the last event, size, and price-to-book ratio – were significant. The results were the same when the window was changed to [-2, 2].
+**Phase 2 | Explanatory variables and regression.** The finding is that four variables are significant: prior returns, days since the last conference, size and price-to-book ratio. I first built nine variables: whether a public video recording was provided, the turnover rate in the 20 days before the event, the return in the 10 days before the event, changes in the top ten shareholders' holdings, days since the previous investor conference (logarithm), changes in retail investor holdings, market capitalization (logarithm), the price-to-book ratio, and industry. I then ran OLS regression tests and checked the correlation coefficients and VIF to confirm the variables did not overlap too much. In the [-3, 3] window, those four variables were significant; in the [-2, 2] window, the results were the same.
 
-**Phase 3 | Integrated calculation.** Originally, each variable called the TEJ API once. I integrated them into a single calculator: fetching data once, sharing the cache, and calculating all variables in parallel.
+**Phase 3 | Integrated calculation.** Originally, each variable called the TEJ API separately. I combined them into a single calculator: it fetches data once, shares a cache, and then calculates all variables in parallel.
 
-**Phase 4 | Strategy and out-of-sample validation.** Each of the four significant factors is standardized into a Z-score, and the weights are determined using the in-sample Sharpe ratio to form a composite score. Only scores greater than 0 are used for entry. The top 20% of scores are allocated 1.5 times the capital, the middle 60% are allocated 1 time, and the bottom 20% are allocated 0.5 times. The in-sample period is from February 1, 2020, to December 31, 2022, and the out-of-sample period is from January 1, 2023, to December 30, 2024, with 2025 to be considered next. The Sharpe ratio of the composite factor during the training period was 1.21 (0.39 for the overall market), 1.37 for the entire period (0.82 for the overall market), and 0.94 for 2025 (0.99 for the overall market). The win rate for a single trade is 45.1%.
+**Phase 4 | Strategy and out-of-sample validation.** Each of the four significant factors is standardized into a Z-score, and the in-sample Sharpe ratios set the weights that combine them into one score; a position is entered only when the score is above 0. Capital follows the score: the top 20% get 1.5 times, the middle 60% get 1 time, and the bottom 20% get 0.5 times. The in-sample period is 2020/2/1 to 2022/12/31, the out-of-sample period is 2023/1/1 to 2024/12/30, and 2025 is checked as well. The composite factor's Sharpe ratio was 1.21 in the training period (market 0.39), 1.37 over the full period (market 0.82), and 0.94 in 2025 (market 0.99). The win rate per trade is 45.1%.
 
 ## Next steps
 
 - Identify the reasons for underperformance relative to the broader market in 2025.
-- The strategy portfolio and backtesting program, as well as the tools for retrieving TEJ data, are also included in the repo, allowing the entire research process to be rerun. Currently, the repo only contains the event study and regression sections.
+- Add the strategy portfolio and backtesting code, plus the tools for retrieving TEJ data, to the repo so the whole study can be rerun. Currently, the repo only contains the event study and regression parts.
 
-This study is also my project at TMBA. See [Event Trading Strategy: Earnings Calls](project.html?id=tmba-event-earnings-call) 。
+This study is also my project at TMBA. See [Event Trading Strategy: Earnings Calls](project.html?id=tmba-event-earnings-call).

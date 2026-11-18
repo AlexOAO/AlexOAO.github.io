@@ -1,0 +1,534 @@
+{
+  "guardrails-poc": {
+    "kpis": [
+      {
+        "value": "3,600",
+        "label": "versioned test cases"
+      },
+      {
+        "value": "98.3%",
+        "label": "attacks blocked"
+      },
+      {
+        "value": "20 of 30",
+        "label": "normal Qs blocked"
+      }
+    ],
+    "challenge": "Regulators require proof that AI output is safe; policy documents cannot prove it.",
+    "action": "Built 3,600 test cases, ran them, and compared the guardrail with built-in protection.",
+    "result": "Recommended skipping an add-on guardrail for now and using the platform's built-in one."
+  },
+  "agentic-platform-eval": {
+    "kpis": [
+      {
+        "value": "12",
+        "label": "issues before purchase"
+      },
+      {
+        "value": "4",
+        "label": "launch blockers"
+      },
+      {
+        "value": "60",
+        "label": "tests on 2 platforms"
+      }
+    ],
+    "challenge": "A wrong agent platform could fail halfway through a build or after launch.",
+    "action": "Designed and ran hands-on tests on two platforms, scored on the same scorecard.",
+    "result": "Found 12 issues before purchase, including 4 launch blockers and 1 security issue."
+  },
+  "agent-cost-roi": {
+    "kpis": [
+      {
+        "value": "4",
+        "label": "agent prototypes"
+      },
+      {
+        "value": "1",
+        "label": "cost-benefit framework"
+      },
+      {
+        "value": "2",
+        "label": "tracking metric types"
+      }
+    ],
+    "challenge": "Four agents with different cost structures were hard to compare for funding.",
+    "action": "Built a prototype for each agent and designed one shared cost-benefit formula.",
+    "result": "All four agents can now be compared side by side; their baselines are in progress."
+  },
+  "agent-loan-assistant": {
+    "kpis": [
+      {
+        "value": "Built",
+        "label": "project prototype"
+      },
+      {
+        "value": "2 types",
+        "label": "business & realization"
+      },
+      {
+        "value": "Pending",
+        "label": "3-year baseline"
+      }
+    ],
+    "challenge": "Applicants with questions often leave the platform when no one answers in time.",
+    "action": "Built a Loan Assistant prototype and defined metrics based on applications.",
+    "result": "The measurement framework is done; the baseline awaits volume data from the business."
+  },
+  "agent-credit-review": {
+    "kpis": [
+      {
+        "value": "3 years",
+        "label": "cost baseline"
+      },
+      {
+        "value": "Confirmed",
+        "label": "production resources"
+      },
+      {
+        "value": "Lead",
+        "label": "prototype, cost study"
+      }
+    ],
+    "challenge": "Underwriters check financial documents one by one; slow, with uneven standards.",
+    "action": "Built the Smart Underwriting prototype and set unit cost and a 3-year baseline.",
+    "result": "The cost baseline is done and production resources are confirmed."
+  },
+  "agent-customer-service": {
+    "kpis": [
+      {
+        "value": "On-prem only",
+        "label": "deployment"
+      },
+      {
+        "value": "Done",
+        "label": "call-volume baseline"
+      },
+      {
+        "value": "Shared",
+        "label": "cost-benefit framework"
+      }
+    ],
+    "challenge": "Agents look things up mid-call and still write notes after hanging up.",
+    "action": "Built the assistant prototype and designed a cost-per-call framework.",
+    "result": "Framework and call baseline are done; waiting on the vendor's updated estimate."
+  },
+  "agent-wealth-assistant": {
+    "kpis": [
+      {
+        "value": "118 pages",
+        "label": "working feature pages"
+      },
+      {
+        "value": "36 tools",
+        "label": "account query tools"
+      },
+      {
+        "value": "31+32",
+        "label": "In/out guardrail rules"
+      }
+    ],
+    "challenge": "Customers must dig through every account to see where their assets stand.",
+    "action": "Led the PoC and launch planning, and built the mobile banking prototype myself.",
+    "result": "Q&A is proven, launch resources are confirmed, and the prototype works."
+  },
+  "agent-governance": {
+    "kpis": [
+      {
+        "value": "6",
+        "label": "FSC AI principles"
+      },
+      {
+        "value": "9 cells",
+        "label": "pre-launch check table"
+      },
+      {
+        "value": "0",
+        "label": "critical error limit"
+      }
+    ],
+    "challenge": "The FSC principles are clear, but nobody could say how to check them.",
+    "action": "Turned the six principles into a nine-cell table: three layers times three questions.",
+    "result": "The check framework is done, and new AI projects can reuse it."
+  },
+  "finllm": {
+    "kpis": [
+      {
+        "value": "Batch 2-1",
+        "label": "data cleaning done"
+      },
+      {
+        "value": "Batch 4",
+        "label": "regulatory scoring"
+      },
+      {
+        "value": "9 batches",
+        "label": "awaiting cleaning"
+      }
+    ],
+    "challenge": "A finance model that learns from wrong data can break regulations.",
+    "action": "Cleaned training data item by item and scored the model's reading of regulations.",
+    "result": "Finished cleaning batch 2-1 and regulatory scoring for batch 4."
+  },
+  "gemini-training": {
+    "kpis": [
+      {
+        "value": "3",
+        "label": "course topics"
+      },
+      {
+        "value": "Confirmed",
+        "label": "course outline"
+      },
+      {
+        "value": "Lead",
+        "label": "course design"
+      }
+    ],
+    "challenge": "Employees did not know how to use AI safely in their own work.",
+    "action": "Designed an AI course with hands-on practice on each business unit's own scenarios.",
+    "result": "Course outline confirmed; collecting business scenarios is in progress."
+  },
+  "ai-ops-dashboard": {
+    "kpis": [
+      {
+        "value": "5 parts",
+        "label": "metric framework"
+      },
+      {
+        "value": "4 Agents",
+        "label": "external, same metrics"
+      },
+      {
+        "value": "Contributor",
+        "label": "metric framework"
+      }
+    ],
+    "challenge": "Each AI track had its own numbers, but none showed whether AI was worth it.",
+    "action": "Designed metrics on five parts: adoption, quality, value, cost, and risk.",
+    "result": "The metric framework is designed; the dashboard is still in planning."
+  },
+  "a2ui-research": {
+    "kpis": [
+      {
+        "value": "3",
+        "label": "candidate use cases"
+      },
+      {
+        "value": "5 phases",
+        "label": "product journey"
+      },
+      {
+        "value": "Lead",
+        "label": "technology research"
+      }
+    ],
+    "challenge": "Wealth info in plain text is hard to read; AI-written web code fails security.",
+    "action": "Assessed A2UI along a product journey and mapped three candidate use cases.",
+    "result": "Candidate use cases are mapped; PoC resources are being confirmed."
+  },
+  "webai-finance": {
+    "kpis": [
+      {
+        "value": "Live",
+        "label": "In production"
+      },
+      {
+        "value": "3 types",
+        "label": "Data source types"
+      },
+      {
+        "value": "Solo",
+        "label": "Requirements to launch"
+      }
+    ],
+    "challenge": "Researchers had to collect and organize data every day before research could start.",
+    "action": "Built an AI assistant that answers market and stock questions from organized data.",
+    "result": "Launched in production, cutting researchers' time to collect and organize data."
+  },
+  "ai-governance-review": {
+    "kpis": [
+      {
+        "value": "3 checks",
+        "label": "Taken over by system"
+      },
+      {
+        "value": "CI/CD",
+        "label": "Automated deployment"
+      },
+      {
+        "value": "Live",
+        "label": "Auto review system"
+      }
+    ],
+    "challenge": "Subsidiary AI reports were reviewed one by one by hand: slow, with uneven standards.",
+    "action": "AI judges the content; the system recalculates risk and checks the asset register.",
+    "result": "The system checks and recalculates first, then hands results to a reviewer."
+  },
+  "rag-support-bot": {
+    "kpis": [
+      {
+        "value": "60%→85%",
+        "label": "Answer accuracy"
+      },
+      {
+        "value": "2–3 sec",
+        "label": "Time to answer"
+      },
+      {
+        "value": "Live",
+        "label": "Front end + admin"
+      }
+    ],
+    "challenge": "Answers were spread across manuals; members who could not find one waited for support.",
+    "action": "Built an AI bot that answers from the manuals, and improved how documents are split.",
+    "result": "Accuracy rose from 60% to 85%, with replies in about 2 to 3 seconds."
+  },
+  "multi-agent-advisory": {
+    "kpis": [
+      {
+        "value": "5 Agents",
+        "label": "AI roles like a fund"
+      },
+      {
+        "value": "3 years",
+        "label": "Taiwan stock backtest"
+      },
+      {
+        "value": "MCP",
+        "label": "Links to TEJ data"
+      }
+    ],
+    "challenge": "One AI struggles to weigh technicals, news sentiment, and fundamentals at once.",
+    "action": "Designed five AI Agents that split work and debate like a fund team to give signals.",
+    "result": "A 3-year Taiwan stock backtest gave the team confidence in the design."
+  },
+  "asr-transcription": {
+    "kpis": [
+      {
+        "value": "Automatic",
+        "label": "Video to transcript"
+      },
+      {
+        "value": "Summary",
+        "label": "Compare firms, quarters"
+      },
+      {
+        "value": "Whisper",
+        "label": "Speech recognition"
+      }
+    ],
+    "challenge": "Someone had to transcribe each earnings call video by hand, which took a long time.",
+    "action": "Used Whisper to turn videos into transcripts and summary tables automatically.",
+    "result": "Cut the time to prepare earnings call notes."
+  },
+  "moda-t-ambassador": {
+    "kpis": [
+      {
+        "value": "6th cohort",
+        "label": "T-Ambassador"
+      },
+      {
+        "value": "Completed",
+        "label": "Ambassador program"
+      },
+      {
+        "value": "GenAI",
+        "label": "Adoption support"
+      }
+    ],
+    "challenge": "Rural groups and small firms lack AI talent, so adopting generative AI alone is hard.",
+    "action": "Developed digital solutions with companies and helped them adopt generative AI.",
+    "result": "Completed the program and helped companies adopt generative AI and AIoT."
+  },
+  "tmba-cta-taiex": {
+    "kpis": [
+      {
+        "value": "3rd place",
+        "label": "Final showcase"
+      },
+      {
+        "value": "3 measures",
+        "label": "Risk and return"
+      },
+      {
+        "value": "26th cohort",
+        "label": "TMBA algo trading"
+      }
+    ],
+    "challenge": "A strategy is taken seriously only if its results are repeatable and measurable.",
+    "action": "Built a TAIEX futures strategy with a repeatable backtest, judged on three measures.",
+    "result": "The strategy won 3rd place at the TMBA showcase."
+  },
+  "tmba-event-earnings-call": {
+    "kpis": [
+      {
+        "value": "2nd",
+        "label": "TMBA strategy"
+      },
+      {
+        "value": "Earnings call",
+        "label": "Trading event"
+      },
+      {
+        "value": "Taiwan",
+        "label": "Stock market"
+      }
+    ],
+    "challenge": "Can an earnings call give a signal you can trade?",
+    "action": "Designed a Taiwan stock strategy around earnings calls and backtested return and risk.",
+    "result": "Strategy details and backtest results: to be added."
+  },
+  "thesis-rag-panel": {
+    "kpis": [
+      {
+        "value": "5.14%→63.73%",
+        "label": "Model fit (within R²)"
+      },
+      {
+        "value": "6 of 6",
+        "label": "Scores significant"
+      },
+      {
+        "value": "37,888",
+        "label": "Firm-quarters"
+      }
+    ],
+    "challenge": "Traditional financial ratios explain only a small part of stock return changes.",
+    "action": "Built an AI system that scores financial statements, then tested it with statistics.",
+    "result": "The model's explanatory power rose from 5.14% to 63.73%."
+  },
+  "fubon-esg-portfolio": {
+    "kpis": [
+      {
+        "value": "113",
+        "label": "Students in cohort"
+      },
+      {
+        "value": "1st",
+        "label": "NTUST cohort"
+      },
+      {
+        "value": "3 months",
+        "label": "Training program"
+      }
+    ],
+    "challenge": "Does ESG add value in stock investing?",
+    "action": "Our team picked Taiwan stocks and built ESG factors into the portfolio allocation.",
+    "result": "Finished the project and presented to fund managers; results to be added."
+  },
+  "thesis-esg-capital-structure": {
+    "kpis": [
+      {
+        "value": "Completed",
+        "label": "Master's thesis"
+      },
+      {
+        "value": "Tunghai GMBA",
+        "label": "Degree program"
+      },
+      {
+        "value": "ESG",
+        "label": "Risk scores studied"
+      }
+    ],
+    "challenge": "Do ESG risk scores affect the capital structure of Taiwanese companies?",
+    "action": "Studied the link between ESG risk scores and capital structure in a thesis.",
+    "result": "Thesis done and degree earned; findings to be added."
+  },
+  "tunghai-english-ta": {
+    "kpis": [
+      {
+        "value": "3 courses",
+        "label": "Taught in English"
+      },
+      {
+        "value": "English",
+        "label": "Teaching language"
+      },
+      {
+        "value": "Completed",
+        "label": "TA role"
+      }
+    ],
+    "challenge": "Students learning statistics, economics, and finance in English need a TA.",
+    "action": "Served as teaching assistant for three English-taught courses.",
+    "result": "Completed the TA role for all three; duties to be added."
+  },
+  "finjourney": {
+    "kpis": [
+      {
+        "value": "< 2 weeks",
+        "label": "Build to launch"
+      },
+      {
+        "value": "656",
+        "label": "Automated tests"
+      },
+      {
+        "value": "10",
+        "label": "Finance areas managed"
+      }
+    ],
+    "challenge": "Personal finance data is scattered, so it is hard to see where the problem is.",
+    "action": "Built, alone, an AI finance product that shows all finances on one chart.",
+    "result": "Live product; the AI advisor only proposes plans and the system does the math."
+  },
+  "vibe-edge": {
+    "kpis": [
+      {
+        "value": "12 weeks",
+        "label": "From zero to 0.6.0"
+      },
+      {
+        "value": "3,749",
+        "label": "Tests, all passing"
+      },
+      {
+        "value": "~100 sec",
+        "label": "Daily update run time"
+      }
+    ],
+    "challenge": "AI creates strategies so fast it can find results that only look good by luck.",
+    "action": "Built a testing gate AI cannot change, and recorded every trial.",
+    "result": "The full flow from raw data to a paper trading list now runs end to end."
+  },
+  "fincli": {
+    "kpis": [
+      {
+        "value": "23",
+        "label": "Data source modules"
+      },
+      {
+        "value": "141/141",
+        "label": "New vs. old matched"
+      },
+      {
+        "value": "~10,000",
+        "label": "Lines of code removed"
+      }
+    ],
+    "challenge": "Much Taiwan stock data has no ready-made tool and must be connected one by one.",
+    "action": "Built a tool that automatically collects raw data after each market close.",
+    "result": "It updates automatically every day and is Vibe-Edge's data source."
+  },
+  "openstrategy": {
+    "kpis": [
+      {
+        "value": "10",
+        "label": "Research script stages"
+      },
+      {
+        "value": "4",
+        "label": "Significant factors"
+      },
+      {
+        "value": "0.94",
+        "label": "Sharpe ratio in 2025"
+      }
+    ],
+    "challenge": "Can investor conferences produce excess returns that can be traded?",
+    "action": "Analyzed prices around conferences and combined the useful factors into stock picks.",
+    "result": "In 2025 it slightly trailed the market's 0.99 and missed the target; finding why is next."
+  }
+}

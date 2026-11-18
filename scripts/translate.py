@@ -25,7 +25,7 @@ import urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CACHE_PATH = os.path.join(ROOT, 'data', 'en', 'translation-cache.json')
-JSON_FILES = ['work.json', 'projects.json', 'about.json', 'experience.json', 'flows.json', 'roles.json']   # data/<f> -> data/en/<f>
+JSON_FILES = ['work.json', 'projects.json', 'about.json', 'experience.json', 'flows.json', 'roles.json', 'glance.json']   # data/<f> -> data/en/<f>
 POSTS = os.path.join(ROOT, 'posts', 'posts.json')                             # title/summary -> title_en/summary_en
 CJK = re.compile(r'[㐀-鿿＀-￯]')
 

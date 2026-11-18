@@ -4,14 +4,14 @@ title: thesis-rag-panel
 
 ## Results
 
-**Adding 6 scores that an LLM produced from financial statements raised the within R² of the stock return model from 5.14% to 63.73%.**
+**Adding 6 scores that an LLM produced from financial statements raised the within R² of the stock return model from 5.14% to 63.73%.** Within R² shows how much of the change in stock returns the model explains.
 
 - All 6 LLM dimension scores are significant at the 1% level.
-- The pilot reliability test gave an ICC of 0.759.
+- The pilot reliability test gave an ICC of 0.759; ICC measures whether scores are stable and consistent.
 
 ## Why this project
 
-Financial statements hold a lot of text and numbers, but the financial ratios research usually uses explain only a small part of stock return variance. My question: **can a large language model extract stronger signals from financial statements?**
+The financial ratios research usually uses explain only a small part of stock return variance. Yet financial statements hold a lot more text and numbers. My question: **can a large language model extract stronger signals from financial statements?**
 
 ## My role
 
@@ -23,7 +23,7 @@ This is my master's thesis at NTUST's Graduate Institute of Finance, advised by 
 
 **Phase 2 | Data.** 592 listed electronics companies over 64 quarters (2009Q3 to 2025Q2): 37,888 firm-quarters.
 
-**Phase 3 | Method.** A RAG-LLM system analyzes 101 financial variables and scores 6 dimensions; fixed-effects panel models then compare a baseline with traditional variables against an enhanced model with the 6 LLM scores. Whether the scores are stable also needs an answer, so a pilot ICC test checks their reliability.
+**Phase 3 | Method.** I built a RAG-LLM system that looks up the financial data, analyzes 101 financial variables, and scores 6 dimensions. Fixed-effects panel models then compare two models: a baseline with traditional variables, and an enhanced model with the 6 LLM scores. Whether the scores are stable also needs an answer, so a pilot ICC test checks their reliability.
 
 **Phase 4 | Evidence.** Within R² rose from 5.14% to 63.73%; all 6 dimension scores are significant at the 1% level; the pilot ICC is 0.759.
 

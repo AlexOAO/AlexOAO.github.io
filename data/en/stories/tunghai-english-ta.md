@@ -8,7 +8,7 @@ title: tunghai-english-ta
 
 ## Why this project
 
-Tunghai University teaches core business courses in English. Students learning statistics, economics, and financial management in English need a teaching assistant.
+Students learning statistics, economics, and financial management in English need a teaching assistant. Tunghai University teaches core business courses in English.
 
 ## My role
 

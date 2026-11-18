@@ -4,54 +4,54 @@ title: agent-customer-service
 
 ## Results
 
-**I developed a prototype for the customer service assistant project and provided its cost-benefit framework.** It should be measured in the language of service: how many calls are handled with AI assistance, how many need to be transferred to a human agent, and the cost of service per call. The measurement framework and call volume benchmarks have been completed. Resource allocation and other aspects will be confirmed after the vendors update their assessments.
+**I built the prototype for the Customer Service Assistant and provided its cost-benefit framework.** It is measured in service terms: how many calls AI helps handle, how many go to a human, and the service cost per call. The measurement framework and call-volume baseline are done. Resource allocation will be confirmed after the vendor updates its estimate.
 
 ## Why this project
 
-The Service Agent is responsible for the third stage of the customer journey: Smart Service. The goal is to provide proactive service and enhance satisfaction. During calls, customer service agents must listen to customers while looking up information. After hanging up, they must also write notes and await quality checks. Calls are concentrated during business hours, and they must be answered promptly: if resources are underestimated, there will be a bottleneck during peak hours; if they are overestimated, costs will be wasted.
+**During a call, agents listen and look up information at the same time; after it, they write notes and wait for quality checks.** The Service Agent covers the third stage of the customer journey, Smart Service, and aims to serve proactively and raise satisfaction. Calls cluster in business hours and must be answered right away. Underestimate resources and peak hours jam; overestimate and money is wasted.
 
 ## What it does
 
-**Service recipients.** Customer service representatives. It's a Copilot for people, with customer service agents positioned between AI and customers.
+**Who it serves.** Customer service agents. It is their Copilot, an AI helper at work. The agent stands between the AI and the customer.
 
 **What it can do on its own:**
 
-- Search the Knowledge Base to find the information needed to answer the customer's question.
-- Draft reply.
-- Write a post-call summary after the call ends.
-- Perform initial quality inspection assessment.
+- Search the knowledge base for the information needed to answer the customer.
+- Draft replies.
+- Write a post-call summary, a short recap of the call, after it ends.
+- Make a first-pass quality-check judgment.
 
-Its input consists of call recordings and complete speech-to-text transcripts.
+Its input is the call recording and the full speech-to-text transcript.
 
-**What it needs to be handed over to someone:** When significant defects are identified during quality inspection, they are handed over to the responsible person for handling.
+**What it hands to people:** When a quality check finds a serious problem, a person handles it.
 
-**What it can't do:** Respond directly to the customer. All content entered into the records must be confirmed by customer service personnel.
+**What it can't do:** Reply to customers directly. Anything written into the records must be confirmed by the agent.
 
-**How people supervise.** Each transaction is verified by a human (human-in-the-loop).
+**How people supervise.** A person confirms every item, which is called human-in-the-loop.
 
-**framework** Because the processing of call recordings and personal data is entirely deployed locally, only local models are used: speech-to-text, along with local language models.
+**Architecture.** Everything runs on-premises with on-premises models only, because it handles call recordings and personal data. The models are speech-to-text plus an on-premises language model.
 
-**How to verify it.** Sample and compare the summary with the original recording; compare the consistency between the quality control score and the manual score; confirm that the summary does not contain any personal information.
+**How to verify it.** Verification checks three things: sample summaries against the original recordings; compare quality-check scores with human scores for consistency; confirm summaries reveal no personal data.
 
 ## My role
 
-I developed a prototype for the Customer Service Assistant project. In terms of cost-benefit, it was a collaborative effort: my colleague was primarily responsible for estimating computing power, while I was responsible for providing the cost-benefit framework.
+I built the prototype for the Customer Service Assistant. The cost-benefit work was shared: a colleague led the computing estimate, and I provided the cost-benefit framework.
 
 ## What I did
 
-**Phase 1 | Prototype.** Create prototypes based on customer service scenarios to allow business units to actually see the processes for knowledge base queries, draft responses, and post-call summaries. Prototype details: To be added.
+**Phase 1 | Prototype.** Built a prototype around the customer service scenario. The business unit could see knowledge-base search, draft replies, and post-call summaries actually working. Prototype details: to be added.
 
-**Phase 2 | Framework design.** The workload for voice and text is calculated using different units and then converted into a single unit cost: the cost of service per call.
+**Phase 2 | Framework design.** Voice and text workloads are counted in different units, then converted into one unit cost: the service cost per call.
 
-**Phase 3 | Data collection and calculation.** The business unit provides the monthly call volume and schedules the workload during peak business hours. We held the first computing power meeting with the vendor to align on the assumptions and requested the vendor to update their assessment. We are currently waiting for the vendor's response.
+**Phase 3 | Data collection and calculation.** The business unit supplied monthly call volume and placed the workload into peak business hours. We held a first computing meeting with the vendor to align assumptions and asked the vendor to update its estimate. We are waiting for the vendor's reply.
 
 **Phase 4 | Institutionalize.** After launch, track two kinds of metrics:
 
-- Business metrics: Number of calls handled with AI assistance ÷ Total number of calls; Transfer-to-agent rate.
+- Business ratios: calls handled with AI help ÷ all calls; transfer-to-human rate.
 - Realization ratios: actual service cost per call ÷ baseline; benefit realization.
 
 ## Next steps
 
 With the vendor's updated estimate, confirm resources and finish the Customer Service baseline.
 
-Back to the parent project: [The Four Major AI Agents](project.html?id=agent-cost-roi) 。
+Back to the parent project: [The Four Major AI Agents](project.html?id=agent-cost-roi).

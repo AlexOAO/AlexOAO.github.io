@@ -11,21 +11,21 @@ title: agentic-platform-eval
 
 ## Why this project
 
-The four Agents need a platform to build and manage them. The candidates were Agatha and the open-source Dify. A wrong choice is expensive: you find a missing capability halfway through, or a security gap after launch. I had to find the risks with real tests before purchase.
+**I had to find the risks of a wrong platform with real tests before purchase.** The four Agents need a platform to build and manage them. The candidates were Agatha and the open-source Dify. A wrong choice is expensive: you find a missing capability halfway through, or a security gap after launch.
 
 ## My role
 
-I led the platform evaluation: test design, test runs, issue logging, and the scorecards.
+I led the platform evaluation. I owned test design, test runs, issue logging, and the scorecards.
 
 ## What I did
 
-**Phase 1 | Problem definition.** A wrong platform is expensive: you find a missing capability halfway through, or a security gap after launch. So the evaluation must answer not "which platform has more features" but "which platform will not fail in our use cases".
+**Phase 1 | Problem definition.** The evaluation must answer not "which platform has more features" but "which platform will not fail in our use cases". A wrong platform is expensive: you find a missing capability halfway through, or a security gap after launch.
 
-**Phase 2 | Test design.** For Dify, I split the official documentation into 5 modules (Knowledge Pipeline for RAG data processing, Workflow, Agent, Plugins and MCP, and Publish and Monitor) and designed tests per module. Another platform's checklist does not ask this platform's questions. I also collected real reports from Dify's GitHub that matter to our case (empty content after Excel upload, PDF tables ignored, sentences split across pages, unstable citations in Workflow mode) and prepared a response for each.
+**Phase 2 | Test design.** Another platform's checklist does not ask this platform's questions, so I designed tests around Dify's own modules. I split the official documentation into 5 modules (Knowledge Pipeline for RAG data processing, Workflow, Agent, Plugins and MCP, and Publish and Monitor). I also collected real reports from Dify's GitHub that matter to our case: empty content after Excel upload, PDF tables ignored, sentences split across pages, and unstable citations in Workflow mode. I prepared a response for each.
 
-**Phase 3 | Testing.** Agatha had 26 hands-on tests, and every issue got a severity: blocking, security, or general. Dify had 34 tests in two levels: basic tests used the bank's regulatory QA (238 questions) and penalty QA (119 questions) to check import, parsing, and retrieval, plus answer accuracy, citations, and hallucination control; advanced tests covered Workflow, Agents, multi-model management, MCP tools, access control (RBAC, injection defense), monitoring, performance, and stability.
+**Phase 3 | Testing.** Agatha had 26 hands-on tests, and every issue got a severity: blocking, security, or general. Dify had 34 tests in two levels. Basic tests used the bank's regulatory QA (238 questions) and penalty QA (119 questions) to check import, parsing, and retrieval, plus answer accuracy, citations, and hallucination control, meaning the AI does not make up answers. Advanced tests covered Workflow, Agents, multi-model management, MCP tools, access control (RBAC, injection defense), monitoring, performance, and stability.
 
-**Phase 4 | Comparison.** Both platforms were scored on the same sheets: the department scorecard and the holding company's 42-item scorecard in 9 categories.
+**Phase 4 | Comparison.** Both platforms were scored on the same sheets, so results sit side by side: the department scorecard and the holding company's 42-item scorecard in 9 categories.
 
 **Phase 5 | Adoption decision.** The PoC reports and scorecards are the basis for the holding company's selection decision.
 

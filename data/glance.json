@@ -1,0 +1,534 @@
+{
+ "guardrails-poc": {
+  "kpis": [
+   {
+    "value": "3,600 題",
+    "label": "版本化題庫"
+   },
+   {
+    "value": "98.3%",
+    "label": "紅隊攻擊攔截率"
+   },
+   {
+    "value": "20/30",
+    "label": "正常提問誤擋"
+   }
+  ],
+  "challenge": "金管會要求證明 AI 輸出安全，制度文件證明不了。",
+  "action": "設計 3,600 題測試，實測護欄並與平台防護比較。",
+  "result": "建議暫不採購外掛護欄，優先用平台既有防護。"
+ },
+ "agentic-platform-eval": {
+  "kpis": [
+   {
+    "value": "12 個",
+    "label": "採購前找出問題"
+   },
+   {
+    "value": "4 個",
+    "label": "阻斷上線問題"
+   },
+   {
+    "value": "60 項",
+    "label": "兩平台實測項目"
+   }
+  ],
+  "challenge": "選錯 Agent 平台，可能做到一半或上線後才出事。",
+  "action": "設計並執行兩個平台的實測，用同一張評分表比較。",
+  "result": "採購前找出 12 個問題，含 4 個阻斷、1 個資安。"
+ },
+ "agent-cost-roi": {
+  "kpis": [
+   {
+    "value": "4 個",
+    "label": "Agent 原型"
+   },
+   {
+    "value": "1 套",
+    "label": "共用成本效益框架"
+   },
+   {
+    "value": "2 類",
+    "label": "可追蹤指標"
+   }
+  ],
+  "challenge": "四個 Agent 成本結構不同，難以比較該先投資誰。",
+  "action": "為每個 Agent 做原型，並設計共用的成本效益公式。",
+  "result": "四個 Agent 首次能同表比較，各自基準建立中。"
+ },
+ "agent-loan-assistant": {
+  "kpis": [
+   {
+    "value": "已建立",
+    "label": "專案原型"
+   },
+   {
+    "value": "2 類",
+    "label": "業務與實現比率"
+   },
+   {
+    "value": "待業務量",
+    "label": "三年基準"
+   }
+  ],
+  "challenge": "客戶在申辦平台有疑問沒人即時回答，就會離開。",
+  "action": "建立貸款助理原型，並訂出以申辦量衡量的指標。",
+  "result": "衡量框架已完成，基準待業務單位提供業務量。"
+ },
+ "agent-credit-review": {
+  "kpis": [
+   {
+    "value": "3 年",
+    "label": "成本基準"
+   },
+   {
+    "value": "已確認",
+    "label": "正式環境配置"
+   },
+   {
+    "value": "主責",
+    "label": "原型與效益評估"
+   }
+  ],
+  "challenge": "徵審人員逐份核對財力文件，費時且標準難一致。",
+  "action": "建立智能徵審原型，算出單件成本與三年成本基準。",
+  "result": "成本基準完成，正式環境資源配置已確認。"
+ },
+ "agent-customer-service": {
+  "kpis": [
+   {
+    "value": "全地端",
+    "label": "部署方式"
+   },
+   {
+    "value": "已完成",
+    "label": "通話量基準"
+   },
+   {
+    "value": "協作",
+    "label": "成本效益框架"
+   }
+  ],
+  "challenge": "客服邊聽邊查資料，掛電話後還要寫紀錄。",
+  "action": "建立客服助理原型，設計每通電話的成本框架。",
+  "result": "衡量框架與通話量基準完成，等廠商更新評估。"
+ },
+ "agent-wealth-assistant": {
+  "kpis": [
+   {
+    "value": "118 頁",
+    "label": "可操作功能頁"
+   },
+   {
+    "value": "36 個",
+    "label": "帳務查詢工具"
+   },
+   {
+    "value": "31+32 條",
+    "label": "輸入輸出護欄"
+   }
+  ],
+  "challenge": "客戶要翻遍各種帳戶，才知道自己的資產狀況。",
+  "action": "主責 PoC 與上線資源規劃，並親手做出行動網銀原型。",
+  "result": "問答功能驗證可用，上線資源已確認，原型可操作。"
+ },
+ "agent-governance": {
+  "kpis": [
+   {
+    "value": "6 大",
+    "label": "金管會原則"
+   },
+   {
+    "value": "9 格",
+    "label": "上線檢核表"
+   },
+   {
+    "value": "0 次",
+    "label": "嚴重錯誤標準"
+   }
+  ],
+  "challenge": "金管會原則寫得清楚，但沒人說得清怎麼檢查。",
+  "action": "把六大原則拆成三層乘三問的九格檢核表。",
+  "result": "檢核框架完成，新的 AI 專案可直接沿用。"
+ },
+ "finllm": {
+  "kpis": [
+   {
+    "value": "第 2-1 批",
+    "label": "資料清洗完成"
+   },
+   {
+    "value": "第 4 批",
+    "label": "法規評分完成"
+   },
+   {
+    "value": "9 批",
+    "label": "待清洗資料"
+   }
+  ],
+  "challenge": "金融模型若學到錯誤資料，可能違反法規。",
+  "action": "逐題清洗訓練資料，並評分模型的法規判讀。",
+  "result": "完成第 2-1 批清洗與第 4 批法規評分。"
+ },
+ "gemini-training": {
+  "kpis": [
+   {
+    "value": "3 個",
+    "label": "課程主題"
+   },
+   {
+    "value": "已確認",
+    "label": "課程大綱"
+   },
+   {
+    "value": "主責",
+    "label": "課程規劃"
+   }
+  ],
+  "challenge": "員工不知道工作中怎麼安全使用 AI。",
+  "action": "規劃用業務單位自己場景實作的 AI 課程。",
+  "result": "課程大綱已確認，業務場景盤點進行中。"
+ },
+ "ai-ops-dashboard": {
+  "kpis": [
+   {
+    "value": "5 個面向",
+    "label": "指標框架"
+   },
+   {
+    "value": "4 大Agent",
+    "label": "對外同步衡量"
+   },
+   {
+    "value": "協作",
+    "label": "指標框架設計"
+   }
+  ],
+  "challenge": "各條 AI 線各有數字，無法回答值不值得。",
+  "action": "設計採用、品質、效益、成本、風險五面向指標。",
+  "result": "指標框架已設計，Dashboard 仍在規劃中。"
+ },
+ "a2ui-research": {
+  "kpis": [
+   {
+    "value": "3 個",
+    "label": "候選場景"
+   },
+   {
+    "value": "5 階段",
+    "label": "產品化旅程"
+   },
+   {
+    "value": "主責",
+    "label": "技術研究"
+   }
+  ],
+  "challenge": "理財資訊純文字難讀，AI 寫網頁又過不了資安。",
+  "action": "依產品化旅程評估 A2UI，整理三個候選場景。",
+  "result": "候選場景已整理，PoC 資源正在確認。"
+ },
+ "webai-finance": {
+  "kpis": [
+   {
+    "value": "已上線",
+    "label": "正式環境"
+   },
+   {
+    "value": "3 類",
+    "label": "整合資料來源"
+   },
+   {
+    "value": "獨立主導",
+    "label": "需求到上線"
+   }
+  ],
+  "challenge": "研究員每天要先收集整理資料，才能開始研究。",
+  "action": "打造 AI 助手，依整理好的資料回答市場與個股問題。",
+  "result": "正式上線，縮短研究員整理資料的時間。"
+ },
+ "ai-governance-review": {
+  "kpis": [
+   {
+    "value": "3 項",
+    "label": "系統接手工作"
+   },
+   {
+    "value": "CI/CD",
+    "label": "自動部署"
+   },
+   {
+    "value": "已上線",
+    "label": "自動審查系統"
+   }
+  ],
+  "challenge": "子公司 AI 報告靠人工逐份審查，耗時且標準不一。",
+  "action": "用 AI 判讀內容，系統自動驗算風險、勾稽資產清冊。",
+  "result": "系統先完成判定與驗算，再交給審查者。"
+ },
+ "rag-support-bot": {
+  "kpis": [
+   {
+    "value": "60%→85%",
+    "label": "回答準確率"
+   },
+   {
+    "value": "2–3 秒",
+    "label": "回答時間"
+   },
+   {
+    "value": "已上線",
+    "label": "前後台系統"
+   }
+  ],
+  "challenge": "答案分散在技術手冊各處，會員找不到只能等客服。",
+  "action": "用 RAG 讓 AI 查手冊作答，並改良文件切分方式。",
+  "result": "準確率從 60% 提高到 85%，約 2 到 3 秒回覆。"
+ },
+ "multi-agent-advisory": {
+  "kpis": [
+   {
+    "value": "5 個",
+    "label": "AI 分工角色"
+   },
+   {
+    "value": "3 年",
+    "label": "台股回測"
+   },
+   {
+    "value": "MCP",
+    "label": "串接 TEJ 數據"
+   }
+  ],
+  "challenge": "單一 AI 很難同時看技術面、新聞與基本面。",
+  "action": "設計五個 AI 像基金團隊分工辯論，產出買賣訊號。",
+  "result": "三年台股回測，讓團隊對架構可行性有信心。"
+ },
+ "asr-transcription": {
+  "kpis": [
+   {
+    "value": "自動",
+    "label": "影音轉逐字稿"
+   },
+   {
+    "value": "摘要表",
+    "label": "比較公司與季度"
+   },
+   {
+    "value": "Whisper",
+    "label": "語音辨識工具"
+   }
+  ],
+  "challenge": "過去要人工逐場聽打法說會影音，非常耗時。",
+  "action": "用 Whisper 自動把影音轉成逐字稿與摘要表。",
+  "result": "縮短法說會文字稿的整理時間。"
+ },
+ "moda-t-ambassador": {
+  "kpis": [
+   {
+    "value": "第六屆",
+    "label": "T 大使"
+   },
+   {
+    "value": "已完成",
+    "label": "大使計畫"
+   },
+   {
+    "value": "生成式 AI",
+    "label": "協助企業導入"
+   }
+  ],
+  "challenge": "偏鄉組織與中小企業缺 AI 人才，難以自行導入。",
+  "action": "與企業一起研擬數位方案，協助導入生成式 AI。",
+  "result": "完成計畫，協助企業導入生成式 AI 與智慧物聯。"
+ },
+ "tmba-cta-taiex": {
+  "kpis": [
+   {
+    "value": "第三名",
+    "label": "成果發表"
+   },
+   {
+    "value": "3 項",
+    "label": "風險報酬指標"
+   },
+   {
+    "value": "第 26 屆",
+    "label": "TMBA 程式交易"
+   }
+  ],
+  "challenge": "策略要被認真看待，結果必須可重現、可量化。",
+  "action": "開發台指期策略，建立可重現的回測並用三指標評估。",
+  "result": "策略在 TMBA 成果發表中獲得第三名。"
+ },
+ "tmba-event-earnings-call": {
+  "kpis": [
+   {
+    "value": "第 2 個",
+    "label": "TMBA 策略"
+   },
+   {
+    "value": "法說會",
+    "label": "交易事件"
+   },
+   {
+    "value": "台股",
+    "label": "交易標的"
+   }
+  ],
+  "challenge": "法說會這個事件，能不能形成可交易的訊號？",
+  "action": "以法說會為事件設計台股策略，並回測報酬與風險。",
+  "result": "策略細節與回測績效待補充。"
+ },
+ "thesis-rag-panel": {
+  "kpis": [
+   {
+    "value": "5.14%→63.73%",
+    "label": "模型解釋力"
+   },
+   {
+    "value": "6 個",
+    "label": "評分全部顯著"
+   },
+   {
+    "value": "37,888",
+    "label": "公司季資料"
+   }
+  ],
+  "challenge": "傳統財務比率只能解釋一小部分股價報酬變化。",
+  "action": "建立 AI 系統讀財報評分，再用統計模型驗證。",
+  "result": "模型解釋力從 5.14% 提高到 63.73%。"
+ },
+ "fubon-esg-portfolio": {
+  "kpis": [
+   {
+    "value": "113 名",
+    "label": "同屆學員"
+   },
+   {
+    "value": "首屆",
+    "label": "臺科大參與"
+   },
+   {
+    "value": "3 個月",
+    "label": "培育課程"
+   }
+  ],
+  "challenge": "ESG 用在股票投資上，到底有沒有效益？",
+  "action": "小組自選台股，把 ESG 因子納入投資組合配置。",
+  "result": "完成期末專案並向基金經理人報告；績效待補充。"
+ },
+ "thesis-esg-capital-structure": {
+  "kpis": [
+   {
+    "value": "已完成",
+    "label": "碩士論文"
+   },
+   {
+    "value": "東海 GMBA",
+    "label": "學位課程"
+   },
+   {
+    "value": "ESG",
+    "label": "風險評分研究"
+   }
+  ],
+  "challenge": "ESG 風險評分會影響台灣公司的財務結構嗎？",
+  "action": "以碩士論文研究 ESG 風險評分與財務結構的關係。",
+  "result": "完成論文並取得碩士；研究結論待補充。"
+ },
+ "tunghai-english-ta": {
+  "kpis": [
+   {
+    "value": "3 門",
+    "label": "全英課程"
+   },
+   {
+    "value": "英文",
+    "label": "授課語言"
+   },
+   {
+    "value": "已完成",
+    "label": "助教工作"
+   }
+  ],
+  "challenge": "學生要用英文學統計、經濟與財管，需要助教協助。",
+  "action": "擔任三門全英授課課程的教學助理。",
+  "result": "完成三門課的助教工作；職責細節待補充。"
+ },
+ "finjourney": {
+  "kpis": [
+   {
+    "value": "不到兩週",
+    "label": "從開發到上線"
+   },
+   {
+    "value": "656 個",
+    "label": "自動化測試"
+   },
+   {
+    "value": "10 個",
+    "label": "理財管理專案"
+   }
+  ],
+  "challenge": "理財資料散在各處，看不出整體哪裡出問題。",
+  "action": "一人打造把財務畫成一張圖的 AI 理財產品。",
+  "result": "產品已上線，AI 顧問只提方案、數字由系統算。"
+ },
+ "vibe-edge": {
+  "kpis": [
+   {
+    "value": "12 週",
+    "label": "從零到0.6.0"
+   },
+   {
+    "value": "3,749",
+    "label": "測試全數通過"
+   },
+   {
+    "value": "約 100 秒",
+    "label": "每日更新耗時"
+   }
+  ],
+  "challenge": "AI 產生策略太快，容易找到只是碰巧的好結果。",
+  "action": "打造 AI 改不到的檢定關卡，並記錄每次試驗。",
+  "result": "從原始資料到紙上交易清單的流程已全線跑通。"
+ },
+ "fincli": {
+  "kpis": [
+   {
+    "value": "23 個",
+    "label": "資料來源模組"
+   },
+   {
+    "value": "141/141",
+    "label": "新舊做法一致"
+   },
+   {
+    "value": "約一萬行",
+    "label": "刪除的手寫程式"
+   }
+  ],
+  "challenge": "很多台股資料沒有現成工具，只能逐一串接。",
+  "action": "打造每天收盤後自動抓取原始資料的工具。",
+  "result": "每日自動更新，成為 Vibe-Edge 的資料來源。"
+ },
+ "openstrategy": {
+  "kpis": [
+   {
+    "value": "10 個",
+    "label": "研究程式階段"
+   },
+   {
+    "value": "4 個",
+    "label": "顯著的因子"
+   },
+   {
+    "value": "0.94",
+    "label": "2025夏普值"
+   }
+  ],
+  "challenge": "想知道法說會能否帶來可交易的超額報酬。",
+  "action": "分析法說會前後股價，找出有效因子組成選股。",
+  "result": "2025 年略輸大盤 0.99，未達目標，下一步找原因。"
+ }
+}
