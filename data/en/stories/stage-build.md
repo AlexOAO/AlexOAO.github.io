@@ -25,7 +25,7 @@ Deliverables for this phase:
 - **[AP Application Owner](roles.html#role-ap)**: Deploying onto the bank's servers and connecting to core systems are theirs to manage; they take over maintenance after launch.
 - **[SDE Software Engineer](roles.html#role-sde)**: Builds features and unit tests. Most bank projects are outsourced: the vendor builds and delivers to the spec, with warranty and maintenance in the contract.
 - **[MLOps Model Operations](roles.html#role-mlops)**: Beyond CI/CD, manages model and prompt versions so every change can be traced.
-- **[Infra Infrastructure](roles.html#role-infra)**: Prepares GPUs, network, and production and test environments.
+- **[SE System Engineer](roles.html#role-se)**: Part of Infrastructure. Builds GPU servers, network, and production and test environments to the TA's design.
 - **[QA Testing](roles.html#role-qa)**: Beyond integration tests, reruns the evaluation set on every change to make sure answers have not got worse.
 - **[ISO Information Security](roles.html#role-iso)**: Security scans, access control and data isolation; gives the pre-launch security opinion.
 - **[BU Business Unit](roles.html#role-bu)**: Takes part in UAT, confirms the features meet the need and signs off; uses the pilot and reports issues.

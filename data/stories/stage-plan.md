@@ -47,7 +47,7 @@ AI 推不動，常常不是技術問題，而是推動方式。三個轉變：
 - **[IT PM 資訊專案經理](roles.html#role-itpm)**：代表資訊單位，評估行內系統、環境與資源，排進 IT 的時程。
 - **[PR 採購單位](roles.html#role-pr)**：依 RFP 比價、簽約；AI 的模型與平台要先 PoC 實測再買。
 - **[SA 系統分析](roles.html#role-sa)**：評估可行性與開發資源，判斷雲端或地端，做原型。
-- **[Infra 基礎架構](roles.html#role-infra)**：依業務量預估算力與容量；GPU 的交期很長，所以要在這個階段就估。
+- **[TA 技術架構師](roles.html#role-ta)**：屬於 Infra。規劃雲端或地端的架構與算力；GPU 的交期很長，所以要在這個階段就估。
 - **[ISO 資安](roles.html#role-iso)**：確認資料分級，以及哪些資料可以送到外部模型。
 - **[CCO 法遵](roles.html#role-cco)**：判斷適用哪些法規，和業務單位一起訂出 AI 的紅線。
 - **[CRO 風控](roles.html#role-cro)**：評估並分級專案的風險。

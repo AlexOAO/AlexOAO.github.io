@@ -47,7 +47,7 @@ Deliverables for this phase:
 - **[IT PM IT Project Manager](roles.html#role-itpm)**: Represents the IT department; assesses in-house systems, environments and resources, and fits the work into IT's schedule.
 - **[PR Procurement](roles.html#role-pr)**: Runs bids and contracts from the RFP; AI models and platforms get a PoC before purchase.
 - **[SA Systems Analyst](roles.html#role-sa)**: Assesses feasibility and development resources, decides cloud or on-prem, and builds a prototype.
-- **[Infra Infrastructure](roles.html#role-infra)**: Estimates compute and capacity from business volume; GPUs take months to arrive, so the estimate happens now.
+- **[TA Technical Architect](roles.html#role-ta)**: Part of Infrastructure. Plans the cloud or on-prem architecture and compute; GPUs take months to arrive, so this happens now.
 - **[ISO Information Security](roles.html#role-iso)**: Confirms data classification and which data may go to external models.
 - **[CCO Compliance](roles.html#role-cco)**: Determines which rules apply and sets the AI's red lines with the business unit.
 - **[CRO Risk](roles.html#role-cro)**: Assesses and rates the project risk.

@@ -635,30 +635,8 @@
     "key": "infra",
     "name": "Infra Infrastructure",
     "short": "Servers, network, GPUs",
-    "about": "Infrastructure. Provides servers, network, production and test environments; for AI projects, GPU compute as well.",
+    "about": "The infrastructure unit. Provides servers, network, and production and test environments; for AI projects, GPU compute too. Inside it, the TA (technical architect) designs and the SE (system engineer) builds and runs.",
     "uses": [
-      {
-        "side": "Traditional development",
-        "items": [
-          {
-            "stage": "③ Build, test and launch",
-            "duty": "Servers, network, production and test environments"
-          }
-        ]
-      },
-      {
-        "side": "AI development",
-        "items": [
-          {
-            "stage": "① Business planning",
-            "duty": "Compute estimate; GPUs take months"
-          },
-          {
-            "stage": "③ Build and deploy",
-            "duty": "GPUs, network, production and test environments"
-          }
-        ]
-      },
       {
         "side": "Outsourced: traditional",
         "items": [
@@ -674,6 +652,58 @@
           {
             "stage": "Deploy in-house",
             "duty": "GPUs or a hybrid cloud environment"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "ta",
+    "name": "TA Technical Architect",
+    "short": "Infra: technical architecture",
+    "about": "Technical architect, part of Infrastructure. Designs the layer underneath: servers, network, container platform, high availability and disaster recovery, and cloud or on-prem deployment; for AI projects, GPU compute too. Works alongside the SA: the SA designs the application layer, the TA the infrastructure layer.",
+    "uses": [
+      {
+        "side": "Traditional development",
+        "items": [
+          {
+            "stage": "② Design",
+            "duty": "Architecture for servers, network, high availability and DR"
+          }
+        ]
+      },
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "① Business planning",
+            "duty": "Cloud/on-prem architecture and compute planning; GPUs take months"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "se",
+    "name": "SE System Engineer",
+    "short": "Infra: servers, environments",
+    "about": "System engineer, part of Infrastructure. Builds and runs servers, operating systems, network, and production and test environments to the TA's design; for AI projects, GPU servers too.",
+    "uses": [
+      {
+        "side": "Traditional development",
+        "items": [
+          {
+            "stage": "③ Build, test and launch",
+            "duty": "Builds servers, network, production and test environments"
+          }
+        ]
+      },
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "③ Build and deploy",
+            "duty": "GPU servers, network, production and test environments"
           }
         ]
       }

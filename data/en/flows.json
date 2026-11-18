@@ -105,8 +105,8 @@
           "tag": "me"
         },
         {
-          "key": "infra",
-          "does": "Compute estimate; GPUs take months"
+          "key": "ta",
+          "does": "Cloud/on-prem architecture and compute planning; GPUs take months"
         }
       ]
     },
@@ -286,8 +286,8 @@
           "tag": "ai"
         },
         {
-          "key": "infra",
-          "does": "GPUs, network, production and test environments"
+          "key": "se",
+          "does": "GPU servers, network, production and test environments"
         }
       ]
     },

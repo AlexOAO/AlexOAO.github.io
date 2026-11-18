@@ -25,7 +25,7 @@ title: stage-build
 - **[AP 應用系統負責單位](roles.html#role-ap)**：系統要嫁接到行內的伺服器、和核心系統串接，都歸他們管；上線後由他們接手維運。
 - **[SDE 軟體工程師](roles.html#role-sde)**：開發功能與單元測試。銀行的案子大多委外，由廠商依規格開發、交付，保固與維護寫在合約裡。
 - **[MLOps 模型維運](roles.html#role-mlops)**：CI/CD 之外，還要管模型與提示詞的版本，讓每次更新都能回溯。
-- **[Infra 基礎架構](roles.html#role-infra)**：準備 GPU、網路與正式、測試環境。
+- **[SE 系統工程師](roles.html#role-se)**：屬於 Infra。依 TA 的設計建置 GPU 主機、網路與正式、測試環境。
 - **[QA 測試團隊](roles.html#role-qa)**：整合測試之外，每次改動都重跑評測集，確認回答沒有變差。
 - **[ISO 資安](roles.html#role-iso)**：資安掃描、存取控制、資料隔離，出具上線前的資安意見。
 - **[BU 業務單位](roles.html#role-bu)**：參與 UAT，確認功能符合需求，簽核驗收；試行時實際使用、回報問題。
