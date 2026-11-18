@@ -21,7 +21,7 @@ Deliverables for this phase:
 - **AIBU (Business Unit)**: Promote usage, report on business performance, and propose requirements for the next round.
 - **PMO**: Consolidate the performance of each project, compare the actual values with the benchmarks, and decide whether to increase or adjust resources.
 - **MLOps/SRE**: In addition to monitoring whether the service is functioning normally, it is also necessary to monitor the quality of responses, model degradation, and token costs.
-- **Cost-benefit**: Compare the actual business volume, costs, and benefits with the pre-launch baseline to calculate the achievement rate.
+- **BA also owns cost-benefit**: Compares actual business volume, cost and benefit with the pre-launch baseline to calculate the realization rate.
 - **Infra (Infrastructure)**: Monitor computing power usage and expand or reallocate as needed.
 - **AIBA**: Analyze usage records and error cases to identify areas for improvement.
 - **Information Security and Compliance/Risk Management**: Continuously monitor risks and regularly review whether they still comply with regulations.

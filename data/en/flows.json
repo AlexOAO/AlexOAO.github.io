@@ -3,77 +3,105 @@
     {
       "boxes": [
         {
-          "role": "CXO/Decision-Makers",
-          "does": "Annual strategy, budget approval, KPI setting"
+          "role": "CXO Executives",
+          "does": "AI strategy, budget approval, KPIs"
         }
       ]
     },
     {
-      "arrow": "Strategic guidelines, budget limits"
+      "arrow": "Strategy and budget ceiling"
     },
     {
       "boxes": [
         {
           "role": "PMO Project Management Office",
-          "does": "Prioritize, allocate resources, and establish processes"
+          "does": "Priorities, resources, process"
         },
         {
           "role": "PO Product Owner",
-          "does": "Product roadmap, prioritization of requirements"
+          "does": "Product roadmap; agrees with BU on acceptable accuracy and the human-AI split"
         }
       ]
     },
     {
-      "arrow": "Project Initiation, Product Vision"
+      "arrow": "Project start, product vision"
     },
     {
       "boxes": [
         {
           "role": "BU Business Unit",
-          "does": "Identify pain points and scenarios, set KPIs, and provide business volume"
+          "does": "Scenario and KPIs, business volume, books the benefit"
         },
         {
-          "role": "AIBA AI Business Analyst",
-          "does": "Turning Requirements into AI Tasks: Boundaries and Acceptance Criteria",
-          "tag": "ai"
+          "role": "BA AI Business Analyst",
+          "does": "Turns needs into AI tasks, limits and acceptance criteria; builds the cost-benefit baseline",
+          "tag": "me"
+        },
+        {
+          "role": "UX User Experience",
+          "does": "User research, conversation flow, handoff to a person"
+        }
+      ],
+      "links": [
+        [
+          "Scenario, volume →",
+          "← Limits, value"
+        ],
+        [
+          "Product needs →",
+          "← Better experience"
+        ]
+      ]
+    },
+    {
+      "arrow": "Scenario, limits, volume"
+    },
+    {
+      "boxes": [
+        {
+          "role": "PM Project Manager",
+          "does": "Schedule, scope, cross-team coordination, vendor contact",
+          "tag": "me"
+        },
+        {
+          "role": "TPM Technical PM",
+          "does": "Coordinates model, platform and architecture decisions"
         }
       ]
     },
     {
-      "arrow": "Scenarios, boundaries, and business volume"
+      "arrow": "Assigns work, sets boundaries"
     },
     {
       "boxes": [
         {
           "role": "SA Systems Analyst",
-          "does": "Feasibility, whether data can be migrated to the cloud, cloud or on-premises; prototyping",
+          "does": "Feasibility, cloud or on-prem, prototype",
           "tag": "me"
         },
         {
           "role": "Infra Infrastructure",
-          "does": "Computing Power and Capacity Estimation (Long GPU Lead Time)"
+          "does": "Compute estimate; GPUs take months"
         },
         {
-          "role": "Cost-benefit",
-          "does": "Business Volume × Usage × Unit Price, establishing a baseline",
-          "tag": "me"
-        }
-      ]
-    },
-    {
-      "arrow": "Risk assessment"
-    },
-    {
-      "boxes": [
+          "role": "ISO Information Security",
+          "does": "Data classification, what may go to the cloud",
+          "tag": "gate"
+        },
         {
-          "role": "Information Security + Compliance/Risk Management",
-          "does": "Data classification, risk classification, and setting red lines",
+          "role": "CCO Compliance",
+          "does": "Applicable rules, red lines",
+          "tag": "gate"
+        },
+        {
+          "role": "CRO Risk",
+          "does": "Risk rating",
           "tag": "gate"
         }
       ]
     },
     {
-      "arrow": "Approved; on to model tuning"
+      "arrow": "WG review, AIC approves the project"
     }
   ],
   "tune": [
@@ -81,290 +109,355 @@
       "boxes": [
         {
           "role": "BU Business Unit",
-          "does": "Real-life cases and standard answers"
+          "does": "Real cases and model answers"
         },
         {
-          "role": "Compliance/Risk Management",
-          "does": "Rules and red lines: What can be done, what needs to be escalated to a human agent, and what cannot be done"
-        }
-      ]
-    },
-    {
-      "arrow": "Rules and Acceptance Criteria"
-    },
-    {
-      "boxes": [
-        {
-          "role": "AIBA AI Business Analyst",
-          "does": "Write the rules as test questions",
-          "tag": "ai"
+          "role": "BA AI Business Analyst",
+          "does": "Writes the rules as test questions",
+          "tag": "me"
         },
         {
-          "role": "Data Team",
-          "does": "Data sourcing, cleaning, and labeling",
-          "tag": "ai"
-        }
-      ]
-    },
-    {
-      "arrow": "Evaluation sets, data"
-    },
-    {
-      "boxes": [
-        {
-          "role": "ML/LLM Engineer",
-          "does": "Prompts, RAG, model selection, and fine-tuning",
-          "tag": "ai"
-        },
-        {
-          "role": "Technical Program Manager (TPM)",
-          "does": "Coordinate technical decisions and track the results of each round"
-        }
-      ]
-    },
-    {
-      "arrow": "Candidate Models and Settings"
-    },
-    {
-      "boxes": [
-        {
-          "role": "AI Evaluation",
-          "does": "Accuracy, consistency, and rationale for decisions",
-          "tag": "ai"
-        },
-        {
-          "role": "Information Security Red Team",
-          "does": "Attack prompts, personal data leaks, guardrails",
-          "tag": "ai"
-        }
-      ]
-    },
-    {
-      "arrow": "Below the bar: back to tuning. Pass: move on.",
-      "tag": "loop"
-    },
-    {
-      "boxes": [
-        {
-          "role": "AI Task Force",
-          "does": "Confirm passing the threshold",
+          "role": "CCO Compliance",
+          "does": "Rules and red lines",
           "tag": "gate"
         }
       ]
     },
     {
-      "arrow": "Proceed to Development and Deployment"
+      "arrow": "Test set, acceptance criteria"
+    },
+    {
+      "boxes": [
+        {
+          "role": "DE Data Engineer",
+          "does": "Data sources, cleaning, labeling",
+          "tag": "ai"
+        },
+        {
+          "role": "DS Data Scientist",
+          "does": "Features, model experiments, analysis",
+          "tag": "ai"
+        },
+        {
+          "role": "MLE Machine Learning Engineer",
+          "does": "Prompts, RAG, model choice, fine-tuning",
+          "tag": "ai"
+        }
+      ]
+    },
+    {
+      "arrow": "Candidate models and settings"
+    },
+    {
+      "boxes": [
+        {
+          "role": "QA AI Evaluation",
+          "does": "Eval set: accuracy, consistency, reasons",
+          "tag": "ai"
+        },
+        {
+          "role": "ISO Information Security",
+          "does": "Red team: attacks, data leaks, guardrails",
+          "tag": "gate"
+        },
+        {
+          "role": "TPM Technical PM",
+          "does": "Coordinates decisions, tracks each round"
+        }
+      ]
+    },
+    {
+      "arrow": "Below the bar: back to tuning",
+      "tag": "loop"
+    },
+    {
+      "boxes": [
+        {
+          "role": "MRM Model Risk Management",
+          "does": "Validates the model independently",
+          "tag": "gate"
+        },
+        {
+          "role": "WG AI Working Group",
+          "does": "Confirms the bar is passed",
+          "tag": "gate"
+        }
+      ]
+    },
+    {
+      "arrow": "On to build"
     }
   ],
   "build": [
     {
       "boxes": [
         {
-          "role": "PM/IT PM Project Manager",
-          "does": "Timeline, Scope, Vendors, and Acceptance",
+          "role": "PM Project Manager",
+          "does": "Schedule, acceptance, contact for vendors and units",
           "tag": "me"
         },
         {
-          "role": "Procurement",
-          "does": "RFP, bids, contract; for AI, test in a PoC before buying"
+          "role": "PR Procurement",
+          "does": "RFP, bids, contract; for AI, test in a PoC first"
         }
       ]
     },
     {
-      "arrow": "Assign tasks and define boundaries"
+      "arrow": "Assigns work, sets boundaries"
     },
     {
       "boxes": [
         {
           "role": "SA Systems Analyst",
-          "does": "System specifications, APIs, data flows",
+          "does": "System spec, APIs, data flow",
           "tag": "me"
-        },
-        {
-          "role": "UI/UX Design",
-          "does": "Interface and conversational experience"
         }
       ]
     },
     {
-      "arrow": "Specifications, API specifications, architecture diagrams"
+      "arrow": "Specs, API specs, architecture"
     },
     {
       "boxes": [
         {
-          "role": "Outsourced vendor / RD",
-          "does": "Most projects are outsourced: the vendor builds, tests and delivers to the specification",
-          "tag": "vendor"
+          "role": "SDE Software Engineer",
+          "does": "Builds features and unit tests; often outsourced",
+          "tag": "ai"
         },
         {
-          "role": "IT AP Application System Responsible Unit",
-          "does": "Integration scheduling for core systems and APIs"
+          "role": "FDE Forward-Deployed Engineer",
+          "does": "Embedded with the business, wires AI into the workflow",
+          "tag": "ai"
+        },
+        {
+          "role": "AP Application Owner",
+          "does": "Connects core systems and APIs"
         }
       ]
-    },
-    {
-      "arrow": "After delivery, deployed onto IT's servers"
     },
     {
       "boxes": [
         {
           "role": "Infra Infrastructure",
-          "does": "GPUs, networks, production and test environments"
+          "does": "GPUs, network, production and test environments"
         },
         {
-          "role": "DevOps/MLOps",
-          "does": "CI/CD, Models, and Prompt Versions",
+          "role": "MLOps Model Operations",
+          "does": "CI/CD, model and prompt versions",
           "tag": "ai"
         }
       ]
     },
     {
-      "arrow": "Deploy to the test environment"
+      "arrow": "Delivered to test"
     },
     {
       "boxes": [
         {
-          "role": "QA + AI Evaluation",
-          "does": "Integration testing, regression testing",
-          "tag": "ai"
+          "role": "QA Testing",
+          "does": "Integration tests; rerun the eval set on every change"
+        },
+        {
+          "role": "ISO Information Security",
+          "does": "Penetration test, data isolation",
+          "tag": "gate"
         },
         {
           "role": "BU Business Unit",
-          "does": "UAT and Approval"
+          "does": "UAT and sign-off"
         }
       ]
     },
     {
-      "arrow": "Online verification"
+      "arrow": "UAT sign-off"
     },
     {
       "boxes": [
         {
-          "role": "Online Levels",
-          "does": "Information security feedback, initial review by the working group, and approval by the committee",
+          "role": "CAB Change Advisory Board",
+          "does": "Approves production changes, models and prompts included",
           "tag": "gate"
+        },
+        {
+          "role": "Ops Operations",
+          "does": "Deploys to production"
         }
       ]
     },
     {
-      "arrow": "Go-Live"
+      "arrow": "WG releases a pilot"
+    },
+    {
+      "boxes": [
+        {
+          "role": "BU Business Unit",
+          "does": "Pilot users try it and report issues"
+        },
+        {
+          "role": "BA AI Business Analyst",
+          "does": "Compares pilot results with the baseline",
+          "tag": "me"
+        }
+      ]
+    },
+    {
+      "arrow": "AIC approves full launch"
     }
   ],
   "ops": [
     {
       "boxes": [
         {
-          "role": "End User/Frontline Staff",
-          "does": "Customers and Underwriting, Customer Service Personnel: Usage and Feedback"
+          "role": "EU End User",
+          "does": "Customers: use and feedback"
+        },
+        {
+          "role": "OP Frontline Staff",
+          "does": "Underwriters and agents work with AI and confirm each case"
         }
       ]
     },
     {
-      "arrow": "Usage records, feedback"
+      "arrow": "Usage logs, feedback"
     },
     {
       "boxes": [
         {
-          "role": "MLOps/SRE",
-          "does": "Service, answer quality, model degradation, token cost",
+          "role": "MLOps Model Operations",
+          "does": "Answer quality, drift, token cost",
           "tag": "ai"
         },
         {
-          "role": "Infra Infrastructure",
-          "does": "Monitor usage, expand or reallocate"
+          "role": "FDE Forward-Deployed Engineer",
+          "does": "Collects issues on site, adjusts flow and prompts",
+          "tag": "ai"
         }
       ]
     },
     {
-      "arrow": "Monitoring Data"
-    },
-    {
       "boxes": [
         {
-          "role": "AIBA AI Business Analyst",
-          "does": "Analyze cases of errors to identify areas for improvement",
-          "tag": "ai"
+          "role": "Ops Operations",
+          "does": "Monitoring, backups, incidents"
         },
         {
-          "role": "BU Business Unit",
-          "does": "Promote usage and report business performance"
-        }
-      ]
-    },
-    {
-      "arrow": "Performance Data"
-    },
-    {
-      "boxes": [
+          "role": "AP Application Owner",
+          "does": "Takes over maintenance"
+        },
         {
-          "role": "PMO + Cost-Benefitness",
-          "does": "Actual Value ÷ Baseline Value: Achievement Rate",
-          "tag": "me"
+          "role": "SD Service Desk",
+          "does": "Handles user issues"
         }
       ]
     },
     {
-      "arrow": "Back to business planning: Decide on the next round of scaling up or adjustments",
+      "arrow": "Short loop: drift or a vendor update sends it back to tuning",
       "tag": "loop"
     },
     {
       "boxes": [
         {
-          "role": "CXO/Decision-Makers",
-          "does": "Resource reallocation"
+          "role": "BA AI Business Analyst",
+          "does": "Error analysis; actual ÷ baseline = realization rate",
+          "tag": "me"
+        },
+        {
+          "role": "BU Business Unit",
+          "does": "Drives adoption, reports results"
         }
       ]
+    },
+    {
+      "arrow": "Realization rate, results"
+    },
+    {
+      "boxes": [
+        {
+          "role": "PMO Project Management Office",
+          "does": "Reallocates resources by realization rate"
+        },
+        {
+          "role": "CXO Executives",
+          "does": "Reassigns budget"
+        }
+      ]
+    },
+    {
+      "arrow": "Long loop: back to planning to scale up or adjust",
+      "tag": "loop"
     }
   ],
   "gov": [
     {
       "boxes": [
         {
-          "role": "AI Governance Committee",
-          "does": "Approve the launch of medium- to high-risk AI",
+          "role": "AIC AI Management Committee",
+          "does": "Approves medium- and high-risk AI",
+          "tag": "gate"
+        },
+        {
+          "role": "MRM Model Risk Management",
+          "does": "Second line: validates models independently",
           "tag": "gate"
         }
       ]
     },
     {
-      "arrow": "Authorization, approval"
+      "arrow": "Mandate, approval"
     },
     {
       "boxes": [
         {
-          "role": "AI Task Force/PMO",
-          "does": "Inventory AI, confirm risk classification, and review initial audit results",
+          "role": "WG AI Working Group",
+          "does": "Inventories AI, rates risk, first review",
           "tag": "gate"
         }
       ]
     },
     {
-      "arrow": "Checkpoint"
+      "arrow": "Checkpoints"
     },
     {
       "boxes": [
         {
-          "role": "The first line of defense",
-          "does": "Requirements and Development Unit: Risk Assessment, Rule Writing"
+          "role": "BU Business Unit",
+          "does": "First line: risk assessment, writes the rules"
         },
         {
-          "role": "Second line of defense",
-          "does": "Information Security, Compliance, and Risk Management: Feedback and Continuous Monitoring"
+          "role": "ISO Information Security",
+          "does": "Second line: data protection, red team",
+          "tag": "gate"
         },
         {
-          "role": "Third line of defense",
-          "does": "Audit: Independent Inspection Process"
+          "role": "CCO Compliance",
+          "does": "Second line: rules and red lines",
+          "tag": "gate"
+        },
+        {
+          "role": "CRO Risk",
+          "does": "Second line: risk rating and monitoring",
+          "tag": "gate"
+        },
+        {
+          "role": "IA Internal Audit",
+          "does": "Third line: independent review",
+          "tag": "gate"
         }
       ]
     },
     {
-      "arrow": "Rules and Questions"
+      "arrow": "Rules and test questions"
     },
     {
       "boxes": [
         {
-          "role": "AIBA＋SA",
-          "does": "Turn specifications into testable items and system controls",
+          "role": "BA AI Business Analyst",
+          "does": "Turns rules into test questions",
+          "tag": "me"
+        },
+        {
+          "role": "SA Systems Analyst",
+          "does": "Turns rules into system controls",
           "tag": "me"
         }
       ]

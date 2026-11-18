@@ -8,7 +8,7 @@ title: stage-plan
 
 Traditional system development follows a downward trajectory: the business department presents its requirements, which are then analyzed, designed, developed, tested, and launched. The process concludes when the system is handed over to the users. AI projects are different. There are three areas that need to be changed:
 
-- **More roles.** The data team, ML/LLM engineers, AI evaluation, and MLOps are all absent from traditional projects (shown in purple in the diagram).
+- **More roles.** Data engineers (DE), data scientists (DS), ML engineers (MLE), AI evaluation and MLOps don't exist in traditional projects; they're purple in the diagram.
 - **Some roles come in earlier.** Information security, compliance, and risk management need to set red lines during the planning stage. Infrastructure needs to estimate capacity during the planning stage because GPUs have long lead times. The unit responsible for IT application systems needs to arrange the integration beforehand.
 - **The end connects back to the start.** The performance figures after going live should be used to inform business planning and decide whether to increase or adjust the budget for the next round.
 
@@ -34,7 +34,7 @@ Deliverables for this phase:
 - **AIBA (AI Business Analyst)**: Translate business requirements into tasks that AI can perform: break down processes, define inputs and outputs, and document boundaries and acceptance criteria.
 - **SA (Systems Analyst)**: Determine which systems and data to connect, whether the data can be migrated to the cloud, and whether to use the cloud or on-premises solutions, and then draw up a preliminary architecture.
 - **Infra (Infrastructure)**: Estimate computing power and capacity based on business volume. The lead time for GPUs is long, so estimates need to be made at this stage.
-- **Cost-benefit**: Establish a baseline for costs and benefits using "business volume × usage per unit × unit price," and use it to calculate the realization rate after going live.
+- **BA also owns cost-benefit**: Builds the cost and benefit baseline as "business volume × usage per unit × unit price", used after launch to calculate the realization rate. BU supplies the business volume.
 - **PMO**: Prioritize among multiple AI projects. The cost-benefit benchmark serves as the basis for its resource allocation.
 - **Compliance/Risk Management**: Determine which regulations apply, work with business units to establish AI red lines, and decide on risk levels.
 - **Information Security**: Confirm the data classification and which data can be sent to external models.

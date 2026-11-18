@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/post.css?v=20261118e">
+  <link rel="stylesheet" href="assets/css/post.css?v=20261118f">
   <style>
     .post-nav { display: flex; justify-content: space-between; align-items: center; }
     .lang-toggle {
@@ -116,7 +116,7 @@
   </article>
   <div class="post-footer"><div class="pager" id="pager"></div></div>
 
-  <script src="assets/js/common.js?v=20261118e"></script>
+  <script src="assets/js/common.js?v=20261118f"></script>
   <script>
     const { esc, dataPath, getJSON, stageNames, stagePills, visibleGroups, STAGE_ORDER, STAGE_COLOR, stageSpan, isGov, QUANT_ORDER, QUANT_COLOR, quantSpan, quantPill } = Site;
     const I18N = {
@@ -220,12 +220,15 @@
     // An AI SDLC stage (id "stage-<key>", or "stage-gov" for the governance band): what the stage is, who takes part,
     // and every project that touches it.
     // Role flow for a stage (data/flows.json): rows of role boxes joined by labelled arrows.
+    // A row with "links" joins its boxes with two-way labels (links[i] sits between box i and i + 1).
     // Box tags: "vendor" (outsourced), "ai" (a role AI projects add), "gate" (a checkpoint), "me" (where I work).
     function flowDiagram(rows) {
       if (!(rows || []).length) return '';
       const body = rows.map(r => r.arrow
         ? `<div class="flow-arrow ${esc(r.tag || '')}"><em>${r.tag === 'loop' ? '↺ ' : ''}${esc(r.arrow)}</em></div>`
-        : `<div class="flow-row">${r.boxes.map(b => `<div class="flow-box ${esc(b.tag || '')}"><b>${esc(b.role)}</b><span>${esc(b.does)}</span></div>`).join('')}</div>`).join('');
+        : `<div class="flow-row ${r.links ? 'chain' : ''}">${r.boxes.map((b, i) =>
+            (i && r.links ? `<div class="flow-link">${(r.links[i - 1] || []).map(t => `<span>${esc(t)}</span>`).join('')}</div>` : '') +
+            `<div class="flow-box ${esc(b.tag || '')}"><b>${esc(b.role)}</b><span>${esc(b.does)}</span></div>`).join('')}</div>`).join('');
       const legend = [['vendor', '#f9a8d4', 'flowVendor'], ['ai', '#a78bfa', 'flowAi'], ['gate', '#fbbf24', 'flowGate'], ['me', '#34d399', 'flowMe']]
         .filter(([tag]) => rows.some(r => (r.boxes || []).some(b => b.tag === tag)))
         .map(([, c, k]) => `<span><i style="border-color:${c};background:color-mix(in srgb, ${c} 25%, transparent)"></i>${esc(T(k))}</span>`).join('');
