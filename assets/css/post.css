@@ -162,7 +162,7 @@ p, li { text-wrap: pretty; }
 .flow-arrow::before { content: ''; width: 1px; height: 0.9rem; background: #475569; }
 .flow-arrow::after { content: ''; border: 5px solid transparent; border-top: 6px solid #475569; border-bottom: 0; }
 .flow-arrow em { font-style: normal; padding: 0.1rem 0; }
-.flow-arrow.loop { color: #34d399; }
+.flow-arrow.loop { color: #34d399; padding: 0.4rem 0 0.75rem; }
 .flow-arrow.loop::before, .flow-arrow.loop::after { display: none; }
 /* Two arrows side by side (one per box below), and a row of boxes joined by two-way links. */
 .flow-split { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
