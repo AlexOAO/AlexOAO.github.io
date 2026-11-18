@@ -163,6 +163,10 @@
           "role": "PM/IT PM Project Manager",
           "does": "Timeline, Scope, Vendors, and Acceptance",
           "tag": "me"
+        },
+        {
+          "role": "Procurement",
+          "does": "RFP, bids, contract; for AI, test in a PoC before buying"
         }
       ]
     },
@@ -188,8 +192,9 @@
     {
       "boxes": [
         {
-          "role": "R&D Team",
-          "does": "Development and Unit Testing"
+          "role": "Outsourced vendor / RD",
+          "does": "Most projects are outsourced: the vendor builds, tests and delivers to the specification",
+          "tag": "vendor"
         },
         {
           "role": "IT AP Application System Responsible Unit",
@@ -198,7 +203,7 @@
       ]
     },
     {
-      "arrow": "Delivery of test environment"
+      "arrow": "After delivery, deployed onto IT's servers"
     },
     {
       "boxes": [

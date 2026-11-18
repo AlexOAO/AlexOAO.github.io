@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/post.css?v=20261118b">
+  <link rel="stylesheet" href="assets/css/post.css?v=20261118c">
   <style>
     .post-nav { display: flex; justify-content: space-between; align-items: center; }
     .lang-toggle {
@@ -116,7 +116,7 @@
   </article>
   <div class="post-footer"><div class="pager" id="pager"></div></div>
 
-  <script src="assets/js/common.js?v=20261118b"></script>
+  <script src="assets/js/common.js?v=20261118c"></script>
   <script>
     const { esc, dataPath, getJSON, stageNames, stagePills, visibleGroups, STAGE_ORDER, STAGE_COLOR, stageSpan, isGov, QUANT_ORDER, QUANT_COLOR, quantSpan, quantPill } = Site;
     const I18N = {
@@ -126,7 +126,7 @@
         notFound: 'This project does not exist.', home: 'Back to the homepage', lc: 'Where it sits in the AI lifecycle', ms: 'Milestones',
         lcQuant: 'Where it sits in the quant pipeline', quantRole: 'Personal project',
         stageNo: 'Stage {n}', prevStage: 'Previous stage', nextStage: 'Next stage',
-        flowTitle: 'Who does what in this stage', flowAi: 'Role added by AI projects', flowGate: 'Checkpoint', flowMe: 'Where I work', meLabel: 'Me', stageProjects: 'My projects in this stage', stageAt: 'This stage in the AI lifecycle',
+        flowTitle: 'Who does what in this stage', flowAi: 'Role added by AI projects', flowGate: 'Checkpoint', flowMe: 'Where I work', meLabel: 'Me', flowVendor: 'Outsourced vendor', vendorLabel: 'Vendor', stageProjects: 'My projects in this stage', stageAt: 'This stage in the AI lifecycle',
         loadError: 'Content failed to load. A network filter may block this site.',
       },
       zh: {
@@ -135,7 +135,7 @@
         notFound: '找不到這個專案。', home: '回到首頁', lc: '在 AI 生命週期的位置', ms: '專案進度',
         lcQuant: '在量化交易流程的位置', quantRole: '個人專案',
         stageNo: '第 {n} 階段', prevStage: '上一個階段', nextStage: '下一個階段',
-        flowTitle: '這個階段的分工流程', flowAi: 'AI 專案新增的角色', flowGate: '檢核關卡', flowMe: '我的位置', meLabel: '我', stageProjects: '我在這個階段的專案', stageAt: '這個階段在 AI 生命週期的位置',
+        flowTitle: '這個階段的分工流程', flowAi: 'AI 專案新增的角色', flowGate: '檢核關卡', flowMe: '我的位置', meLabel: '我', flowVendor: '委外廠商', vendorLabel: '委外', stageProjects: '我在這個階段的專案', stageAt: '這個階段在 AI 生命週期的位置',
         loadError: '內容載入失敗。可能是網路過濾設備封鎖了本站。',
       },
     };
@@ -220,16 +220,16 @@
     // An AI SDLC stage (id "stage-<key>", or "stage-gov" for the governance band): what the stage is, who takes part,
     // and every project that touches it.
     // Role flow for a stage (data/flows.json): rows of role boxes joined by labelled arrows.
-    // Box tags: "ai" (a role AI projects add), "gate" (a checkpoint), "me" (where I work).
+    // Box tags: "vendor" (outsourced), "ai" (a role AI projects add), "gate" (a checkpoint), "me" (where I work).
     function flowDiagram(rows) {
       if (!(rows || []).length) return '';
       const body = rows.map(r => r.arrow
         ? `<div class="flow-arrow ${esc(r.tag || '')}"><em>${r.tag === 'loop' ? '↺ ' : ''}${esc(r.arrow)}</em></div>`
         : `<div class="flow-row">${r.boxes.map(b => `<div class="flow-box ${esc(b.tag || '')}"><b>${esc(b.role)}</b><span>${esc(b.does)}</span></div>`).join('')}</div>`).join('');
-      const legend = [['ai', '#a78bfa', 'flowAi'], ['gate', '#fbbf24', 'flowGate'], ['me', '#34d399', 'flowMe']]
+      const legend = [['vendor', '#f9a8d4', 'flowVendor'], ['ai', '#a78bfa', 'flowAi'], ['gate', '#fbbf24', 'flowGate'], ['me', '#34d399', 'flowMe']]
         .filter(([tag]) => rows.some(r => (r.boxes || []).some(b => b.tag === tag)))
         .map(([, c, k]) => `<span><i style="border-color:${c};background:color-mix(in srgb, ${c} 25%, transparent)"></i>${esc(T(k))}</span>`).join('');
-      return `<div class="flow" style="--me-label:'${T('meLabel')}'"><p class="flow-title">${esc(T('flowTitle'))}</p>${body}<div class="flow-legend">${legend}</div></div>`;
+      return `<div class="flow" style="--me-label:'${T('meLabel')}';--vendor-label:'${T('vendorLabel')}'"><p class="flow-title">${esc(T('flowTitle'))}</p>${body}<div class="flow-legend">${legend}</div></div>`;
     }
 
     function stageView(about, raw, flows) {

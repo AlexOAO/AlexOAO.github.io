@@ -181,6 +181,40 @@ p, li { text-wrap: pretty; }
 .flow-compare figcaption small { display: block; font-weight: 400; color: var(--dim); font-size: 0.8rem; margin-top: 0.2rem; }
 .flow-compare .flow { margin: 1rem 0 0; }
 
+/* Role comparison: one row per role group, traditional and AI side by side, arrows between rows. */
+.role-compare {
+  display: grid; grid-template-columns: 7.5rem minmax(0, 1fr) minmax(0, 1fr); gap: 0 1.25rem; margin: 2rem 0;
+  width: min(1240px, calc(100vw - 2.5rem)); position: relative; left: 50%; transform: translateX(-50%);
+  padding: 1.25rem; border: 1px solid var(--line); border-radius: 18px; background: rgba(15,23,42,0.55);
+  font-size: 0.86rem; line-height: 1.55;
+}
+.rc-head { font-weight: 700; color: var(--text); font-size: 1rem; padding-bottom: 0.75rem; }
+.rc-head small { display: block; font-weight: 400; color: var(--dim); font-size: 0.8rem; }
+.rc-label { padding-top: 0.6rem; border-top: 1px dashed rgba(148,163,184,0.2); color: #cbd5e1; font-weight: 700; font-size: 0.82rem; }
+.rc-label small { display: block; color: var(--dim); font-weight: 400; font-size: 0.72rem; margin-top: 0.15rem; }
+.rc-cell { padding-top: 0.6rem; border-top: 1px dashed rgba(148,163,184,0.2); }
+.rc-cell .flow-row { justify-content: flex-start; }
+.rc-empty { display: flex; align-items: center; justify-content: center; min-height: 3.5rem; border: 1px dashed rgba(148,163,184,0.25); border-radius: 12px; color: #64748b; font-size: 0.78rem; }
+.rc-arrow { min-height: 0.5rem; }
+.rc-arrow .flow-arrow { padding: 0.1rem 0 0.25rem; }
+.rc-loop { grid-column: 3; color: #34d399; font-size: 0.78rem; text-align: center; padding: 0.75rem 0 0.25rem; }
+.flow-box.vendor { border-color: rgba(244,114,182,0.6); background: rgba(244,114,182,0.1); }
+.flow-box.vendor::after {
+  content: var(--vendor-label, '委外'); position: absolute; top: -0.55rem; right: 0.6rem; padding: 0 0.4rem; border-radius: 6px;
+  font-size: 0.66rem; font-weight: 700; line-height: 1.1rem; color: #0b1120; background: #f9a8d4;
+}
+.role-compare .flow-legend { grid-column: 1 / -1; }
+@media (max-width: 979px) {
+  .role-compare { grid-template-columns: minmax(0, 1fr); }
+  .rc-head { display: none; }
+  .rc-label { margin-top: 0.5rem; }
+  .rc-label + .rc-cell { border-top: 0; }
+  .rc-cell { border-top: 0; padding-top: 0.35rem; }
+  .rc-cell::before { content: attr(data-side); display: block; color: var(--dim); font-size: 0.72rem; margin-bottom: 0.4rem; }
+  .rc-arrow, .rc-arrow + .rc-arrow, .rc-spacer { display: none; }
+  .rc-loop { grid-column: 1; }
+}
+
 /* ── Post Footer ── */
 .post-footer {
   max-width: 720px; margin: 0 auto;

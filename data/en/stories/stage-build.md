@@ -20,8 +20,9 @@ Deliverables for this phase:
 - **IT PM (IT Project Manager)**: Manage the schedule, scope, vendors, and acceptance, and set milestones for initiation, requirements, UAT, and go-live.
 - **SA (Systems Analyst)**: Write system specifications: data flow, APIs, and how to connect with existing systems.
 - **UI/UX Design**: Design interfaces and conversational experiences, such as how AI responses should be presented and when to escalate to a human agent.
-- **RD (Research and Development Team)**: Develop features and write unit tests.
-- **IT AP (Application System Responsible Unit)**: The core systems and APIs that AI needs to integrate with are under their control, and the integration needs to be scheduled according to their timeline.
+- **Procurement**: Turn the requirements into an RFP, compare bids, and sign the contract. For AI models and platforms, run a PoC first, then decide which vendor to buy from.
+- **Outsourced vendor / RD**: Most bank projects are outsourced. The vendor develops, tests and delivers to the specification, with warranty and maintenance written into the contract. When the bank has its own RD team, the work is done in-house.
+- **IT AP (Application System Responsible Unit)**: The vendor's system is deployed onto the bank's servers and connected to the core systems and APIs, all owned by this unit. The integration has to fit their schedule, and they take over operations after launch.
 - **TPM (Technical Project Manager)**: Coordinate cross-team technical decisions, such as platform selection, performance, and technical risks.
 - **Infra (Infrastructure)**: Prepare computing power, network, and environment, and plan capacity based on business volume.
 - **DevOps/MLOps**: In addition to CI/CD, we also need to manage the versions of models and prompts, so that every update can be traced back.
