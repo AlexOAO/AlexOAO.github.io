@@ -38,6 +38,8 @@ Alex Li's portfolio & blog.
 
 ## Deployment
 
+Browsers cache CSS and JS for 4 hours. After changing `assets/css/post.css` or `assets/js/common.js`, bump the `?v=` date on every page that links them (`grep -rl 'post.css?v=' .`), or visitors keep the old file and new layout or code breaks.
+
 Push to `main` → auto-deploys to **Cloudflare Pages** (custom domain `xiang-wei-li.com`; Framework preset None, no build command, output directory = repo root).
 
 GitHub Pages via GitHub Actions stays as a backup (**Settings > Pages > Source > GitHub Actions**).
