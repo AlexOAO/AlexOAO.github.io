@@ -19,7 +19,16 @@ So, I set the rules: agents cannot also serve as referees, and the number of tri
 
 ## My role
 
-Independently developed. I am responsible for the specifications, architecture, programming, and documentation. Most of the code was written by me and CLI agents like Claude Code. Each design decision is numbered and recorded, with a total of 412 to date.
+Independent developer. I own it end to end, from the vision, spec and architecture to daily operations.
+
+**Vision**: one person should be able to do institutional-grade quant research. AI agents generate and implement ideas at scale, people ask the questions and judge the direction, and the platform keeps the gate. Research speed can be handed to AI; research credibility cannot.
+
+**Value**:
+
+- **Credible**: every result passes the same statistical tests, which agents cannot change, and every trial is counted, so no strategy looks good just because it was tried enough times.
+- **Traceable**: data fingerprints, registered rounds and 412 numbered design decisions let any result be traced back to how it was produced.
+- **Repeatable**: research follows a fixed ten-step flow, and the same nodes and tests apply to each new idea instead of a new backtest every time.
+- **Cost-controlled**: AI spend has a global ledger and a hard cap, and the daily update runs in about 100 seconds.
 
 ## What I did
 
