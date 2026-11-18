@@ -18,7 +18,8 @@ const Site = (() => {
   }
 
   const dataPath = f => lang === 'en' ? `data/en/${f}` : `data/${f}`;
-  const getJSON = url => fetch(url).then(r => { if (!r.ok) throw new Error(url); return r.json(); });
+  // "no-cache" re-checks with the server on every load, so an edit shows up without a hard refresh.
+  const getJSON = url => fetch(url, { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error(url); return r.json(); });
 
   const STAGE_COLOR = { plan: '#3b82f6', tune: '#8b5cf6', build: '#06b6d4', ops: '#10b981', gov: '#f59e0b' };
 
