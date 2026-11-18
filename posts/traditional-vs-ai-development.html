@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="../assets/images/favicon.svg">
+  <title>傳統開發 vs. AI 開發：分工圖哪裡不一樣 | Alex Li</title>
+  <meta name="description" content="Alex Li（李翔緯）把傳統系統開發的分工圖和 AI SDLC 的分工圖放在一起比較：AI 專案多了哪些角色、哪些角色要提早進來，以及為什麼最後要接回起點。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/post.css">
+</head>
+<body>
+  <nav class="post-nav">
+    <a href="../index.html" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Back
+    </a>
+  </nav>
+
+  <article class="post">
+    <header class="post-header">
+      <div class="post-meta">
+        <time>2026-11-18</time>
+        <div class="post-tags">
+          <span>AI SDLC</span><span>專案管理</span><span>組織分工</span>
+        </div>
+      </div>
+      <h1>傳統開發 vs. AI 開發：分工圖哪裡不一樣</h1>
+    </header>
+
+    <div class="post-body">
+      <p>很多銀行做第一個 AI 專案時，沿用的是原本的系統開發流程：業務提需求，分析、開發、測試、上線。做到一半才發現，有些事沒人負責：測題誰寫？模型答錯算誰的？GPU 誰去申請？上線三個月後，效益到底有沒有出來？這篇把兩張分工圖放在一起，看 AI 開發到底多了什麼、改了什麼。</p>
+
+      <h2>一、傳統開發：一條往下交棒的線</h2>
+      <p>傳統的分工很清楚。決策層訂策略，PMO 管制度，PO 管產品方向；業務單位提出痛點，BA 把它轉成流程與 User Story；PM 掌控時程，SA 寫規格，RD 寫程式，QA 測試，DevOps 部署上線，最後交到使用者手上。</p>
+      <p>這條線的前提是：<strong>系統的行為是寫死的。</strong>同樣的輸入一定得到同樣的輸出，所以測試通過、驗收簽核，就可以放心上線，專案也就結束了。</p>
+
+      <h2>二、AI 開發：四個階段，加一條回到起點的線</h2>
+      <p>AI 的行為不是寫死的。同一個問題，模型今天答對、明天可能答錯；換一份資料、改一句提示詞，結果就不一樣。所以 AI 專案的分工要照 AI SDLC 的四個階段重新排：業務規劃、模型調教、開發部署、營運監控，再加上一條貫穿全程的 AI 治理。</p>
+
+      <div class="flow-compare">
+        <figure>
+          <figcaption>傳統開發<small>一條往下交棒的線，上線就結束</small></figcaption>
+          <div class="flow">
+            <div class="flow-row"><div class="flow-box wide"><b>CXO／高階管理層</b><span>制定年度戰略、核准重大專案預算、定義公司 KPI</span></div></div>
+            <div class="flow-split">
+              <div class="flow-arrow"><em>監督、資源、績效報告</em></div>
+              <div class="flow-arrow"><em>戰略方針／營運目標</em></div>
+            </div>
+            <div class="flow-row">
+              <div class="flow-box"><b>PMO 專案管理辦公室</b><span>制訂制度、資源調度、跨專案監督、流程與範本規範</span></div>
+              <div class="flow-box"><b>PO 產品負責人</b><span>定義產品藍圖、排定需求優先級</span></div>
+            </div>
+            <div class="flow-split">
+              <div class="flow-arrow"><em>政策引導／標準流程</em></div>
+              <div class="flow-arrow"><em>產品願景與定位</em></div>
+            </div>
+            <div class="flow-row chain">
+              <div class="flow-box"><b>BU 業務單位</b><span>提出商業痛點、負責營運變現</span></div>
+              <div class="flow-link"><span>業務需求 →</span><span>← 確認價值</span></div>
+              <div class="flow-box"><b>BA 商業分析</b><span>需求轉化為流程</span></div>
+              <div class="flow-link"><span>產品需求 →</span><span>← 優化體驗</span></div>
+              <div class="flow-box"><b>UI/UX 設計</b><span>用戶研究與視覺</span></div>
+            </div>
+            <div class="flow-split">
+              <div class="flow-arrow"><em>期望上線時間</em></div>
+              <div class="flow-arrow"><em>商業需求／User Story</em></div>
+            </div>
+            <div class="flow-row"><div class="flow-box"><b>PM 專案經理</b><span>掌控時程與範疇、跨團隊溝通協調</span></div></div>
+            <div class="flow-arrow"><em>分派任務、定義邊界</em></div>
+            <div class="flow-row"><div class="flow-box"><b>SA 系統分析</b><span>系統架構與規格、資料與資料流</span></div></div>
+            <div class="flow-arrow"><em>系統規格書、API 規格、架構圖</em></div>
+            <div class="flow-row"><div class="flow-box"><b>RD 研發團隊</b><span>撰寫程式碼、單元測試</span></div></div>
+            <div class="flow-arrow"><em>交付測試環境</em></div>
+            <div class="flow-row"><div class="flow-box"><b>QA 測試團隊</b><span>測試案例撰寫、系統與整合測試</span></div></div>
+            <div class="flow-arrow"><em>通過驗收（Sign-off）、進入部署</em></div>
+            <div class="flow-row"><div class="flow-box"><b>DevOps 運維團隊</b><span>CI/CD、雲端基礎、正式環境監控</span></div></div>
+            <div class="flow-arrow"><em>正式上線（Go-Live）、穩定運作</em></div>
+            <div class="flow-row"><div class="flow-box wide"><b>End User 終端用戶／客戶</b><span>實際使用系統、回饋使用體驗、產生商業營收</span></div></div>
+          </div>
+        </figure>
+
+        <figure>
+          <figcaption>AI 開發（AI SDLC）<small>四個階段，治理貫穿全程，營運數字回到起點</small></figcaption>
+          <div class="flow">
+            <div class="flow-row"><div class="flow-box gate wide"><b>AI 治理（貫穿全週期）</b><span>委員會核准、工作小組初審；資安、法遵、風控是第二道防線，稽核是第三道</span></div></div>
+
+            <p class="flow-stage" style="--c:#60a5fa">① 業務規劃：值不值得做、怎麼衡量</p>
+            <div class="flow-row"><div class="flow-box wide"><b>CXO／PMO／PO</b><span>策略與預算、專案優先序、產品藍圖</span></div></div>
+            <div class="flow-arrow"><em>立案、產品願景</em></div>
+            <div class="flow-row chain">
+              <div class="flow-box"><b>BU 業務單位</b><span>場景、KPI、業務量</span></div>
+              <div class="flow-link"><span>場景 →</span><span>← 邊界與價值</span></div>
+              <div class="flow-box ai"><b>AIBA AI 業務分析</b><span>AI 任務的邊界與驗收標準</span></div>
+            </div>
+            <div class="flow-arrow"><em>場景、邊界、業務量</em></div>
+            <div class="flow-row" style="margin-top:0.6rem">
+              <div class="flow-box me"><b>SA＋原型</b><span>可行性、雲或地端、做原型</span></div>
+              <div class="flow-box"><b>Infra 基礎架構</b><span>提早估算力（GPU 交期長）</span></div>
+              <div class="flow-box me"><b>成本效益</b><span>業務量 × 用量 × 單價，建立基準</span></div>
+              <div class="flow-box gate"><b>資安＋法遵／風控</b><span>風險分級、訂紅線</span></div>
+            </div>
+            <div class="flow-arrow"><em>核准立案</em></div>
+
+            <p class="flow-stage" style="--c:#a78bfa">② 模型調教：答得對不對、安不安全</p>
+            <div class="flow-row">
+              <div class="flow-box ai"><b>資料團隊</b><span>資料清理與標註</span></div>
+              <div class="flow-box ai"><b>ML／LLM 工程師</b><span>提示詞、RAG、選型、微調</span></div>
+              <div class="flow-box ai"><b>AI 評測＋紅隊</b><span>評測集、攻擊題、護欄</span></div>
+            </div>
+            <div class="flow-arrow loop"><em>↺ 沒過門檻就回到調教</em></div>
+            <div class="flow-arrow"><em>通過門檻</em></div>
+
+            <p class="flow-stage" style="--c:#22d3ee">③ 開發部署：變成每天能用的服務</p>
+            <div class="flow-row">
+              <div class="flow-box me"><b>PM／SA</b><span>時程、驗收、系統規格</span></div>
+              <div class="flow-box"><b>RD＋UI/UX</b><span>開發、介面與對話體驗</span></div>
+              <div class="flow-box"><b>IT AP 應用系統負責單位</b><span>核心系統與 API 串接</span></div>
+            </div>
+            <div class="flow-row" style="margin-top:0.6rem">
+              <div class="flow-box"><b>Infra 基礎架構</b><span>GPU、網路、環境</span></div>
+              <div class="flow-box ai"><b>DevOps／MLOps</b><span>CI/CD、模型與提示詞版本</span></div>
+              <div class="flow-box gate"><b>上線關卡</b><span>QA＋AI 評測、UAT、核准</span></div>
+            </div>
+            <div class="flow-arrow"><em>正式上線（Go-Live）</em></div>
+
+            <p class="flow-stage" style="--c:#34d399">④ 營運監控：有沒有持續運作、效益有沒有實現</p>
+            <div class="flow-row">
+              <div class="flow-box"><b>End User／第一線人員</b><span>使用與回饋</span></div>
+              <div class="flow-box ai"><b>MLOps／SRE</b><span>品質、模型退化、Token 成本</span></div>
+              <div class="flow-box me"><b>PMO＋成本效益</b><span>實際值 ÷ 基準值：實現率</span></div>
+            </div>
+            <div class="flow-arrow loop"><em>↺ 回到 ① 業務規劃：決定下一輪加碼或調整</em></div>
+
+            <div class="flow-legend">
+              <span><i style="border-color:#a78bfa;background:rgba(167,139,250,0.25)"></i>AI 專案新增的角色</span>
+              <span><i style="border-color:#fbbf24;background:rgba(251,191,36,0.25)"></i>治理與檢核關卡</span>
+              <span><i style="border-color:#34d399;background:rgba(52,211,153,0.25)"></i>我的位置</span>
+            </div>
+          </div>
+        </figure>
+      </div>
+
+      <h2>三、七個差異</h2>
+      <p><strong>1. 測試變成評測。</strong>傳統 QA 測的是「輸入 A，一定得到 B」。AI 沒辦法這樣測，要準備一整套評測集，衡量準確率、一致性，以及每個判斷的理由；還要用攻擊題做紅隊測試，看它會不會洩漏資料、被繞過。這也是為什麼要有 AIBA：有人要把業務規則寫成可以測的題目。</p>
+      <p><strong>2. 多了一個階段，和一群新角色。</strong>「模型調教」在傳統流程裡不存在。資料團隊、ML／LLM 工程師、AI 評測，都是為了這個階段才出現的。而且這個階段會一直重來：沒過門檻，就回去調資料、改提示詞、換模型。</p>
+      <p><strong>3. 資安、法遵、風控，從最後一關變成最前面的規則。</strong>傳統專案常在上線前才送資安與法遵審查。AI 專案如果等到最後，才發現資料不能上雲、某些回答踩到法規，前面的工作就白做了。所以紅線要在業務規劃時就訂好：哪些事 AI 可以自己做、哪些要轉人工、哪些絕對不能做。</p>
+      <p><strong>4. IT 與 Infra 要提早進來。</strong>傳統圖上只有 DevOps，但在銀行裡，IT 與 Infra 是兩個不同的單位。IT 的應用系統負責單位管 AI 要接的核心系統與 API，串接要排進他們的時程。Infra 管 GPU、網路與環境；GPU 從申請到到貨要好幾個月，等到開發部署才找，就來不及了。用雲端還是地端，也要由 SA、Infra 和資安在規劃時一起決定，因為它同時牽涉架構、成本，以及資料能不能出去。</p>
+      <p><strong>5. 上線不是終點。</strong>模型會退化，使用者的問法會變，Token 用量會跑掉。DevOps 只顧主機與部署還不夠，還要有 MLOps 監控回答品質、模型與提示詞的版本，以及每個月的成本。</p>
+      <p><strong>6. 成本跟著用量走，所以要有人管「值不值得」。</strong>傳統系統的成本大多在建置時就確定了。AI 的成本按通話、案件或 Token 計算，業務量一成長，成本就跟著漲。所以要有人在上線前建立成本效益基準，上線後追蹤實現率：預估的業務量、成本與效益，實際兌現了多少。這條數字線，就是 AI 開發圖最下面那條接回起點的箭頭。</p>
+      <p><strong>7. 使用者不只是客戶。</strong>很多 AI 是給員工用的 Copilot，例如幫徵審人員看文件、幫客服人員寫話後小結。這些第一線人員和 AI 一起工作，每一筆都要由他們確認。他們需要教育訓練，他們的回饋也是改善 AI 的主要來源。</p>
+
+      <h2>四、我在這張圖的哪裡</h2>
+      <p>我的角色是 PM 兼 SA，圖上綠色的位置：</p>
+      <ul>
+        <li><strong>業務規劃</strong>：替四個業務服務 Agent 建立原型，並設計共同的成本效益框架。見<a href="../project.html?id=agent-cost-roi">四大 AI Agent</a>。</li>
+        <li><strong>開發部署</strong>：評測企業 AI 代理平台，作為選型的依據。見 <a href="../project.html?id=agentic-platform-eval">Platform PoC</a>。</li>
+        <li><strong>營運監控</strong>：設計 AI 營運成效 Dashboard 的指標，追蹤效益有沒有實現。見<a href="../project.html?id=ai-ops-dashboard">AI 營運成效 Dashboard</a>。</li>
+        <li><strong>AI 治理</strong>：設計 Agent 上線前的檢核機制。見<a href="../project.html?id=agent-governance">Agent 上線檢測機制</a>。</li>
+      </ul>
+      <p>每個階段由誰負責什麼，可以從首頁的 AI SDLC 圖點進去看，例如<a href="../project.html?id=stage-plan">業務規劃</a>和<a href="../project.html?id=stage-tune">模型調教</a>。</p>
+
+      <h2>學到的事</h2>
+      <p>傳統分工圖沒有錯，只是它假設系統的行為是確定的。AI 打破了這個假設，所以要多三樣東西：調教與評測的角色、提早進場的治理與基礎架構，以及一條把營運數字帶回起點的線。少了任何一樣，AI 專案就容易卡在「上線了，但不知道值不值得」。</p>
+    </div>
+  </article>
+
+  <footer class="post-footer">
+    <a href="../index.html#blog" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      All Posts
+    </a>
+  </footer>
+</body>
+</html>

@@ -21,6 +21,8 @@ Deliverables for this phase:
 - **AIBA**: Formulate acceptance criteria as test questions. Questions based on business scenarios and historical cases with known answers.
 - **AIBU (Business Unit)**: Provide real-world business scenarios and cases to determine whether the answers are correct in a business context.
 - **Data Team**: Data sources, cleaning, labeling, and quality.
+- **ML/LLM Engineer**: Adjust prompts, design RAG retrieval methods, select models, and fine-tune them when necessary.
+- **AI Evaluation**: Replacing traditional QA. Traditional testing follows the principle of "input A must yield B." In contrast, AI uses evaluation sets to assess accuracy, consistency, and the rationale behind its judgments.
 - **TPM (Technical Project Manager)**: Coordinate technical decisions regarding model selection, prompts, and retrieval, and track the results of each round of testing.
 - **Information Security**: Design attack scenarios and red team tests to ensure that personal data and confidential information are not leaked.
 - **Compliance/Risk Management**: Confirm that the output does not violate regulations, such as the terminology used in investment advice and the fairness of credit extensions.

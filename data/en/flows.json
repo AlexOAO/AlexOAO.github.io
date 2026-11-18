@@ -1,0 +1,368 @@
+{
+  "plan": [
+    {
+      "boxes": [
+        {
+          "role": "CXO/Decision-Makers",
+          "does": "Annual strategy, budget approval, KPI setting"
+        }
+      ]
+    },
+    {
+      "arrow": "Strategic guidelines, budget limits"
+    },
+    {
+      "boxes": [
+        {
+          "role": "PMO Project Management Office",
+          "does": "Prioritize, allocate resources, and establish processes"
+        },
+        {
+          "role": "PO Product Owner",
+          "does": "Product roadmap, prioritization of requirements"
+        }
+      ]
+    },
+    {
+      "arrow": "Project Initiation, Product Vision"
+    },
+    {
+      "boxes": [
+        {
+          "role": "BU Business Unit",
+          "does": "Identify pain points and scenarios, set KPIs, and provide business volume"
+        },
+        {
+          "role": "AIBA AI Business Analyst",
+          "does": "Turning Requirements into AI Tasks: Boundaries and Acceptance Criteria",
+          "tag": "ai"
+        }
+      ]
+    },
+    {
+      "arrow": "Scenarios, boundaries, and business volume"
+    },
+    {
+      "boxes": [
+        {
+          "role": "SA Systems Analyst",
+          "does": "Feasibility, whether data can be migrated to the cloud, cloud or on-premises; prototyping",
+          "tag": "me"
+        },
+        {
+          "role": "Infra Infrastructure",
+          "does": "Computing Power and Capacity Estimation (Long GPU Lead Time)"
+        },
+        {
+          "role": "Cost-benefit",
+          "does": "Business Volume × Usage × Unit Price, establishing a baseline",
+          "tag": "me"
+        }
+      ]
+    },
+    {
+      "arrow": "Risk assessment"
+    },
+    {
+      "boxes": [
+        {
+          "role": "Information Security + Compliance/Risk Management",
+          "does": "Data classification, risk classification, and setting red lines",
+          "tag": "gate"
+        }
+      ]
+    },
+    {
+      "arrow": "Approved; on to model tuning"
+    }
+  ],
+  "tune": [
+    {
+      "boxes": [
+        {
+          "role": "BU Business Unit",
+          "does": "Real-life cases and standard answers"
+        },
+        {
+          "role": "Compliance/Risk Management",
+          "does": "Rules and red lines: What can be done, what needs to be escalated to a human agent, and what cannot be done"
+        }
+      ]
+    },
+    {
+      "arrow": "Rules and Acceptance Criteria"
+    },
+    {
+      "boxes": [
+        {
+          "role": "AIBA AI Business Analyst",
+          "does": "Write the rules as test questions",
+          "tag": "ai"
+        },
+        {
+          "role": "Data Team",
+          "does": "Data sourcing, cleaning, and labeling",
+          "tag": "ai"
+        }
+      ]
+    },
+    {
+      "arrow": "Evaluation sets, data"
+    },
+    {
+      "boxes": [
+        {
+          "role": "ML/LLM Engineer",
+          "does": "Prompts, RAG, model selection, and fine-tuning",
+          "tag": "ai"
+        },
+        {
+          "role": "Technical Program Manager (TPM)",
+          "does": "Coordinate technical decisions and track the results of each round"
+        }
+      ]
+    },
+    {
+      "arrow": "Candidate Models and Settings"
+    },
+    {
+      "boxes": [
+        {
+          "role": "AI Evaluation",
+          "does": "Accuracy, consistency, and rationale for decisions",
+          "tag": "ai"
+        },
+        {
+          "role": "Information Security Red Team",
+          "does": "Attack prompts, personal data leaks, guardrails",
+          "tag": "ai"
+        }
+      ]
+    },
+    {
+      "arrow": "Below the bar: back to tuning. Pass: move on.",
+      "tag": "loop"
+    },
+    {
+      "boxes": [
+        {
+          "role": "AI Task Force",
+          "does": "Confirm passing the threshold",
+          "tag": "gate"
+        }
+      ]
+    },
+    {
+      "arrow": "Proceed to Development and Deployment"
+    }
+  ],
+  "build": [
+    {
+      "boxes": [
+        {
+          "role": "PM/IT PM Project Manager",
+          "does": "Timeline, Scope, Vendors, and Acceptance",
+          "tag": "me"
+        }
+      ]
+    },
+    {
+      "arrow": "Assign tasks and define boundaries"
+    },
+    {
+      "boxes": [
+        {
+          "role": "SA Systems Analyst",
+          "does": "System specifications, APIs, data flows",
+          "tag": "me"
+        },
+        {
+          "role": "UI/UX Design",
+          "does": "Interface and conversational experience"
+        }
+      ]
+    },
+    {
+      "arrow": "Specifications, API specifications, architecture diagrams"
+    },
+    {
+      "boxes": [
+        {
+          "role": "R&D Team",
+          "does": "Development and Unit Testing"
+        },
+        {
+          "role": "IT AP Application System Responsible Unit",
+          "does": "Integration scheduling for core systems and APIs"
+        }
+      ]
+    },
+    {
+      "arrow": "Delivery of test environment"
+    },
+    {
+      "boxes": [
+        {
+          "role": "Infra Infrastructure",
+          "does": "GPUs, networks, production and test environments"
+        },
+        {
+          "role": "DevOps/MLOps",
+          "does": "CI/CD, Models, and Prompt Versions",
+          "tag": "ai"
+        }
+      ]
+    },
+    {
+      "arrow": "Deploy to the test environment"
+    },
+    {
+      "boxes": [
+        {
+          "role": "QA + AI Evaluation",
+          "does": "Integration testing, regression testing",
+          "tag": "ai"
+        },
+        {
+          "role": "BU Business Unit",
+          "does": "UAT and Approval"
+        }
+      ]
+    },
+    {
+      "arrow": "Online verification"
+    },
+    {
+      "boxes": [
+        {
+          "role": "Online Levels",
+          "does": "Information security feedback, initial review by the working group, and approval by the committee",
+          "tag": "gate"
+        }
+      ]
+    },
+    {
+      "arrow": "Go-Live"
+    }
+  ],
+  "ops": [
+    {
+      "boxes": [
+        {
+          "role": "End User/Frontline Staff",
+          "does": "Customers and Underwriting, Customer Service Personnel: Usage and Feedback"
+        }
+      ]
+    },
+    {
+      "arrow": "Usage records, feedback"
+    },
+    {
+      "boxes": [
+        {
+          "role": "MLOps/SRE",
+          "does": "Service, answer quality, model degradation, token cost",
+          "tag": "ai"
+        },
+        {
+          "role": "Infra Infrastructure",
+          "does": "Monitor usage, expand or reallocate"
+        }
+      ]
+    },
+    {
+      "arrow": "Monitoring Data"
+    },
+    {
+      "boxes": [
+        {
+          "role": "AIBA AI Business Analyst",
+          "does": "Analyze cases of errors to identify areas for improvement",
+          "tag": "ai"
+        },
+        {
+          "role": "BU Business Unit",
+          "does": "Promote usage and report business performance"
+        }
+      ]
+    },
+    {
+      "arrow": "Performance Data"
+    },
+    {
+      "boxes": [
+        {
+          "role": "PMO + Cost-Benefitness",
+          "does": "Actual Value ÷ Baseline Value: Achievement Rate",
+          "tag": "me"
+        }
+      ]
+    },
+    {
+      "arrow": "Back to business planning: Decide on the next round of scaling up or adjustments",
+      "tag": "loop"
+    },
+    {
+      "boxes": [
+        {
+          "role": "CXO/Decision-Makers",
+          "does": "Resource reallocation"
+        }
+      ]
+    }
+  ],
+  "gov": [
+    {
+      "boxes": [
+        {
+          "role": "AI Governance Committee",
+          "does": "Approve the launch of medium- to high-risk AI",
+          "tag": "gate"
+        }
+      ]
+    },
+    {
+      "arrow": "Authorization, approval"
+    },
+    {
+      "boxes": [
+        {
+          "role": "AI Task Force/PMO",
+          "does": "Inventory AI, confirm risk classification, and review initial audit results",
+          "tag": "gate"
+        }
+      ]
+    },
+    {
+      "arrow": "Checkpoint"
+    },
+    {
+      "boxes": [
+        {
+          "role": "The first line of defense",
+          "does": "Requirements and Development Unit: Risk Assessment, Rule Writing"
+        },
+        {
+          "role": "Second line of defense",
+          "does": "Information Security, Compliance, and Risk Management: Feedback and Continuous Monitoring"
+        },
+        {
+          "role": "Third line of defense",
+          "does": "Audit: Independent Inspection Process"
+        }
+      ]
+    },
+    {
+      "arrow": "Rules and Questions"
+    },
+    {
+      "boxes": [
+        {
+          "role": "AIBA＋SA",
+          "does": "Turn specifications into testable items and system controls",
+          "tag": "me"
+        }
+      ]
+    }
+  ]
+}

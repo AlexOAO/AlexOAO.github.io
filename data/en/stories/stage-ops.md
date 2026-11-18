@@ -17,12 +17,15 @@ Deliverables for this phase:
 
 ## Who takes part
 
+- **End Users and Frontline Staff**: Customers, as well as underwriting and customer service personnel who work with AI. Their usage records and feedback serve as the starting point for improvement.
 - **AIBU (Business Unit)**: Promote usage, report on business performance, and propose requirements for the next round.
 - **PMO**: Consolidate the performance of each project, compare the actual values with the benchmarks, and decide whether to increase or adjust resources.
-- **IT/Operations Team**: Monitoring services, handling incidents, and maintaining the environment.
+- **MLOps/SRE**: In addition to monitoring whether the service is functioning normally, it is also necessary to monitor the quality of responses, model degradation, and token costs.
+- **Cost-benefit**: Compare the actual business volume, costs, and benefits with the pre-launch baseline to calculate the achievement rate.
 - **Infra (Infrastructure)**: Monitor computing power usage and expand or reallocate as needed.
 - **AIBA**: Analyze usage records and error cases to identify areas for improvement.
 - **Information Security and Compliance/Risk Management**: Continuously monitor risks and regularly review whether they still comply with regulations.
+- **CXO/Decision-Makers**: Reallocate resources based on realization rates.
 
 ## Handoffs and checks
 
