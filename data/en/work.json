@@ -9,7 +9,7 @@
     "other": [],
     "projects": [
       {
-        "short": "AI guardrails: Guardrails PoC",
+        "short": "AI Guardrails: 3,600-Case Test",
         "slug": "guardrails-poc",
         "title": "AI Guardrails PoC with the Holding Company (XecGuard / Vulcan)",
         "summary": "Followed the holding company's PoC of two AI guardrail vendors and built the bank's own verification method.",
@@ -84,7 +84,7 @@
         "source": "S2,S3,S4, XecGuard_簡報_final, XecGuard_vs_Vulcan_回饋, 使用者說明（R1 定義、Vulcan 進行中）"
       },
       {
-        "short": "AI agent platform: Platform PoC",
+        "short": "AI Agent Platform: 60-Test Evaluation",
         "slug": "agentic-platform-eval",
         "title": "Enterprise Agentic Platform Evaluation (Agatha / Dify)",
         "summary": "Ran 60 tests on 2 platforms and found 12 issues before selection.",
@@ -515,7 +515,7 @@
         "source": "S4"
       },
       {
-        "short": "AI operations performance: Dashboard",
+        "short": "AI Ops Results: Is AI Worth It, on One Page",
         "slug": "ai-ops-dashboard",
         "title": "AI Operations Performance Dashboard (Internal: Copilot / Gemini / Ella; External: 4 Agents)",
         "summary": "One set of metrics to measure internal AI tools and the four external Agents.",
@@ -561,7 +561,7 @@
         "source": "ttt.pptx (2026/10/19 management meeting); metric framework is a design proposal"
       },
       {
-        "short": "AI technology: A2UI",
+        "short": "AI Interface: A2UI from Tech to Product",
         "slug": "a2ui-research",
         "title": "A2UI Research: From Technology to Product",
         "summary": "Evaluating A2UI along a product journey: use cases first, then resources, value, and launch.",
@@ -769,7 +769,7 @@
         "source": "S1, posts/rag-smart-customer-service.html"
       },
       {
-        "short": "AI advisory: Multi-Agent",
+        "short": "AI Robo-Advisor: Multi-Agent Collaboration",
         "slug": "multi-agent-advisory",
         "title": "Multi-Agent Investment Advisory Architecture",
         "summary": "Let AI work like a fund team to produce signals that can be backtested.",
@@ -947,7 +947,7 @@
     "other": [],
     "projects": [
       {
-        "short": "CTA strategy",
+        "short": "Quant Strategy: TAIEX Futures CTA",
         "slug": "tmba-cta-taiex",
         "kind": "Quant strategy",
         "layers": [
@@ -1036,7 +1036,7 @@
     "other": [],
     "projects": [
       {
-        "short": "Master's thesis",
+        "short": "Master's Thesis: LLM Reads Filings to Predict Returns",
         "slug": "thesis-rag-panel",
         "title": "Stock Price Return Prediction Combining Retrieval-Augmented Generation and Panel Data Models: Taiwan Electronics Industry",
         "kind": "Research",
@@ -1134,7 +1134,7 @@
     "other": [],
     "projects": [
       {
-        "short": "GMBA thesis",
+        "short": "GMBA Thesis: ESG Risk and Capital Structure",
         "slug": "thesis-esg-capital-structure",
         "kind": "Research",
         "title": "The Effect of ESG Risk Scores on the Capital Structure of Taiwanese Companies",
