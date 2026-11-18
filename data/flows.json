@@ -3,7 +3,7 @@
   {
    "boxes": [
     {
-     "role": "CXO 高階管理層",
+     "key": "cxo",
      "does": "AI 策略、核准預算、定義 KPI"
     }
    ]
@@ -14,11 +14,11 @@
   {
    "boxes": [
     {
-     "role": "PMO 專案管理辦公室",
+     "key": "pmo",
      "does": "排優先序、資源調度、訂流程"
     },
     {
-     "role": "PO 產品負責人",
+     "key": "po",
      "does": "產品藍圖；和 BU 定可接受的準確度與人機分工"
     }
    ]
@@ -29,27 +29,29 @@
   {
    "boxes": [
     {
-     "role": "BU 業務單位",
+     "key": "bu",
      "does": "場景與 KPI、提供業務量、認列效益"
     },
     {
-     "role": "BA AI 業務分析",
+     "key": "ba",
      "does": "需求轉成 AI 任務、邊界與驗收標準；建立成本效益基準",
-     "tag": "me"
+     "tag": "me",
+     "role": "BA AI 業務分析",
+     "short": "需求轉成 AI 任務"
     },
     {
-     "role": "UX 使用者體驗",
+     "key": "ux",
      "does": "用戶研究、對話流程、轉人工怎麼呈現"
     }
    ],
    "links": [
     [
-     "場景、業務量 →",
-     "← 邊界與價值"
+     "場景 →",
+     "← 邊界"
     ],
     [
-     "產品需求 →",
-     "← 優化體驗"
+     "規格 →",
+     "← 體驗"
     ]
    ]
   },
@@ -59,42 +61,60 @@
   {
    "boxes": [
     {
-     "role": "PM 專案經理",
+     "key": "pm",
      "does": "時程、範疇、跨團隊協調、廠商窗口",
      "tag": "me"
     },
     {
-     "role": "TPM 技術 PM",
+     "key": "tpm",
      "does": "協調模型、平台與架構的技術決策"
+    },
+    {
+     "key": "it",
+     "does": "代表 IT 參與，評估行內系統、環境與資源"
     }
    ]
   },
   {
-   "arrow": "分派任務、定義邊界"
+   "split": [
+    "",
+    "技術方案",
+    "行內資源"
+   ]
   },
   {
    "boxes": [
     {
-     "role": "SA 系統分析",
+     "ghost": true
+    },
+    {
+     "key": "sa",
      "does": "可行性、雲或地端、做原型",
      "tag": "me"
     },
     {
-     "role": "Infra 基礎架構",
+     "key": "infra",
      "does": "預估算力，GPU 交期長"
-    },
+    }
+   ]
+  },
+  {
+   "arrow": "可行性、架構與資源方案"
+  },
+  {
+   "boxes": [
     {
-     "role": "ISO 資安",
+     "key": "iso",
      "does": "資料分級、哪些資料能上雲",
      "tag": "gate"
     },
     {
-     "role": "CCO 法遵",
+     "key": "cco",
      "does": "法規適用、訂紅線",
      "tag": "gate"
     },
     {
-     "role": "CRO 風控",
+     "key": "cro",
      "does": "風險分級",
      "tag": "gate"
     }
@@ -108,16 +128,18 @@
   {
    "boxes": [
     {
-     "role": "BU 業務單位",
+     "key": "bu",
      "does": "真實案例與標準答案"
     },
     {
-     "role": "BA AI 業務分析",
+     "key": "ba",
      "does": "把規則寫成測題",
-     "tag": "me"
+     "tag": "me",
+     "role": "BA AI 業務分析",
+     "short": "需求轉成 AI 任務"
     },
     {
-     "role": "CCO 法遵",
+     "key": "cco",
      "does": "規則與紅線",
      "tag": "gate"
     }
@@ -129,17 +151,17 @@
   {
    "boxes": [
     {
-     "role": "DE 資料工程",
+     "key": "de",
      "does": "資料來源、清理與標註",
      "tag": "ai"
     },
     {
-     "role": "DS 資料科學家",
+     "key": "ds",
      "does": "特徵、模型實驗、成效分析",
      "tag": "ai"
     },
     {
-     "role": "MLE 機器學習工程師",
+     "key": "mle",
      "does": "提示詞、RAG、選型、微調",
      "tag": "ai"
     }
@@ -151,17 +173,19 @@
   {
    "boxes": [
     {
-     "role": "QA AI 評測",
+     "key": "qa",
      "does": "評測集：準確率、一致性、判斷理由",
-     "tag": "ai"
+     "tag": "ai",
+     "role": "QA AI 評測",
+     "short": "評測 AI 的回答"
     },
     {
-     "role": "ISO 資安",
+     "key": "iso",
      "does": "紅隊：攻擊題、個資外洩、護欄",
      "tag": "gate"
     },
     {
-     "role": "TPM 技術 PM",
+     "key": "tpm",
      "does": "協調技術決策、追蹤每輪結果"
     }
    ]
@@ -173,12 +197,12 @@
   {
    "boxes": [
     {
-     "role": "MRM 模型風險管理",
+     "key": "mrm",
      "does": "獨立驗證模型",
      "tag": "gate"
     },
     {
-     "role": "WG AI 工作小組",
+     "key": "wg",
      "does": "確認通過門檻",
      "tag": "gate"
     }
@@ -192,25 +216,42 @@
   {
    "boxes": [
     {
-     "role": "PM 專案經理",
+     "key": "pm",
      "does": "時程、驗收、廠商與各單位的窗口",
      "tag": "me"
     },
     {
-     "role": "PR 採購單位",
-     "does": "RFP、比價、簽約；AI 先 PoC 實測再買"
+     "key": "tpm",
+     "does": "協調開發、平台與部署的技術決策"
+    },
+    {
+     "key": "it",
+     "does": "協調行內系統串接、環境與上線排程"
     }
    ]
   },
   {
-   "arrow": "分派任務、定義邊界"
+   "split": [
+    "分派任務",
+    "規格與架構",
+    "行內資源"
+   ]
   },
   {
    "boxes": [
     {
-     "role": "SA 系統分析",
+     "key": "fde",
+     "does": "進駐業務單位，把 AI 接進實際流程",
+     "tag": "ai"
+    },
+    {
+     "key": "sa",
      "does": "系統規格、API、資料流",
      "tag": "me"
+    },
+    {
+     "key": "ap",
+     "does": "核心系統與 API 串接"
     }
    ]
   },
@@ -220,31 +261,18 @@
   {
    "boxes": [
     {
-     "role": "SDE 軟體工程師",
+     "key": "sde",
      "does": "開發產品功能與單元測試；很多案子委外",
      "tag": "ai"
     },
     {
-     "role": "FDE 前線部署工程師",
-     "does": "進駐業務單位，把 AI 接進實際流程",
-     "tag": "ai"
-    },
-    {
-     "role": "AP 應用系統負責單位",
-     "does": "核心系統與 API 串接"
-    }
-   ]
-  },
-  {
-   "boxes": [
-    {
-     "role": "Infra 基礎架構",
-     "does": "GPU、網路、正式與測試環境"
-    },
-    {
-     "role": "MLOps 模型維運",
+     "key": "mlops",
      "does": "CI/CD、模型與提示詞版本",
      "tag": "ai"
+    },
+    {
+     "key": "infra",
+     "does": "GPU、網路、正式與測試環境"
     }
    ]
   },
@@ -254,16 +282,16 @@
   {
    "boxes": [
     {
-     "role": "QA 測試團隊",
+     "key": "qa",
      "does": "整合測試，每次改動重跑評測集"
     },
     {
-     "role": "ISO 資安",
+     "key": "iso",
      "does": "滲透測試、資料隔離",
      "tag": "gate"
     },
     {
-     "role": "BU 業務單位",
+     "key": "bu",
      "does": "UAT 與簽核"
     }
    ]
@@ -274,12 +302,12 @@
   {
    "boxes": [
     {
-     "role": "CAB 變更審查委員會",
+     "key": "cab",
      "does": "核准正式環境變更，模型與提示詞也算",
      "tag": "gate"
     },
     {
-     "role": "Ops 維運團隊",
+     "key": "ops",
      "does": "部署到正式環境"
     }
    ]
@@ -290,13 +318,15 @@
   {
    "boxes": [
     {
-     "role": "BU 業務單位",
+     "key": "bu",
      "does": "試行單位實際使用、回報問題"
     },
     {
-     "role": "BA AI 業務分析",
+     "key": "ba",
      "does": "比對試行結果與基準",
-     "tag": "me"
+     "tag": "me",
+     "role": "BA AI 業務分析",
+     "short": "需求轉成 AI 任務"
     }
    ]
   },
@@ -308,11 +338,11 @@
   {
    "boxes": [
     {
-     "role": "EU 終端用戶",
+     "key": "eu",
      "does": "客戶：使用與回饋"
     },
     {
-     "role": "OP 第一線人員",
+     "key": "op",
      "does": "徵審、客服人員和 AI 一起工作，逐筆確認"
     }
    ]
@@ -323,12 +353,12 @@
   {
    "boxes": [
     {
-     "role": "MLOps 模型維運",
+     "key": "mlops",
      "does": "回答品質、模型退化、Token 成本",
      "tag": "ai"
     },
     {
-     "role": "FDE 前線部署工程師",
+     "key": "fde",
      "does": "現場蒐集問題，調整流程與提示詞",
      "tag": "ai"
     }
@@ -337,15 +367,15 @@
   {
    "boxes": [
     {
-     "role": "Ops 維運團隊",
+     "key": "ops",
      "does": "系統監控、備份、事件處理"
     },
     {
-     "role": "AP 應用系統負責單位",
+     "key": "ap",
      "does": "接手維運"
     },
     {
-     "role": "SD 服務台",
+     "key": "sd",
      "does": "受理使用者的問題"
     }
    ]
@@ -357,12 +387,14 @@
   {
    "boxes": [
     {
-     "role": "BA AI 業務分析",
+     "key": "ba",
      "does": "錯誤分析；實際值 ÷ 基準值，算實現率",
-     "tag": "me"
+     "tag": "me",
+     "role": "BA AI 業務分析",
+     "short": "需求轉成 AI 任務"
     },
     {
-     "role": "BU 業務單位",
+     "key": "bu",
      "does": "推廣使用、回報業務成效"
     }
    ]
@@ -373,11 +405,11 @@
   {
    "boxes": [
     {
-     "role": "PMO 專案管理辦公室",
+     "key": "pmo",
      "does": "依實現率調整資源與優先序"
     },
     {
-     "role": "CXO 高階管理層",
+     "key": "cxo",
      "does": "資源再配置"
     }
    ]
@@ -391,12 +423,12 @@
   {
    "boxes": [
     {
-     "role": "AIC AI 管理委員會",
+     "key": "aic",
      "does": "核准中高風險的 AI 上線",
      "tag": "gate"
     },
     {
-     "role": "MRM 模型風險管理",
+     "key": "mrm",
      "does": "第二道防線：獨立驗證模型",
      "tag": "gate"
     }
@@ -408,7 +440,7 @@
   {
    "boxes": [
     {
-     "role": "WG AI 工作小組",
+     "key": "wg",
      "does": "盤點 AI、風險分級、初審檢核",
      "tag": "gate"
     }
@@ -420,26 +452,26 @@
   {
    "boxes": [
     {
-     "role": "BU 業務單位",
+     "key": "bu",
      "does": "第一道防線：風險評估、寫規則"
     },
     {
-     "role": "ISO 資安",
+     "key": "iso",
      "does": "第二道防線：資料保護、紅隊",
      "tag": "gate"
     },
     {
-     "role": "CCO 法遵",
+     "key": "cco",
      "does": "第二道防線：法規與紅線",
      "tag": "gate"
     },
     {
-     "role": "CRO 風控",
+     "key": "cro",
      "does": "第二道防線：風險分級與監控",
      "tag": "gate"
     },
     {
-     "role": "IA 稽核",
+     "key": "ia",
      "does": "第三道防線：獨立檢查流程",
      "tag": "gate"
     }
@@ -451,12 +483,14 @@
   {
    "boxes": [
     {
-     "role": "BA AI 業務分析",
+     "key": "ba",
      "does": "把規範寫成可測試的題目",
-     "tag": "me"
+     "tag": "me",
+     "role": "BA AI 業務分析",
+     "short": "需求轉成 AI 任務"
     },
     {
-     "role": "SA 系統分析",
+     "key": "sa",
      "does": "把規範變成系統控制",
      "tag": "me"
     }

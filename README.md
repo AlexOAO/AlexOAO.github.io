@@ -160,6 +160,13 @@ Each stage box on the AI SDLC chart (and the governance band) opens `project.htm
 - The body is the story file `data/stories/stage-<key>.md`. Outline: 這個階段在做什麼 → 誰參與 (by role: AIBU, AIBA, SA, IT PM, TPM, Infra, PMO, 資安, 法遵／風控, 資料團隊) → 交接與檢核 → 我在這個階段做什麼.
 - The roles are described as common practice in financial AI projects, not as any bank's official split.
 
+### Roles page (`roles.html`, `data/roles.json`)
+
+`roles.html` lists every role used in the role charts (the traditional vs AI post and the stage pages): name, one-line definition, full definition, and what the role does in traditional development, AI development and the outsourcing examples. Each entry has the id `role-<key>`.
+
+- `data/roles.json`: one object per role: `key`, `name` ("abbreviation + Chinese"), `short` (one line, shown in the chart boxes), `about`, `uses`. English is `data/en/roles.json`.
+- Stage-page charts (`data/flows.json`) name a role by `key`; the box takes its name and one-line definition from `roles.json`, shows `does` (that stage's duty) on hover, and links to `roles.html#role-<key>`. `role` and `short` on a box override the name and line. A row with `split` holds one arrow per column; a box with `ghost: true` keeps a column empty.
+
 ### Project stories (`data/stories/<slug>.md`)
 
 Each project page shows a blog-style story, plus links to sub-projects if it has any.

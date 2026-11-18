@@ -1,0 +1,1126 @@
+[
+  {
+    "key": "cxo",
+    "name": "CXO Executives",
+    "short": "Sets strategy, approves budgets",
+    "about": "Senior management. Sets the annual strategy, approves major budgets and defines company KPIs.",
+    "uses": [
+      {
+        "side": "Traditional development",
+        "items": [
+          {
+            "stage": "① Planning and requirements",
+            "duty": "Annual strategy, major budgets, company KPIs"
+          }
+        ]
+      },
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "① Business planning",
+            "duty": "AI strategy, budget approval, KPIs"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "itc",
+    "name": "ITC IT Committee",
+    "short": "Approves IT projects and budgets",
+    "about": "IT committee. Approves IT projects and major budgets.",
+    "uses": [
+      {
+        "side": "Traditional development",
+        "items": [
+          {
+            "stage": "IT governance",
+            "duty": "Approves projects and major budgets"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "aic",
+    "name": "AIC AI Management Committee",
+    "short": "Approves AI launches",
+    "about": "AI management committee. The top oversight body for AI; approves medium- and high-risk AI launches.",
+    "uses": [
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "AI governance",
+            "duty": "Approves medium- and high-risk AI launches"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "pmo",
+    "name": "PMO Project Management Office",
+    "short": "Owns process and resources",
+    "about": "Project management office. Sets project management rules, prioritizes across projects and allocates resources.",
+    "uses": [
+      {
+        "side": "Traditional development",
+        "items": [
+          {
+            "stage": "① Planning and requirements",
+            "duty": "Rules, resources, cross-project oversight, templates"
+          }
+        ]
+      },
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "① Business planning",
+            "duty": "Priorities, resources, process"
+          },
+          {
+            "stage": "④ Operations and monitoring",
+            "duty": "Reallocates resources by realization rate"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "po",
+    "name": "PO Product Owner",
+    "short": "Owns product direction",
+    "about": "Product owner. Defines the product roadmap and requirement priorities, and owns the product outcome.",
+    "uses": [
+      {
+        "side": "Traditional development",
+        "items": [
+          {
+            "stage": "① Planning and requirements",
+            "duty": "Product roadmap, requirement priorities"
+          }
+        ]
+      },
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "① Business planning",
+            "duty": "Product roadmap; agrees with BU on acceptable accuracy and the human-AI split"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "bu",
+    "name": "BU Business Unit",
+    "short": "Raises needs, earns the revenue",
+    "about": "Business unit. Raises business pain points and needs; after launch it uses the system and turns it into revenue.",
+    "uses": [
+      {
+        "side": "Traditional development",
+        "items": [
+          {
+            "stage": "① Planning and requirements",
+            "duty": "Raises pain points, turns the system into revenue"
+          },
+          {
+            "stage": "③ Build, test and launch",
+            "duty": "UAT and sign-off"
+          },
+          {
+            "stage": "④ Maintenance",
+            "duty": "Collects feedback, watches results, raises change requests"
+          }
+        ]
+      },
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "① Business planning",
+            "duty": "Scenario and KPIs, business volume, books the benefit"
+          },
+          {
+            "stage": "③ Build and deploy",
+            "duty": "UAT and sign-off"
+          },
+          {
+            "stage": "③ Build and deploy",
+            "duty": "Pilot users try it and report issues"
+          },
+          {
+            "stage": "④ Operations and monitoring",
+            "duty": "Drives adoption, reports results"
+          }
+        ]
+      },
+      {
+        "side": "Outsourced: traditional",
+        "items": [
+          {
+            "stage": "Requirements and procurement",
+            "duty": "Raises the requirement"
+          }
+        ]
+      },
+      {
+        "side": "Outsourced: AI",
+        "items": [
+          {
+            "stage": "Requirements and procurement",
+            "duty": "Scenario, business volume"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "ba",
+    "name": "BA Business Analyst",
+    "short": "Turns needs into specs",
+    "about": "Business analyst. Turns business needs into workable processes and specs. In AI projects, also defines the AI's limits, acceptance criteria and test questions, and builds the cost-benefit baseline.",
+    "uses": [
+      {
+        "side": "Traditional development",
+        "items": [
+          {
+            "stage": "① Planning and requirements",
+            "duty": "Turns needs into processes and user stories"
+          }
+        ]
+      },
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "① Business planning",
+            "duty": "Turns needs into AI tasks, limits and acceptance criteria; builds the cost-benefit baseline"
+          },
+          {
+            "stage": "③ Build and deploy",
+            "duty": "Compares pilot results with the baseline"
+          },
+          {
+            "stage": "④ Operations and monitoring",
+            "duty": "Error analysis; actual ÷ baseline = realization rate"
+          }
+        ]
+      },
+      {
+        "side": "Outsourced: traditional",
+        "items": [
+          {
+            "stage": "Requirements and procurement",
+            "duty": "Requirements spec"
+          }
+        ]
+      },
+      {
+        "side": "Outsourced: AI",
+        "items": [
+          {
+            "stage": "Requirements and procurement",
+            "duty": "Acceptance criteria and test questions"
+          },
+          {
+            "stage": "Maintenance",
+            "duty": "Tracks the realization rate"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "ux",
+    "name": "UX User Experience",
+    "short": "Designs the user experience",
+    "about": "User experience. Researches users and designs screens, interactions or conversation flows.",
+    "uses": [
+      {
+        "side": "Traditional development",
+        "items": [
+          {
+            "stage": "① Planning and requirements",
+            "duty": "User research, screens and interactions"
+          }
+        ]
+      },
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "① Business planning",
+            "duty": "User research, conversation flow, handoff to a person, usability tests"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "pm",
+    "name": "PM Project Manager",
+    "short": "Owns schedule and scope",
+    "about": "Project manager. Owns the schedule and scope, coordinates teams and vendors, and runs acceptance.",
+    "uses": [
+      {
+        "side": "Traditional development",
+        "items": [
+          {
+            "stage": "② Design",
+            "duty": "Schedule, scope, cross-team coordination"
+          }
+        ]
+      },
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "① Business planning",
+            "duty": "Schedule, scope, cross-team coordination, vendor contact"
+          },
+          {
+            "stage": "③ Build and deploy",
+            "duty": "Schedule, acceptance, contact for vendors and units"
+          }
+        ]
+      },
+      {
+        "side": "Outsourced: traditional",
+        "items": [
+          {
+            "stage": "Requirements and procurement",
+            "duty": "Writes the RFP, manages the vendor's schedule and acceptance"
+          },
+          {
+            "stage": "Vendor build",
+            "duty": "Contact for the bank's PM"
+          }
+        ]
+      },
+      {
+        "side": "Outsourced: AI",
+        "items": [
+          {
+            "stage": "Requirements and procurement",
+            "duty": "RFP: features plus model, data and compute requirements"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "tpm",
+    "name": "TPM Technical PM",
+    "short": "Coordinates technical decisions",
+    "about": "Technical project manager. Coordinates technical decisions across teams, such as the choice of model, platform and architecture.",
+    "uses": [
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "① Business planning",
+            "duty": "Coordinates model, platform and architecture decisions"
+          },
+          {
+            "stage": "③ Build and deploy",
+            "duty": "Coordinates build, platform and deployment decisions"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "it",
+    "name": "IT IT Liaison",
+    "short": "Coordinates in-house IT resources",
+    "about": "The IT department's project contact. Represents IT in the project, coordinates in-house resources (applications, infrastructure, databases, security) and fits the work into IT's schedule.",
+    "uses": [
+      {
+        "side": "Traditional development",
+        "items": [
+          {
+            "stage": "② Design",
+            "duty": "Represents IT; coordinates architecture, databases and environments"
+          }
+        ]
+      },
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "① Business planning",
+            "duty": "Represents IT; assesses in-house systems, environments and resources"
+          },
+          {
+            "stage": "③ Build and deploy",
+            "duty": "Coordinates integration, environments and the release schedule"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "sa",
+    "name": "SA Systems Analyst",
+    "short": "System architecture and specs",
+    "about": "Systems analyst. Designs the system architecture and specs, and defines data flows and APIs.",
+    "uses": [
+      {
+        "side": "Traditional development",
+        "items": [
+          {
+            "stage": "② Design",
+            "duty": "System architecture, specs, data flow"
+          }
+        ]
+      },
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "① Business planning",
+            "duty": "Feasibility, cloud or on-prem, prototype"
+          },
+          {
+            "stage": "③ Build and deploy",
+            "duty": "System spec, APIs, data flow"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "ea",
+    "name": "EA Enterprise Architecture",
+    "short": "Reviews architecture standards",
+    "about": "Enterprise architecture. Checks that a new system meets the bank's architecture and technology standards.",
+    "uses": [
+      {
+        "side": "Traditional development",
+        "items": [
+          {
+            "stage": "② Design",
+            "duty": "Checks the bank's architecture and technology standards"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "dba",
+    "name": "DBA Database Administrator",
+    "short": "Designs the database",
+    "about": "Database administrator. Designs and maintains databases.",
+    "uses": [
+      {
+        "side": "Traditional development",
+        "items": [
+          {
+            "stage": "② Design",
+            "duty": "Tables and database design"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "de",
+    "name": "DE Data Engineer",
+    "short": "Prepares and labels data",
+    "about": "Data engineer. Prepares the data AI needs: sources, cleaning and labeling.",
+    "uses": [
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "② Model tuning",
+            "duty": "Data sources, cleaning, labeling"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "ds",
+    "name": "DS Data Scientist",
+    "short": "Model experiments and analysis",
+    "about": "Data scientist. Designs features, runs model experiments and analyzes results.",
+    "uses": [
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "② Model tuning",
+            "duty": "Features, model experiments, analysis"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "mle",
+    "name": "MLE Machine Learning Engineer",
+    "short": "Tunes the model",
+    "about": "Machine learning engineer. Tunes the model: prompts, RAG, model choice and fine-tuning.",
+    "uses": [
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "② Model tuning",
+            "duty": "Prompts, RAG, model choice, fine-tuning"
+          }
+        ]
+      },
+      {
+        "side": "Outsourced: AI",
+        "items": [
+          {
+            "stage": "Vendor build",
+            "duty": "Models, RAG, AI platform"
+          },
+          {
+            "stage": "Maintenance",
+            "duty": "Re-tests after each model update, written into the contract"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "sde",
+    "name": "SDE Software Engineer",
+    "short": "Code and unit tests",
+    "about": "Software engineer. Builds features to the spec and writes unit tests; in banks, often a vendor's engineer.",
+    "uses": [
+      {
+        "side": "Traditional development",
+        "items": [
+          {
+            "stage": "③ Build, test and launch",
+            "duty": "Front-end and back-end code, unit tests"
+          }
+        ]
+      },
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "③ Build and deploy",
+            "duty": "Builds features and unit tests; often outsourced"
+          }
+        ]
+      },
+      {
+        "side": "Outsourced: traditional",
+        "items": [
+          {
+            "stage": "Vendor build",
+            "duty": "Builds to the spec"
+          }
+        ]
+      },
+      {
+        "side": "Outsourced: AI",
+        "items": [
+          {
+            "stage": "Vendor build",
+            "duty": "Applications and system integration"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "fde",
+    "name": "FDE Forward-Deployed Engineer",
+    "short": "Embedded on site to roll out AI",
+    "about": "Forward-deployed engineer. Works inside the business unit, wires AI into the real workflow and keeps adjusting it on site after launch.",
+    "uses": [
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "③ Build and deploy",
+            "duty": "Embedded with the business, wires AI into the workflow and adjusts on site"
+          },
+          {
+            "stage": "④ Operations and monitoring",
+            "duty": "Collects issues on site, adjusts flow and prompts"
+          }
+        ]
+      },
+      {
+        "side": "Outsourced: AI",
+        "items": [
+          {
+            "stage": "Vendor build",
+            "duty": "Embedded at the bank, wires AI into the workflow"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "ap",
+    "name": "AP Application Owner",
+    "short": "Owns in-house systems",
+    "about": "Application owner. Owns the bank's core systems and APIs; new systems connect to them, and this unit takes over maintenance after launch.",
+    "uses": [
+      {
+        "side": "Traditional development",
+        "items": [
+          {
+            "stage": "③ Build, test and launch",
+            "duty": "Connects to core systems, interface specs"
+          },
+          {
+            "stage": "④ Maintenance",
+            "duty": "Takes over maintenance, small changes"
+          }
+        ]
+      },
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "③ Build and deploy",
+            "duty": "Connects core systems and APIs"
+          },
+          {
+            "stage": "④ Operations and monitoring",
+            "duty": "Takes over maintenance"
+          }
+        ]
+      },
+      {
+        "side": "Outsourced: traditional",
+        "items": [
+          {
+            "stage": "Deploy in-house",
+            "duty": "Connects core systems, acceptance"
+          },
+          {
+            "stage": "Maintenance",
+            "duty": "Takes over maintenance"
+          }
+        ]
+      },
+      {
+        "side": "Outsourced: AI",
+        "items": [
+          {
+            "stage": "Deploy in-house",
+            "duty": "Connects core systems"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "infra",
+    "name": "Infra Infrastructure",
+    "short": "Servers, network and compute",
+    "about": "Infrastructure. Provides servers, network, production and test environments; for AI projects, GPU compute as well.",
+    "uses": [
+      {
+        "side": "Traditional development",
+        "items": [
+          {
+            "stage": "③ Build, test and launch",
+            "duty": "Servers, network, production and test environments"
+          }
+        ]
+      },
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "① Business planning",
+            "duty": "Compute estimate; GPUs take months"
+          },
+          {
+            "stage": "③ Build and deploy",
+            "duty": "GPUs, network, production and test environments"
+          }
+        ]
+      },
+      {
+        "side": "Outsourced: traditional",
+        "items": [
+          {
+            "stage": "Deploy in-house",
+            "duty": "In-house servers and environments"
+          }
+        ]
+      },
+      {
+        "side": "Outsourced: AI",
+        "items": [
+          {
+            "stage": "Deploy in-house",
+            "duty": "GPUs or a hybrid cloud environment"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "qa",
+    "name": "QA Testing",
+    "short": "Testing and verification",
+    "about": "Testing team. Writes test cases and runs system and integration tests. In AI projects, also measures answer accuracy and consistency with an evaluation set.",
+    "uses": [
+      {
+        "side": "Traditional development",
+        "items": [
+          {
+            "stage": "③ Build, test and launch",
+            "duty": "Test cases, system and integration tests"
+          }
+        ]
+      },
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "② Model tuning",
+            "duty": "Eval set: accuracy, consistency, reasons"
+          },
+          {
+            "stage": "③ Build and deploy",
+            "duty": "Integration tests; rerun the eval set on every change"
+          }
+        ]
+      },
+      {
+        "side": "Outsourced: traditional",
+        "items": [
+          {
+            "stage": "Vendor build",
+            "duty": "System tests"
+          }
+        ]
+      },
+      {
+        "side": "Outsourced: AI",
+        "items": [
+          {
+            "stage": "Deploy in-house",
+            "duty": "Acceptance with the bank's own test questions"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "mlops",
+    "name": "MLOps Model Operations",
+    "short": "Model versions and monitoring",
+    "about": "Model operations. Manages model and prompt versions, and monitors answer quality, model drift and cost.",
+    "uses": [
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "③ Build and deploy",
+            "duty": "CI/CD, model and prompt versions"
+          },
+          {
+            "stage": "④ Operations and monitoring",
+            "duty": "Answer quality, drift, token cost"
+          }
+        ]
+      },
+      {
+        "side": "Outsourced: AI",
+        "items": [
+          {
+            "stage": "Maintenance",
+            "duty": "Quality, drift and cost monitoring"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "ops",
+    "name": "Ops Operations",
+    "short": "Deployment and operations",
+    "about": "Operations team. Deploys systems to production and handles monitoring, backups and incidents.",
+    "uses": [
+      {
+        "side": "Traditional development",
+        "items": [
+          {
+            "stage": "③ Build, test and launch",
+            "duty": "Deploys to production"
+          },
+          {
+            "stage": "④ Maintenance",
+            "duty": "Monitoring, backups, incidents"
+          }
+        ]
+      },
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "③ Build and deploy",
+            "duty": "Deploys to production"
+          },
+          {
+            "stage": "④ Operations and monitoring",
+            "duty": "System monitoring, backups, incidents"
+          }
+        ]
+      },
+      {
+        "side": "Outsourced: traditional",
+        "items": [
+          {
+            "stage": "Maintenance",
+            "duty": "Monitoring, backups, first-line support"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "cab",
+    "name": "CAB Change Advisory Board",
+    "short": "Approves production changes",
+    "about": "Change advisory board. Approves changes to production and their timing.",
+    "uses": [
+      {
+        "side": "Traditional development",
+        "items": [
+          {
+            "stage": "③ Build, test and launch",
+            "duty": "Approves production changes and timing"
+          }
+        ]
+      },
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "③ Build and deploy",
+            "duty": "Approves production changes, models and prompts included"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "sd",
+    "name": "SD Service Desk",
+    "short": "Handles user issues",
+    "about": "Service desk. Takes user issues and passes them to the team responsible.",
+    "uses": [
+      {
+        "side": "Traditional development",
+        "items": [
+          {
+            "stage": "④ Maintenance",
+            "duty": "Takes user issues and passes them to AP"
+          }
+        ]
+      },
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "④ Operations and monitoring",
+            "duty": "Handles user issues"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "eu",
+    "name": "EU End User",
+    "short": "Customers using the system",
+    "about": "End user. The customer who actually uses the system.",
+    "uses": [
+      {
+        "side": "Traditional development",
+        "items": [
+          {
+            "stage": "④ Maintenance",
+            "duty": "Uses the system, gives feedback, generates revenue"
+          }
+        ]
+      },
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "④ Operations and monitoring",
+            "duty": "Customers: use and feedback"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "op",
+    "name": "OP Frontline Staff",
+    "short": "Staff working with AI",
+    "about": "Frontline staff. Employees who work with AI, such as underwriters and call-center agents, and confirm its output.",
+    "uses": [
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "④ Operations and monitoring",
+            "duty": "Underwriters and agents work with AI and confirm each case"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "iso",
+    "name": "ISO Information Security",
+    "short": "Guards information security",
+    "about": "Information security. Owns data classification, access control and attack protection, from design to launch.",
+    "uses": [
+      {
+        "side": "Traditional development",
+        "items": [
+          {
+            "stage": "② Design",
+            "duty": "Security requirements, threat analysis"
+          },
+          {
+            "stage": "③ Build, test and launch",
+            "duty": "Vulnerability scans, penetration tests"
+          }
+        ]
+      },
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "① Business planning",
+            "duty": "Data classification, what may go to the cloud"
+          },
+          {
+            "stage": "② Model tuning",
+            "duty": "Red team: attacks, data leaks, guardrails"
+          },
+          {
+            "stage": "③ Build and deploy",
+            "duty": "Penetration test, data isolation"
+          }
+        ]
+      },
+      {
+        "side": "Outsourced: traditional",
+        "items": [
+          {
+            "stage": "Deploy in-house",
+            "duty": "Vulnerability scans, penetration tests"
+          }
+        ]
+      },
+      {
+        "side": "Outsourced: AI",
+        "items": [
+          {
+            "stage": "Deploy in-house",
+            "duty": "Red team, data isolation"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "cco",
+    "name": "CCO Compliance",
+    "short": "Rules and red lines",
+    "about": "Compliance. Confirms the project follows regulations and sets the red lines.",
+    "uses": [
+      {
+        "side": "Traditional development",
+        "items": [
+          {
+            "stage": "IT governance",
+            "duty": "Contracts, data protection and outsourcing rules"
+          }
+        ]
+      },
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "① Business planning",
+            "duty": "Applicable rules, red lines"
+          }
+        ]
+      },
+      {
+        "side": "Outsourced: AI",
+        "items": [
+          {
+            "stage": "Requirements and procurement",
+            "duty": "Outsourcing and cloud-data review"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "cro",
+    "name": "CRO Risk",
+    "short": "Assesses and rates risk",
+    "about": "Risk management. Assesses and rates project risk, and keeps monitoring it after launch.",
+    "uses": [
+      {
+        "side": "Traditional development",
+        "items": [
+          {
+            "stage": "IT governance",
+            "duty": "Risk assessment of new systems"
+          }
+        ]
+      },
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "① Business planning",
+            "duty": "Risk rating"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "mrm",
+    "name": "MRM Model Risk Management",
+    "short": "Validates models independently",
+    "about": "Model risk management. Part of the second line; validates models independently of the team that built them: whether they can be used, and their limits.",
+    "uses": [
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "AI governance",
+            "duty": "Second line: validates models independently"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "wg",
+    "name": "WG AI Working Group",
+    "short": "Inventories and reviews AI",
+    "about": "AI working group. Keeps the inventory of the bank's AI, confirms risk ratings and does the first review of pre-launch checks.",
+    "uses": [
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "AI governance",
+            "duty": "Inventories AI, rates risk, first review"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "ia",
+    "name": "IA Internal Audit",
+    "short": "Third-line audit",
+    "about": "Internal audit. The third line; independently checks that the process followed the rules.",
+    "uses": [
+      {
+        "side": "Traditional development",
+        "items": [
+          {
+            "stage": "IT governance",
+            "duty": "Third line: periodic audit"
+          }
+        ]
+      },
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "AI governance",
+            "duty": "Third line: independent review"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "pr",
+    "name": "PR Procurement",
+    "short": "Bids and contracts",
+    "about": "Procurement. Runs bids, negotiation and contracts.",
+    "uses": [
+      {
+        "side": "Outsourced: traditional",
+        "items": [
+          {
+            "stage": "Requirements and procurement",
+            "duty": "Bids, negotiation, contract"
+          }
+        ]
+      },
+      {
+        "side": "Outsourced: AI",
+        "items": [
+          {
+            "stage": "Requirements and procurement",
+            "duty": "PoC first, then bids and contract"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "csp",
+    "name": "CSP Cloud Provider",
+    "short": "Cloud models and compute",
+    "about": "Cloud service provider. Provides cloud models and compute.",
+    "uses": [
+      {
+        "side": "Outsourced: AI",
+        "items": [
+          {
+            "stage": "Vendor build",
+            "duty": "Cloud models and compute"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "ma",
+    "name": "MA Vendor Maintenance",
+    "short": "Warranty and maintenance contract",
+    "about": "Vendor maintenance. Fixes issues during the warranty period and provides maintenance under contract.",
+    "uses": [
+      {
+        "side": "Outsourced: traditional",
+        "items": [
+          {
+            "stage": "Maintenance",
+            "duty": "Fixes during warranty; maintenance contract"
+          }
+        ]
+      }
+    ]
+  }
+]

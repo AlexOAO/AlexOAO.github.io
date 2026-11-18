@@ -3,7 +3,7 @@
     {
       "boxes": [
         {
-          "role": "CXO Executives",
+          "key": "cxo",
           "does": "AI strategy, budget approval, KPIs"
         }
       ]
@@ -14,11 +14,11 @@
     {
       "boxes": [
         {
-          "role": "PMO Project Management Office",
+          "key": "pmo",
           "does": "Priorities, resources, process"
         },
         {
-          "role": "PO Product Owner",
+          "key": "po",
           "does": "Product roadmap; agrees with BU on acceptable accuracy and the human-AI split"
         }
       ]
@@ -29,27 +29,29 @@
     {
       "boxes": [
         {
-          "role": "BU Business Unit",
+          "key": "bu",
           "does": "Scenario and KPIs, business volume, books the benefit"
         },
         {
-          "role": "BA AI Business Analyst",
+          "key": "ba",
           "does": "Turns needs into AI tasks, limits and acceptance criteria; builds the cost-benefit baseline",
-          "tag": "me"
+          "tag": "me",
+          "role": "BA AI Business Analyst",
+          "short": "Turns needs into AI tasks"
         },
         {
-          "role": "UX User Experience",
+          "key": "ux",
           "does": "User research, conversation flow, handoff to a person"
         }
       ],
       "links": [
         [
-          "Scenario, volume →",
-          "← Limits, value"
+          "Scenario →",
+          "← Limits"
         ],
         [
-          "Product needs →",
-          "← Better experience"
+          "Specs →",
+          "← UX"
         ]
       ]
     },
@@ -59,42 +61,60 @@
     {
       "boxes": [
         {
-          "role": "PM Project Manager",
+          "key": "pm",
           "does": "Schedule, scope, cross-team coordination, vendor contact",
           "tag": "me"
         },
         {
-          "role": "TPM Technical PM",
+          "key": "tpm",
           "does": "Coordinates model, platform and architecture decisions"
+        },
+        {
+          "key": "it",
+          "does": "Represents IT; assesses in-house systems, environments and resources"
         }
       ]
     },
     {
-      "arrow": "Assigns work, sets boundaries"
+      "split": [
+        "",
+        "Technical plan",
+        "In-house resources"
+      ]
     },
     {
       "boxes": [
         {
-          "role": "SA Systems Analyst",
+          "ghost": true
+        },
+        {
+          "key": "sa",
           "does": "Feasibility, cloud or on-prem, prototype",
           "tag": "me"
         },
         {
-          "role": "Infra Infrastructure",
+          "key": "infra",
           "does": "Compute estimate; GPUs take months"
-        },
+        }
+      ]
+    },
+    {
+      "arrow": "Feasibility, architecture and resource plan"
+    },
+    {
+      "boxes": [
         {
-          "role": "ISO Information Security",
+          "key": "iso",
           "does": "Data classification, what may go to the cloud",
           "tag": "gate"
         },
         {
-          "role": "CCO Compliance",
+          "key": "cco",
           "does": "Applicable rules, red lines",
           "tag": "gate"
         },
         {
-          "role": "CRO Risk",
+          "key": "cro",
           "does": "Risk rating",
           "tag": "gate"
         }
@@ -108,16 +128,18 @@
     {
       "boxes": [
         {
-          "role": "BU Business Unit",
+          "key": "bu",
           "does": "Real cases and model answers"
         },
         {
-          "role": "BA AI Business Analyst",
+          "key": "ba",
           "does": "Writes the rules as test questions",
-          "tag": "me"
+          "tag": "me",
+          "role": "BA AI Business Analyst",
+          "short": "Turns needs into AI tasks"
         },
         {
-          "role": "CCO Compliance",
+          "key": "cco",
           "does": "Rules and red lines",
           "tag": "gate"
         }
@@ -129,17 +151,17 @@
     {
       "boxes": [
         {
-          "role": "DE Data Engineer",
+          "key": "de",
           "does": "Data sources, cleaning, labeling",
           "tag": "ai"
         },
         {
-          "role": "DS Data Scientist",
+          "key": "ds",
           "does": "Features, model experiments, analysis",
           "tag": "ai"
         },
         {
-          "role": "MLE Machine Learning Engineer",
+          "key": "mle",
           "does": "Prompts, RAG, model choice, fine-tuning",
           "tag": "ai"
         }
@@ -151,17 +173,19 @@
     {
       "boxes": [
         {
-          "role": "QA AI Evaluation",
+          "key": "qa",
           "does": "Eval set: accuracy, consistency, reasons",
-          "tag": "ai"
+          "tag": "ai",
+          "role": "QA AI Evaluation",
+          "short": "Evaluates AI answers"
         },
         {
-          "role": "ISO Information Security",
+          "key": "iso",
           "does": "Red team: attacks, data leaks, guardrails",
           "tag": "gate"
         },
         {
-          "role": "TPM Technical PM",
+          "key": "tpm",
           "does": "Coordinates decisions, tracks each round"
         }
       ]
@@ -173,12 +197,12 @@
     {
       "boxes": [
         {
-          "role": "MRM Model Risk Management",
+          "key": "mrm",
           "does": "Validates the model independently",
           "tag": "gate"
         },
         {
-          "role": "WG AI Working Group",
+          "key": "wg",
           "does": "Confirms the bar is passed",
           "tag": "gate"
         }
@@ -192,25 +216,42 @@
     {
       "boxes": [
         {
-          "role": "PM Project Manager",
+          "key": "pm",
           "does": "Schedule, acceptance, contact for vendors and units",
           "tag": "me"
         },
         {
-          "role": "PR Procurement",
-          "does": "RFP, bids, contract; for AI, test in a PoC first"
+          "key": "tpm",
+          "does": "Coordinates build, platform and deployment decisions"
+        },
+        {
+          "key": "it",
+          "does": "Coordinates integration, environments and the release schedule"
         }
       ]
     },
     {
-      "arrow": "Assigns work, sets boundaries"
+      "split": [
+        "Assigns work",
+        "Specs and architecture",
+        "In-house resources"
+      ]
     },
     {
       "boxes": [
         {
-          "role": "SA Systems Analyst",
+          "key": "fde",
+          "does": "Embedded with the business, wires AI into the workflow",
+          "tag": "ai"
+        },
+        {
+          "key": "sa",
           "does": "System spec, APIs, data flow",
           "tag": "me"
+        },
+        {
+          "key": "ap",
+          "does": "Connects core systems and APIs"
         }
       ]
     },
@@ -220,31 +261,18 @@
     {
       "boxes": [
         {
-          "role": "SDE Software Engineer",
+          "key": "sde",
           "does": "Builds features and unit tests; often outsourced",
           "tag": "ai"
         },
         {
-          "role": "FDE Forward-Deployed Engineer",
-          "does": "Embedded with the business, wires AI into the workflow",
-          "tag": "ai"
-        },
-        {
-          "role": "AP Application Owner",
-          "does": "Connects core systems and APIs"
-        }
-      ]
-    },
-    {
-      "boxes": [
-        {
-          "role": "Infra Infrastructure",
-          "does": "GPUs, network, production and test environments"
-        },
-        {
-          "role": "MLOps Model Operations",
+          "key": "mlops",
           "does": "CI/CD, model and prompt versions",
           "tag": "ai"
+        },
+        {
+          "key": "infra",
+          "does": "GPUs, network, production and test environments"
         }
       ]
     },
@@ -254,16 +282,16 @@
     {
       "boxes": [
         {
-          "role": "QA Testing",
+          "key": "qa",
           "does": "Integration tests; rerun the eval set on every change"
         },
         {
-          "role": "ISO Information Security",
+          "key": "iso",
           "does": "Penetration test, data isolation",
           "tag": "gate"
         },
         {
-          "role": "BU Business Unit",
+          "key": "bu",
           "does": "UAT and sign-off"
         }
       ]
@@ -274,12 +302,12 @@
     {
       "boxes": [
         {
-          "role": "CAB Change Advisory Board",
+          "key": "cab",
           "does": "Approves production changes, models and prompts included",
           "tag": "gate"
         },
         {
-          "role": "Ops Operations",
+          "key": "ops",
           "does": "Deploys to production"
         }
       ]
@@ -290,13 +318,15 @@
     {
       "boxes": [
         {
-          "role": "BU Business Unit",
+          "key": "bu",
           "does": "Pilot users try it and report issues"
         },
         {
-          "role": "BA AI Business Analyst",
+          "key": "ba",
           "does": "Compares pilot results with the baseline",
-          "tag": "me"
+          "tag": "me",
+          "role": "BA AI Business Analyst",
+          "short": "Turns needs into AI tasks"
         }
       ]
     },
@@ -308,11 +338,11 @@
     {
       "boxes": [
         {
-          "role": "EU End User",
+          "key": "eu",
           "does": "Customers: use and feedback"
         },
         {
-          "role": "OP Frontline Staff",
+          "key": "op",
           "does": "Underwriters and agents work with AI and confirm each case"
         }
       ]
@@ -323,12 +353,12 @@
     {
       "boxes": [
         {
-          "role": "MLOps Model Operations",
+          "key": "mlops",
           "does": "Answer quality, drift, token cost",
           "tag": "ai"
         },
         {
-          "role": "FDE Forward-Deployed Engineer",
+          "key": "fde",
           "does": "Collects issues on site, adjusts flow and prompts",
           "tag": "ai"
         }
@@ -337,15 +367,15 @@
     {
       "boxes": [
         {
-          "role": "Ops Operations",
+          "key": "ops",
           "does": "Monitoring, backups, incidents"
         },
         {
-          "role": "AP Application Owner",
+          "key": "ap",
           "does": "Takes over maintenance"
         },
         {
-          "role": "SD Service Desk",
+          "key": "sd",
           "does": "Handles user issues"
         }
       ]
@@ -357,12 +387,14 @@
     {
       "boxes": [
         {
-          "role": "BA AI Business Analyst",
+          "key": "ba",
           "does": "Error analysis; actual ÷ baseline = realization rate",
-          "tag": "me"
+          "tag": "me",
+          "role": "BA AI Business Analyst",
+          "short": "Turns needs into AI tasks"
         },
         {
-          "role": "BU Business Unit",
+          "key": "bu",
           "does": "Drives adoption, reports results"
         }
       ]
@@ -373,11 +405,11 @@
     {
       "boxes": [
         {
-          "role": "PMO Project Management Office",
+          "key": "pmo",
           "does": "Reallocates resources by realization rate"
         },
         {
-          "role": "CXO Executives",
+          "key": "cxo",
           "does": "Reassigns budget"
         }
       ]
@@ -391,12 +423,12 @@
     {
       "boxes": [
         {
-          "role": "AIC AI Management Committee",
+          "key": "aic",
           "does": "Approves medium- and high-risk AI",
           "tag": "gate"
         },
         {
-          "role": "MRM Model Risk Management",
+          "key": "mrm",
           "does": "Second line: validates models independently",
           "tag": "gate"
         }
@@ -408,7 +440,7 @@
     {
       "boxes": [
         {
-          "role": "WG AI Working Group",
+          "key": "wg",
           "does": "Inventories AI, rates risk, first review",
           "tag": "gate"
         }
@@ -420,26 +452,26 @@
     {
       "boxes": [
         {
-          "role": "BU Business Unit",
+          "key": "bu",
           "does": "First line: risk assessment, writes the rules"
         },
         {
-          "role": "ISO Information Security",
+          "key": "iso",
           "does": "Second line: data protection, red team",
           "tag": "gate"
         },
         {
-          "role": "CCO Compliance",
+          "key": "cco",
           "does": "Second line: rules and red lines",
           "tag": "gate"
         },
         {
-          "role": "CRO Risk",
+          "key": "cro",
           "does": "Second line: risk rating and monitoring",
           "tag": "gate"
         },
         {
-          "role": "IA Internal Audit",
+          "key": "ia",
           "does": "Third line: independent review",
           "tag": "gate"
         }
@@ -451,12 +483,14 @@
     {
       "boxes": [
         {
-          "role": "BA AI Business Analyst",
+          "key": "ba",
           "does": "Turns rules into test questions",
-          "tag": "me"
+          "tag": "me",
+          "role": "BA AI Business Analyst",
+          "short": "Turns needs into AI tasks"
         },
         {
-          "role": "SA Systems Analyst",
+          "key": "sa",
           "does": "Turns rules into system controls",
           "tag": "me"
         }

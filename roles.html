@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
+  <title>AI 專案的角色說明 | Alex Li (李翔緯)</title>
+  <meta name="description" content="Roles in a bank's IT and AI projects, by Alex Li (李翔緯): what each role does in traditional development, in AI development, and when the work is outsourced.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/post.css?v=20261118i">
+  <style>
+    .post-nav { display: flex; justify-content: space-between; align-items: center; }
+    .lang-toggle {
+      font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--text);
+      background: rgba(30,41,59,0.6); border: 1px solid var(--line); border-radius: 20px; padding: 0.35rem 0.9rem; cursor: pointer;
+    }
+    .lead { font-size: 1.1rem; color: var(--muted); line-height: 1.8; margin-top: 1rem; }
+    .role-index { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 1.5rem; }
+    .role-index a { font-size: 0.78rem; padding: 0.2rem 0.6rem; border-radius: 20px; border: 1px solid var(--line); color: var(--muted); text-decoration: none; }
+    .role-index a:hover { color: var(--text); border-color: #60a5fa; }
+    .role-entry .short { color: var(--accent-2); font-size: 0.9rem; margin-bottom: 0.4rem; }
+    .error { color: #f59e0b; }
+  </style>
+</head>
+<body>
+  <nav class="post-nav">
+    <a href="posts/traditional-vs-ai-development.html#diagrams" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      <span id="backText">回到分工圖</span>
+    </a>
+    <button class="lang-toggle" id="langToggle" aria-label="Switch language">EN</button>
+  </nav>
+
+  <article class="post">
+    <header class="post-header">
+      <h1 id="title">AI 專案的角色說明</h1>
+      <p class="lead" id="lead"></p>
+      <nav class="role-index" id="index" aria-label="Roles"></nav>
+    </header>
+    <div class="post-body" id="roles"><p class="lead">Loading...</p></div>
+  </article>
+
+  <script src="assets/js/common.js?v=20261118i"></script>
+  <script>
+    const { esc, dataPath, getJSON } = Site;
+    const I18N = {
+      en: {
+        title: 'Roles in AI projects', back: 'Back to the role charts', toggle: '中文',
+        lead: 'What each role does in a bank project: in traditional development, in AI development, and when the work is outsourced. The boxes in the role charts link here.',
+        loadError: 'Content failed to load. A network filter may block this site.',
+      },
+      zh: {
+        title: 'AI 專案的角色說明', back: '回到分工圖', toggle: 'EN',
+        lead: '銀行專案裡每個角色負責什麼：在傳統開發、AI 開發，以及委外的時候。分工圖上的方框都會連到這裡。',
+        loadError: '內容載入失敗。可能是網路過濾設備封鎖了本站。',
+      },
+    };
+    const T = k => I18N[Site.getLang()][k];
+
+    function render() {
+      document.documentElement.lang = Site.getLang() === 'en' ? 'en' : 'zh-Hant';
+      document.title = `${T('title')} | Alex Li (李翔緯)`;
+      ['title', 'lead'].forEach(id => { document.getElementById(id).textContent = T(id); });
+      document.getElementById('backText').textContent = T('back');
+      document.getElementById('langToggle').textContent = T('toggle');
+      getJSON(dataPath('roles.json')).then(roles => {
+        document.getElementById('index').innerHTML = roles.map(r => `<a href="#role-${esc(r.key)}">${esc(r.name)}</a>`).join('');
+        document.getElementById('roles').innerHTML = roles.map(r => `
+          <div class="role-entry" id="role-${esc(r.key)}">
+            <h3>${esc(r.name)}</h3>
+            <p class="short">${esc(r.short)}</p>
+            <p>${esc(r.about)}</p>
+            <ul>${r.uses.map(u => `<li><strong>${esc(u.side)}</strong><br>${u.items.map(i => `${i.stage ? `${esc(i.stage)}${Site.getLang() === 'en' ? ': ' : '：'}` : ''}${esc(i.duty)}`).join('<br>')}</li>`).join('')}</ul>
+          </div>`).join('');
+        // The entries arrive after load, so jump to the role in the address bar ourselves.
+        const target = location.hash && document.getElementById(location.hash.slice(1));
+        if (target) target.scrollIntoView({ block: 'start' });
+      }).catch(() => { document.getElementById('roles').innerHTML = `<p class="error">${esc(T('loadError'))}</p>`; });
+    }
+
+    document.getElementById('langToggle').addEventListener('click', () => { Site.toggleLang(); render(); });
+    render();
+  </script>
+</body>
+</html>

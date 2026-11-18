@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/post.css?v=20261118h">
+  <link rel="stylesheet" href="assets/css/post.css?v=20261118i">
   <style>
     .post-nav { display: flex; justify-content: space-between; align-items: center; }
     .lang-toggle {
@@ -116,7 +116,7 @@
   </article>
   <div class="post-footer"><div class="pager" id="pager"></div></div>
 
-  <script src="assets/js/common.js?v=20261118h"></script>
+  <script src="assets/js/common.js?v=20261118i"></script>
   <script>
     const { esc, dataPath, getJSON, stageNames, stagePills, visibleGroups, STAGE_ORDER, STAGE_COLOR, stageSpan, isGov, QUANT_ORDER, QUANT_COLOR, quantSpan, quantPill } = Site;
     const I18N = {
@@ -179,8 +179,8 @@
       const root = document.getElementById('project');
       const pager = document.getElementById('pager');
 
-      Promise.all([getJSON(dataPath('about.json')), getJSON(dataPath('work.json')), getJSON(dataPath('projects.json')).catch(() => []), getJSON(dataPath('flows.json')).catch(() => ({})), getStory()]).then(([about, raw, repos, flows, story]) => {
-        const view = stageView(about, raw, flows) || workView(about, raw) || quantView(about, repos);
+      Promise.all([getJSON(dataPath('about.json')), getJSON(dataPath('work.json')), getJSON(dataPath('projects.json')).catch(() => []), getJSON(dataPath('flows.json')).catch(() => ({})), getJSON(dataPath('roles.json')).catch(() => []), getStory()]).then(([about, raw, repos, flows, roles, story]) => {
+        const view = stageView(about, raw, flows, Object.fromEntries(roles.map(r => [r.key, r]))) || workView(about, raw) || quantView(about, repos);
         document.getElementById('backLink').href = view ? view.back : 'index.html#experience';
         if (!view) {
           root.innerHTML = `<p class="lead error">${esc(T('notFound'))} <a href="index.html#experience">${esc(T('home'))}</a></p>`;
@@ -222,20 +222,29 @@
     // Role flow for a stage (data/flows.json): rows of role boxes joined by labelled arrows.
     // A row with "links" joins its boxes with two-way labels (links[i] sits between box i and i + 1).
     // Box tags: "vendor" (outsourced), "ai" (a role AI projects add), "gate" (a checkpoint), "me" (where I work).
-    function flowDiagram(rows) {
+    // Boxes name a role ("key" in data/roles.json): the box shows the role and its one-line definition, links to
+    // roles.html, and shows this stage's duty ("does") on hover. "role" / "short" override the name and the line.
+    // A row with "split" holds one arrow per column; a box with "ghost" keeps a column empty.
+    function flowDiagram(rows, roles) {
       if (!(rows || []).length) return '';
+      const box = b => {
+        if (b.ghost) return '<div class="flow-box ghost" aria-hidden="true"></div>';
+        const r = roles[b.key] || {};
+        return `<a class="flow-box ${esc(b.tag || '')}" href="roles.html#role-${esc(b.key)}" title="${esc(b.does || '')}"><b>${esc(b.role || r.name || b.key)}</b><span>${esc(b.short || r.short || '')}</span></a>`;
+      };
       const body = rows.map(r => r.arrow
         ? `<div class="flow-arrow ${esc(r.tag || '')}"><em>${r.tag === 'loop' ? '↺ ' : ''}${esc(r.arrow)}</em></div>`
+        : r.split
+        ? `<div class="flow-split">${r.split.map(t => t ? `<div class="flow-arrow"><em>${esc(t)}</em></div>` : '<div></div>').join('')}</div>`
         : `<div class="flow-row ${r.links ? 'chain' : ''}">${r.boxes.map((b, i) =>
-            (i && r.links ? `<div class="flow-link">${(r.links[i - 1] || []).map(t => `<span>${esc(t)}</span>`).join('')}</div>` : '') +
-            `<div class="flow-box ${esc(b.tag || '')}"><b>${esc(b.role)}</b><span>${esc(b.does)}</span></div>`).join('')}</div>`).join('');
+            (i && r.links ? `<div class="flow-link">${(r.links[i - 1] || []).map(t => `<span>${esc(t)}</span>`).join('')}</div>` : '') + box(b)).join('')}</div>`).join('');
       const legend = [['vendor', '#f9a8d4', 'flowVendor'], ['ai', '#a78bfa', 'flowAi'], ['gate', '#fbbf24', 'flowGate'], ['me', '#34d399', 'flowMe']]
         .filter(([tag]) => rows.some(r => (r.boxes || []).some(b => b.tag === tag)))
         .map(([, c, k]) => `<span><i style="border-color:${c};background:color-mix(in srgb, ${c} 25%, transparent)"></i>${esc(T(k))}</span>`).join('');
-      return `<div class="flow" style="--me-label:'${T('meLabel')}';--vendor-label:'${T('vendorLabel')}'"><p class="flow-title">${esc(T('flowTitle'))}</p>${body}<div class="flow-legend">${legend}</div></div>`;
+      return `<div class="flow compact" style="--me-label:'${T('meLabel')}';--vendor-label:'${T('vendorLabel')}'"><p class="flow-title">${esc(T('flowTitle'))}</p>${body}<div class="flow-legend">${legend}</div></div>`;
     }
 
-    function stageView(about, raw, flows) {
+    function stageView(about, raw, flows, roles) {
       const cfg = about.sdlc || {};
       const names = stageNames(cfg);
       const list = [...(cfg.stages || []).map(st => ({ key: st.key, name: st.name, desc: st.desc })),
@@ -253,7 +262,7 @@
         eyebrow: `AI SDLC · ${gov ? names.gov : T('stageNo').replace('{n}', si + 1)}`, title: st.name, lead: st.desc,
         pills: '', own: '', tags: [], ms: '',
         lc: lcRow(T('stageAt'), STAGE_ORDER, STAGE_COLOR, names, gov ? null : [si, si], gov ? `<div class="lc-gov">${esc(names.gov)}</div>` : ''),
-        parent: null, kids, kidsTitle: T('stageProjects'), stage: true, diagram: flowDiagram((flows || {})[st.key]),
+        parent: null, kids, kidsTitle: T('stageProjects'), stage: true, diagram: flowDiagram((flows || {})[st.key], roles),
       };
     }
 

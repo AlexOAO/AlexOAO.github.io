@@ -229,6 +229,7 @@ p, li { text-wrap: pretty; }
 .flow.compact .flow-link { flex: 0 0 var(--L); max-width: var(--L); font-size: 0.62rem; gap: 0.2rem; }
 .flow.compact .flow-split { display: flex; justify-content: center; gap: var(--L); }
 .flow.compact .flow-split > * { flex: 0 0 var(--W); }
+.flow.compact .flow-box.ghost { visibility: hidden; }
 .post-body a.flow-box { color: inherit; text-decoration: none; transition: border-color 0.2s, transform 0.2s; }
 .post-body a.flow-box:hover { border-color: #60a5fa; transform: translateY(-1px); }
 .post-body a.flow-box:focus-visible { outline: 2px solid #60a5fa; outline-offset: 2px; }
