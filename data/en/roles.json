@@ -92,8 +92,8 @@
   {
     "key": "po",
     "name": "PO Product Owner",
-    "short": "Business contact, roadmap",
-    "about": "Product owner. Defines the product roadmap and requirement priorities, and owns the product outcome. In banks the PO usually comes from the business or digital unit and is the project's business contact, paired with the IT PM on the IT side.",
+    "short": "Priorities and resources",
+    "about": "Product owner. Takes part in prioritizing needs, advises from a strategic view, allocates BA and SA resources and decides key directions. With many projects, a lead PO coordinates several POs.",
     "uses": [
       {
         "side": "Traditional development",
@@ -109,7 +109,7 @@
         "items": [
           {
             "stage": "① Business planning",
-            "duty": "Product roadmap; agrees with BU on acceptable accuracy and the human-AI split"
+            "duty": "Joins prioritization with a strategic view; allocates BA and SA resources"
           }
         ]
       }
@@ -155,7 +155,7 @@
           },
           {
             "stage": "④ Operations and monitoring",
-            "duty": "Drives adoption, reports results"
+            "duty": "Drives adoption, keeps the knowledge base current"
           }
         ]
       },
@@ -182,8 +182,8 @@
   {
     "key": "ba",
     "name": "BA Business Analyst",
-    "short": "Turns needs into specs",
-    "about": "Business analyst. Turns business needs into workable processes and specs. In AI projects, also defines the AI's limits, acceptance criteria and test questions, and builds the cost-benefit baseline.",
+    "short": "Business contact; confirms needs",
+    "about": "Business analyst, the contact for business units. Finds and confirms the business unit's needs and hands them to the SA to assess feasibility; helps the business unit complete AI governance documents and functional tests. In AI projects, also agrees the acceptance bar (number of test questions and accuracy) with the business unit up front, and builds the cost-benefit baseline. The right person has close ties with the business units, for example an existing digital PM moving into the role: technical depth can come later, trust has to come first.",
     "uses": [
       {
         "side": "Traditional development",
@@ -199,7 +199,7 @@
         "items": [
           {
             "stage": "① Business planning",
-            "duty": "Turns needs into AI tasks, limits and acceptance criteria; builds the cost-benefit baseline"
+            "duty": "Finds and confirms needs for the SA to assess; agrees the acceptance bar with BU; builds the cost-benefit baseline"
           },
           {
             "stage": "③ Build and deploy",
@@ -265,7 +265,7 @@
     "key": "pm",
     "name": "PM Project Manager",
     "short": "Owns schedule and scope",
-    "about": "Project manager. Owns the schedule and scope, coordinates teams and vendors, and runs acceptance. The PM may be the business contact (PO) or the IT contact (IT PM), or a third party in between, such as an innovation or AI team.",
+    "about": "Project manager. Owns the schedule and scope, coordinates teams and vendors, and runs acceptance. The PM may be the business contact (BA) or the IT contact (IT PM), or a third party in between, such as an innovation or AI team.",
     "uses": [
       {
         "side": "Traditional development",
@@ -367,8 +367,8 @@
   {
     "key": "sa",
     "name": "SA Systems Analyst",
-    "short": "Architecture and specs",
-    "about": "Systems analyst. Designs the system architecture and specs, and defines data flows and APIs.",
+    "short": "Assesses feasibility, resources",
+    "about": "Systems analyst, working at the application layer. Assesses feasibility and development resources for the scope and assigns the technical team; designs the application architecture and specs (functions, data flows, APIs, integration with core systems) and writes the technical side of the AI governance documents. The infrastructure layer (servers, network, GPUs, environments) belongs to Infra; the SA states the performance, capacity and cloud or on-prem requirements and confirms security and infrastructure compliance.",
     "uses": [
       {
         "side": "Traditional development",
@@ -384,11 +384,11 @@
         "items": [
           {
             "stage": "① Business planning",
-            "duty": "Feasibility, cloud or on-prem, prototype"
+            "duty": "Assesses feasibility and resources, cloud or on-prem; prototype"
           },
           {
             "stage": "③ Build and deploy",
-            "duty": "System spec, APIs, data flow"
+            "duty": "Assigns the technical team; system spec, APIs, data flow"
           }
         ]
       }
@@ -406,6 +406,15 @@
           {
             "stage": "② Design",
             "duty": "Checks the bank's architecture and technology standards"
+          }
+        ]
+      },
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "③ Build and deploy",
+            "duty": "Architecture review (ARB)"
           }
         ]
       }

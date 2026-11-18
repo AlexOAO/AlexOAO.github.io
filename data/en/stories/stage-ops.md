@@ -31,6 +31,8 @@ Deliverables for this phase:
 
 Operational figures feed back into business planning: projects with an excessively low achievement rate require a review of their scope or resources, while those performing well can be expanded. This is the closed loop of the AI SDLC.
 
+Worse answers do not always mean model drift; the content may be out of date. Business units have to keep the knowledge base current, so there needs to be a standard maintenance request process: the business unit raises it with the BA, prepares the material, and it is ranked together with new requests. Count maintenance in that ranking and keep development capacity for it, or new requests will crowd it out.
+
 ## What I did in this stage
 
 - Design metrics for the AI Operations Performance Dashboard, using the same set of metrics to evaluate both internal AI tools and external agents. See [AI Operations Performance Dashboard](project.html?id=ai-ops-dashboard) 。

@@ -29,6 +29,8 @@ Deliverables for this phase:
 
 The common approach involves three lines of defense: the first is the requirements and development units, the second is information security, compliance, and risk management, and the third is auditing. The pre-launch checkpoint is where the three lines of defense converge.
 
+The requesting unit fills in the risk rating, the department head approves it, and the coordinating unit confirms and files it; it is done at planning and before launch, then reviewed every year after launch. Governance documents come in two layers: one for the shared platform, and one for each department's use case, because data, permissions and users differ; N departments on one platform means N+1 documents. The BA helps the business unit write the use-case documents; the SA writes the technical side.
+
 ## What I did in this stage
 
 - Design a pre-launch verification mechanism for AI Agents: A three-tiered verification process aligned with regulatory principles, transforming guidelines into verifiable criteria. See [Agent Online Detection Mechanism](project.html?id=agent-governance) 。

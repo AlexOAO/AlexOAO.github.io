@@ -14,6 +14,14 @@ Traditional system development follows a downward trajectory: the business depar
 
 The division of labor process above, along with the other four stage pages, incorporates these three points into each stage. A full comparison of traditional development and AI development can be found in this article: [Traditional vs. AI Development: How the Team Chart Changes](posts/traditional-vs-ai-development.html) 。
 
+## How to drive it: needs first, top-down
+
+AI often stalls because of how it is pushed, not because of the technology. Three shifts:
+
+- **From pushing a product to needs first.** A standard AI tool pitched to every department rarely fixes their end-to-end processes. Start with four questions instead: scenario, process, pain point, benefit.
+- **From bottom-up to top-down.** Working only with colleagues who want to be more productive never earns the department's formal mandate. Get the department head's support and resources, and put the benefit into the department's goals.
+- **From quick wins to benefit first.** Early on, building up cases is fine; once there are many, rank them by benefit, resources and technical feasibility.
+
 ## What this stage does
 
 Business planning needs to answer one question: **Is this AI worth pursuing, and how should we measure it?** Before writing any code, define the scenario, value, cost, and specifications.
@@ -42,6 +50,15 @@ Deliverables for this phase:
 ## Handoffs and checks
 
 The business unit proposes a scenario, and AIBA and SA turn it into a specification that can be estimated. The IT department estimates the usage, and the business department provides the business volume. Together, they form the cost-benefit benchmark. The risk classification determines how stringent the subsequent verification should be.
+
+Once there are many requests, a show of hands can't decide what to build. Every request gets done; the only question is the order, ranked with one scorecard:
+
+- **Benefit** (BA): people affected, uses per month, hours saved per use, budget saved.
+- **Feasibility** (SA): technology, resources and expected accuracy.
+- **Compliance** (BA and SA): whether security, compliance and AI governance are confirmed.
+- **Cost** (SA): person-days for development and infrastructure.
+
+The PO, BA and SA review the scorecard together on a regular cadence, and the SA schedules the work from the result.
 
 ## What I did in this stage
 

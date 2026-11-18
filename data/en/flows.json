@@ -26,7 +26,7 @@
         },
         {
           "key": "po",
-          "does": "Product roadmap; agrees with BU on acceptable accuracy and the human-AI split"
+          "does": "Joins prioritization with a strategic view; allocates BA and SA resources"
         }
       ]
     },
@@ -45,10 +45,10 @@
         },
         {
           "key": "ba",
-          "does": "Turns needs into AI tasks, limits and acceptance criteria; builds the cost-benefit baseline",
+          "does": "Finds and confirms needs for the SA to assess; agrees the acceptance bar with BU; builds the cost-benefit baseline",
           "tag": "me",
           "role": "BA AI Business Analyst",
-          "short": "Turns needs into AI tasks"
+          "short": "Business contact; confirms needs"
         },
         {
           "key": "ux",
@@ -101,7 +101,7 @@
         },
         {
           "key": "sa",
-          "does": "Feasibility, cloud or on-prem, prototype",
+          "does": "Assesses feasibility and resources, cloud or on-prem; prototype",
           "tag": "me"
         },
         {
@@ -148,7 +148,7 @@
           "does": "Writes the rules as test questions",
           "tag": "me",
           "role": "BA AI Business Analyst",
-          "short": "Turns needs into AI tasks"
+          "short": "Business contact; confirms needs"
         },
         {
           "key": "cco",
@@ -209,6 +209,9 @@
     {
       "boxes": [
         {
+          "ghost": true
+        },
+        {
           "key": "mrm",
           "does": "Validates the model independently",
           "tag": "gate"
@@ -258,7 +261,7 @@
         },
         {
           "key": "sa",
-          "does": "System spec, APIs, data flow",
+          "does": "Assigns the technical team; system spec, APIs, data flow",
           "tag": "me"
         },
         {
@@ -314,6 +317,11 @@
     {
       "boxes": [
         {
+          "key": "ea",
+          "does": "Architecture review (ARB)",
+          "tag": "gate"
+        },
+        {
           "key": "cab",
           "does": "Approves production changes, models and prompts included",
           "tag": "gate"
@@ -330,6 +338,9 @@
     {
       "boxes": [
         {
+          "ghost": true
+        },
+        {
           "key": "bu",
           "does": "Pilot users try it and report issues"
         },
@@ -338,7 +349,7 @@
           "does": "Compares pilot results with the baseline",
           "tag": "me",
           "role": "BA AI Business Analyst",
-          "short": "Turns needs into AI tasks"
+          "short": "Business contact; confirms needs"
         }
       ]
     },
@@ -349,6 +360,9 @@
   "ops": [
     {
       "boxes": [
+        {
+          "ghost": true
+        },
         {
           "key": "eu",
           "does": "Customers: use and feedback"
@@ -364,6 +378,9 @@
     },
     {
       "boxes": [
+        {
+          "ghost": true
+        },
         {
           "key": "mlops",
           "does": "Answer quality, drift, token cost",
@@ -399,15 +416,18 @@
     {
       "boxes": [
         {
+          "ghost": true
+        },
+        {
           "key": "ba",
           "does": "Error analysis; actual ÷ baseline = realization rate",
           "tag": "me",
           "role": "BA AI Business Analyst",
-          "short": "Turns needs into AI tasks"
+          "short": "Business contact; confirms needs"
         },
         {
           "key": "bu",
-          "does": "Drives adoption, reports results"
+          "does": "Drives adoption, keeps the knowledge base current"
         }
       ]
     },
@@ -416,6 +436,9 @@
     },
     {
       "boxes": [
+        {
+          "ghost": true
+        },
         {
           "key": "pmo",
           "does": "Reallocates resources by realization rate"
@@ -434,6 +457,9 @@
   "gov": [
     {
       "boxes": [
+        {
+          "ghost": true
+        },
         {
           "key": "aic",
           "does": "Approves medium- and high-risk AI",
@@ -465,7 +491,7 @@
       "boxes": [
         {
           "key": "bu",
-          "does": "First line: risk assessment, writes the rules"
+          "does": "First line: fills in the risk rating, head approves, writes the rules"
         },
         {
           "key": "iso",
@@ -495,15 +521,18 @@
     {
       "boxes": [
         {
+          "ghost": true
+        },
+        {
           "key": "ba",
-          "does": "Turns rules into test questions",
+          "does": "Helps BU with governance documents and test questions",
           "tag": "me",
           "role": "BA AI Business Analyst",
-          "short": "Turns needs into AI tasks"
+          "short": "Business contact; confirms needs"
         },
         {
           "key": "sa",
-          "does": "Turns rules into system controls",
+          "does": "Writes technical governance documents and system controls",
           "tag": "me"
         }
       ]

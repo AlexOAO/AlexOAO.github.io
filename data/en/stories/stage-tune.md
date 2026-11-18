@@ -31,6 +31,8 @@ Deliverables for this phase:
 
 The business unit and the Compliance Department first establish the rules: what AI can do, when to switch to human intervention, and what it cannot do. The technology department then sets test questions and runs tests based on these rules. Models that do not meet the threshold do not proceed to the next stage.
 
+Agree the launch bar with the business unit up front. Generative AI will never give word-for-word identical answers; without an agreed bar, testing never ends and the launch keeps slipping. Ask the business unit to set the acceptance criteria: how many test questions and what accuracy. Once the agreed bar is met, launch and keep iterating.
+
 ## What I did in this stage
 
 - PoC responsible for AI safety guardrails: Designed thousands of test questions, compared two guardrail products, and established industry-standard validation methods. See [Guardrails PoC](project.html?id=guardrails-poc) 。

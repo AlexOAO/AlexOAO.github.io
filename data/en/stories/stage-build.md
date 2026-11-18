@@ -35,6 +35,15 @@ Deliverables for this phase:
 
 A review process must be completed before going live. The business unit writes the rules, the technology unit prepares and conducts the tests, the working group performs the initial review, and higher-risk items are further approved by the committee. UAT or a limited rollout can be approved first, followed by a full rollout.
 
+A bank's actual pre-launch gates usually include:
+
+- Requirements and acceptance documents: the business unit head approves the test report.
+- AI governance documents: the AI asset register and the risk rating.
+- Asset registration and architecture review (ARB).
+- Security scans: white-box, black-box and host vulnerability scans, with exemptions requested where needed.
+- Environment setup and the launch checklist: code changes, test report and scan reports all signed off.
+- The formal launch request and the launch announcement.
+
 ## What I did in this stage
 
 - Evaluate two enterprise AI agent platforms with 60 tests to identify issues in advance and use the results as a basis for selection. See [Platform PoC](project.html?id=agentic-platform-eval) 。
