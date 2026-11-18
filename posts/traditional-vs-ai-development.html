@@ -34,73 +34,100 @@
       <p>很多銀行做第一個 AI 專案時，沿用的是原本的系統開發流程：業務提需求，分析、開發、測試、上線。做到一半才發現，有些事沒人負責：測題誰寫？模型答錯算誰的？GPU 誰去申請？上線三個月後，效益到底有沒有出來？這篇把兩張分工圖放在一起，看 AI 開發到底多了什麼、改了什麼。</p>
 
       <h2>一、傳統開發：一條往下交棒的線</h2>
-      <p>傳統的系統開發（SDLC）分成幾個階段：規劃、需求、設計、開發、測試、上線、維運。分工也很清楚：決策層訂策略，PMO 管制度，PO 管產品方向；業務單位提出痛點，BA 把它轉成流程與 User Story；PM 掌控時程，SA 寫規格，RD 寫程式，QA 測試，DevOps 部署上線，最後交到使用者手上。很多案子的開發是委外的：採購單位簽約，由廠商開發、交付，再嫁接到 IT 的伺服器上。</p>
+      <p>傳統的系統開發（SDLC）分成幾個階段：規劃、需求、設計、開發、測試、上線、維運。分工也很清楚：決策層訂策略，PMO 管制度，PO 管產品方向；業務單位提出痛點，BA 把它轉成流程與 User Story；PM 掌控時程，SA 寫規格，RD 寫程式，QA 測試，DevOps 部署上線，最後交到使用者手上。很多案子的開發與維運是委外的，後面另外畫了一個範例。</p>
       <p>這條線的前提是：<strong>系統的行為是寫死的。</strong>同樣的輸入一定得到同樣的輸出，所以測試通過、驗收簽核，就可以放心上線，專案也就結束了。</p>
 
       <h2>二、AI 開發：四個階段，加一條回到起點的線</h2>
       <p>AI 的行為不是寫死的。同一個問題，模型今天答對、明天可能答錯；換一份資料、改一句提示詞，結果就不一樣。所以 AI 專案的分工要照 AI SDLC 的四個階段重新排：業務規劃、模型調教、開發部署、營運監控，再加上一條貫穿全程的 AI 治理。</p>
-      <p>兩張圖都依階段排列：左邊把傳統的七個步驟併成四段，右邊是 AI SDLC 的四個階段，每段標題寫著它對應到另一邊的哪裡。差別集中在兩處：第二段，傳統開發設計完就直接開發，AI 多了一段模型調教；最後一段，傳統的維運只顧系統持續運作，AI 的營運監控要把成效帶回第一段。</p>
+      <p>兩張圖都依階段排列，每個方框是一個角色：左邊把傳統的七個步驟併成四段，右邊是 AI SDLC 的四個階段。差別集中在兩處：第二段，傳統開發設計完就直接開發，AI 多了一段模型調教；最後一段，傳統的維運只顧系統持續運作，AI 的營運監控要把成效帶回第一段。</p>
 
       <div class="flow-compare">
         <figure>
-          <figcaption>傳統開發（SDLC）<small>規劃、需求、設計、開發、測試、上線、維運：一條往下交棒的線，上線後只維運</small></figcaption>
+          <figcaption>傳統開發（SDLC）<small>規劃、需求、設計、開發、測試、上線、維運：一條往下交棒的線</small></figcaption>
           <div class="flow">
-            <p class="flow-stage" style="--c:#94a3b8">① 規劃・需求（對應 AI 的業務規劃）</p>
-            <div class="flow-row"><div class="flow-box wide"><b>CXO 高階管理層</b><span>制定年度戰略、核准重大專案預算、定義公司 KPI</span></div></div>
+            <p class="flow-stage" style="--c:#94a3b8">① 規劃・需求</p>
+            <div class="flow-row">
+              <div class="flow-box wide"><b>CXO 高階管理層</b><span>年度戰略、核准重大預算、定義公司 KPI</span></div>
+            </div>
             <div class="flow-split">
               <div class="flow-arrow"><em>監督、資源、績效報告</em></div>
-              <div class="flow-arrow"><em>戰略方針／營運目標</em></div>
+              <div class="flow-arrow"><em>戰略方針、營運目標</em></div>
             </div>
             <div class="flow-row">
-              <div class="flow-box"><b>PMO 專案管理辦公室</b><span>制訂制度、資源調度、跨專案監督、流程與範本規範</span></div>
-              <div class="flow-box"><b>PO 產品負責人</b><span>定義產品藍圖、排定需求優先級</span></div>
+              <div class="flow-box"><b>PMO 專案管理辦公室</b><span>制度、資源調度、跨專案監督、範本</span></div>
+              <div class="flow-box"><b>PO 產品負責人</b><span>產品藍圖、需求優先級</span></div>
             </div>
             <div class="flow-split">
-              <div class="flow-arrow"><em>政策引導／標準流程</em></div>
+              <div class="flow-arrow"><em>政策引導、標準流程</em></div>
               <div class="flow-arrow"><em>產品願景與定位</em></div>
             </div>
             <div class="flow-row chain">
-              <div class="flow-box"><b>BU 業務單位</b><span>提出商業痛點、負責營運變現</span></div>
+              <div class="flow-box"><b>BU 業務單位</b><span>提出痛點、負責營運變現</span></div>
               <div class="flow-link"><span>業務需求 →</span><span>← 確認價值</span></div>
-              <div class="flow-box"><b>BA 商業分析</b><span>需求轉化為流程</span></div>
+              <div class="flow-box"><b>BA 商業分析</b><span>需求轉成流程與 User Story</span></div>
               <div class="flow-link"><span>產品需求 →</span><span>← 優化體驗</span></div>
-              <div class="flow-box"><b>UX 使用者體驗</b><span>用戶研究與視覺</span></div>
+              <div class="flow-box"><b>UX 使用者體驗</b><span>用戶研究、畫面與互動</span></div>
             </div>
             <div class="flow-split">
               <div class="flow-arrow"><em>期望上線時間</em></div>
-              <div class="flow-arrow"><em>商業需求／User Story</em></div>
+              <div class="flow-arrow"><em>商業需求、User Story</em></div>
             </div>
-            <p class="flow-stage" style="--c:#94a3b8">② 設計（AI 在這裡多了模型調教）</p>
-            <div class="flow-row"><div class="flow-box"><b>PM 專案經理</b><span>掌控時程與範疇、跨團隊溝通協調</span></div></div>
-            <div class="flow-arrow"><em>分派任務、定義邊界</em></div>
-            <div class="flow-row"><div class="flow-box"><b>SA 系統分析</b><span>系統架構與規格、資料與資料流</span></div></div>
-            <div class="flow-arrow"><em>系統規格書、API 規格、架構圖</em></div>
-            <p class="flow-stage" style="--c:#94a3b8">③ 開發・測試・上線（對應 AI 的開發部署）</p>
+            <p class="flow-stage" style="--c:#94a3b8">② 設計</p>
             <div class="flow-row">
-              <div class="flow-box"><b>RD 研發團隊</b><span>SDE 撰寫程式碼、單元測試</span></div>
-              <div class="flow-box vendor"><b>Vendor 委外廠商（例）</b><span>很多案子由採購委外，廠商開發、交付，再嫁接到 IT 的伺服器</span></div>
+              <div class="flow-box"><b>PM 專案經理</b><span>時程、範疇、跨團隊溝通協調</span></div>
+            </div>
+            <div class="flow-arrow"><em>分派任務、定義邊界</em></div>
+            <div class="flow-row">
+              <div class="flow-box"><b>SA 系統分析</b><span>系統架構與規格、資料流</span></div>
+              <div class="flow-box"><b>EA 企業架構</b><span>確認符合行內的架構與技術標準</span></div>
+              <div class="flow-box"><b>DBA 資料庫管理</b><span>資料表與資料庫設計</span></div>
+            </div>
+            <div class="flow-arrow"><em>系統規格書、API 規格、架構圖</em></div>
+            <p class="flow-stage" style="--c:#94a3b8">③ 開發・測試・上線</p>
+            <div class="flow-row">
+              <div class="flow-box"><b>SDE 軟體工程師</b><span>前後端開發、單元測試</span></div>
+              <div class="flow-box"><b>AP 應用系統負責單位</b><span>與核心系統串接、介面規格</span></div>
+              <div class="flow-box"><b>Infra 基礎架構</b><span>伺服器、網路、正式與測試環境</span></div>
             </div>
             <div class="flow-arrow"><em>交付測試環境</em></div>
-            <div class="flow-row"><div class="flow-box"><b>QA 測試團隊</b><span>測試案例撰寫、系統與整合測試</span></div></div>
-            <div class="flow-arrow"><em>通過驗收（Sign-off）、進入部署</em></div>
-            <div class="flow-row"><div class="flow-box"><b>Ops 維運團隊</b><span>CI/CD、雲端基礎、正式環境監控</span></div></div>
-            <div class="flow-arrow"><em>正式上線（Go-Live）、穩定運作</em></div>
-            <p class="flow-stage" style="--c:#94a3b8">④ 維運（對應 AI 的營運監控，但不回到起點）</p>
-            <div class="flow-row"><div class="flow-box wide"><b>EU 終端用戶</b><span>實際使用系統、回饋使用體驗、產生商業營收</span></div></div>
-            <div class="flow-legend"><span><i style="border-color:#f9a8d4;background:rgba(249,168,212,0.25)"></i>委外廠商（例子）</span></div>
+            <div class="flow-row">
+              <div class="flow-box"><b>QA 測試團隊</b><span>測試案例、系統與整合測試</span></div>
+              <div class="flow-box gate"><b>ISO 資安</b><span>弱點掃描、滲透測試</span></div>
+              <div class="flow-box"><b>BU 業務單位</b><span>UAT 與簽核</span></div>
+            </div>
+            <div class="flow-arrow"><em>通過驗收（Sign-off）</em></div>
+            <div class="flow-row">
+              <div class="flow-box gate"><b>CAB 變更審查委員會</b><span>核准正式環境的變更與上線時間</span></div>
+              <div class="flow-box"><b>Ops 維運團隊</b><span>部署到正式環境</span></div>
+            </div>
+            <div class="flow-arrow"><em>正式上線（Go-Live）</em></div>
+            <p class="flow-stage" style="--c:#94a3b8">④ 維運</p>
+            <div class="flow-row">
+              <div class="flow-box"><b>Ops 維運團隊</b><span>監控、備份、事件處理</span></div>
+              <div class="flow-box"><b>AP 應用系統負責單位</b><span>接手維運、小幅修改</span></div>
+              <div class="flow-box"><b>SD 服務台</b><span>受理使用者的問題</span></div>
+            </div>
+            <div class="flow-arrow"><em>穩定運作</em></div>
+            <div class="flow-row">
+              <div class="flow-box"><b>EU 終端用戶</b><span>實際使用、回饋體驗、產生營收</span></div>
+              <div class="flow-box gate"><b>IA 稽核</b><span>定期查核</span></div>
+            </div>
+            <div class="flow-legend">
+              <span><i style="border-color:#fbbf24;background:rgba(251,191,36,0.25)"></i>治理與把關的角色</span>
+            </div>
           </div>
         </figure>
 
         <figure>
           <figcaption>AI 開發（AI SDLC）<small>四個階段，治理貫穿全程，營運數字回到起點</small></figcaption>
           <div class="flow">
-            <p class="flow-stage" style="--c:#fbbf24">AI 治理（貫穿全週期）</p>
+            <p class="flow-stage" style="--c:#fbbf24">AI 治理：貫穿全週期</p>
             <div class="flow-row">
               <div class="flow-box gate"><b>AIC AI 管理委員會</b><span>核准中高風險的 AI 上線</span></div>
               <div class="flow-box gate"><b>WG AI 工作小組</b><span>盤點 AI、風險分級、初審檢核</span></div>
               <div class="flow-box gate"><b>IA 稽核</b><span>第三道防線：獨立檢查流程</span></div>
             </div>
-            <p class="flow-stage" style="--c:#60a5fa">① 業務規劃：值不值得做、怎麼衡量（傳統的規劃・需求）</p>
+            <p class="flow-stage" style="--c:#60a5fa">① 業務規劃：值不值得做、怎麼衡量</p>
             <div class="flow-row">
               <div class="flow-box"><b>CXO 高階管理層</b><span>AI 策略、核准預算、定義 KPI</span></div>
             </div>
@@ -114,6 +141,8 @@
               <div class="flow-box"><b>BU 業務單位</b><span>場景與 KPI、提供業務量、認列效益</span></div>
               <div class="flow-link"><span>場景、業務量 →</span><span>← 邊界與價值</span></div>
               <div class="flow-box me"><b>BA AI 業務分析</b><span>需求轉成 AI 任務、邊界與驗收標準；建立成本效益基準</span></div>
+              <div class="flow-link"><span>產品需求 →</span><span>← 優化體驗</span></div>
+              <div class="flow-box"><b>UX 使用者體驗</b><span>用戶研究、對話流程、轉人工怎麼呈現</span></div>
             </div>
             <div class="flow-arrow"><em>場景、邊界、業務量</em></div>
             <div class="flow-row">
@@ -124,7 +153,7 @@
               <div class="flow-box gate"><b>CRO 風控</b><span>風險分級</span></div>
             </div>
             <div class="flow-arrow"><em>核准立案</em></div>
-            <p class="flow-stage" style="--c:#a78bfa">② 模型調教：答得對不對、安不安全（傳統沒有這一段）</p>
+            <p class="flow-stage" style="--c:#a78bfa">② 模型調教：答得對不對、安不安全</p>
             <div class="flow-row">
               <div class="flow-box ai"><b>DE 資料工程</b><span>資料來源、清理與標註</span></div>
               <div class="flow-box ai"><b>DS 資料科學家</b><span>特徵、模型實驗、成效分析</span></div>
@@ -137,11 +166,11 @@
             </div>
             <div class="flow-arrow loop"><em>↺ 沒過門檻就回到調教</em></div>
             <div class="flow-arrow"><em>通過門檻</em></div>
-            <p class="flow-stage" style="--c:#22d3ee">③ 開發部署：變成每天能用的服務（傳統的設計、開發、測試、上線）</p>
+            <p class="flow-stage" style="--c:#22d3ee">③ 開發部署：變成每天能用的服務</p>
             <div class="flow-row">
               <div class="flow-box me"><b>PM 專案經理</b><span>時程、驗收、廠商與各單位的窗口</span></div>
               <div class="flow-box me"><b>SA 系統分析</b><span>系統規格、API、資料流</span></div>
-              <div class="flow-box"><b>UX 使用者體驗</b><span>對話體驗、轉人工怎麼呈現</span></div>
+              <div class="flow-box"><b>UX 使用者體驗</b><span>介面細節、可用性測試</span></div>
             </div>
             <div class="flow-arrow"><em>規格書、API 規格、架構圖</em></div>
             <div class="flow-row">
@@ -159,7 +188,7 @@
               <div class="flow-box"><b>BU 業務單位</b><span>UAT 與簽核</span></div>
             </div>
             <div class="flow-arrow"><em>資安意見、工作小組初審、委員會核准後正式上線</em></div>
-            <p class="flow-stage" style="--c:#34d399">④ 營運監控：有沒有持續運作、效益有沒有實現（傳統的維運）</p>
+            <p class="flow-stage" style="--c:#34d399">④ 營運監控：有沒有持續運作、效益有沒有實現</p>
             <div class="flow-row">
               <div class="flow-box"><b>EU 終端用戶</b><span>客戶：使用與回饋</span></div>
               <div class="flow-box"><b>OP 第一線人員</b><span>徵審、客服人員和 AI 一起工作，逐筆確認</span></div>
@@ -180,6 +209,96 @@
               <span><i style="border-color:#a78bfa;background:rgba(167,139,250,0.25)"></i>AI 專案新增或變重的角色</span>
               <span><i style="border-color:#fbbf24;background:rgba(251,191,36,0.25)"></i>治理與把關的角色</span>
               <span><i style="border-color:#34d399;background:rgba(52,211,153,0.25)"></i>我的位置</span>
+            </div>
+          </div>
+        </figure>
+      </div>
+
+      <h3>範例：委外專案的分工</h3>
+      <p>上面兩張圖是概念。實務上，銀行的系統大多委外：行內寫需求、管廠商，廠商負責開發，交付後再嫁接到行內 IT 的伺服器；上線後，廠商還要依合約保固與維護。AI 也常委外，但買的東西不一樣。下面用同一個邏輯，比較兩種委外：</p>
+      <div class="flow-compare">
+        <figure>
+          <figcaption>傳統系統委外<small>行內寫需求、管廠商；廠商開發，交付後嫁接到行內</small></figcaption>
+          <div class="flow">
+            <p class="flow-stage" style="--c:#94a3b8">需求與採購</p>
+            <div class="flow-row">
+              <div class="flow-box"><b>BU 業務單位</b><span>提出需求</span></div>
+              <div class="flow-box"><b>BA 商業分析</b><span>需求規格書</span></div>
+            </div>
+            <div class="flow-arrow"><em>需求規格書</em></div>
+            <div class="flow-row">
+              <div class="flow-box"><b>PM 專案經理</b><span>寫 RFP，管廠商的時程與驗收</span></div>
+              <div class="flow-box"><b>PR 採購單位</b><span>比價、議約、簽約</span></div>
+            </div>
+            <div class="flow-arrow"><em>合約</em></div>
+            <p class="flow-stage" style="--c:#94a3b8">廠商開發</p>
+            <div class="flow-row">
+              <div class="flow-box vendor"><b>PM 廠商專案經理</b><span>對行內 PM 的窗口</span></div>
+              <div class="flow-box vendor"><b>SDE 廠商工程師</b><span>依規格開發</span></div>
+              <div class="flow-box vendor"><b>QA 廠商測試</b><span>系統測試</span></div>
+            </div>
+            <div class="flow-arrow"><em>交付程式、文件與安裝</em></div>
+            <p class="flow-stage" style="--c:#94a3b8">嫁接到行內</p>
+            <div class="flow-row">
+              <div class="flow-box"><b>AP 應用系統負責單位</b><span>串接核心系統、驗收</span></div>
+              <div class="flow-box"><b>Infra 基礎架構</b><span>行內伺服器與環境</span></div>
+              <div class="flow-box gate"><b>ISO 資安</b><span>弱點掃描、滲透測試</span></div>
+            </div>
+            <div class="flow-arrow"><em>BU UAT 簽核後上線</em></div>
+            <p class="flow-stage" style="--c:#94a3b8">維運</p>
+            <div class="flow-row">
+              <div class="flow-box vendor"><b>MA 廠商維護</b><span>保固期內修正；維護合約</span></div>
+              <div class="flow-box"><b>Ops 維運團隊</b><span>監控、備份、第一線處理</span></div>
+              <div class="flow-box"><b>AP 應用系統負責單位</b><span>接手維運</span></div>
+            </div>
+            <div class="flow-legend">
+              <span><i style="border-color:#f9a8d4;background:rgba(249,168,212,0.25)"></i>委外廠商</span>
+              <span><i style="border-color:#fbbf24;background:rgba(251,191,36,0.25)"></i>治理與把關的角色</span>
+            </div>
+          </div>
+        </figure>
+        <figure>
+          <figcaption>AI 委外<small>買的是模型、平台與算力，要先實測，上線後還要重測</small></figcaption>
+          <div class="flow">
+            <p class="flow-stage" style="--c:#94a3b8">需求與採購</p>
+            <div class="flow-row">
+              <div class="flow-box"><b>BU 業務單位</b><span>場景、業務量</span></div>
+              <div class="flow-box"><b>BA AI 業務分析</b><span>驗收標準與測題</span></div>
+            </div>
+            <div class="flow-arrow"><em>場景與測題</em></div>
+            <div class="flow-row">
+              <div class="flow-box"><b>PM 專案經理</b><span>RFP：功能，加上模型、資料與算力條件</span></div>
+              <div class="flow-box"><b>PR 採購單位</b><span>先 PoC 實測，再比價、簽約</span></div>
+              <div class="flow-box gate"><b>CCO 法遵</b><span>委外與資料上雲的審查</span></div>
+            </div>
+            <div class="flow-arrow"><em>通過審查、簽約</em></div>
+            <p class="flow-stage" style="--c:#94a3b8">廠商開發</p>
+            <div class="flow-row">
+              <div class="flow-box vendor"><b>MLE 廠商模型團隊</b><span>模型、RAG、AI 平台</span></div>
+              <div class="flow-box vendor"><b>SDE 廠商工程師</b><span>應用與系統整合</span></div>
+              <div class="flow-box vendor"><b>FDE 廠商前線部署</b><span>進駐行內，把 AI 接進流程</span></div>
+            </div>
+            <div class="flow-row">
+              <div class="flow-box vendor"><b>CSP 雲服務商</b><span>雲端模型與算力</span></div>
+            </div>
+            <div class="flow-arrow"><em>交付模型、平台與應用</em></div>
+            <p class="flow-stage" style="--c:#94a3b8">嫁接到行內</p>
+            <div class="flow-row">
+              <div class="flow-box"><b>QA AI 評測</b><span>用行內的測題驗收</span></div>
+              <div class="flow-box"><b>AP 應用系統負責單位</b><span>串接核心系統</span></div>
+              <div class="flow-box"><b>Infra 基礎架構</b><span>GPU 或雲地混合環境</span></div>
+              <div class="flow-box gate"><b>ISO 資安</b><span>紅隊、資料隔離</span></div>
+            </div>
+            <div class="flow-arrow"><em>BU UAT、委員會核准後上線</em></div>
+            <p class="flow-stage" style="--c:#94a3b8">維運</p>
+            <div class="flow-row">
+              <div class="flow-box vendor"><b>MLE 廠商模型團隊</b><span>模型改版後重新評測，寫進合約</span></div>
+              <div class="flow-box"><b>MLOps 模型維運</b><span>品質、模型退化、成本監控</span></div>
+              <div class="flow-box"><b>BA AI 業務分析</b><span>追蹤實現率</span></div>
+            </div>
+            <div class="flow-legend">
+              <span><i style="border-color:#f9a8d4;background:rgba(249,168,212,0.25)"></i>委外廠商</span>
+              <span><i style="border-color:#fbbf24;background:rgba(251,191,36,0.25)"></i>治理與把關的角色</span>
             </div>
           </div>
         </figure>
