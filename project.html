@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/post.css?v=20261118l">
+  <link rel="stylesheet" href="assets/css/post.css?v=20261118m">
   <style>
     .post-nav { display: flex; justify-content: space-between; align-items: center; }
     .lang-toggle {
@@ -116,7 +116,7 @@
   </article>
   <div class="post-footer"><div class="pager" id="pager"></div></div>
 
-  <script src="assets/js/common.js?v=20261118l"></script>
+  <script src="assets/js/common.js?v=20261118m"></script>
   <script>
     const { esc, dataPath, getJSON, stageNames, stagePills, visibleGroups, STAGE_ORDER, STAGE_COLOR, stageSpan, isGov, QUANT_ORDER, QUANT_COLOR, quantSpan, quantPill } = Site;
     const I18N = {
@@ -221,7 +221,7 @@
       if (!g || !g.vision) return '';
       const card = (k, text, extra = '') => `<div class="glance-card ${k}"><p class="glance-k">${esc(T(k))}</p><p class="glance-v">${esc(text)}</p>${extra}</div>`;
       const kpis = (g.kpis || []).length ? `<div class="glance-kpis">${g.kpis.map(x => `<div class="glance-kpi"><b>${esc(x.value)}</b><span>${esc(x.label)}</span></div>`).join('')}</div>` : '';
-      return `<section class="glance" aria-label="${esc(T('glance'))}"><p class="glance-title">${esc(T('glance'))}</p>
+      return `<section class="glance" aria-label="${esc(T('glance'))}">
         <div class="glance-cards">${card('gVision', g.vision)}${card('gValue', g.value)}${card('gAchieve', g.achieve, kpis)}</div></section>`;
     }
 

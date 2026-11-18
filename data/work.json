@@ -349,9 +349,9 @@
         "source": "S1"
       },
       {
-        "short": "AI 圖像辨識：財報掃描檔",
+        "short": "AI 圖像辨識：VLM 讀懂財報",
         "slug": "financial-statement-vlm",
-        "title": "上市櫃財報掃描檔 AI 圖像辨識（Gemini 視覺語言模型）",
+        "title": "用 Gemini 視覺語言模型讀懂掃描財報：從圖片到結構化數據",
         "summary": "用雲端 Gemini 視覺語言模型讀懂掃描版財報，不只是傳統 OCR。",
         "sdlc": ["tune", "build"],
         "ownership": "協作",

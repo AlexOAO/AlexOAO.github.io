@@ -40,7 +40,7 @@
   "data/stories/tunghai-english-ta.md": "c6818589114f918356d1b78a92251a72e8bb049f2cf05feacea1db4533c4b3f0",
   "data/stories/vibe-edge.md": "9c4ab7cf0dfc854ff47d4300062634ac9bf2dd52b100245bcb125e4048266ae2",
   "data/stories/webai-finance.md": "609c2d86c2b500a87dd842c0c63af9f7d8e4be62ce5a81d64c1baa762cc93add",
-  "data/work.json": "5f000bb52c1a9699815c4a4910a8976625f84b9e5d19445f1618465f4acaf05d",
+  "data/work.json": "c82b865293b7a16c5a513baf516048bfab1aefa8ab9c5da1a4ecb7b361e5f2a7",
   "posts/posts.json": "3f8ad688183b48f56c935c6ffe9b2001503d2d7c1fb3d5dff7490bd5c71e1443"
  },
  "lines": {
@@ -1065,6 +1065,7 @@
   "AI 代理平台：Platform PoC": "AI agent platform: Platform PoC",
   "AI 分工角色": "AI roles like a fund",
   "AI 員工賦能：Gemini 教育訓練": "AI enablement: Gemini training",
+  "AI 圖像辨識：VLM 讀懂財報": "AI Image Recognition: VLM Reads Statements",
   "AI 圖像辨識：財報掃描檔": "AI Image Recognition: Scanned Statements",
   "AI 委外範例": "Outsourced: AI",
   "AI 安全護欄：Guardrails PoC": "AI guardrails: Guardrails PoC",
@@ -2145,6 +2146,7 @@
   "用 A2UI 為例，整理把新技術推向產品的五個站點：商用場景、所需資源、價值驗證、PoC、產品化，以及為什麼順序不能反過來。": "Using A2UI as the example, five stations that take a new technology to a product: use cases, resources, value check, PoC, and productization, and why the order matters.",
   "用 AI 判讀內容，系統自動驗算風險、勾稽資產清冊。": "AI judges the content; the system recalculates risk and checks the asset register.",
   "用 Gemini 視覺語言模型讀懂掃描版財報，不只是傳統 OCR。": "Reads scanned financial statements with Gemini's vision-language model, beyond traditional OCR.",
+  "用 Gemini 視覺語言模型讀懂掃描財報：從圖片到結構化數據": "Reading Scanned Financial Statements with Gemini's Vision-Language Model: From Images to Structured Data",
   "用 RAG 打造金融智能客服的踩坑紀錄": "Lessons from building a RAG customer service bot for finance",
   "用 RAG 讓 AI 查手冊作答，並改良文件切分方式。": "Built an AI bot that answers from the manuals, and improved how documents are split.",
   "用 Whisper 自動把影音轉成逐字稿與摘要表。": "Used Whisper to turn videos into transcripts and summary tables automatically.",

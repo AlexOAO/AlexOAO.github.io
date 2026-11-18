@@ -249,11 +249,9 @@ p, li { text-wrap: pretty; }
 .role-back { font-size: 0.8rem; }
 
 /* "At a glance" panel on project pages: vision, value and achieved as three cards; key numbers inside "achieved". */
-.glance { margin: 0 0 2.5rem; padding: 1.25rem 1.25rem 1.4rem; border: 1px solid rgba(96,165,250,0.3); border-radius: 18px;
-  background: linear-gradient(180deg, rgba(30,58,138,0.18), rgba(15,23,42,0.4)); }
-.glance-title { font-family: var(--display); font-size: 0.78rem; letter-spacing: 0.08em; color: #93c5fd; margin: 0 0 0.9rem !important; }
+.glance { margin: 0 0 2.5rem; }
 .glance-cards { display: grid; grid-template-columns: 1fr 1fr 1.25fr; gap: 0.75rem; align-items: stretch; }
-.glance-card { padding: 0.9rem 1rem 1rem; border-radius: 14px; background: rgba(15,23,42,0.6); border: 1px solid var(--line); border-top: 3px solid var(--c, #3b82f6); }
+.glance-card { padding: 0.9rem 1rem 1rem; border-radius: 14px; background: #111a2e; border: 1px solid var(--line); border-top: 3px solid var(--c, #3b82f6); }
 .glance-card.gVision { --c: #8b5cf6; }
 .glance-card.gValue { --c: #06b6d4; }
 .glance-card.gAchieve { --c: #10b981; }
