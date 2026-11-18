@@ -18,14 +18,17 @@ Deliverables for this phase:
 
 ## Who takes part
 
-- **AIBA**: Formulate acceptance criteria as test questions. Questions based on business scenarios and historical cases with known answers.
-- **AIBU (Business Unit)**: Provide real-world business scenarios and cases to determine whether the answers are correct in a business context.
-- **Data Team**: Data sources, cleaning, labeling, and quality.
-- **ML/LLM Engineer**: Adjust prompts, design RAG retrieval methods, select models, and fine-tune them when necessary.
-- **AI Evaluation**: Replacing traditional QA. Traditional testing follows the principle of "input A must yield B." In contrast, AI uses evaluation sets to assess accuracy, consistency, and the rationale behind its judgments.
-- **TPM (Technical Project Manager)**: Coordinate technical decisions regarding model selection, prompts, and retrieval, and track the results of each round of testing.
-- **Information Security**: Design attack scenarios and red team tests to ensure that personal data and confidential information are not leaked.
-- **Compliance/Risk Management**: Confirm that the output does not violate regulations, such as the terminology used in investment advice and the fairness of credit extensions.
+- **[BU Business Unit](roles.html#role-bu)**: Supplies real business cases and model answers, and judges whether answers are right for the business.
+- **[BA AI Business Analyst](roles.html#role-ba)**: Writes the rules and acceptance criteria as test questions, and agrees the launch bar with the business unit.
+- **[CCO Compliance](roles.html#role-cco)**: Sets rules and red lines, and checks that output breaks no regulation, such as the wording of investment advice or fairness in lending.
+- **[DE Data Engineer](roles.html#role-de)**: Data sources, cleaning, labeling and quality.
+- **[DS Data Scientist](roles.html#role-ds)**: Features, model experiments and analysis of results.
+- **[MLE ML Engineer](roles.html#role-mle)**: Tunes prompts, designs RAG retrieval, chooses models and fine-tunes when needed.
+- **[QA Testing](roles.html#role-qa)**: Replaces traditional testing. Traditional tests check that input A always gives B; AI needs an evaluation set that measures accuracy, consistency and the reasons behind each answer.
+- **[ISO Information Security](roles.html#role-iso)**: Designs attack questions and red-team tests to make sure personal and confidential data do not leak.
+- **[TPM Technical PM](roles.html#role-tpm)**: Coordinates technical decisions on models, prompts and retrieval, and tracks each round of results.
+- **[MRM Model Risk Management](roles.html#role-mrm)**: The second line; validates the model independently of the team that built it.
+- **[WG AI Working Group](roles.html#role-wg)**: Confirms the model has passed the bar before it moves on to build.
 
 ## Handoffs and checks
 

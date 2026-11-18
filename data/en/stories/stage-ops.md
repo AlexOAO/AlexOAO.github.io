@@ -17,15 +17,18 @@ Deliverables for this phase:
 
 ## Who takes part
 
-- **End Users and Frontline Staff**: Customers, as well as underwriting and customer service personnel who work with AI. Their usage records and feedback serve as the starting point for improvement.
-- **AIBU (Business Unit)**: Promote usage, report on business performance, and propose requirements for the next round.
-- **PMO**: Consolidate the performance of each project, compare the actual values with the benchmarks, and decide whether to increase or adjust resources.
-- **MLOps/SRE**: In addition to monitoring whether the service is functioning normally, it is also necessary to monitor the quality of responses, model degradation, and token costs.
-- **BA also owns cost-benefit**: Compares actual business volume, cost and benefit with the pre-launch baseline to calculate the realization rate.
-- **Infra (Infrastructure)**: Monitor computing power usage and expand or reallocate as needed.
-- **AIBA**: Analyze usage records and error cases to identify areas for improvement.
-- **Information Security and Compliance/Risk Management**: Continuously monitor risks and regularly review whether they still comply with regulations.
-- **CXO/Decision-Makers**: Reallocate resources based on realization rates.
+- **[EU End User](roles.html#role-eu)**: Customers. They use the AI and give feedback.
+- **[OP Frontline Staff](roles.html#role-op)**: Underwriters and call-center agents who work with the AI and confirm each output; their feedback is where improvement starts.
+- **[MLOps Model Operations](roles.html#role-mlops)**: Beyond service health, monitors answer quality, model drift and token cost.
+- **[FDE Forward-Deployed Eng](roles.html#role-fde)**: Collects issues on site and adjusts the workflow and prompts.
+- **[Ops Operations](roles.html#role-ops)**: System monitoring, backups and incident handling.
+- **[AP Application Owner](roles.html#role-ap)**: Takes over maintenance.
+- **[SD Service Desk](roles.html#role-sd)**: Takes user issues and passes them to the team responsible.
+- **[BA AI Business Analyst](roles.html#role-ba)**: Analyzes error cases; compares actual business volume, cost and benefit with the baseline to calculate the realization rate.
+- **[BU Business Unit](roles.html#role-bu)**: Drives adoption, keeps the knowledge base current and reports business results.
+- **[PMO Project Office](roles.html#role-pmo)**: Decides from the realization rate whether to scale up or adjust resources.
+- **[CXO Executives](roles.html#role-cxo)**: Reallocates resources.
+- **[CRO Risk](roles.html#role-cro)**: With security, keeps monitoring risk and periodically checks that the AI still meets the rules.
 
 ## Handoffs and checks
 

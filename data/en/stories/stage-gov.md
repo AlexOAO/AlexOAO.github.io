@@ -17,13 +17,16 @@ Deliverables for this phase:
 
 ## Who takes part
 
-- **Compliance/Risk Management**: Interpret regulations, establish risk classifications, and provide opinions on each AI system.
-- **Information Security**: Data protection, access control, and protection against model attacks.
-- **PMO/AI Working Group**: Take stock of all AI applications, confirm their classification, and review the initial assessment results.
-- **AIBU (Business Unit)**: Conduct risk assessments and collaborate with the Compliance team to establish rules and boundaries for AI.
-- **AIBA and SA**: Transform specifications into testable items and system controls.
-- **Admin commission**: Approve the launch of AI with higher risk.
-- **audit**: Conduct an independent inspection to determine whether the entire process complies with regulations.
+- **[AIC AI Committee](roles.html#role-aic)**: Approves medium- and high-risk AI launches.
+- **[MRM Model Risk Management](roles.html#role-mrm)**: The second line; validates models independently.
+- **[WG AI Working Group](roles.html#role-wg)**: Keeps the AI inventory, confirms risk ratings and does the first review of checks.
+- **[BU Business Unit](roles.html#role-bu)**: The first line. Fills in the risk rating for the department head's approval, and writes the AI's rules and red lines with compliance.
+- **[ISO Information Security](roles.html#role-iso)**: The second line. Data protection, access control and defense against attacks on the model.
+- **[CCO Compliance](roles.html#role-cco)**: The second line. Interprets regulations, sets red lines and gives an opinion on each AI.
+- **[CRO Risk](roles.html#role-cro)**: The second line. Risk rating and ongoing monitoring.
+- **[IA Internal Audit](roles.html#role-ia)**: The third line; independently checks that the whole process followed the rules.
+- **[BA AI Business Analyst](roles.html#role-ba)**: Helps the business unit complete governance documents and test questions.
+- **[SA Systems Analyst](roles.html#role-sa)**: Writes the technical governance documents and turns the rules into system controls.
 
 ## Handoffs and checks
 

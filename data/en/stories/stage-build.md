@@ -17,19 +17,22 @@ Deliverables for this phase:
 
 ## Who takes part
 
-- **IT PM (IT Project Manager)**: Manage the schedule, scope, vendors, and acceptance, and set milestones for initiation, requirements, UAT, and go-live.
-- **SA (Systems Analyst)**: Write system specifications: data flow, APIs, and how to connect with existing systems.
-- **UI/UX Design**: Design interfaces and conversational experiences, such as how AI responses should be presented and when to escalate to a human agent.
-- **Procurement**: Turn the requirements into an RFP, compare bids, and sign the contract. For AI models and platforms, run a PoC first, then decide which vendor to buy from.
-- **Outsourced vendor / RD**: Most bank projects are outsourced. The vendor develops, tests and delivers to the specification, with warranty and maintenance written into the contract. When the bank has its own RD team, the work is done in-house.
-- **IT AP (Application System Responsible Unit)**: The vendor's system is deployed onto the bank's servers and connected to the core systems and APIs, all owned by this unit. The integration has to fit their schedule, and they take over operations after launch.
-- **TPM (Technical Project Manager)**: Coordinate cross-team technical decisions, such as platform selection, performance, and technical risks.
-- **Infra (Infrastructure)**: Prepare computing power, network, and environment, and plan capacity based on business volume.
-- **DevOps/MLOps**: In addition to CI/CD, we also need to manage the versions of models and prompts, so that every update can be traced back.
-- **QA + AI Evaluation**: In addition to integration testing, the evaluation set is rerun for every change to ensure that the quality of the answers has not deteriorated.
-- **Information Security**: Review access control, data isolation, and pre-launch security recommendations.
-- **AIBU (Business Unit)**: Participate in UAT, confirm that the features meet the requirements, and approve acceptance.
-- **PMO**: Track progress and resources to ensure the project is progressing as planned.
+- **[PM Project Manager](roles.html#role-pm)**: Schedule and acceptance; the contact for vendors and units.
+- **[TPM Technical PM](roles.html#role-tpm)**: Coordinates the technical plan for build, platform and deployment.
+- **[IT PM IT Project Manager](roles.html#role-itpm)**: Represents the IT department; coordinates integration, environments and the release schedule, and handles IT procurement and the change process.
+- **[FDE Forward-Deployed Eng](roles.html#role-fde)**: Works inside the business unit and wires AI into the real workflow.
+- **[SA Systems Analyst](roles.html#role-sa)**: Assigns the technical team; writes the system spec: data flow, APIs, and how it connects to existing systems.
+- **[AP Application Owner](roles.html#role-ap)**: Deploying onto the bank's servers and connecting to core systems are theirs to manage; they take over maintenance after launch.
+- **[SDE Software Engineer](roles.html#role-sde)**: Builds features and unit tests. Most bank projects are outsourced: the vendor builds and delivers to the spec, with warranty and maintenance in the contract.
+- **[MLOps Model Operations](roles.html#role-mlops)**: Beyond CI/CD, manages model and prompt versions so every change can be traced.
+- **[Infra Infrastructure](roles.html#role-infra)**: Prepares GPUs, network, and production and test environments.
+- **[QA Testing](roles.html#role-qa)**: Beyond integration tests, reruns the evaluation set on every change to make sure answers have not got worse.
+- **[ISO Information Security](roles.html#role-iso)**: Security scans, access control and data isolation; gives the pre-launch security opinion.
+- **[BU Business Unit](roles.html#role-bu)**: Takes part in UAT, confirms the features meet the need and signs off; uses the pilot and reports issues.
+- **[EA Enterprise Architect](roles.html#role-ea)**: Architecture review (ARB): checks the bank's architecture and technology standards.
+- **[CAB Change Advisory Board](roles.html#role-cab)**: Approves production changes, models and prompts included.
+- **[Ops Operations](roles.html#role-ops)**: Deploys to production.
+- **[BA AI Business Analyst](roles.html#role-ba)**: Compares pilot results with the baseline before full launch is approved.
 
 ## Handoffs and checks
 

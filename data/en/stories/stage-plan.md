@@ -36,20 +36,25 @@ Deliverables for this phase:
 
 ## Who takes part
 
-- **CXO/Decision-Makers**: Set annual strategies and KPIs, and approve budget limits.
-- **AIBU (Business Unit)**: Present requirements and scenarios, define what success looks like (e.g., conversion rate, processing rate), and provide business volume. Ultimately, the value of AI must be recognized by the business unit.
-- **PO (Product Owner)**: Define the product roadmap and prioritize requirements.
-- **AIBA (AI Business Analyst)**: Translate business requirements into tasks that AI can perform: break down processes, define inputs and outputs, and document boundaries and acceptance criteria.
-- **SA (Systems Analyst)**: Determine which systems and data to connect, whether the data can be migrated to the cloud, and whether to use the cloud or on-premises solutions, and then draw up a preliminary architecture.
-- **Infra (Infrastructure)**: Estimate computing power and capacity based on business volume. The lead time for GPUs is long, so estimates need to be made at this stage.
-- **BA also owns cost-benefit**: Builds the cost and benefit baseline as "business volume × usage per unit × unit price", used after launch to calculate the realization rate. BU supplies the business volume.
-- **PMO**: Prioritize among multiple AI projects. The cost-benefit benchmark serves as the basis for its resource allocation.
-- **Compliance/Risk Management**: Determine which regulations apply, work with business units to establish AI red lines, and decide on risk levels.
-- **Information Security**: Confirm the data classification and which data can be sent to external models.
+- **[CXO Executives](roles.html#role-cxo)**: Sets the AI strategy and KPIs, and approves the budget ceiling.
+- **[PMO Project Office](roles.html#role-pmo)**: Sets the process, prioritizes across AI projects and allocates resources.
+- **[PO Product Owner](roles.html#role-po)**: Takes part in prioritizing, advises from a strategic view, and allocates BA and SA resources.
+- **[BU Business Unit](roles.html#role-bu)**: Raises the scenario and pain points, defines what success looks like (for example conversion or processing rates) and supplies business volume; in the end, the business unit books the value of the AI.
+- **[BA AI Business Analyst](roles.html#role-ba)**: The business units' contact. Finds and confirms needs (scenario, process, pain point, benefit) and hands them to the SA to assess; turns them into the AI task's limits and acceptance criteria, and builds the cost-benefit baseline.
+- **[UX User Experience](roles.html#role-ux)**: A specialist team in the digital unit: user research, customer 360 analysis and conversation design.
+- **[PM Project Manager](roles.html#role-pm)**: Owns the schedule and scope, and coordinates teams and vendors.
+- **[TPM Technical PM](roles.html#role-tpm)**: Coordinates the technical plan, such as the choice of model, platform and architecture.
+- **[IT PM IT Project Manager](roles.html#role-itpm)**: Represents the IT department; assesses in-house systems, environments and resources, and fits the work into IT's schedule.
+- **[PR Procurement](roles.html#role-pr)**: Runs bids and contracts from the RFP; AI models and platforms get a PoC before purchase.
+- **[SA Systems Analyst](roles.html#role-sa)**: Assesses feasibility and development resources, decides cloud or on-prem, and builds a prototype.
+- **[Infra Infrastructure](roles.html#role-infra)**: Estimates compute and capacity from business volume; GPUs take months to arrive, so the estimate happens now.
+- **[ISO Information Security](roles.html#role-iso)**: Confirms data classification and which data may go to external models.
+- **[CCO Compliance](roles.html#role-cco)**: Determines which rules apply and sets the AI's red lines with the business unit.
+- **[CRO Risk](roles.html#role-cro)**: Assesses and rates the project risk.
 
 ## Handoffs and checks
 
-The business unit proposes a scenario, and AIBA and SA turn it into a specification that can be estimated. The IT department estimates the usage, and the business department provides the business volume. Together, they form the cost-benefit benchmark. The risk classification determines how stringent the subsequent verification should be.
+The business unit proposes a scenario, and BA and SA turn it into a specification that can be estimated. The IT department estimates the usage, and the business department provides the business volume. Together, they form the cost-benefit benchmark. The risk classification determines how stringent the subsequent verification should be.
 
 Once there are many requests, a show of hands can't decide what to build. Every request gets done; the only question is the order, ranked with one scorecard:
 
