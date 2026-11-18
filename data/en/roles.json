@@ -20,6 +20,10 @@
           {
             "stage": "① Business planning",
             "duty": "AI strategy, budget approval, KPIs"
+          },
+          {
+            "stage": "④ Operations and monitoring",
+            "duty": "Reallocates resources by realization rate"
           }
         ]
       }
@@ -80,6 +84,10 @@
           {
             "stage": "① Planning and requirements",
             "duty": "Rules, resources, cross-project oversight, templates"
+          },
+          {
+            "stage": "④ Maintenance",
+            "duty": "Project close-out and post-launch review"
           }
         ]
       },
@@ -155,6 +163,10 @@
             "duty": "Scenario and KPIs, business volume, books the benefit"
           },
           {
+            "stage": "② Model tuning",
+            "duty": "Real cases and model answers"
+          },
+          {
             "stage": "③ Build and deploy",
             "duty": "UAT and sign-off"
           },
@@ -209,6 +221,10 @@
           {
             "stage": "① Business planning",
             "duty": "Finds and confirms needs for the SA to assess; agrees the acceptance bar with BU; builds the cost-benefit baseline"
+          },
+          {
+            "stage": "② Model tuning",
+            "duty": "Writes the rules as test questions; agrees the launch bar with BU"
           },
           {
             "stage": "③ Build and deploy",
@@ -334,6 +350,10 @@
           {
             "stage": "① Business planning",
             "duty": "Coordinates model, platform and architecture decisions"
+          },
+          {
+            "stage": "② Model tuning",
+            "duty": "Coordinates model, prompt and retrieval decisions; tracks each round"
           },
           {
             "stage": "③ Build and deploy",
@@ -1054,6 +1074,10 @@
           {
             "stage": "① Business planning",
             "duty": "Applicable rules, red lines"
+          },
+          {
+            "stage": "② Model tuning",
+            "duty": "Rules and red lines"
           }
         ]
       },
