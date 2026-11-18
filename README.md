@@ -59,6 +59,8 @@ Sign in once with a GitHub token:
 
 The token stays in your browser. Treat it like a password; revoke it on GitHub if a device is lost.
 
+Local preview: run `python3 scripts/serve.py` and open http://localhost:8765/. It is `python3 -m http.server` with caching turned off, so a normal reload always shows the current files.
+
 Local editing without a token: run a local server in the repo, open `/admin/` in Chrome or Edge, and choose **使用本機倉庫** (Work with Local Repository). Commit and push with git yourself.
 
 What you can edit: project stories, experience and project cards, Quant Lab, chart text, other experience, and the blog list, all in Chinese. English is translated automatically after each save. Blog posts themselves are HTML files in `posts/` and are not edited in the admin. The admin config is `admin/config.yml`.
