@@ -24,6 +24,7 @@ title: stage-build
 - **[SA 系統分析](roles.html#role-sa)**：分派技術團隊開發；寫系統規格：資料流、API、和既有系統怎麼接。
 - **[AP 應用系統負責單位](roles.html#role-ap)**：系統要嫁接到行內的伺服器、和核心系統串接，都歸他們管；上線後由他們接手維運。
 - **[SDE 軟體工程師](roles.html#role-sde)**：開發功能與單元測試。銀行的案子大多委外，由廠商依規格開發、交付，保固與維護寫在合約裡。
+- **[DBA 資料庫管理](roles.html#role-dba)**：設計應用系統的資料庫。
 - **[MLOps 模型維運](roles.html#role-mlops)**：CI/CD 之外，還要管模型與提示詞的版本，讓每次更新都能回溯。
 - **[SE 系統工程師](roles.html#role-se)**：屬於 Infra。依 TA 的設計建置 GPU 主機、網路與正式、測試環境。
 - **[QA 測試團隊](roles.html#role-qa)**：整合測試之外，每次改動都重跑評測集，確認回答沒有變差。

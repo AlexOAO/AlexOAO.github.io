@@ -17,6 +17,7 @@ AI 治理不是單獨的一個階段，而是貫穿整個生命週期：**業務
 
 ## 誰參與
 
+- **[ITC 資訊委員會](roles.html#role-itc)**：核准 IT 立案與預算；AI 專案一樣要經過。
 - **[AIC AI 管理委員會](roles.html#role-aic)**：核准中高風險的 AI 上線。
 - **[MRM 模型風險管理](roles.html#role-mrm)**：第二道防線，獨立驗證模型。
 - **[WG AI 工作小組](roles.html#role-wg)**：盤點所有 AI，確認風險分級，初審檢核結果。

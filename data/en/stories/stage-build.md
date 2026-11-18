@@ -24,6 +24,7 @@ Deliverables for this phase:
 - **[SA Systems Analyst](roles.html#role-sa)**: Assigns the technical team; writes the system spec: data flow, APIs, and how it connects to existing systems.
 - **[AP Application Owner](roles.html#role-ap)**: Deploying onto the bank's servers and connecting to core systems are theirs to manage; they take over maintenance after launch.
 - **[SDE Software Engineer](roles.html#role-sde)**: Builds features and unit tests. Most bank projects are outsourced: the vendor builds and delivers to the spec, with warranty and maintenance in the contract.
+- **[DBA Database Admin](roles.html#role-dba)**: Designs the application database.
 - **[MLOps Model Operations](roles.html#role-mlops)**: Beyond CI/CD, manages model and prompt versions so every change can be traced.
 - **[SE System Engineer](roles.html#role-se)**: Part of Infrastructure. Builds GPU servers, network, and production and test environments to the TA's design.
 - **[QA Testing](roles.html#role-qa)**: Beyond integration tests, reruns the evaluation set on every change to make sure answers have not got worse.

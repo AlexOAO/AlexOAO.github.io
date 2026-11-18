@@ -17,6 +17,7 @@ Deliverables for this phase:
 
 ## Who takes part
 
+- **[ITC IT Committee](roles.html#role-itc)**: Approves IT projects and budgets; AI projects go through it too.
 - **[AIC AI Committee](roles.html#role-aic)**: Approves medium- and high-risk AI launches.
 - **[MRM Model Risk Management](roles.html#role-mrm)**: The second line; validates models independently.
 - **[WG AI Working Group](roles.html#role-wg)**: Keeps the AI inventory, confirms risk ratings and does the first review of checks.

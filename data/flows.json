@@ -281,13 +281,27 @@
      "tag": "ai"
     },
     {
+     "key": "dba",
+     "does": "應用系統的資料庫設計"
+    },
+    {
+     "key": "se",
+     "does": "GPU 主機、網路、正式與測試環境"
+    }
+   ]
+  },
+  {
+   "boxes": [
+    {
+     "ghost": true
+    },
+    {
      "key": "mlops",
      "does": "CI/CD、模型與提示詞版本",
      "tag": "ai"
     },
     {
-     "key": "se",
-     "does": "GPU 主機、網路、正式與測試環境"
+     "ghost": true
     }
    ]
   },
@@ -458,7 +472,9 @@
   {
    "boxes": [
     {
-     "ghost": true
+     "key": "itc",
+     "does": "核准 IT 立案與預算",
+     "tag": "gate"
     },
     {
      "key": "aic",

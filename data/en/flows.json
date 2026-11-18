@@ -281,13 +281,27 @@
           "tag": "ai"
         },
         {
+          "key": "dba",
+          "does": "Database design for the application"
+        },
+        {
+          "key": "se",
+          "does": "GPU servers, network, production and test environments"
+        }
+      ]
+    },
+    {
+      "boxes": [
+        {
+          "ghost": true
+        },
+        {
           "key": "mlops",
           "does": "CI/CD, model and prompt versions",
           "tag": "ai"
         },
         {
-          "key": "se",
-          "does": "GPU servers, network, production and test environments"
+          "ghost": true
         }
       ]
     },
@@ -458,7 +472,9 @@
     {
       "boxes": [
         {
-          "ghost": true
+          "key": "itc",
+          "does": "Approves IT projects and budgets",
+          "tag": "gate"
         },
         {
           "key": "aic",

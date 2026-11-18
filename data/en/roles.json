@@ -39,6 +39,15 @@
             "duty": "Approves projects and major budgets"
           }
         ]
+      },
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "AI governance",
+            "duty": "Approves IT projects and budgets"
+          }
+        ]
       }
     ]
   },
@@ -361,6 +370,24 @@
             "duty": "Coordinates integration, environments and the release schedule"
           }
         ]
+      },
+      {
+        "side": "Outsourced: traditional",
+        "items": [
+          {
+            "stage": "Requirements and procurement",
+            "duty": "States IT standards and environment needs"
+          }
+        ]
+      },
+      {
+        "side": "Outsourced: AI",
+        "items": [
+          {
+            "stage": "Requirements and procurement",
+            "duty": "States cloud/on-prem and cloud-data conditions"
+          }
+        ]
       }
     ]
   },
@@ -391,6 +418,15 @@
             "duty": "Assigns the technical team; system spec, APIs, data flow"
           }
         ]
+      },
+      {
+        "side": "Outsourced: traditional",
+        "items": [
+          {
+            "stage": "Vendor build",
+            "duty": "Writes the system spec from the requirements"
+          }
+        ]
       }
     ]
   },
@@ -406,6 +442,10 @@
           {
             "stage": "② Design",
             "duty": "Checks the bank's architecture and technology standards"
+          },
+          {
+            "stage": "③ Build, test and launch",
+            "duty": "Architecture review (ARB)"
           }
         ]
       },
@@ -432,6 +472,15 @@
           {
             "stage": "② Design",
             "duty": "Tables and database design"
+          }
+        ]
+      },
+      {
+        "side": "AI development",
+        "items": [
+          {
+            "stage": "③ Build and deploy",
+            "duty": "Database design for the application"
           }
         ]
       }
@@ -636,26 +685,7 @@
     "name": "Infra Infrastructure",
     "short": "Servers, network, GPUs",
     "about": "The infrastructure unit. Provides servers, network, and production and test environments; for AI projects, GPU compute too. Inside it, the TA (technical architect) designs and the SE (system engineer) builds and runs.",
-    "uses": [
-      {
-        "side": "Outsourced: traditional",
-        "items": [
-          {
-            "stage": "Deploy in-house",
-            "duty": "In-house servers and environments"
-          }
-        ]
-      },
-      {
-        "side": "Outsourced: AI",
-        "items": [
-          {
-            "stage": "Deploy in-house",
-            "duty": "GPUs or a hybrid cloud environment"
-          }
-        ]
-      }
-    ]
+    "uses": []
   },
   {
     "key": "ta",
@@ -704,6 +734,24 @@
           {
             "stage": "③ Build and deploy",
             "duty": "GPU servers, network, production and test environments"
+          }
+        ]
+      },
+      {
+        "side": "Outsourced: traditional",
+        "items": [
+          {
+            "stage": "Deploy in-house",
+            "duty": "In-house servers and environments"
+          }
+        ]
+      },
+      {
+        "side": "Outsourced: AI",
+        "items": [
+          {
+            "stage": "Deploy in-house",
+            "duty": "GPUs or a hybrid cloud environment"
           }
         ]
       }
@@ -974,6 +1022,10 @@
         "side": "Outsourced: AI",
         "items": [
           {
+            "stage": "Requirements and procurement",
+            "duty": "Security review of the vendor and the cloud"
+          },
+          {
             "stage": "Deploy in-house",
             "duty": "Red team, data isolation"
           }
@@ -1056,6 +1108,15 @@
             "duty": "Second line: validates models independently"
           }
         ]
+      },
+      {
+        "side": "Outsourced: AI",
+        "items": [
+          {
+            "stage": "Deploy in-house",
+            "duty": "Validates the vendor's model independently"
+          }
+        ]
       }
     ]
   },
@@ -1109,11 +1170,20 @@
     "about": "Procurement. Runs bids, negotiation and contracts.",
     "uses": [
       {
+        "side": "Traditional development",
+        "items": [
+          {
+            "stage": "② Design",
+            "duty": "RFP, bids, contract"
+          }
+        ]
+      },
+      {
         "side": "AI development",
         "items": [
           {
             "stage": "① Business planning",
-            "duty": "RFP, bids, contract; for AI, a PoC first"
+            "duty": "RFP, bids, contract; for AI, test in a PoC first"
           }
         ]
       },
