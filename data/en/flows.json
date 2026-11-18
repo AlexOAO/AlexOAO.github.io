@@ -70,7 +70,7 @@
           "does": "Coordinates model, platform and architecture decisions"
         },
         {
-          "key": "it",
+          "key": "itpm",
           "does": "Represents IT; assesses in-house systems, environments and resources"
         }
       ]
@@ -225,7 +225,7 @@
           "does": "Coordinates build, platform and deployment decisions"
         },
         {
-          "key": "it",
+          "key": "itpm",
           "does": "Coordinates integration, environments and the release schedule"
         }
       ]

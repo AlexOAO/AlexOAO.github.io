@@ -2,7 +2,7 @@
   {
     "key": "cxo",
     "name": "CXO Executives",
-    "short": "Sets strategy, approves budgets",
+    "short": "Strategy and budgets",
     "about": "Senior management. Sets the annual strategy, approves major budgets and defines company KPIs.",
     "uses": [
       {
@@ -28,7 +28,7 @@
   {
     "key": "itc",
     "name": "ITC IT Committee",
-    "short": "Approves IT projects and budgets",
+    "short": "Approves IT projects",
     "about": "IT committee. Approves IT projects and major budgets.",
     "uses": [
       {
@@ -44,7 +44,7 @@
   },
   {
     "key": "aic",
-    "name": "AIC AI Management Committee",
+    "name": "AIC AI Committee",
     "short": "Approves AI launches",
     "about": "AI management committee. The top oversight body for AI; approves medium- and high-risk AI launches.",
     "uses": [
@@ -61,7 +61,7 @@
   },
   {
     "key": "pmo",
-    "name": "PMO Project Management Office",
+    "name": "PMO Project Office",
     "short": "Owns process and resources",
     "about": "Project management office. Sets project management rules, prioritizes across projects and allocates resources.",
     "uses": [
@@ -92,8 +92,8 @@
   {
     "key": "po",
     "name": "PO Product Owner",
-    "short": "Owns product direction",
-    "about": "Product owner. Defines the product roadmap and requirement priorities, and owns the product outcome.",
+    "short": "Business contact, roadmap",
+    "about": "Product owner. Defines the product roadmap and requirement priorities, and owns the product outcome. In banks the PO usually comes from the business or digital unit and is the project's business contact, paired with the IT PM on the IT side.",
     "uses": [
       {
         "side": "Traditional development",
@@ -118,7 +118,7 @@
   {
     "key": "bu",
     "name": "BU Business Unit",
-    "short": "Raises needs, earns the revenue",
+    "short": "Raises needs, owns revenue",
     "about": "Business unit. Raises business pain points and needs; after launch it uses the system and turns it into revenue.",
     "uses": [
       {
@@ -238,8 +238,8 @@
   {
     "key": "ux",
     "name": "UX User Experience",
-    "short": "Designs the user experience",
-    "about": "User experience. Researches users and designs screens, interactions or conversation flows.",
+    "short": "Digital unit: user research",
+    "about": "User experience. In banks this is rarely project staff: it is a specialist team in the digital or customer-experience unit, shared across projects, doing user research, customer 360 analysis, and journey and interface design; projects commission or borrow from it. It often sits in the same digital unit as the PO, but the PO decides and UX supplies the research and design.",
     "uses": [
       {
         "side": "Traditional development",
@@ -265,7 +265,7 @@
     "key": "pm",
     "name": "PM Project Manager",
     "short": "Owns schedule and scope",
-    "about": "Project manager. Owns the schedule and scope, coordinates teams and vendors, and runs acceptance.",
+    "about": "Project manager. Owns the schedule and scope, coordinates teams and vendors, and runs acceptance. The PM may be the business contact (PO) or the IT contact (IT PM), or a third party in between, such as an innovation or AI team.",
     "uses": [
       {
         "side": "Traditional development",
@@ -316,8 +316,8 @@
   {
     "key": "tpm",
     "name": "TPM Technical PM",
-    "short": "Coordinates technical decisions",
-    "about": "Technical project manager. Coordinates technical decisions across teams, such as the choice of model, platform and architecture.",
+    "short": "Owns the technical plan",
+    "about": "Technical project manager. Coordinates the technical plan across teams, such as the choice of model, platform and architecture, and handles technical dependencies and risks. Unlike the IT PM, the TPM owns the technical plan and represents no department; in banks the role is often filled by an architect, a senior SA, the AI team or the vendor's technical lead.",
     "uses": [
       {
         "side": "AI development",
@@ -335,10 +335,10 @@
     ]
   },
   {
-    "key": "it",
-    "name": "IT IT Liaison",
-    "short": "Coordinates in-house IT resources",
-    "about": "The IT department's project contact. Represents IT in the project, coordinates in-house resources (applications, infrastructure, databases, security) and fits the work into IT's schedule.",
+    "key": "itpm",
+    "name": "IT PM IT Project Manager",
+    "short": "IT resources and schedule",
+    "about": "IT project manager, the IT department's contact for the project. Plans IT's schedule and budget, brings in applications, infrastructure, databases and security, and handles IT procurement and the change process (CAB). Unlike the TPM, who owns the technical plan, the IT PM owns IT's resources and schedule; on a small project one person may do both.",
     "uses": [
       {
         "side": "Traditional development",
@@ -367,7 +367,7 @@
   {
     "key": "sa",
     "name": "SA Systems Analyst",
-    "short": "System architecture and specs",
+    "short": "Architecture and specs",
     "about": "Systems analyst. Designs the system architecture and specs, and defines data flows and APIs.",
     "uses": [
       {
@@ -396,8 +396,8 @@
   },
   {
     "key": "ea",
-    "name": "EA Enterprise Architecture",
-    "short": "Reviews architecture standards",
+    "name": "EA Enterprise Architect",
+    "short": "Architecture standards",
     "about": "Enterprise architecture. Checks that a new system meets the bank's architecture and technology standards.",
     "uses": [
       {
@@ -413,7 +413,7 @@
   },
   {
     "key": "dba",
-    "name": "DBA Database Administrator",
+    "name": "DBA Database Admin",
     "short": "Designs the database",
     "about": "Database administrator. Designs and maintains databases.",
     "uses": [
@@ -448,7 +448,7 @@
   {
     "key": "ds",
     "name": "DS Data Scientist",
-    "short": "Model experiments and analysis",
+    "short": "Model experiments",
     "about": "Data scientist. Designs features, runs model experiments and analyzes results.",
     "uses": [
       {
@@ -464,7 +464,7 @@
   },
   {
     "key": "mle",
-    "name": "MLE Machine Learning Engineer",
+    "name": "MLE ML Engineer",
     "short": "Tunes the model",
     "about": "Machine learning engineer. Tunes the model: prompts, RAG, model choice and fine-tuning.",
     "uses": [
@@ -538,8 +538,8 @@
   },
   {
     "key": "fde",
-    "name": "FDE Forward-Deployed Engineer",
-    "short": "Embedded on site to roll out AI",
+    "name": "FDE Forward-Deployed Eng",
+    "short": "Rolls out AI on site",
     "about": "Forward-deployed engineer. Works inside the business unit, wires AI into the real workflow and keeps adjusting it on site after launch.",
     "uses": [
       {
@@ -625,7 +625,7 @@
   {
     "key": "infra",
     "name": "Infra Infrastructure",
-    "short": "Servers, network and compute",
+    "short": "Servers, network, GPUs",
     "about": "Infrastructure. Provides servers, network, production and test environments; for AI projects, GPU compute as well.",
     "uses": [
       {
@@ -721,7 +721,7 @@
   {
     "key": "mlops",
     "name": "MLOps Model Operations",
-    "short": "Model versions and monitoring",
+    "short": "Model versions, monitoring",
     "about": "Model operations. Manages model and prompt versions, and monitors answer quality, model drift and cost.",
     "uses": [
       {
@@ -1006,7 +1006,7 @@
   {
     "key": "mrm",
     "name": "MRM Model Risk Management",
-    "short": "Validates models independently",
+    "short": "Independent model checks",
     "about": "Model risk management. Part of the second line; validates models independently of the team that built them: whether they can be used, and their limits.",
     "uses": [
       {
@@ -1109,7 +1109,7 @@
   {
     "key": "ma",
     "name": "MA Vendor Maintenance",
-    "short": "Warranty and maintenance contract",
+    "short": "Warranty and maintenance",
     "about": "Vendor maintenance. Fixes issues during the warranty period and provides maintenance under contract.",
     "uses": [
       {
