@@ -49,6 +49,8 @@ I did two things:
 - Task Ratio: Tasks handled by AI ÷ Total task volume, such as AI handling rate and human transfer rate. It answers the question, "Is AI really doing anything?"
 - Realization ratios: actual ÷ baseline, such as volume realization, cost execution, and benefit realization. They answer "did the original estimate come true?"
 
+The three-year baseline suits large Agents with complex cost structures. The many small internal requests are ranked with a lighter scorecard instead: benefit, feasibility, compliance and cost, each filled in by the BA or SA. The two complement each other: large Agents first prove they are worth it, small requests first get an order.
+
 **Phase 3 | Data collection and calculation.** The business unit provides the business volume and benefits, while the IT unit provides the usage. Once the data is complete, establish a three-year baseline for workload, cost, and benefits for each agent. This baseline serves as the denominator for calculating the achievement rate after going live. This is currently in progress.
 
 **Phase 4 | Institutionalize.** Planning to integrate indicators into the resource allocation process: Establish benchmarks before launch, and regularly monitor business ratios and achievement rates after launch. Initiate reviews when achievement rates fall below the threshold, and adjust resources or scope accordingly.
