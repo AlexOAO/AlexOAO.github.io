@@ -9,7 +9,7 @@
     "other": [],
     "projects": [
       {
-        "short": "AI 安全護欄：3,600 題實測",
+        "short": "AI 安全護欄：Guardrails PoC",
         "slug": "guardrails-poc",
         "title": "金控 AI 安全護欄 PoC（XecGuard／Vulcan）",
         "summary": "跟進金控 PoC，評估兩家 AI 安全護欄，建立行內驗證方法。",
@@ -31,7 +31,7 @@
         "source": "S2,S3,S4, XecGuard_簡報_final, XecGuard_vs_Vulcan_回饋, 使用者說明（R1 定義、Vulcan 進行中）"
       },
       {
-        "short": "AI 代理平台：60 項選型評測",
+        "short": "AI 代理平台：Platform PoC",
         "slug": "agentic-platform-eval",
         "title": "企業 Agentic 平台選型評測（Agatha／Dify）",
         "summary": "以 60 項測試評測 2 個平台，提前發現 12 項問題。",
@@ -201,7 +201,7 @@
         "source": "S4"
       },
       {
-        "short": "AI 營運成效：值不值得一張表看懂",
+        "short": "AI 營運成效：Dashboard",
         "slug": "ai-ops-dashboard",
         "title": "AI 營運成效 Dashboard（對內 Copilot／Gemini／艾拉，對外四大 Agent）",
         "summary": "用同一套指標，衡量對內 AI 工具與對外四大 Agent 的成效。",
@@ -219,7 +219,7 @@
         "source": "ttt.pptx（2026/10/19 主管會議）；指標框架為設計提案"
       },
       {
-        "short": "AI 介面：A2UI 從技術到產品",
+        "short": "AI 技術：A2UI",
         "slug": "a2ui-research",
         "title": "A2UI 技術研究：從技術到產品",
         "summary": "依產品化旅程評估 A2UI：先找場景，再備資源、驗證價值、上線。",
@@ -313,7 +313,7 @@
         "source": "S1, posts/rag-smart-customer-service.html"
       },
       {
-        "short": "AI 智能投顧：多代理人協作",
+        "short": "AI 智能投顧：Multi-Agent",
         "slug": "multi-agent-advisory",
         "title": "Multi-Agent 智能投顧架構",
         "summary": "讓 AI 像基金團隊一樣分工討論，產生可回測的投資訊號。",
@@ -403,7 +403,7 @@
     "other": [],
     "projects": [
       {
-        "short": "量化策略：台指期 CTA",
+        "short": "CTA 策略",
         "slug": "tmba-cta-taiex",
         "kind": "量化策略",
         "layers": ["data", "test"],
@@ -450,7 +450,7 @@
     "other": [],
     "projects": [
       {
-        "short": "碩士論文：LLM 讀財報預測股價",
+        "short": "碩士論文",
         "slug": "thesis-rag-panel",
         "title": "結合檢索增強生成與縱橫資料模型之股價報酬預測：以臺灣電子產業為例",
         "kind": "學術研究",
@@ -498,7 +498,7 @@
     "other": [],
     "projects": [
       {
-        "short": "GMBA 論文：ESG 風險與資本結構",
+        "short": "GMBA 論文",
         "slug": "thesis-esg-capital-structure",
         "kind": "學術研究",
         "title": "ESG 風險評分對台灣公司的財務結構影響",
