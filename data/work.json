@@ -72,7 +72,7 @@
         "source": "S2,S4,S5"
       },
       {
-        "short": "貸款助理",
+        "short": "貸款助理：Sales Agent",
         "slug": "agent-loan-assistant",
         "parent": "agent-cost-roi",
         "title": "貸款助理（Sales Agent）：智慧獲客",
@@ -90,7 +90,7 @@
         "source": "S5"
       },
       {
-        "short": "智能徵審",
+        "short": "智能徵審：Credit Agent",
         "slug": "agent-credit-review",
         "parent": "agent-cost-roi",
         "title": "智能徵審（Credit Agent）：智慧交易",
@@ -109,7 +109,7 @@
         "source": "S4,S5"
       },
       {
-        "short": "客服助理",
+        "short": "客服助理：Service Agent",
         "slug": "agent-customer-service",
         "parent": "agent-cost-roi",
         "title": "客服助理（Service Agent）：智慧服務",
@@ -128,7 +128,7 @@
         "source": "S4,S5"
       },
       {
-        "short": "智富管家",
+        "short": "智富管家：App Agent",
         "slug": "agent-wealth-assistant",
         "parent": "agent-cost-roi",
         "title": "智富管家（App 2.0）：智慧經營",

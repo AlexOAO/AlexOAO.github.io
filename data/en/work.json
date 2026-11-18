@@ -211,7 +211,7 @@
         "source": "S2,S4,S5"
       },
       {
-        "short": "Loan Assistant",
+        "short": "Loan Assistant: Sales Agent",
         "slug": "agent-loan-assistant",
         "parent": "agent-cost-roi",
         "title": "Loan Assistant (Sales Agent): Smart Customer Acquisition",
@@ -251,7 +251,7 @@
         "source": "S5"
       },
       {
-        "short": "Credit Review",
+        "short": "Credit Review: Credit Agent",
         "slug": "agent-credit-review",
         "parent": "agent-cost-roi",
         "title": "Credit Review (Credit Agent): Smart Transactions",
@@ -296,7 +296,7 @@
         "source": "S4,S5"
       },
       {
-        "short": "Customer Service",
+        "short": "Customer Service: Service Agent",
         "slug": "agent-customer-service",
         "parent": "agent-cost-roi",
         "title": "Customer Service Assistant (Service Agent): Smart Service",
@@ -341,7 +341,7 @@
         "source": "S4,S5"
       },
       {
-        "short": "Wealth Assistant",
+        "short": "Wealth Assistant: App Agent",
         "slug": "agent-wealth-assistant",
         "parent": "agent-cost-roi",
         "title": "Wealth Assistant (App 2.0): Smart Wealth Management",
