@@ -1,5 +1,8 @@
 {
   "guardrails-poc": {
+    "vision": "Every AI agent that goes live is proven safe with the same yardstick.",
+    "value": "The bank can show the regulator real safety evidence without buying an extra guardrail.",
+    "achieve": "Ran 3,600 tests and advised not buying XecGuard yet; Vulcan is in progress.",
     "kpis": [
       {
         "value": "3,600",
@@ -13,12 +16,12 @@
         "value": "20 of 30",
         "label": "normal Qs blocked"
       }
-    ],
-    "challenge": "Regulators require proof that AI output is safe; policy documents cannot prove it.",
-    "action": "Built 3,600 test cases, ran them, and compared the guardrail with built-in protection.",
-    "result": "Recommended skipping an add-on guardrail for now and using the platform's built-in one."
+    ]
   },
   "agentic-platform-eval": {
+    "vision": "The bank knows which agent platform is safe to build on before it buys.",
+    "value": "Avoids missing features midway or security holes after launch, with a side-by-side basis to choose.",
+    "achieve": "Led the tests and found 12 issues before purchase, including 4 launch blockers and 1 security hole.",
     "kpis": [
       {
         "value": "12",
@@ -32,12 +35,12 @@
         "value": "60",
         "label": "tests on 2 platforms"
       }
-    ],
-    "challenge": "A wrong agent platform could fail halfway through a build or after launch.",
-    "action": "Designed and ran hands-on tests on two platforms, scored on the same scorecard.",
-    "result": "Found 12 issues before purchase, including 4 launch blockers and 1 security issue."
+    ]
   },
   "agent-cost-roi": {
+    "vision": "Four AI agents link the whole customer journey, from first contact to wealth management.",
+    "value": "Leaders decide who gets resources first from one table, then track if estimates come true.",
+    "achieve": "Four prototypes and a shared cost-benefit framework are done; each agent's baseline is in progress.",
     "kpis": [
       {
         "value": "4",
@@ -51,12 +54,12 @@
         "value": "2",
         "label": "tracking metric types"
       }
-    ],
-    "challenge": "Four agents with different cost structures were hard to compare for funding.",
-    "action": "Built a prototype for each agent and designed one shared cost-benefit formula.",
-    "result": "All four agents can now be compared side by side; their baselines are in progress."
+    ]
   },
   "agent-loan-assistant": {
+    "vision": "Customers always get an answer on the application platform, so they no longer leave.",
+    "value": "Its value is measured by extra applications won, not only by cost saved.",
+    "achieve": "Prototype and measurement framework are done; the baseline awaits volume data from the business.",
     "kpis": [
       {
         "value": "Built",
@@ -70,12 +73,12 @@
         "value": "Pending",
         "label": "3-year baseline"
       }
-    ],
-    "challenge": "Applicants with questions often leave the platform when no one answers in time.",
-    "action": "Built a Loan Assistant prototype and defined metrics based on applications.",
-    "result": "The measurement framework is done; the baseline awaits volume data from the business."
+    ]
   },
   "agent-credit-review": {
+    "vision": "Underwriters spend less time checking documents, so approvals are faster and more consistent.",
+    "value": "Underwriters save checking time, and managers see cost per case and three-year budget use.",
+    "achieve": "Prototype, unit cost and three-year cost baseline are done, and production resources are confirmed.",
     "kpis": [
       {
         "value": "3 years",
@@ -89,12 +92,12 @@
         "value": "Lead",
         "label": "prototype, cost study"
       }
-    ],
-    "challenge": "Underwriters check financial documents one by one; slow, with uneven standards.",
-    "action": "Built the Smart Underwriting prototype and set unit cost and a 3-year baseline.",
-    "result": "The cost baseline is done and production resources are confirmed."
+    ]
   },
   "agent-customer-service": {
+    "vision": "Agents focus on customers while an AI sidekick looks things up and writes the notes.",
+    "value": "Less lookup during calls and less note writing after, with peak capacity neither short nor wasted.",
+    "achieve": "Prototype, cost framework and call baseline are done; resources await the vendor's estimate.",
     "kpis": [
       {
         "value": "On-prem only",
@@ -108,12 +111,12 @@
         "value": "Shared",
         "label": "cost-benefit framework"
       }
-    ],
-    "challenge": "Agents look things up mid-call and still write notes after hanging up.",
-    "action": "Built the assistant prototype and designed a cost-per-call framework.",
-    "result": "Framework and call baseline are done; waiting on the vendor's updated estimate."
+    ]
   },
   "agent-wealth-assistant": {
+    "vision": "One question tells customers where their assets stand, leading naturally to advice.",
+    "value": "Customers skip digging through accounts, and the bank deepens its wealth management value.",
+    "achieve": "Built a working 118-page prototype with an AI wealth assistant myself; launch resources are confirmed.",
     "kpis": [
       {
         "value": "118 pages",
@@ -127,12 +130,12 @@
         "value": "31+32",
         "label": "In/out guardrail rules"
       }
-    ],
-    "challenge": "Customers must dig through every account to see where their assets stand.",
-    "action": "Led the PoC and launch planning, and built the mobile banking prototype myself.",
-    "result": "Q&A is proven, launch resources are confirmed, and the prototype works."
+    ]
   },
   "agent-governance": {
+    "vision": "Every AI gets a clear compliance check before it goes live.",
+    "value": "Regulator principles become a fill-in checklist; new projects only add their rules and test set.",
+    "achieve": "Turned six principles into a nine-cell table and finished the framework; agent data is being gathered.",
     "kpis": [
       {
         "value": "6",
@@ -146,12 +149,12 @@
         "value": "0",
         "label": "critical error limit"
       }
-    ],
-    "challenge": "The FSC principles are clear, but nobody could say how to check them.",
-    "action": "Turned the six principles into a nine-cell table: three layers times three questions.",
-    "result": "The check framework is done, and new AI projects can reuse it."
+    ]
   },
   "finllm": {
+    "vision": "A finance-only language model learns from correct, compliant data from the start.",
+    "value": "Item-by-item cleaning and rule scoring lower the risk of the model learning errors or breaking rules.",
+    "achieve": "Finished cleaning batch 2-1 and rule scoring for batch 4; batch 5 is in progress.",
     "kpis": [
       {
         "value": "Batch 2-1",
@@ -165,12 +168,12 @@
         "value": "9 batches",
         "label": "awaiting cleaning"
       }
-    ],
-    "challenge": "A finance model that learns from wrong data can break regulations.",
-    "action": "Cleaned training data item by item and scored the model's reading of regulations.",
-    "result": "Finished cleaning batch 2-1 and regulatory scoring for batch 4."
+    ]
   },
   "gemini-training": {
+    "vision": "Staff learn how AI fits their own work, and how to use it safely.",
+    "value": "Class practice uses each unit's own work cases, not just a tour of tool features.",
+    "achieve": "Led the planning and the outline is confirmed; case collection is in progress before the first class.",
     "kpis": [
       {
         "value": "3",
@@ -184,12 +187,12 @@
         "value": "Lead",
         "label": "course design"
       }
-    ],
-    "challenge": "Employees did not know how to use AI safely in their own work.",
-    "action": "Designed an AI course with hands-on practice on each business unit's own scenarios.",
-    "result": "Course outline confirmed; collecting business scenarios is in progress."
+    ]
   },
   "ai-ops-dashboard": {
+    "vision": "One dashboard answers leaders' top question: are these AI investments worth it?",
+    "value": "Internal tools and external agents share one metric set, so results and costs compare together.",
+    "achieve": "The five-part metric framework is designed; the dashboard is in planning and the first report awaits data.",
     "kpis": [
       {
         "value": "5 parts",
@@ -203,12 +206,12 @@
         "value": "Contributor",
         "label": "metric framework"
       }
-    ],
-    "challenge": "Each AI track had its own numbers, but none showed whether AI was worth it.",
-    "action": "Designed metrics on five parts: adoption, quality, value, cost, and risk.",
-    "result": "The metric framework is designed; the dashboard is still in planning."
+    ]
   },
   "a2ui-research": {
+    "vision": "AI replies with bank-approved charts and forms, not just text.",
+    "value": "Customers read money information more easily, while the bank still decides which screen parts are allowed.",
+    "achieve": "Three candidate use cases are mapped and PoC resources are being confirmed; next is the value checkpoint.",
     "kpis": [
       {
         "value": "3",
@@ -222,12 +225,12 @@
         "value": "Lead",
         "label": "technology research"
       }
-    ],
-    "challenge": "Wealth info in plain text is hard to read; AI-written web code fails security.",
-    "action": "Assessed A2UI along a product journey and mapped three candidate use cases.",
-    "result": "Candidate use cases are mapped; PoC resources are being confirmed."
+    ]
   },
   "webai-finance": {
+    "vision": "Researchers spend their time on research, not on collecting and sorting data.",
+    "value": "The whole group asks AI about markets and stocks in its usual screen, with fund data kept separate.",
+    "achieve": "Took it alone from requirements to production launch as an intern; measuring the impact is next.",
     "kpis": [
       {
         "value": "Live",
@@ -241,12 +244,12 @@
         "value": "Solo",
         "label": "Requirements to launch"
       }
-    ],
-    "challenge": "Researchers had to collect and organize data every day before research could start.",
-    "action": "Built an AI assistant that answers market and stock questions from organized data.",
-    "result": "Launched in production, cutting researchers' time to collect and organize data."
+    ]
   },
   "ai-governance-review": {
+    "vision": "Group AI governance reviews become faster and consistent, no longer read one by one by hand.",
+    "value": "Reviewers get results already judged, recalculated and cross-checked, saving effort and aligning standards.",
+    "achieve": "The system is live with automatic CI/CD deployment; the before-and-after review time is yet to be measured.",
     "kpis": [
       {
         "value": "3 checks",
@@ -260,12 +263,12 @@
         "value": "Live",
         "label": "Auto review system"
       }
-    ],
-    "challenge": "Subsidiary AI reports were reviewed one by one by hand: slow, with uneven standards.",
-    "action": "AI judges the content; the system recalculates risk and checks the asset register.",
-    "result": "The system checks and recalculates first, then hands results to a reviewer."
+    ]
   },
   "rag-support-bot": {
+    "vision": "Members find answers in the manuals with one question, without waiting for support.",
+    "value": "Members get instant answers, and admins update the knowledge base with no engineer needed.",
+    "achieve": "Changed how documents are split, raising accuracy from 60% to 85% with answers in about 2 to 3 seconds.",
     "kpis": [
       {
         "value": "60%→85%",
@@ -279,12 +282,12 @@
         "value": "Live",
         "label": "Front end + admin"
       }
-    ],
-    "challenge": "Answers were spread across manuals; members who could not find one waited for support.",
-    "action": "Built an AI bot that answers from the manuals, and improved how documents are split.",
-    "result": "Accuracy rose from 60% to 85%, with replies in about 2 to 3 seconds."
+    ]
   },
   "multi-agent-advisory": {
+    "vision": "AI splits work and debates like a fund team to reach investment calls that can be checked.",
+    "value": "Avoids one model's blind spots, and every buy or sell signal comes with reasoning that can be checked.",
+    "achieve": "Designed the roles and linked TEJ data; the five agents ran a three-year Taiwan stock backtest.",
     "kpis": [
       {
         "value": "5 Agents",
@@ -298,12 +301,12 @@
         "value": "MCP",
         "label": "Links to TEJ data"
       }
-    ],
-    "challenge": "One AI struggles to weigh technicals, news sentiment, and fundamentals at once.",
-    "action": "Designed five AI Agents that split work and debate like a fund team to give signals.",
-    "result": "A 3-year Taiwan stock backtest gave the team confidence in the design."
+    ]
   },
   "asr-transcription": {
+    "vision": "The research team gets earnings call key points without typing up each call by ear.",
+    "value": "Researchers can compare key points across companies and quarters directly.",
+    "achieve": "Videos now auto-convert to transcripts and summary tables, cutting prep time; the gain is yet to be measured.",
     "kpis": [
       {
         "value": "Automatic",
@@ -317,12 +320,12 @@
         "value": "Whisper",
         "label": "Speech recognition"
       }
-    ],
-    "challenge": "Someone had to transcribe each earnings call video by hand, which took a long time.",
-    "action": "Used Whisper to turn videos into transcripts and summary tables automatically.",
-    "result": "Cut the time to prepare earnings call notes."
+    ]
   },
   "moda-t-ambassador": {
+    "vision": "Rural groups and small firms can use generative AI too, narrowing the digital gap.",
+    "value": "Firms without AI talent get help turning their real problems into digital solutions.",
+    "achieve": "Completed the 6th cohort and helped firms adopt generative AI and AIoT; results to be added.",
     "kpis": [
       {
         "value": "6th cohort",
@@ -336,12 +339,12 @@
         "value": "GenAI",
         "label": "Adoption support"
       }
-    ],
-    "challenge": "Rural groups and small firms lack AI talent, so adopting generative AI alone is hard.",
-    "action": "Developed digital solutions with companies and helped them adopt generative AI.",
-    "result": "Completed the program and helped companies adopt generative AI and AIoT."
+    ]
   },
   "tmba-cta-taiex": {
+    "vision": "Build a trading strategy that can be reproduced, measured and tested.",
+    "value": "Return, Sharpe ratio and max drawdown together show the risk behind the return.",
+    "achieve": "The TAIEX futures CTA strategy I led won 3rd place at the 26th TMBA showcase.",
     "kpis": [
       {
         "value": "3rd place",
@@ -355,12 +358,12 @@
         "value": "26th cohort",
         "label": "TMBA algo trading"
       }
-    ],
-    "challenge": "A strategy is taken seriously only if its results are repeatable and measurable.",
-    "action": "Built a TAIEX futures strategy with a repeatable backtest, judged on three measures.",
-    "result": "The strategy won 3rd place at the TMBA showcase."
+    ]
   },
   "tmba-event-earnings-call": {
+    "vision": "Test whether the moment a company explains its business and outlook can become a trade.",
+    "value": "Backtesting return and risk on history gives the event-trading idea data behind it.",
+    "achieve": "Led and backtested the earnings call strategy; the full research is written up in OpenStrategy.",
     "kpis": [
       {
         "value": "2nd",
@@ -374,12 +377,12 @@
         "value": "Taiwan",
         "label": "Stock market"
       }
-    ],
-    "challenge": "Can an earnings call give a signal you can trade?",
-    "action": "Designed a Taiwan stock strategy around earnings calls and backtested return and risk.",
-    "result": "Strategy details and backtest results: to be added."
+    ]
   },
   "thesis-rag-panel": {
+    "vision": "AI reads the text of financial reports to find signals that classic ratios miss.",
+    "value": "A method for report analysis: build the AI system first, then prove it works with statistics.",
+    "achieve": "Adding 6 LLM scores raised the model's explanatory power from 5.14% to 63.73%.",
     "kpis": [
       {
         "value": "5.14%→63.73%",
@@ -393,12 +396,12 @@
         "value": "37,888",
         "label": "Firm-quarters"
       }
-    ],
-    "challenge": "Traditional financial ratios explain only a small part of stock return changes.",
-    "action": "Built an AI system that scores financial statements, then tested it with statistics.",
-    "result": "The model's explanatory power rose from 5.14% to 63.73%."
+    ]
   },
   "fubon-esg-portfolio": {
+    "vision": "Answer whether ESG really pays off in stock investing.",
+    "value": "Hands-on experience of researcher and fund manager work, with feedback from fund managers.",
+    "achieve": "Finished and presented the final project in NTUST's first cohort; portfolio results to be added.",
     "kpis": [
       {
         "value": "113",
@@ -412,12 +415,12 @@
         "value": "3 months",
         "label": "Training program"
       }
-    ],
-    "challenge": "Does ESG add value in stock investing?",
-    "action": "Our team picked Taiwan stocks and built ESG factors into the portfolio allocation.",
-    "result": "Finished the project and presented to fund managers; results to be added."
+    ]
   },
   "thesis-esg-capital-structure": {
+    "vision": "Find out whether ESG risk scores affect how Taiwanese companies are financed.",
+    "value": "Links the ESG scores investors watch to how companies raise their funding.",
+    "achieve": "Finished the thesis and earned the degree; design and findings to be added.",
     "kpis": [
       {
         "value": "Completed",
@@ -431,12 +434,12 @@
         "value": "ESG",
         "label": "Risk scores studied"
       }
-    ],
-    "challenge": "Do ESG risk scores affect the capital structure of Taiwanese companies?",
-    "action": "Studied the link between ESG risk scores and capital structure in a thesis.",
-    "result": "Thesis done and degree earned; findings to be added."
+    ]
   },
   "tunghai-english-ta": {
+    "vision": "Students learn core business courses well in English.",
+    "value": "Helps students learn statistics, economics and financial management in English.",
+    "achieve": "Completed the TA role for three English-taught courses; duty details to be added.",
     "kpis": [
       {
         "value": "3 courses",
@@ -450,12 +453,12 @@
         "value": "Completed",
         "label": "TA role"
       }
-    ],
-    "challenge": "Students learning statistics, economics, and finance in English need a TA.",
-    "action": "Served as teaching assistant for three English-taught courses.",
-    "result": "Completed the TA role for all three; duties to be added."
+    ]
   },
   "finjourney": {
+    "vision": "Anyone can see their whole financial picture at a glance and spot what is wrong.",
+    "value": "Scattered money figures sit on one map, and AI adds a diagnosis and next steps.",
+    "achieve": "Built alone from first commit to launch in under two weeks, backed by 656 automated backend tests.",
     "kpis": [
       {
         "value": "< 2 weeks",
@@ -469,12 +472,12 @@
         "value": "10",
         "label": "Finance areas managed"
       }
-    ],
-    "challenge": "Personal finance data is scattered, so it is hard to see where the problem is.",
-    "action": "Built, alone, an AI finance product that shows all finances on one chart.",
-    "result": "Live product; the AI advisor only proposes plans and the system does the math."
+    ]
   },
   "vibe-edge": {
+    "vision": "One person can do institution-grade quant research with results you can trust.",
+    "value": "AI brings the speed, while fixed statistical tests the agents cannot change guard the trust.",
+    "achieve": "Reached 0.6.0 in 12 weeks with the full flow running and 3,749 tests passing; no factor admitted yet.",
     "kpis": [
       {
         "value": "12 weeks",
@@ -488,12 +491,12 @@
         "value": "~100 sec",
         "label": "Daily update run time"
       }
-    ],
-    "challenge": "AI creates strategies so fast it can find results that only look good by luck.",
-    "action": "Built a testing gate AI cannot change, and recorded every trial.",
-    "result": "The full flow from raw data to a paper trading list now runs end to end."
+    ]
   },
   "fincli": {
+    "vision": "Quant research gets raw, traceable Taiwan stock data to work with.",
+    "value": "Taiwan data with no ready-made package arrives automatically each day, with raw numbers intact.",
+    "achieve": "23 source modules update automatically after each close and feed Vibe-Edge's data layer.",
     "kpis": [
       {
         "value": "23",
@@ -507,12 +510,12 @@
         "value": "~10,000",
         "label": "Lines of code removed"
       }
-    ],
-    "challenge": "Much Taiwan stock data has no ready-made tool and must be connected one by one.",
-    "action": "Built a tool that automatically collects raw data after each market close.",
-    "result": "It updates automatically every day and is Vibe-Edge's data source."
+    ]
   },
   "openstrategy": {
+    "vision": "Find abnormal returns around earnings calls and turn them into a tradable signal.",
+    "value": "An event study and regression found four explaining factors, giving stock picks a statistical basis.",
+    "achieve": "Organized into 10-stage code; the 2025 Sharpe ratio of 0.94 slightly trailed the market's 0.99.",
     "kpis": [
       {
         "value": "10",
@@ -526,9 +529,6 @@
         "value": "0.94",
         "label": "Sharpe ratio in 2025"
       }
-    ],
-    "challenge": "Can investor conferences produce excess returns that can be traded?",
-    "action": "Analyzed prices around conferences and combined the useful factors into stock picks.",
-    "result": "In 2025 it slightly trailed the market's 0.99 and missed the target; finding why is next."
+    ]
   }
 }

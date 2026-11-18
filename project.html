@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/post.css?v=20261118k">
+  <link rel="stylesheet" href="assets/css/post.css?v=20261118l">
   <style>
     .post-nav { display: flex; justify-content: space-between; align-items: center; }
     .lang-toggle {
@@ -116,7 +116,7 @@
   </article>
   <div class="post-footer"><div class="pager" id="pager"></div></div>
 
-  <script src="assets/js/common.js?v=20261118k"></script>
+  <script src="assets/js/common.js?v=20261118l"></script>
   <script>
     const { esc, dataPath, getJSON, stageNames, stagePills, visibleGroups, STAGE_ORDER, STAGE_COLOR, stageSpan, isGov, QUANT_ORDER, QUANT_COLOR, quantSpan, quantPill } = Site;
     const I18N = {
@@ -126,7 +126,7 @@
         notFound: 'This project does not exist.', home: 'Back to the homepage', lc: 'Where it sits in the AI lifecycle', ms: 'Milestones',
         lcQuant: 'Where it sits in the quant pipeline', quantRole: 'Personal project',
         stageNo: 'Stage {n}', prevStage: 'Previous stage', nextStage: 'Next stage',
-        glance: 'At a glance', gChallenge: 'Challenge', gAction: 'What I did', gResult: 'Result',
+        glance: 'At a glance', gVision: 'Vision', gValue: 'Value', gAchieve: 'Achieved',
         flowTitle: 'Who does what in this stage', flowAi: 'Role added by AI projects', flowGate: 'Checkpoint', flowMe: 'Where I work', meLabel: 'Me', flowVendor: 'Outsourced vendor', vendorLabel: 'Vendor', stageProjects: 'My projects in this stage', stageAt: 'This stage in the AI lifecycle',
         loadError: 'Content failed to load. A network filter may block this site.',
       },
@@ -136,7 +136,7 @@
         notFound: '找不到這個專案。', home: '回到首頁', lc: '在 AI 生命週期的位置', ms: '專案進度',
         lcQuant: '在量化交易流程的位置', quantRole: '個人專案',
         stageNo: '第 {n} 階段', prevStage: '上一個階段', nextStage: '下一個階段',
-        glance: '30 秒看懂', gChallenge: '挑戰', gAction: '我的做法', gResult: '成果',
+        glance: '30 秒看懂', gVision: '願景', gValue: '價值', gAchieve: '達成',
         flowTitle: '這個階段的分工流程', flowAi: 'AI 專案新增的角色', flowGate: '檢核關卡', flowMe: '我的位置', meLabel: '我', flowVendor: '委外廠商', vendorLabel: '委外', stageProjects: '我在這個階段的專案', stageAt: '這個階段在 AI 生命週期的位置',
         loadError: '內容載入失敗。可能是網路過濾設備封鎖了本站。',
       },
@@ -204,7 +204,7 @@
             ${view.ms}
           </header>
           <div class="post-body story">
-            ${view.stage ? '' : glancePanel(glances[slug], story)}
+            ${view.stage ? '' : glancePanel(glances[slug])}
             ${view.diagram || ''}
             ${story ? markdown(story) : `<p class="error">${esc(T('noStory'))}</p>`}
             ${view.kids.length ? `<h2>${esc(view.kidsTitle || T('kids'))}</h2><div class="kids">${kidLinks}</div>` : ''}
@@ -216,18 +216,13 @@
       }).catch(() => { root.innerHTML = `<p class="lead error">${esc(T('loadError'))}</p>`; });
     }
 
-    // "At a glance" panel: three key numbers and challenge / action / result from data/glance.json, plus the story's
-    // phases ("**第一階段｜名稱。** ..." or "**Phase 1 | Name.** ...") as steps, so the steps always match the story.
-    function glancePanel(g, story) {
-      const steps = [...(story || '').matchAll(/^\*\*(?:第.階段|Phase \d+)\s*[｜|]\s*(.+?)[。.]?\*\*\s*(.*)$/gm)]
-        .map(m => ({ name: m[1].trim(), gist: m[2].split(/[。]|\. /)[0].replace(/[。.]\s*$/, '') }));
-      if (!g && steps.length < 2) return '';
-      const kpis = g ? `<div class="glance-kpis">${g.kpis.map(k => `<div class="glance-kpi"><b>${esc(k.value)}</b><span>${esc(k.label)}</span></div>`).join('')}</div>` : '';
-      const star = g ? `<dl class="glance-star">${[['gChallenge', g.challenge], ['gAction', g.action], ['gResult', g.result]]
-        .map(([k, v]) => `<div><dt>${esc(T(k))}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>` : '';
-      const flow = steps.length >= 2 ? `<ol class="glance-steps" style="--n:${Math.min(steps.length, 6)}">${steps.map((st, i) =>
-        `<li><span class="n">${i + 1}</span><b>${esc(st.name)}</b><span class="g">${esc(st.gist)}</span></li>`).join('')}</ol>` : '';
-      return `<section class="glance" aria-label="${esc(T('glance'))}"><p class="glance-title">${esc(T('glance'))}</p>${kpis}${star}${flow}</section>`;
+    // "At a glance" panel (data/glance.json): three cards, vision / value / achieved, with the key numbers in the last.
+    function glancePanel(g) {
+      if (!g || !g.vision) return '';
+      const card = (k, text, extra = '') => `<div class="glance-card ${k}"><p class="glance-k">${esc(T(k))}</p><p class="glance-v">${esc(text)}</p>${extra}</div>`;
+      const kpis = (g.kpis || []).length ? `<div class="glance-kpis">${g.kpis.map(x => `<div class="glance-kpi"><b>${esc(x.value)}</b><span>${esc(x.label)}</span></div>`).join('')}</div>` : '';
+      return `<section class="glance" aria-label="${esc(T('glance'))}"><p class="glance-title">${esc(T('glance'))}</p>
+        <div class="glance-cards">${card('gVision', g.vision)}${card('gValue', g.value)}${card('gAchieve', g.achieve, kpis)}</div></section>`;
     }
 
     // One row of segments: which stages (or layers) the project covers. "band" goes above the row (AI governance).
