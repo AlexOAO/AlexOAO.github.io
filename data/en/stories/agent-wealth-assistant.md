@@ -4,19 +4,19 @@ title: agent-wealth-assistant
 
 ## Results
 
-**I built the Wealth Assistant into a working mobile banking prototype: 118 feature pages, plus an AI wealth assistant that checks accounts and answers money questions.** Before this, a PoC, a proof of concept, had already confirmed the Q&A works, and the resources needed for launch were confirmed. After launch, its value depends on whether customers actually use it.
+**I turned the Wealth Assistant into a mobile banking prototype you can actually use: 118 feature pages, plus an AI wealth assistant that checks accounts and answers money questions.** Before this, a PoC, a proof of concept, had already shown that the Q&A works, and the resources needed for launch were confirmed. After launch, whether it is worth it depends on whether customers really use it.
 
-- It is the highest-volume of the four Agents; its three-year usage forecast is in the baseline.
+- It is the most heavily used of the four Agents; its three-year usage forecast is already in the baseline.
 
 ## Why this project
 
-**Customers don't have to dig through every account; one question tells them where their assets stand.** The Wealth Assistant is the AI wealth assistant in the bank's wealth app (App 2.0) and covers the fourth stage of the customer journey, Smart Management. The goal is wealth management and deeper value: after the asset question, it moves naturally to the next-step advice.
+**Customers don't have to dig through every account; one question tells them where their money stands.** The Wealth Assistant is the AI wealth assistant in the bank's wealth app (App 2.0). It handles the fourth stage of the customer journey, Smart Management, which aims at good wealth management and deeper customer relationships. After a customer asks about their assets, it can carry the conversation on to advice on the next step.
 
-Before launch there are two questions: does the Q&A work? Will resources hold up as usage grows? After launch: do customers use the app more because of it?
+Before launch there are two questions: does the Q&A work, and will resources hold up as more people use it? After launch: do customers use the app more because of it?
 
 ## What it does
 
-**Who it serves and where.** Everyday customers, through chat inside the app.
+**Who it serves and where.** Everyday customers, by chatting inside the app.
 
 **What it can do on its own:**
 
@@ -28,15 +28,15 @@ Before launch there are two questions: does the Q&A work? Will resources hold up
 
 **What it hands to people:** Asset allocation advice for high-net-worth customers goes to a dedicated specialist.
 
-**What it can't do:** Execute any transaction, handle passwords or verification codes, or use phrases like "guaranteed profit."
+**What it can't do:** Make any transaction for the customer, handle passwords or verification codes, or say things like "guaranteed profit."
 
 **How a question is answered.**
 
-1. Input guardrails: block personal data, prompt injection, and jailbreak attacks, which are attempts to trick the AI into breaking rules.
-2. Intent detection: a small on-premises model works out what the customer is asking.
-3. Two paths. General questions get answers from the FAQ, and feature questions get a link to the right page. Account questions go to a query agent that plans which APIs to call, then builds the answer from a template.
-4. Output guardrails: check investment wording and personal data leaks, then decide to fix, block, or allow.
-5. Conversation memory: keeps short-term conversation context and stores only masked content.
+- **Step 1, input guardrails:** First block personal data, prompt injection, and jailbreak attacks, which are attempts to trick the AI into breaking its rules.
+- **Step 2, intent detection:** A small model on the bank's own servers (on-premises) works out what the customer is asking.
+- **Step 3, two paths:** General questions get answers from the FAQ, and questions about features get a link to the right page. Account questions go to a query agent that decides which APIs (the interfaces systems use to fetch data) to call, then builds the answer from a template.
+- **Step 4, output guardrails:** Check the investment wording and whether any personal data leaks, then decide to fix, block, or allow the answer.
+- **Step 5, conversation memory:** Remember only the recent conversation, and store only a version with personal data masked.
 
 **How people supervise.** human-in-the-loop, with people in control.
 
@@ -48,18 +48,18 @@ I led PoC testing and launch resource planning, and built the Wealth Assistant m
 
 **Phase 1 | PoC.** Confirm that the AI wealth assistant's Q&A works.
 
-**Phase 2 | Build.** Drew the first system architecture draft, organized test results and documents, then handed over to a senior colleague to continue development.
+**Phase 2 | Build.** I drew the first draft of the system architecture, organized the test results and documents, then handed the work to a senior colleague to continue development.
 
-**Phase 3 | Prototype.** Following the requirements specification and statement of work, I built a working mobile banking MVP:
+**Phase 3 | Prototype.** Following the requirements specification and statement of work, I built a working mobile banking MVP (the smallest version that still works):
 
-- **Full mobile banking.** Mobile banking and online banking (desktop and mobile) with 118 working feature pages. Features include transfers, currency exchange, time deposits, bill payments, installments, fund and bond orders, loans, and settings. Transactions are written to a simulated bank and show up at once on account pages and in the AI's answers.
-- **AI wealth assistant.** Supports streaming replies, follow-up questions, and feedback. Account queries use 36 account tools provided through MCP, covering the 240 fields defined in the specification.
-- **Guardrails.** 31 input rules and 32 output rules, plus personal data masking. The model receives only de-identified questions and never sees account figures.
-- **Dynamic screens.** Following the A2UI v0.9 specification, the AI can attach charts, tables, and other screens to its answers. All official test cases pass.
+- **Full banking features.** Mobile banking and online banking (desktop and mobile) with 118 working feature pages, including transfers, currency exchange, time deposits, bill payments, installments, placing fund and bond orders, loans, and settings. Every transaction is written to a simulated bank, and the account pages and the AI's answers update right away.
+- **AI wealth assistant.** Replies appear word by word as they are written, and customers can ask follow-up questions and leave feedback. To check accounts, it uses 36 account tools through MCP (a standard that lets AI use outside tools), covering the 240 fields defined in the specification.
+- **Guardrails.** 31 input rules and 32 output rules, plus personal data masking. The model only receives questions with identifying details removed, and never sees any account amounts.
+- **Dynamic screens.** Following the A2UI v0.9 specification, the AI can put charts, tables, and other screens right into its answers. All official test cases pass.
 - **Admin.** A 12-page admin back office with three role levels, approval workflow, change logs, and CSV export.
-- **Ready for the bank's environment.** All language models use the OpenAI API format, so any compatible endpoint or a small on-premises model can be swapped in. Connecting to the bank's test environment needs only a settings change and an API mapping table.
+- **Ready to plug into the bank's systems.** All language models use the OpenAI API format, so any compatible service can be swapped in, or a small on-premises model. Connecting to the bank's test environment only needs a settings change and an API mapping table.
 
-**Phase 4 | Launch readiness.** Estimated three-year usage from login volume and confirmed resources for production and test environments.
+**Phase 4 | Launch readiness.** I estimated three-year usage from the number of logins and confirmed the resources for the production and test environments.
 
 **Phase 5 | Launch.** Led by the team that took over. After launch, track two kinds of metrics:
 
@@ -68,6 +68,6 @@ I led PoC testing and launch resource planning, and built the Wealth Assistant m
 
 ## Next steps
 
-A2UI technical research will start from the Wealth Assistant's business scenarios. The prototype already implements A2UI, so it can be used directly for validation.
+A2UI technical research will start from the Wealth Assistant's business scenarios. The prototype already has A2UI built in, so it can be used to test it right away.
 
 Back to the parent project: [The Four Major AI Agents](project.html?id=agent-cost-roi).

@@ -8,24 +8,24 @@ title: fubon-esg-portfolio
 
 ## Why this project
 
-Does ESG add value in stock investing? That was the question for that year's final project. ESG, meaning environmental, social, and governance factors, is now a shared language in investing. Fubon has run the program with 5 universities for 7 years; NTUST joined for the first time.
+Fubon Asset Management has run this program with 5 universities for 7 years, and NTUST joined for the first time. ESG stands for environmental, social and governance factors, and it is now a shared language in investing. That year's final project asked: does ESG actually add value in stock investing?
 
 ## My role
 
-Team member; we completed the final project together.
+I was a team member, and we completed the final project together.
 
 ## What I did
 
-**Phase 1 | Question.** Does ESG add value in stock investing? That was the question for that year's final project.
+**Phase 1 | Question.** We set out to test whether using ESG in stock investing adds value.
 
-**Phase 2 | Data.** Our team selected investment targets, mainly Taiwan stocks.
+**Phase 2 | Data.** Our team picked its own investments, mainly Taiwan stocks.
 
-**Phase 3 | Method.** Integrate the ESG factors from class into the portfolio allocation. The program ran 3 months, and every class had an assignment and a team presentation, to show what researchers and fund managers do.
+**Phase 3 | Method.** We built the ESG factors from class into how the portfolio was allocated. The program ran 3 months, and every class had an assignment and a team presentation, to give students a real taste of what researchers and fund managers do.
 
-**Phase 4 | Evidence.** We wrote the report and presented it to fund managers for feedback. About the program (in Chinese): [Money Weekly article](https://www.moneyweekly.com.tw/_Article?AID=161517).
+**Phase 4 | Evidence.** We wrote the report, then presented it to fund managers for feedback. About the program (in Chinese): [Money Weekly article](https://www.moneyweekly.com.tw/_Article?AID=161517).
 
 **Phase 5 | Conclusion.** Portfolio allocation logic and results: to be added.
 
 ## Next steps
 
-The portfolio allocation logic and results: to be added.
+Portfolio allocation logic and results: to be added.

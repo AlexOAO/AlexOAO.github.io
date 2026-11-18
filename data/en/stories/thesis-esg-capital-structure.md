@@ -4,15 +4,15 @@ title: thesis-esg-capital-structure
 
 ## Results
 
-**I completed my Tunghai GMBA thesis on how ESG risk scores relate to the capital structure of Taiwanese companies.** Capital structure is the mix of debt and equity a company uses to fund itself. Findings: to be added.
+**I completed my Tunghai GMBA thesis on how ESG risk scores relate to the capital structure of Taiwanese companies.** Capital structure is how much of a company's funding comes from debt and how much from shareholders. Findings: to be added.
 
 ## Why this project
 
-Investors use ESG risk scores as one measure of a company. My question: **do ESG risk scores affect the capital structure of Taiwanese companies?**
+Investors use ESG risk scores as one way to judge a company. My question: **do ESG risk scores affect the capital structure of Taiwanese companies?**
 
 ## My role
 
-Author.
+I wrote this thesis.
 
 ## What I did
 

@@ -1,553 +1,302 @@
 {
   "guardrails-poc": {
-    "vision": "Every AI agent that goes live is proven safe with the same yardstick.",
-    "value": "The bank can show the regulator real safety evidence without buying an extra guardrail.",
-    "achieve": "Ran 3,600 tests and advised not buying XecGuard yet; Vulcan is in progress.",
-    "kpis": [
-      {
-        "value": "3,600",
-        "label": "versioned test cases"
-      },
-      {
-        "value": "98.3%",
-        "label": "attacks blocked"
-      },
-      {
-        "value": "20 of 30",
-        "label": "normal Qs blocked"
-      }
-    ]
+    "purpose": "Check that AI safety guardrails really stop attacks aimed at our bank",
+    "who": "Bank AI team and security reviewers",
+    "asis_user": "Vendor reports looked good, but none tested our own bank business",
+    "tobe_user": "A 3,600-question test shows which rule stopped which kind of attack",
+    "asis_biz": "Papers only proved the process was followed, not that AI answers were safe",
+    "tobe_biz": "Advice: skip the add-on guardrail; the question set can check every AI assistant",
+    "metric": {
+      "value": "3,600",
+      "label": "reusable test questions"
+    }
   },
   "agentic-platform-eval": {
-    "vision": "The bank knows which agent platform is safe to build on before it buys.",
-    "value": "Avoids missing features midway or security holes after launch, with a side-by-side basis to choose.",
-    "achieve": "Led the tests and found 12 issues before purchase, including 4 launch blockers and 1 security hole.",
-    "kpis": [
-      {
-        "value": "12",
-        "label": "issues before purchase"
-      },
-      {
-        "value": "4",
-        "label": "launch blockers"
-      },
-      {
-        "value": "60",
-        "label": "tests on 2 platforms"
-      }
-    ]
+    "purpose": "Pick an AI agent platform that will not fail us, before we buy it",
+    "who": "Bank selection team and management",
+    "asis_user": "Teams often found missing key features only halfway through",
+    "tobe_user": "26 hands-on tests found 4 problems that would block launch",
+    "asis_biz": "A wrong pick was costly, and security holes could surface after launch",
+    "tobe_biz": "Both platforms scored side by side on one sheet, the basis for the final pick",
+    "metric": {
+      "value": "12",
+      "label": "issues found before purchase"
+    }
   },
   "agent-cost-roi": {
-    "vision": "Four AI agents link the whole customer journey, from first contact to wealth management.",
-    "value": "Leaders decide who gets resources first from one table, then track if estimates come true.",
-    "achieve": "Four prototypes and a shared cost-benefit framework are done; each agent's baseline is in progress.",
-    "kpis": [
-      {
-        "value": "4",
-        "label": "agent prototypes"
-      },
-      {
-        "value": "1",
-        "label": "cost-benefit framework"
-      },
-      {
-        "value": "2",
-        "label": "tracking metric types"
-      }
-    ]
+    "purpose": "Decide which of four AI assistants should get resources first",
+    "who": "Business units and decision makers",
+    "asis_user": "Before spending, business units could not see how an assistant would work",
+    "tobe_user": "Four working prototypes, one per stage from winning customers to wealth care",
+    "asis_biz": "The four served different people at different costs, so none could be compared",
+    "tobe_biz": "One cost-benefit table compares them, and estimates can be tracked after launch",
+    "metric": {
+      "value": "4",
+      "label": "AI assistant prototypes"
+    }
   },
   "agent-loan-assistant": {
-    "vision": "Customers always get an answer on the application platform, so they no longer leave.",
-    "value": "Its value is measured by extra applications won, not only by cost saved.",
-    "achieve": "Prototype and measurement framework are done; the baseline awaits volume data from the business.",
-    "kpis": [
-      {
-        "value": "Built",
-        "label": "project prototype"
-      },
-      {
-        "value": "2 types",
-        "label": "business & realization"
-      },
-      {
-        "value": "Pending",
-        "label": "3-year baseline"
-      }
-    ]
+    "purpose": "Make sure loan applicants always get their questions answered",
+    "who": "Loan applicants and the business unit",
+    "asis_user": "Customers with questions often left when no one replied in time",
+    "tobe_user": "Prototype built; once live, AI answers at once and guides the application",
+    "asis_biz": "There was no way to measure how many extra applications AI could win",
+    "tobe_biz": "Value measured by conversion rate; the baseline awaits business volume data",
+    "metric": null
   },
   "agent-credit-review": {
-    "vision": "Underwriters spend less time checking documents, so approvals are faster and more consistent.",
-    "value": "Underwriters save checking time, and managers see cost per case and three-year budget use.",
-    "achieve": "Prototype, unit cost and three-year cost baseline are done, and production resources are confirmed.",
-    "kpis": [
-      {
-        "value": "3 years",
-        "label": "cost baseline"
-      },
-      {
-        "value": "Confirmed",
-        "label": "production resources"
-      },
-      {
-        "value": "Lead",
-        "label": "prototype, cost study"
-      }
-    ]
+    "purpose": "Help underwriters spend less time checking documents, so loans are approved faster",
+    "who": "Underwriters and management",
+    "asis_user": "Underwriters checked income papers one by one, slowly and unevenly",
+    "tobe_user": "Prototype built; AI reads papers, checks them and works out income, with reasons",
+    "asis_biz": "Case volume grew every year, yet no one knew the cost of each case",
+    "tobe_biz": "Cost per case and a three-year cost baseline are set, with work run off-peak",
+    "metric": null
   },
   "agent-customer-service": {
-    "vision": "Agents focus on customers while an AI sidekick looks things up and writes the notes.",
-    "value": "Less lookup during calls and less note writing after, with peak capacity neither short nor wasted.",
-    "achieve": "Prototype, cost framework and call baseline are done; resources await the vendor's estimate.",
-    "kpis": [
-      {
-        "value": "On-prem only",
-        "label": "deployment"
-      },
-      {
-        "value": "Done",
-        "label": "call-volume baseline"
-      },
-      {
-        "value": "Shared",
-        "label": "cost-benefit framework"
-      }
-    ]
+    "purpose": "Let call agents focus on customers while an AI sidekick handles the busywork",
+    "who": "Call agents and call center managers",
+    "asis_user": "Agents looked things up while listening, then wrote notes after every call",
+    "tobe_user": "Prototype built; an AI sidekick finds facts, drafts replies and sums up calls",
+    "asis_biz": "Calls bunch at peak hours: too few resources jam, too many waste money",
+    "tobe_biz": "A call volume baseline and cost per call are set; resources await the vendor",
+    "metric": null
   },
   "agent-wealth-assistant": {
-    "vision": "One question tells customers where their assets stand, leading naturally to advice.",
-    "value": "Customers skip digging through accounts, and the bank deepens its wealth management value.",
-    "achieve": "Built a working 118-page prototype with an AI wealth assistant myself; launch resources are confirmed.",
-    "kpis": [
-      {
-        "value": "118 pages",
-        "label": "working feature pages"
-      },
-      {
-        "value": "36 tools",
-        "label": "account query tools"
-      },
-      {
-        "value": "31+32",
-        "label": "In/out guardrail rules"
-      }
-    ]
+    "purpose": "Customers learn where their assets stand by asking one question",
+    "who": "App customers and the bank",
+    "asis_user": "Customers dug through many accounts to piece together what they own",
+    "tobe_user": "Prototype built: ask once in the app to check accounts or money questions",
+    "asis_biz": "No one knew if the Q&A worked or if resources would hold as use grew",
+    "tobe_biz": "Q&A proven to work; launch resources and three-year usage are estimated",
+    "metric": {
+      "value": "118",
+      "label": "working app pages"
+    }
   },
   "agent-governance": {
-    "vision": "Every AI gets a clear compliance check before it goes live.",
-    "value": "Regulator principles become a fill-in checklist; new projects only add their rules and test set.",
-    "achieve": "Turned six principles into a nine-cell table and finished the framework; agent data is being gathered.",
-    "kpis": [
-      {
-        "value": "6",
-        "label": "FSC AI principles"
-      },
-      {
-        "value": "9 cells",
-        "label": "pre-launch check table"
-      },
-      {
-        "value": "0",
-        "label": "critical error limit"
-      }
-    ]
+    "purpose": "Give every AI a clear compliance check before it goes live",
+    "who": "AI project teams and compliance leaders",
+    "asis_user": "Project teams did not know what to check before an AI went live",
+    "tobe_user": "Framework designed: fill all nine boxes with proof and the AI passes",
+    "asis_biz": "Existing rules covered paperwork only; no one checked AI answers or actions",
+    "tobe_biz": "Planned for the bank rulebook: no check report, no launch",
+    "metric": null
   },
   "finllm": {
-    "vision": "A finance-only language model learns from correct, compliant data from the start.",
-    "value": "Item-by-item cleaning and rule scoring lower the risk of the model learning errors or breaking rules.",
-    "achieve": "Finished cleaning batch 2-1 and rule scoring for batch 4; batch 5 is in progress.",
-    "kpis": [
-      {
-        "value": "Batch 2-1",
-        "label": "data cleaning done"
-      },
-      {
-        "value": "Batch 4",
-        "label": "regulatory scoring"
-      },
-      {
-        "value": "9 batches",
-        "label": "awaiting cleaning"
-      }
-    ]
+    "purpose": "Make sure a finance-only AI model learns from correct data",
+    "who": "The finance industry and FinLLM program",
+    "asis_user": "Raw data had to be checked and fixed item by item, with no shortcut",
+    "tobe_user": "A fixed-step cleaning process now applies to more items",
+    "asis_biz": "Flawed data could teach the model errors, even answers that break rules",
+    "tobe_biz": "Batch 2-1 cleaning and batch 4 regulation scoring are done",
+    "metric": null
   },
   "gemini-training": {
-    "vision": "Staff learn how AI fits their own work, and how to use it safely.",
-    "value": "Class practice uses each unit's own work cases, not just a tour of tool features.",
-    "achieve": "Led the planning and the outline is confirmed; case collection is in progress before the first class.",
-    "kpis": [
-      {
-        "value": "3",
-        "label": "course topics"
-      },
-      {
-        "value": "Confirmed",
-        "label": "course outline"
-      },
-      {
-        "value": "Lead",
-        "label": "course design"
-      }
-    ]
+    "purpose": "Help staff see how AI fits their own work, and use it safely",
+    "who": "All staff and business units",
+    "asis_user": "Staff got the tool but did not know which tasks suit AI",
+    "tobe_user": "Outline set; classes will practise on each unit's own work",
+    "asis_biz": "The bank pushed AI use without knowing if staff used it safely",
+    "tobe_biz": "Attendance and the AI use ideas learners bring back will be tracked",
+    "metric": null
   },
   "ai-ops-dashboard": {
-    "vision": "One dashboard answers leaders' top question: are these AI investments worth it?",
-    "value": "Internal tools and external agents share one metric set, so results and costs compare together.",
-    "achieve": "The five-part metric framework is designed; the dashboard is in planning and the first report awaits data.",
-    "kpis": [
-      {
-        "value": "5 parts",
-        "label": "metric framework"
-      },
-      {
-        "value": "4 Agents",
-        "label": "external, same metrics"
-      },
-      {
-        "value": "Contributor",
-        "label": "metric framework"
-      }
-    ]
+    "purpose": "Answer leaders' top question: are our AI investments worth it?",
+    "who": "Bank leaders and AI owners",
+    "asis_user": "Each AI effort kept its own numbers, and one had no dashboard at all",
+    "tobe_user": "In planning: one five-part metric set for internal tools and customer AI",
+    "asis_biz": "No single view showed whether AI spending was worth it",
+    "tobe_biz": "Once built, leaders can compare results and costs side by side",
+    "metric": null
   },
   "a2ui-research": {
-    "vision": "AI replies with bank-approved charts and forms, not just text.",
-    "value": "Customers read money information more easily, while the bank still decides which screen parts are allowed.",
-    "achieve": "Three candidate use cases are mapped and PoC resources are being confirmed; next is the value checkpoint.",
-    "kpis": [
-      {
-        "value": "3",
-        "label": "candidate use cases"
-      },
-      {
-        "value": "5 phases",
-        "label": "product journey"
-      },
-      {
-        "value": "Lead",
-        "label": "technology research"
-      }
-    ]
+    "purpose": "Let AI reply with bank-approved charts and forms instead of long text",
+    "who": "Wealth app customers and the bank",
+    "asis_user": "Money answers in long text were hard for customers to read",
+    "tobe_user": "In research: asset overview, product comparison and form filling picked",
+    "asis_biz": "Letting AI write web page code would never pass security review",
+    "tobe_biz": "By design, AI lays out the screen while the bank approves the parts",
+    "metric": null
   },
   "webai-finance": {
-    "vision": "Researchers spend their time on research, not on collecting and sorting data.",
-    "value": "The whole group asks AI about markets and stocks in its usual screen, with fund data kept separate.",
-    "achieve": "Took it alone from requirements to production launch as an intern; measuring the impact is next.",
-    "kpis": [
-      {
-        "value": "Live",
-        "label": "In production"
-      },
-      {
-        "value": "3 types",
-        "label": "Data source types"
-      },
-      {
-        "value": "Solo",
-        "label": "Requirements to launch"
-      }
-    ]
+    "purpose": "Let researchers spend time on research, not on gathering data",
+    "who": "Group researchers and all group staff",
+    "asis_user": "Researchers first had to gather reports, economic data and news daily",
+    "tobe_user": "Live: pick a market or stock, ask AI, then ask follow-ups",
+    "asis_biz": "The tool had to open to the whole group while keeping fund data apart",
+    "tobe_biz": "One permission design keeps it open yet separated, inside the usual screen",
+    "metric": null
   },
   "ai-governance-review": {
-    "vision": "Group AI governance reviews become faster and consistent, no longer read one by one by hand.",
-    "value": "Reviewers get results already judged, recalculated and cross-checked, saving effort and aligning standards.",
-    "achieve": "The system is live with automatic CI/CD deployment; the before-and-after review time is yet to be measured.",
-    "kpis": [
-      {
-        "value": "3 checks",
-        "label": "Taken over by system"
-      },
-      {
-        "value": "CI/CD",
-        "label": "Automated deployment"
-      },
-      {
-        "value": "Live",
-        "label": "Auto review system"
-      }
-    ]
+    "purpose": "Make reviews of the group's AI usage reports faster and consistent",
+    "who": "Group AI office reviewers",
+    "asis_user": "Reviewers read each report, redid risk levels and matched asset lists by hand",
+    "tobe_user": "Live: the system judges, recalculates and cross-checks before reviewers look",
+    "asis_biz": "Each reviewer judged differently, so subsidiary reports were held unevenly",
+    "tobe_biz": "Every subsidiary is reviewed to one standard, with suggested fixes",
+    "metric": {
+      "value": "3",
+      "label": "review checks the system does"
+    }
   },
   "rag-support-bot": {
-    "vision": "Members find answers in the manuals with one question, without waiting for support.",
-    "value": "Members get instant answers, and admins update the knowledge base with no engineer needed.",
-    "achieve": "Changed how documents are split, raising accuracy from 60% to 85% with answers in about 2 to 3 seconds.",
-    "kpis": [
-      {
-        "value": "60%→85%",
-        "label": "Answer accuracy"
-      },
-      {
-        "value": "2–3 sec",
-        "label": "Time to answer"
-      },
-      {
-        "value": "Live",
-        "label": "Front end + admin"
-      }
-    ]
+    "purpose": "Let members find answers in the technical manuals with one question",
+    "who": "TEJ members and admins",
+    "asis_user": "Answers were scattered across manuals, so members waited for support",
+    "tobe_user": "Live: ask in everyday words and get an answer in about 2 to 3 seconds",
+    "asis_biz": "Manuals changed often, and retraining an AI model each time cost too much",
+    "tobe_biz": "Accuracy rose from 60% to 85%, and admins update the knowledge base themselves",
+    "metric": {
+      "value": "60%→85%",
+      "label": "answer accuracy"
+    }
   },
   "multi-agent-advisory": {
-    "vision": "AI splits work and debates like a fund team to reach investment calls that can be checked.",
-    "value": "Avoids one model's blind spots, and every buy or sell signal comes with reasoning that can be checked.",
-    "achieve": "Designed the roles and linked TEJ data; the five agents ran a three-year Taiwan stock backtest.",
-    "kpis": [
-      {
-        "value": "5 Agents",
-        "label": "AI roles like a fund"
-      },
-      {
-        "value": "3 years",
-        "label": "Taiwan stock backtest"
-      },
-      {
-        "value": "MCP",
-        "label": "Links to TEJ data"
-      }
-    ]
+    "purpose": "Have AI split work like a fund team to make investment calls that can be checked",
+    "who": "Investment research and decision teams",
+    "asis_user": "One AI struggled to cover charts, news mood and company basics at once",
+    "tobe_user": "Five AI roles split the work and debate, then give a buy or sell signal",
+    "asis_biz": "Advice came with no visible reasoning, so decisions could not be checked",
+    "tobe_biz": "Tested on three years of Taiwan stock history, giving the team confidence",
+    "metric": null
   },
   "asr-transcription": {
-    "vision": "The research team gets earnings call key points without typing up each call by ear.",
-    "value": "Researchers can compare key points across companies and quarters directly.",
-    "achieve": "Videos now auto-convert to transcripts and summary tables, cutting prep time; the gain is yet to be measured.",
-    "kpis": [
-      {
-        "value": "Automatic",
-        "label": "Video to transcript"
-      },
-      {
-        "value": "Summary",
-        "label": "Compare firms, quarters"
-      },
-      {
-        "value": "Whisper",
-        "label": "Speech recognition"
-      }
-    ]
+    "purpose": "Cut the time the research team spends writing up earnings calls",
+    "who": "The research team",
+    "asis_user": "Someone typed up each call by ear, then pulled out the key points",
+    "tobe_user": "Live: recordings turn into transcripts and a key-point table automatically",
+    "asis_biz": "Transcripts alone were not enough; key points were hard to compare or quote",
+    "tobe_biz": "Write-ups take less time, and key points compare across firms and quarters",
+    "metric": null
   },
   "financial-statement-vlm": {
-    "vision": "Scanned statements read as accurately as text files, figure by figure.",
-    "value": "Reads table structure and figures together, not just image to text.",
-    "achieve": "In production; accuracy and volume to be added.",
-    "kpis": [
-      {
-        "value": "Live",
-        "label": "Statement data flow"
-      },
-      {
-        "value": "VLM",
-        "label": "Beyond traditional OCR"
-      },
-      {
-        "value": "Cloud",
-        "label": "Gemini VLM"
-      }
-    ]
+    "purpose": "Read every figure accurately, even from scanned financial statements",
+    "who": "TEJ financial data users",
+    "asis_user": "Scanned statements were images, and old text recognition missed the tables",
+    "tobe_user": "Live: AI reads layout, tables and words together",
+    "asis_biz": "Figures were hard to match to the right line item and period",
+    "tobe_biz": "Now part of the statement data flow, matching figures to items and periods",
+    "metric": null
   },
   "moda-t-ambassador": {
-    "vision": "Rural groups and small firms can use generative AI too, narrowing the digital gap.",
-    "value": "Firms without AI talent get help turning their real problems into digital solutions.",
-    "achieve": "Completed the 6th cohort and helped firms adopt generative AI and AIoT; results to be added.",
-    "kpis": [
-      {
-        "value": "6th cohort",
-        "label": "T-Ambassador"
-      },
-      {
-        "value": "Completed",
-        "label": "Ambassador program"
-      },
-      {
-        "value": "GenAI",
-        "label": "Adoption support"
-      }
-    ]
+    "purpose": "Help rural groups and small firms use generative AI too",
+    "who": "Rural groups and small firms",
+    "asis_user": "Without AI talent, they struggled to adopt new tools alone",
+    "tobe_user": "Ambassadors work with firms to turn real problems into digital solutions",
+    "asis_biz": "A digital gap and an industry talent shortage needed closing",
+    "tobe_biz": "Helped bring in generative AI and smart devices, and promoted the policy",
+    "metric": null
   },
   "tmba-cta-taiex": {
-    "vision": "Build a trading strategy that can be reproduced, measured and tested.",
-    "value": "Return, Sharpe ratio and max drawdown together show the risk behind the return.",
-    "achieve": "The TAIEX futures CTA strategy I led won 3rd place at the 26th TMBA showcase.",
-    "kpis": [
-      {
-        "value": "3rd place",
-        "label": "Final showcase"
-      },
-      {
-        "value": "3 measures",
-        "label": "Risk and return"
-      },
-      {
-        "value": "26th cohort",
-        "label": "TMBA algo trading"
-      }
-    ]
+    "purpose": "Build a futures trading strategy that can be reproduced, measured and tested",
+    "who": "TMBA trading club and judges",
+    "asis_user": "A strategy that cannot be rerun may give different results on the same data",
+    "tobe_user": "A test setup now gives the same result every run",
+    "asis_biz": "Looking at returns alone hid how much risk was taken",
+    "tobe_biz": "Returns and risk are judged together, and it won 3rd at the showcase",
+    "metric": {
+      "value": "3rd place",
+      "label": "club final showcase"
+    }
   },
   "tmba-event-earnings-call": {
-    "vision": "Test whether the moment a company explains its business and outlook can become a trade.",
-    "value": "Backtesting return and risk on history gives the event-trading idea data behind it.",
-    "achieve": "Led and backtested the earnings call strategy; the full research is written up in OpenStrategy.",
-    "kpis": [
-      {
-        "value": "2nd",
-        "label": "TMBA strategy"
-      },
-      {
-        "value": "Earnings call",
-        "label": "Trading event"
-      },
-      {
-        "value": "Taiwan",
-        "label": "Stock market"
-      }
-    ]
+    "purpose": "Test whether earnings calls can become trading opportunities",
+    "who": "TMBA trading club",
+    "asis_user": "Whether earnings calls offer trades was only a hunch",
+    "tobe_user": "A Taiwan stock strategy built around earnings calls and tested on history",
+    "asis_biz": "No data showed the return or risk of such trades",
+    "tobe_biz": "Return and risk were measured on history, and the research carried on",
+    "metric": null
   },
   "thesis-rag-panel": {
-    "vision": "AI reads the text of financial reports to find signals that classic ratios miss.",
-    "value": "A method for report analysis: build the AI system first, then prove it works with statistics.",
-    "achieve": "Adding 6 LLM scores raised the model's explanatory power from 5.14% to 63.73%.",
-    "kpis": [
-      {
-        "value": "5.14%→63.73%",
-        "label": "Model fit (within R²)"
-      },
-      {
-        "value": "6 of 6",
-        "label": "Scores significant"
-      },
-      {
-        "value": "37,888",
-        "label": "Firm-quarters"
-      }
-    ]
+    "purpose": "Let AI read financial reports to find signals that classic ratios miss",
+    "who": "Finance researchers and investors",
+    "asis_user": "Reports hold lots of text that common methods left unused",
+    "tobe_user": "AI reads reports of 592 companies and gives six scores",
+    "asis_biz": "Common ratios explained only a small part of stock price moves",
+    "tobe_biz": "The share of returns explained rose from 5.14% to 63.73%",
+    "metric": {
+      "value": "5.14%→63.73%",
+      "label": "share of returns explained"
+    }
   },
   "fubon-esg-portfolio": {
-    "vision": "Answer whether ESG really pays off in stock investing.",
-    "value": "Hands-on experience of researcher and fund manager work, with feedback from fund managers.",
-    "achieve": "Finished and presented the final project in NTUST's first cohort; portfolio results to be added.",
-    "kpis": [
-      {
-        "value": "113",
-        "label": "Students in cohort"
-      },
-      {
-        "value": "1st",
-        "label": "NTUST cohort"
-      },
-      {
-        "value": "3 months",
-        "label": "Training program"
-      }
-    ]
+    "purpose": "Answer whether ESG really pays off in stock investing",
+    "who": "Program trainees and investment pros",
+    "asis_user": "Trainees needed hands-on experience of researcher and fund manager work",
+    "tobe_user": "A three-month course with assignments and group talks every class",
+    "asis_biz": "Whether ESG truly helps stock picking still needed testing",
+    "tobe_biz": "ESG factors went into a Taiwan stock portfolio, reviewed by fund managers",
+    "metric": null
   },
   "thesis-esg-capital-structure": {
-    "vision": "Find out whether ESG risk scores affect how Taiwanese companies are financed.",
-    "value": "Links the ESG scores investors watch to how companies raise their funding.",
-    "achieve": "Finished the thesis and earned the degree; design and findings to be added.",
-    "kpis": [
-      {
-        "value": "Completed",
-        "label": "Master's thesis"
-      },
-      {
-        "value": "Tunghai GMBA",
-        "label": "Degree program"
-      },
-      {
-        "value": "ESG",
-        "label": "Risk scores studied"
-      }
-    ]
+    "purpose": "Find out whether ESG risk scores affect how Taiwanese companies are financed",
+    "who": "Investors and finance researchers",
+    "asis_user": "Investors often use ESG risk scores to judge a company",
+    "tobe_user": "The thesis links ESG scores to how much companies fund by debt or equity",
+    "asis_biz": "Few people linked ESG scores to how companies raise money",
+    "tobe_biz": "Thesis completed and degree earned; findings still to be added",
+    "metric": null
   },
   "tunghai-english-ta": {
-    "vision": "Students learn core business courses well in English.",
-    "value": "Helps students learn statistics, economics and financial management in English.",
-    "achieve": "Completed the TA role for three English-taught courses; duty details to be added.",
-    "kpis": [
-      {
-        "value": "3 courses",
-        "label": "Taught in English"
-      },
-      {
-        "value": "English",
-        "label": "Teaching language"
-      },
-      {
-        "value": "Completed",
-        "label": "TA role"
-      }
-    ]
+    "purpose": "Help students learn core business courses well in English",
+    "who": "Tunghai GMBA students",
+    "asis_user": "Students learning statistics, economics and finance in English needed help",
+    "tobe_user": "In three English-taught courses, a teaching assistant helps students keep up",
+    "asis_biz": "The school ran core business courses in English and needed TA support",
+    "tobe_biz": "English-taught statistics, economics and finance courses run smoothly",
+    "metric": {
+      "value": "3",
+      "label": "English-taught courses"
+    }
   },
   "finjourney": {
-    "vision": "Anyone can see their whole financial picture at a glance and spot what is wrong.",
-    "value": "Scattered money figures sit on one map, and AI adds a diagnosis and next steps.",
-    "achieve": "Built alone from first commit to launch in under two weeks, backed by 656 automated backend tests.",
-    "kpis": [
-      {
-        "value": "< 2 weeks",
-        "label": "Build to launch"
-      },
-      {
-        "value": "656",
-        "label": "Automated tests"
-      },
-      {
-        "value": "10",
-        "label": "Finance areas managed"
-      }
-    ]
+    "purpose": "Let anyone see their whole financial picture and where the problems are",
+    "who": "Everyday people managing their money",
+    "asis_user": "Spending, investments and insurance sat in separate sheets and apps",
+    "tobe_user": "Live: one map shows it all, and an AI adviser flags problems and fixes",
+    "asis_biz": "AI gets numbers wrong most easily, making money advice hard to trust",
+    "tobe_biz": "The system does all the math, AI only suggests plans, and 656 tests guard it",
+    "metric": {
+      "value": "< 2 weeks",
+      "label": "from zero to launch"
+    }
   },
   "vibe-edge": {
-    "vision": "One person can do institution-grade quant research with results you can trust.",
-    "value": "AI brings the speed, while fixed statistical tests the agents cannot change guard the trust.",
-    "achieve": "Reached 0.6.0 in 12 weeks with the full flow running and 3,749 tests passing; no factor admitted yet.",
-    "kpis": [
-      {
-        "value": "12 weeks",
-        "label": "From zero to 0.6.0"
-      },
-      {
-        "value": "3,749",
-        "label": "Tests, all passing"
-      },
-      {
-        "value": "~100 sec",
-        "label": "Daily update run time"
-      }
-    ]
+    "purpose": "Let one person do institution-grade quant research with results you can trust",
+    "who": "Solo quant researchers",
+    "asis_user": "AI makes strategy versions far faster than a person can check them",
+    "tobe_user": "AI writes research steps, and five layers run through to a paper trade list",
+    "asis_biz": "If AI could edit the tests or skip counting tries, results could not be trusted",
+    "tobe_biz": "Fixed tests AI cannot touch, with every try and every AI cost logged",
+    "metric": {
+      "value": "12 weeks",
+      "label": "from zero to 0.6.0"
+    }
   },
   "fincli": {
-    "vision": "Quant research gets raw, traceable Taiwan stock data to work with.",
-    "value": "Taiwan data with no ready-made package arrives automatically each day, with raw numbers intact.",
-    "achieve": "23 source modules update automatically after each close and feed Vibe-Edge's data layer.",
-    "kpis": [
-      {
-        "value": "23",
-        "label": "Data source modules"
-      },
-      {
-        "value": "141/141",
-        "label": "New vs. old matched"
-      },
-      {
-        "value": "~10,000",
-        "label": "Lines of code removed"
-      }
-    ]
+    "purpose": "Give quant research raw, traceable Taiwan stock data to work with",
+    "who": "Quant researchers and their platform",
+    "asis_user": "Much Taiwan market data had no ready tool, so each site was wired by hand",
+    "tobe_user": "After each close, 23 sources are fetched automatically, no manual work",
+    "asis_biz": "Changing data while fetching would lose the original numbers for good",
+    "tobe_biz": "Raw data is stored as is and traceable, with a health check every night",
+    "metric": {
+      "value": "23",
+      "label": "sources updated daily"
+    }
   },
   "openstrategy": {
-    "vision": "Find abnormal returns around earnings calls and turn them into a tradable signal.",
-    "value": "An event study and regression found four explaining factors, giving stock picks a statistical basis.",
-    "achieve": "Organized into 10-stage code; the 2025 Sharpe ratio of 0.94 slightly trailed the market's 0.99.",
-    "kpis": [
-      {
-        "value": "10",
-        "label": "Research script stages"
-      },
-      {
-        "value": "4",
-        "label": "Significant factors"
-      },
-      {
-        "value": "0.94",
-        "label": "Sharpe ratio in 2025"
-      }
-    ]
+    "purpose": "Find unusual stock moves around earnings calls and turn them into stock picks",
+    "who": "TMBA researchers and stock pickers",
+    "asis_user": "Each variable fetched its own data, and the research code was scattered",
+    "tobe_user": "Organised into ten steps that fetch data once and share it",
+    "asis_biz": "Whether prices moved unusually around earnings calls had no statistical basis",
+    "tobe_biz": "Four significant factors form the picks; 2025 slightly trailed the market",
+    "metric": {
+      "value": "4",
+      "label": "significant explaining factors"
+    }
   }
 }

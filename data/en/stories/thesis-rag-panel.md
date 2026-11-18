@@ -4,14 +4,14 @@ title: thesis-rag-panel
 
 ## Results
 
-**Adding 6 scores that an LLM produced from financial statements raised the within R² of the stock return model from 5.14% to 63.73%.** Within R² shows how much of the change in stock returns the model explains.
+**I had an LLM read financial statements and produce 6 scores. Adding them to the stock return model raised its within R² from 5.14% to 63.73%.** Within R² shows how much of the change in stock returns the model explains; higher means it explains more.
 
-- All 6 LLM dimension scores are significant at the 1% level.
-- The pilot reliability test gave an ICC of 0.759; ICC measures whether scores are stable and consistent.
+- All 6 LLM dimension scores are statistically significant at the 1% level.
+- In a pilot reliability test, the ICC was 0.759. ICC measures whether scores are stable and consistent.
 
 ## Why this project
 
-The financial ratios research usually uses explain only a small part of stock return variance. Yet financial statements hold a lot more text and numbers. My question: **can a large language model extract stronger signals from financial statements?**
+The financial ratios that research usually relies on explain only a small part of the changes in stock returns. Yet financial statements hold much more text and numbers. My question: **can a large language model extract stronger signals from financial statements?**
 
 ## My role
 
@@ -19,11 +19,11 @@ This is my master's thesis at NTUST's Graduate Institute of Finance, advised by 
 
 ## What I did
 
-**Phase 1 | Question.** Traditional financial ratios explain only a small part of stock return variance. LLMs can read the text in financial statements; can they fill the gap?
+**Phase 1 | Question.** LLMs can read the text in financial statements. Can they explain the large part that traditional financial ratios miss?
 
-**Phase 2 | Data.** 592 listed electronics companies over 64 quarters (2009Q3 to 2025Q2): 37,888 firm-quarters.
+**Phase 2 | Data.** 592 listed electronics companies over 64 quarters (2009Q3 to 2025Q2), for 37,888 company-quarter records.
 
-**Phase 3 | Method.** I built a RAG-LLM system that looks up the financial data, analyzes 101 financial variables, and scores 6 dimensions. Fixed-effects panel models then compare two models: a baseline with traditional variables, and an enhanced model with the 6 LLM scores. Whether the scores are stable also needs an answer, so a pilot ICC test checks their reliability.
+**Phase 3 | Method.** I built a RAG-LLM system: the AI looks up the financial data, analyzes 101 financial variables, and scores 6 dimensions. I then used fixed-effects panel models, a statistical method that follows the same companies over time, to compare two models: a baseline with only traditional variables, and an enhanced model that adds the 6 LLM scores. I also had to show whether the scores were stable, so I ran a pilot ICC test of their reliability.
 
 **Phase 4 | Evidence.** Within R² rose from 5.14% to 63.73%; all 6 dimension scores are significant at the 1% level; the pilot ICC is 0.759.
 
@@ -31,4 +31,4 @@ This is my master's thesis at NTUST's Graduate Institute of Finance, advised by 
 
 ## Next steps
 
-The thesis applies RAG and LLMs to financial data and checks the results with statistics. That is also how I work: build the system, then prove with data that it works.
+The thesis applies RAG and LLMs to financial data and checks the results with statistics. I work the same way: build the system first, then prove with data that it works.
