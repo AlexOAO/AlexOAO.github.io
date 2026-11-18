@@ -347,6 +347,22 @@
         ],
         "tags": ["Whisper", "ASR", "Summarization"],
         "source": "S1"
+      },
+      {
+        "short": "AI 圖像辨識：財報掃描檔",
+        "slug": "financial-statement-vlm",
+        "title": "上市櫃財報掃描檔 AI 圖像辨識（Gemini 視覺語言模型）",
+        "summary": "用 Gemini 視覺語言模型讀懂掃描版財報，不只是傳統 OCR。",
+        "sdlc": ["tune", "build"],
+        "ownership": "協作",
+        "period": "2025/07 ~ 2025/12",
+        "milestones": [
+          {"date": "Phase 1", "text": "需求分析：掃描版財報", "status": "done"},
+          {"date": "Phase 2", "text": "PoC：Gemini 視覺辨識", "status": "done"},
+          {"date": "Phase 3", "text": "上線：財報資料流程", "status": "done"}
+        ],
+        "tags": ["Gemini", "VLM", "Document AI", "Financial Statements"],
+        "source": "使用者說明（2026/11/18）：協作、已上線，成果數字待補充"
       }
     ]
   },

@@ -848,6 +848,42 @@
           "Summarization"
         ],
         "source": "S1"
+      },
+      {
+        "short": "AI Image Recognition: Scanned Statements",
+        "slug": "financial-statement-vlm",
+        "title": "AI Image Recognition for Scanned Financial Statements of Listed Companies (Gemini Vision-Language Model)",
+        "summary": "Reads scanned financial statements with Gemini's vision-language model, beyond traditional OCR.",
+        "sdlc": [
+          "tune",
+          "build"
+        ],
+        "ownership": "Contributor",
+        "period": "2025/07 ~ 2025/12",
+        "milestones": [
+          {
+            "date": "Phase 1",
+            "text": "Requirements: scanned statements",
+            "status": "done"
+          },
+          {
+            "date": "Phase 2",
+            "text": "PoC: Gemini vision",
+            "status": "done"
+          },
+          {
+            "date": "Phase 3",
+            "text": "Launch: statement data flow",
+            "status": "done"
+          }
+        ],
+        "tags": [
+          "Gemini",
+          "VLM",
+          "Document AI",
+          "Financial Statements"
+        ],
+        "source": "User's account (2026/11/18): contributor, in production, figures to be added"
       }
     ]
   },

@@ -322,6 +322,25 @@
       }
     ]
   },
+  "financial-statement-vlm": {
+    "vision": "Scanned statements read as accurately as text files, figure by figure.",
+    "value": "Reads table structure and figures together, not just image to text.",
+    "achieve": "In production; accuracy and volume to be added.",
+    "kpis": [
+      {
+        "value": "Live",
+        "label": "Statement data flow"
+      },
+      {
+        "value": "VLM",
+        "label": "Beyond traditional OCR"
+      },
+      {
+        "value": "Contributor",
+        "label": "My role"
+      }
+    ]
+  },
   "moda-t-ambassador": {
     "vision": "Rural groups and small firms can use generative AI too, narrowing the digital gap.",
     "value": "Firms without AI talent get help turning their real problems into digital solutions.",
