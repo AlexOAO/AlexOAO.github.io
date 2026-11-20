@@ -73,12 +73,14 @@ const Site = (() => {
 
   const COVER_HUES = [['#3b82f6', '#22d3ee'], ['#8b5cf6', '#3b82f6'], ['#06b6d4', '#10b981'], ['#a78bfa', '#22d3ee'], ['#f59e0b', '#8b5cf6']];
   // Blog cover art: a small generated picture per post (orbits, bars or lines), seeded by the post id.
-  function blogCover(id) {
+  // Pass n (the post's position, oldest = 0) to give every post its own style and colour pair.
+  function blogCover(id, n) {
     let h = 2166136261;
     for (const ch of id) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
     const rnd = () => (h = Math.imul(h ^ (h >>> 15), 2246822507) >>> 0) / 4294967296;
-    const [c1, c2] = COVER_HUES[h % COVER_HUES.length], g = `g${id.replace(/\W/g, '')}`;
-    const kind = Math.floor(rnd() * 3);
+    const KINDS = 9, hue = n == null ? h % COVER_HUES.length : (n + Math.floor(n / KINDS)) % COVER_HUES.length;
+    const [c1, c2] = COVER_HUES[hue], g = `g${id.replace(/\W/g, '')}`;
+    const kind = n == null ? Math.floor(rnd() * 3) : n % KINDS;
     let art = '';
     if (kind === 0) {        // orbits
       const cx = 220 + rnd() * 120, cy = 40 + rnd() * 50;
@@ -86,6 +88,30 @@ const Site = (() => {
       art += `<circle cx="${cx}" cy="${cy}" r="5" fill="${c2}"/>`;
     } else if (kind === 1) { // bars, like a small chart
       for (let i = 0; i < 22; i++) { const bh = 14 + rnd() * 92; art += `<rect x="${20 + i * 18}" y="${132 - bh}" width="9" height="${bh}" rx="2" fill="url(#${g})" fill-opacity="${0.25 + rnd() * 0.6}"/>`; }
+    } else if (kind === 3) { // dot grid with a few lit points
+      for (let x = 0; x < 20; x++) for (let y = 0; y < 7; y++) { const on = rnd() > 0.82;
+        art += `<circle cx="${14 + x * 20}" cy="${10 + y * 19}" r="${on ? 3.2 : 1.4}" fill="${on ? c2 : `url(#${g})`}" fill-opacity="${on ? 0.95 : 0.35}"/>`; }
+    } else if (kind === 4) { // mountain ridges
+      for (let i = 0; i < 5; i++) { let d = `M0 132 L0 ${60 + i * 14}`;
+        for (let x = 0; x <= 400; x += 25) d += ` L${x} ${40 + i * 16 + rnd() * 34 - 17}`;
+        art += `<path d="${d} L400 132 Z" fill="url(#${g})" fill-opacity="${0.12 + i * 0.12}"/>`; }
+    } else if (kind === 5) { // stacked diamonds
+      const cx = 80 + rnd() * 240;
+      for (let i = 1; i <= 8; i++) { const r = i * 16; art += `<path d="M${cx} ${66 - r} L${cx + r * 1.6} 66 L${cx} ${66 + r} L${cx - r * 1.6} 66 Z" fill="none" stroke="url(#${g})" stroke-opacity="${0.95 - i * 0.1}" stroke-width="1"/>`; }
+      art += `<rect x="${cx - 4}" y="62" width="8" height="8" transform="rotate(45 ${cx} 66)" fill="${c2}"/>`;
+    } else if (kind === 6) { // candlesticks
+      let y = 70;
+      for (let i = 0; i < 18; i++) { const o = y, c = Math.max(20, Math.min(112, y + rnd() * 40 - 20)), hi = Math.min(o, c) - 4 - rnd() * 10, lo = Math.max(o, c) + 4 + rnd() * 10, x = 16 + i * 21, up = c < o;
+        art += `<line x1="${x + 4}" y1="${hi}" x2="${x + 4}" y2="${lo}" stroke="${up ? c2 : c1}" stroke-opacity="0.7"/><rect x="${x}" y="${Math.min(o, c)}" width="8" height="${Math.max(2, Math.abs(c - o))}" rx="1" fill="${up ? c2 : c1}" fill-opacity="${up ? 0.9 : 0.5}"/>`; y = c; }
+    } else if (kind === 7) { // triangle mesh
+      for (let r = 0; r < 4; r++) for (let q = 0; q < 12; q++) { const x = q * 36 - (r % 2) * 18, y = r * 36, up = (q + r) % 2;
+        art += `<path d="M${x} ${up ? y + 36 : y} L${x + 36} ${up ? y + 36 : y} L${x + 18} ${up ? y : y + 36} Z" fill="url(#${g})" fill-opacity="${0.05 + rnd() * 0.45}" stroke="#0d1527" stroke-width="1.5"/>`; }
+    } else if (kind === 8) { // radar sweep
+      const cx = 300, cy = 132;
+      for (let i = 1; i <= 5; i++) art += `<path d="M${cx - i * 26} ${cy} A${i * 26} ${i * 26} 0 0 1 ${cx + i * 26} ${cy}" fill="none" stroke="url(#${g})" stroke-opacity="0.55"/>`;
+      for (let a = 0; a < 7; a++) { const t = Math.PI + a * Math.PI / 6; art += `<line x1="${cx}" y1="${cy}" x2="${cx + Math.cos(t) * 130}" y2="${cy + Math.sin(t) * 130}" stroke="${c1}" stroke-opacity="0.25"/>`; }
+      art += `<path d="M${cx} ${cy} L${cx - 130} ${cy} A130 130 0 0 1 ${cx + Math.cos(Math.PI * 1.25) * 130} ${cy + Math.sin(Math.PI * 1.25) * 130} Z" fill="${c2}" fill-opacity="0.18"/>`;
+      for (let i = 0; i < 6; i++) { const t = Math.PI + rnd() * Math.PI, r = 30 + rnd() * 95; art += `<circle cx="${cx + Math.cos(t) * r}" cy="${cy + Math.sin(t) * r}" r="3" fill="${c2}"/>`; }
     } else {                 // flowing lines
       for (let i = 0; i < 9; i++) { const y = 20 + i * 12, a = 18 + rnd() * 30; art += `<path d="M-10 ${y} C 110 ${y - a}, 230 ${y + a}, 420 ${y - a / 2}" fill="none" stroke="url(#${g})" stroke-opacity="${0.25 + i * 0.08}" stroke-width="1.2"/>`; }
     }

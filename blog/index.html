@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/css/post.css?v=20261120e">
+  <link rel="stylesheet" href="/assets/css/post.css?v=20261120g">
   <style>
     .post-nav { display: flex; justify-content: space-between; align-items: center; }
     .lang-toggle { font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--text);
@@ -131,7 +131,7 @@
       <aside class="side-r" id="sideR" aria-label="All posts"></aside>
     </div>
   </main>
-  <script src="/assets/js/common.js?v=20261120e"></script>
+  <script src="/assets/js/common.js?v=20261120g"></script>
   <script>
     const { esc, getJSON, blogCover, arrowSvg } = Site;
     const I18N = {
@@ -139,7 +139,7 @@
       zh: { topics: '主題', posts: '全部文章', back: '回到首頁', toggle: 'EN', sub: '金融業 AI 從治理到上線的筆記、學習心得與有趣的事。', all: '全部', count: '共 {n} 篇', read: '閱讀', none: '沒有這個標籤的文章。', err: '內容載入失敗。' },
     };
     const T = k => I18N[Site.getLang()][k];
-    let posts = [], tag = new URLSearchParams(location.search).get('tag') || '';
+    let posts = [], order = [], tag = new URLSearchParams(location.search).get('tag') || '';
     function draw() {
       const en = Site.getLang() === 'en';
       const tags = [...new Set(posts.flatMap(p => p.tags))];
@@ -148,7 +148,7 @@
         [['', T('all')], ...tags.map(t => [t, t])].map(([v, l]) => `<button class="chip" data-tag="${esc(v)}" aria-pressed="${v === tag}">${esc(l)}</button>`).join('');
       document.getElementById('grid').innerHTML = shown.length ? shown.map(p => `
         <a href="/${esc(p.file)}" class="blog-card">
-          <div class="blog-cover">${blogCover(p.id || p.file)}<span class="tag">${esc(p.tags[0] || '')}</span></div>
+          <div class="blog-cover">${blogCover(p.id || p.file, order.indexOf(p))}<span class="tag">${esc(p.tags[0] || '')}</span></div>
           <div class="blog-date">${esc(p.date)}</div>
           <h3>${esc(en && p.title_en ? p.title_en : p.title)}</h3>
           <div class="summary">${esc(en && p.summary_en ? p.summary_en : p.summary)}</div>
@@ -170,7 +170,10 @@
       document.getElementById('backText').textContent = T('back');
       document.getElementById('langToggle').textContent = T('toggle');
       document.getElementById('sub').textContent = T('sub');
-      getJSON('/posts/posts.json').then(list => { posts = list.sort((a, b) => new Date(b.date) - new Date(a.date)); draw(); })
+      getJSON('/posts/posts.json').then(list => {
+        // Cover order: oldest first, so a new post never changes the existing covers.
+        order = [...list].sort((a, b) => new Date(a.date) - new Date(b.date) || list.indexOf(b) - list.indexOf(a));
+        posts = list.sort((a, b) => new Date(b.date) - new Date(a.date)); draw(); })
         .catch(() => { document.getElementById('grid').innerHTML = `<p class="empty">${esc(T('err'))}</p>`; });
     }
     document.getElementById('langToggle').addEventListener('click', () => { Site.toggleLang(); render(); });
