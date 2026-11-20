@@ -67,7 +67,7 @@ The PO, BA and SA review the scorecard together on a regular cadence, and the SA
 
 ## What I did in this stage
 
-My role at this stage is PM and SA:
+When the department was new, I covered PM, SA, BA and technical architecture analyst at once; in this stage:
 
 - Create prototypes for four business service agents and design a common cost-benefit framework. See [The Four Major AI Agents](project.html?id=agent-cost-roi) 。
 - Design a verification mechanism before the agent goes online to ensure that risk levels correspond to specific checks. See [AI Governance](project.html?id=agent-governance) 。

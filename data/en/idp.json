@@ -1,0 +1,584 @@
+{
+  "blueprint": {
+    "title": "Three-year development blueprint",
+    "sub": "From proving value with the business to owning AI's results and investment",
+    "phases": [
+      {
+        "when": "Months 0–12",
+        "name": "Co-create value",
+        "line": "Use evidence to win the investment",
+        "tasks": [
+          {
+            "t": "Find a journey worth changing",
+            "d": "Pick one AI agent scenario; confirm the business owner, baseline and target; map the current and future journey; write the business case"
+          },
+          {
+            "t": "Pilot and pass the investment gate",
+            "d": "Run an 8–12 week pilot in the real process, gather evidence and capability gaps, write the investment proposal, and lead business, IT and security to a decision"
+          }
+        ],
+        "milestone": "At least 1 scenario with measurable pilot results; the first investment proposal done"
+      },
+      {
+        "when": "Months 13–24",
+        "name": "Build capability",
+        "line": "Turn investment into capability and results",
+        "tasks": [
+          {
+            "t": "Build with IT",
+            "d": "Plan the data, API and system build, and move the AI agent from assisting to controlled action"
+          },
+          {
+            "t": "Track results",
+            "d": "Review adoption, cost and benefit monthly, and use the realization rate to scale up or adjust"
+          }
+        ],
+        "milestone": "1 customer journey changed; 2 consecutive periods of benefit tracking on target"
+      },
+      {
+        "when": "Months 25–36",
+        "name": "Own the value",
+        "line": "Own the value stream and its portfolio",
+        "tasks": [
+          {
+            "t": "Manage the portfolio",
+            "d": "Own one value stream and its investment portfolio, and chair the quarterly portfolio review"
+          },
+          {
+            "t": "Make the method repeatable",
+            "d": "Turn cases and methods into a reusable team playbook, and coach new colleagues"
+          }
+        ],
+        "milestone": "Own 1 reusable AI method or module; become a value owner"
+      }
+    ],
+    "have_title": "Current abilities",
+    "have": [
+      {
+        "k": "Finance / research",
+        "v": "MA in finance, quant research, empirical thesis"
+      },
+      {
+        "k": "Data / development",
+        "v": "Python, SQL, PostgreSQL, FastAPI, React"
+      },
+      {
+        "k": "AI / agents",
+        "v": "RAG, multi-agent, MCP, VLM, LLM evaluation"
+      },
+      {
+        "k": "Governance / cost",
+        "v": "Pre-launch checks, guardrail testing, cost-benefit framework"
+      }
+    ],
+    "axes_title": "Abilities to upgrade",
+    "axes": [
+      "Process design",
+      "Business case",
+      "Cross-team leadership",
+      "Scaling and governance"
+    ],
+    "goal_title": "3-year goal",
+    "goal": "Turn business problems into AI solutions that are proven, investable and scalable, and own their results.",
+    "tag": "Finance × AI × value × collaboration | from finding the problem to scaling"
+  },
+  "updated": "2026/11",
+  "goal": "Within three years, move from turning processes into AI solutions to owning AI's results and investment.",
+  "tagline": "Change how work gets done with AI first, then use evidence to win the investment.",
+  "summary": [
+    {
+      "value": "Level 2 → Level 3",
+      "label": "Now → three-year goal"
+    },
+    {
+      "value": "3",
+      "label": "Competencies to build first"
+    },
+    {
+      "value": "Month 9",
+      "label": "First investment proposal"
+    }
+  ],
+  "scale": [
+    "Aware",
+    "Can do it alone",
+    "Can lead others",
+    "Can set the method for the organization"
+  ],
+  "levels": [
+    {
+      "n": 1,
+      "name": "Solution designer",
+      "does": "Turns processes into workable AI solutions",
+      "when": "In place",
+      "state": "done",
+      "proof": [
+        [
+          "Four Agent prototypes",
+          "project.html?id=agent-cost-roi"
+        ],
+        [
+          "RAG support bot",
+          "project.html?id=rag-support-bot"
+        ]
+      ]
+    },
+    {
+      "n": 2,
+      "name": "Value co-creator",
+      "does": "Proves AI's value together with business units",
+      "when": "Now | months 0–12",
+      "state": "now",
+      "proof": [
+        [
+          "Cost-benefit framework",
+          "project.html?id=agent-cost-roi"
+        ],
+        [
+          "Guardrails PoC",
+          "project.html?id=guardrails-poc"
+        ]
+      ]
+    },
+    {
+      "n": 3,
+      "name": "Value owner",
+      "does": "Owns AI's results and the investment portfolio",
+      "when": "Goal | months 12–36",
+      "state": "next",
+      "proof": []
+    }
+  ],
+  "competencies": [
+    {
+      "key": "biz",
+      "name": "Business and finance",
+      "now": 3,
+      "target": 3,
+      "importance": 3.0,
+      "evidence": [
+        [
+          "Master's thesis",
+          "project.html?id=thesis-rag-panel"
+        ],
+        [
+          "Vibe-Edge",
+          "project.html?id=vibe-edge"
+        ]
+      ]
+    },
+    {
+      "key": "flow",
+      "name": "Process design",
+      "now": 2,
+      "target": 4,
+      "importance": 4.6,
+      "evidence": [
+        [
+          "Four Agents' customer journey",
+          "project.html?id=agent-cost-roi"
+        ]
+      ]
+    },
+    {
+      "key": "data",
+      "name": "Data analysis",
+      "now": 3,
+      "target": 3,
+      "importance": 2.4,
+      "evidence": [
+        [
+          "FinCLI",
+          "project.html?id=fincli"
+        ],
+        [
+          "Earnings-call study",
+          "project.html?id=openstrategy"
+        ]
+      ]
+    },
+    {
+      "key": "ai",
+      "name": "AI technology",
+      "now": 3,
+      "target": 3,
+      "importance": 3.2,
+      "evidence": [
+        [
+          "FinLLM evaluation",
+          "project.html?id=finllm"
+        ],
+        [
+          "RAG support bot",
+          "project.html?id=rag-support-bot"
+        ]
+      ]
+    },
+    {
+      "key": "agent",
+      "name": "AI agent solutions",
+      "now": 3,
+      "target": 4,
+      "importance": 4.0,
+      "evidence": [
+        [
+          "Wealth Assistant prototype",
+          "project.html?id=agent-wealth-assistant"
+        ],
+        [
+          "FinJourney",
+          "project.html?id=finjourney"
+        ]
+      ]
+    },
+    {
+      "key": "case",
+      "name": "Business case",
+      "now": 2,
+      "target": 4,
+      "importance": 5.0,
+      "evidence": [
+        [
+          "Cost-benefit framework",
+          "project.html?id=agent-cost-roi"
+        ]
+      ]
+    },
+    {
+      "key": "gov",
+      "name": "Governance and risk",
+      "now": 3,
+      "target": 4,
+      "importance": 4.3,
+      "evidence": [
+        [
+          "Pre-launch checks",
+          "project.html?id=agent-governance"
+        ],
+        [
+          "Guardrails PoC",
+          "project.html?id=guardrails-poc"
+        ]
+      ]
+    },
+    {
+      "key": "team",
+      "name": "Cross-team leadership",
+      "now": 2,
+      "target": 4,
+      "importance": 4.8,
+      "evidence": [
+        [
+          "Platform evaluation",
+          "project.html?id=agentic-platform-eval"
+        ]
+      ]
+    }
+  ],
+  "quadrants": {
+    "tr": "Build first",
+    "br": "Keep and deepen",
+    "tl": "Build later",
+    "bl": "Maintain"
+  },
+  "roadmap": [
+    {
+      "start": 0,
+      "end": 3,
+      "when": "Months 0–3",
+      "title": "Find a journey worth changing",
+      "level": 2,
+      "steps": [
+        "Find the problem",
+        "Map the journey"
+      ],
+      "focus": [
+        "Process design",
+        "Business case"
+      ],
+      "use": [
+        "Business and finance"
+      ],
+      "plan": [
+        "Pick one AI agent scenario and confirm the business owner",
+        "Set the baseline and the target",
+        "Map the current and future journey; write the benefit hypothesis"
+      ],
+      "output": [
+        "Goals and KPI tree",
+        "Journey map",
+        "First business case"
+      ]
+    },
+    {
+      "start": 3,
+      "end": 6,
+      "when": "Months 3–6",
+      "title": "Get evidence from a small pilot",
+      "level": 2,
+      "steps": [
+        "Inventory what to reuse",
+        "Pilot",
+        "Gather evidence"
+      ],
+      "focus": [
+        "Cross-team leadership",
+        "Process design"
+      ],
+      "use": [
+        "Data analysis",
+        "AI technology"
+      ],
+      "plan": [
+        "Inventory reusable platforms, data and APIs",
+        "Run an 8–12 week pilot in the real process, reviewed every two weeks",
+        "Track handling time, throughput and adoption"
+      ],
+      "output": [
+        "Reuse map",
+        "Pilot charter",
+        "Evidence pack and capability gaps"
+      ]
+    },
+    {
+      "start": 6,
+      "end": 12,
+      "when": "Months 6–12",
+      "title": "The first investment gate",
+      "level": 2,
+      "steps": [
+        "Investment gate"
+      ],
+      "focus": [
+        "Business case",
+        "Cross-team leadership"
+      ],
+      "use": [
+        "Governance and risk"
+      ],
+      "plan": [
+        "Write the investment proposal: outcome, evidence, gaps, ask and return",
+        "Build the governance controls into the gate criteria",
+        "Lead business, IT and security to a stop, hold, invest or scale decision"
+      ],
+      "output": [
+        "Investment proposal",
+        "Gate decision record"
+      ]
+    },
+    {
+      "start": 12,
+      "end": 24,
+      "when": "Years 1–2",
+      "title": "Turn investment into capability and results",
+      "level": 3,
+      "steps": [
+        "Build capability",
+        "Track results"
+      ],
+      "focus": [
+        "Cross-team leadership",
+        "Business case"
+      ],
+      "use": [
+        "AI agent solutions"
+      ],
+      "plan": [
+        "Plan the data, API and system build with IT",
+        "Move the AI agent from assisting to controlled action",
+        "Review adoption, cost and benefit monthly, for two periods in a row"
+      ],
+      "output": [
+        "Capability roadmap",
+        "Results dashboard",
+        "Benefit tracking report"
+      ]
+    },
+    {
+      "start": 24,
+      "end": 36,
+      "when": "Years 2–3",
+      "title": "Become a value owner",
+      "level": 3,
+      "steps": [
+        "Portfolio management"
+      ],
+      "focus": [
+        "Business case",
+        "Cross-team leadership"
+      ],
+      "use": [
+        "Business and finance",
+        "Governance and risk"
+      ],
+      "plan": [
+        "Own one value stream and its investment portfolio",
+        "Chair the quarterly portfolio review",
+        "Turn cases and methods into a reusable team playbook"
+      ],
+      "output": [
+        "Yearly capability map",
+        "Playbook and case library"
+      ]
+    }
+  ],
+  "milestones": [
+    {
+      "m": 3,
+      "label": "Journey map"
+    },
+    {
+      "m": 6,
+      "label": "Evidence pack"
+    },
+    {
+      "m": 9,
+      "label": "Investment proposal"
+    },
+    {
+      "m": 24,
+      "label": "Two periods tracked"
+    },
+    {
+      "m": 36,
+      "label": "Value owner"
+    }
+  ],
+  "cycle": [
+    {
+      "name": "Find the problem",
+      "state": "done",
+      "proof": [
+        "Four Agents",
+        "project.html?id=agent-cost-roi"
+      ]
+    },
+    {
+      "name": "Map the journey",
+      "state": "done",
+      "proof": [
+        "Customer journey",
+        "project.html?id=agent-cost-roi"
+      ]
+    },
+    {
+      "name": "Inventory reuse",
+      "state": "done",
+      "proof": [
+        "Platform evaluation",
+        "project.html?id=agentic-platform-eval"
+      ]
+    },
+    {
+      "name": "Pilot",
+      "state": "done",
+      "proof": [
+        "Guardrails PoC",
+        "project.html?id=guardrails-poc"
+      ]
+    },
+    {
+      "name": "Gather evidence",
+      "state": "now",
+      "proof": [
+        "Guardrails evaluation",
+        "project.html?id=guardrails-poc"
+      ]
+    },
+    {
+      "name": "Investment gate",
+      "state": "gap",
+      "gate": true,
+      "proof": null
+    },
+    {
+      "name": "Build capability",
+      "state": "done",
+      "proof": [
+        "FinJourney",
+        "project.html?id=finjourney"
+      ]
+    },
+    {
+      "name": "Track results",
+      "state": "now",
+      "proof": [
+        "AI ops results",
+        "project.html?id=ai-ops-dashboard"
+      ]
+    }
+  ],
+  "states": {
+    "done": "Done",
+    "now": "In progress",
+    "gap": "Not yet"
+  },
+  "measures": [
+    {
+      "name": "Business value",
+      "what": "KPI attainment, benefit amount"
+    },
+    {
+      "name": "Pilot results",
+      "what": "Pilot success, adoption, evidence quality"
+    },
+    {
+      "name": "Investment impact",
+      "what": "Investment proposals adopted"
+    },
+    {
+      "name": "Capability reuse",
+      "what": "Reuse rate, components delivered"
+    },
+    {
+      "name": "AI governance",
+      "what": "Assessment speed, control coverage, no major incidents"
+    },
+    {
+      "name": "Knowledge sharing",
+      "what": "Playbooks, cases, reusable assets"
+    }
+  ],
+  "checklist": [
+    "1 customer journey being changed",
+    "1 evidence pack",
+    "1 investment proposal or scale plan",
+    "2 consecutive periods of benefit tracking"
+  ],
+  "review": "Results reviewed monthly, investment quarterly, and this plan updated yearly.",
+  "traits": [
+    [
+      "Business curiosity",
+      "Learns the business without waiting for requests"
+    ],
+    [
+      "Problem framing",
+      "Breaks vague problems into testable ones"
+    ],
+    [
+      "Tech curiosity",
+      "Explores new AI capabilities"
+    ],
+    [
+      "Data-driven",
+      "Uses data, not gut feeling"
+    ],
+    [
+      "Cross-functional",
+      "Works with business, IT, data and security"
+    ],
+    [
+      "Value ownership",
+      "Launch is not the finish line"
+    ],
+    [
+      "Challenge the status quo",
+      "Asks why it has always been done this way"
+    ],
+    [
+      "Pragmatism",
+      "Knows when not to use AI"
+    ]
+  ],
+  "selfNote": "Levels, targets and importance are self-assessed."
+}

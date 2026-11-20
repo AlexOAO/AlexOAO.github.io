@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
+  <title>個人發展計畫 IDP | Alex Li (李翔緯)</title>
+  <meta name="description" content="Individual development plan of Alex Li (李翔緯): where I am going, where I am now, what to build first, how I will get there, and how I will know.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/post.css?v=20261120b">
+  <style>
+    :root { --now: #16a34a; --tgt: #a855f7; --box: #111a2e; --ink: #e2e8f0; --mute: #94a3b8; }
+    .post { max-width: 880px; }
+    .post-nav { display: flex; justify-content: space-between; align-items: center; }
+    .lang-toggle { font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--text);
+      background: rgba(30,41,59,0.6); border: 1px solid var(--line); border-radius: 20px; padding: 0.35rem 0.9rem; cursor: pointer; }
+    .eyebrow { font-family: var(--display); font-size: 0.8rem; letter-spacing: 0.06em; color: var(--accent-2); font-weight: 500; margin-bottom: 1rem; }
+    .goal { margin-top: 1rem; font-size: 1.15rem; line-height: 1.7; color: #f1f5f9; font-weight: 500; }
+    .tagline { margin-top: 0.4rem; color: #93c5fd; }
+    .box { background: var(--box); border: 1px solid var(--line); border-radius: 14px; }
+    .sum { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.6rem; margin-top: 1.4rem; }
+    .sum div { padding: 0.9rem 1rem; }
+    .sum b { display: block; font-family: var(--display); font-size: 1.3rem; color: #f1f5f9; }
+    .sum span { font-size: 0.82rem; color: var(--mute); }
+    .q { font-family: var(--display); font-size: 0.78rem; letter-spacing: 0.1em; color: #60a5fa; margin: 0 0 0.2rem !important; }
+    .post-body h2 { margin-top: 3rem; }
+    .lead2 { color: var(--mute); }
+    /* levels */
+    .lv { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.6rem; margin: 1rem 0; align-items: end; }
+    .lv-card { padding: 0.9rem 1rem; position: relative; }
+    .lv-card.l1 { min-height: 7.5rem; } .lv-card.l2 { min-height: 9.5rem; border-color: rgba(59,130,246,0.6); } .lv-card.l3 { min-height: 11.5rem; border-style: dashed; border-color: rgba(168,85,247,0.6); }
+    .lv-n { font-family: var(--display); font-size: 0.75rem; color: var(--mute); }
+    .lv-card h3 { margin: 0.1rem 0 0.35rem !important; font-size: 1.05rem; }
+    .post-body .lv-card p { margin: 0; font-size: 0.86rem; color: #cbd5e1; line-height: 1.55; }
+    .pill { display: inline-block; font-size: 0.72rem; padding: 0.05rem 0.5rem; border-radius: 6px; border: 1px solid; margin-top: 0.5rem; }
+    .pill.done { color: #86efac; border-color: rgba(22,163,74,0.6); } .pill.now { color: #93c5fd; border-color: rgba(59,130,246,0.6); } .pill.next { color: #d8b4fe; border-color: rgba(168,85,247,0.6); }
+    .pill.gap { color: #fbbf24; border-color: rgba(245,158,11,0.6); }
+    .chips { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.5rem; }
+    .post-body .chips a { font-size: 0.72rem; padding: 0.08rem 0.5rem; border-radius: 20px; border: 1px solid rgba(22,163,74,0.5); color: #86efac; text-decoration: none; }
+    /* charts */
+    .chart { padding: 1rem; margin: 1rem 0 0.5rem; }
+    .chart svg { display: block; width: 100%; height: auto; }
+    .chart svg text { font-family: 'Noto Sans TC', 'Inter', sans-serif; }
+    .legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; font-size: 0.8rem; color: #cbd5e1; margin-top: 0.4rem; }
+    .legend i { display: inline-block; width: 18px; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 0.4rem; }
+    .note { font-size: 0.78rem; color: var(--mute); }
+    .two { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 0.8rem; align-items: start; }
+    .tbl { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+    .tbl th { text-align: left; font-size: 0.72rem; color: var(--mute); padding: 0.4rem 0.4rem; border-bottom: 1px solid var(--line); font-weight: 700; }
+    .tbl td { padding: 0.45rem 0.4rem; border-bottom: 1px solid var(--line); color: var(--ink); vertical-align: top; }
+    .tbl td.num { font-family: var(--display); white-space: nowrap; }
+    .tbl .up { color: #d8b4fe; }
+    .quad { display: grid; grid-template-columns: 1.6rem minmax(0, 1fr); grid-template-rows: auto auto; gap: 0.4rem; }
+    .qy { writing-mode: vertical-rl; transform: rotate(180deg); text-align: center; font-size: 0.78rem; color: var(--mute); }
+    .qx { grid-column: 2; text-align: right; font-size: 0.78rem; color: var(--mute); }
+    .qg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.4rem; }
+    .qd { min-height: 7.5rem; padding: 0.8rem; border-radius: 12px; background: #0d1526; border: 1px solid var(--line); }
+    .qd.tr { background: #241c0b; border-color: rgba(245,158,11,0.6); }
+    .qd-t { display: block; font-size: 0.8rem; font-weight: 700; color: var(--mute); margin-bottom: 0.5rem; }
+    .qd.tr .qd-t { color: #fbbf24; } .qd.br .qd-t { color: #86efac; }
+    .qd > div { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .qc { display: inline-flex; align-items: baseline; gap: 0.4rem; padding: 0.3rem 0.6rem; border-radius: 8px; background: #111a2e; border: 1px solid var(--line); }
+    .qc b { font-size: 0.86rem; color: var(--ink); } .qc em { font-style: normal; font-family: var(--display); font-size: 0.75rem; color: #d8b4fe; }
+    .qd.tr .qc { border-color: rgba(245,158,11,0.45); } .qd-e { color: #475569; }
+    /* three-year blueprint */
+    .bp { margin: 2rem 0 0.5rem; padding: 1.4rem; border-radius: 18px; background: #0d1526; border: 1px solid var(--line); }
+    .bp-h { margin: 0 !important; font-size: 1.35rem; color: #f1f5f9; }
+    .post-body .bp-sub { margin: 0.3rem 0 1.2rem; color: #93c5fd; font-size: 0.95rem; }
+    .bp-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.4rem; position: relative; }
+    .bp-col { position: relative; display: flex; flex-direction: column; padding: 1rem; border-radius: 14px; background: #111a2e; border: 1px solid var(--line); border-top: 4px solid var(--c); }
+    .bp-col:nth-child(1) { --c: #2563eb; } .bp-col:nth-child(2) { --c: #0891b2; } .bp-col:nth-child(3) { --c: #9333ea; }
+    .bp-col:not(:last-child)::after { content: '➜'; position: absolute; right: -1.15rem; top: 2.2rem; color: #64748b; font-size: 1rem; }
+    .bp-no { display: inline-flex; align-items: center; justify-content: center; width: 1.7rem; height: 1.7rem; border-radius: 50%; background: var(--c); color: #fff; font-family: var(--display); font-weight: 800; font-size: 0.85rem; }
+    .bp-when { font-family: var(--display); font-weight: 700; font-size: 0.82rem; color: color-mix(in srgb, var(--c) 55%, #fff); margin-left: 0.5rem; }
+    .post-body .bp-col h3 { margin: 0.6rem 0 0.15rem !important; font-size: 1.1rem; color: #f1f5f9; }
+    .post-body .bp-line { margin: 0 0 0.8rem; font-size: 0.85rem; color: var(--mute); }
+    .bp-task { margin-bottom: 0.7rem; }
+    .bp-task b { display: flex; gap: 0.45rem; align-items: baseline; font-size: 0.92rem; color: var(--ink); }
+    .bp-task b i { font-style: normal; font-family: var(--display); font-size: 0.75rem; color: color-mix(in srgb, var(--c) 55%, #fff); }
+    .post-body .bp-task p { margin: 0.2rem 0 0 1.1rem; font-size: 0.82rem; line-height: 1.6; color: #cbd5e1; }
+    .bp-ms { margin-top: auto; padding: 0.65rem 0.75rem; border-radius: 10px; background: #1a2233; border-left: 3px solid #f59e0b; }
+    .bp-ms span { display: block; font-size: 0.72rem; font-weight: 700; color: #fbbf24; letter-spacing: 0.06em; }
+    .post-body .bp-ms p { margin: 0.15rem 0 0; font-size: 0.84rem; line-height: 1.55; color: #fde68a; }
+    .bp-foot { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1.1fr); gap: 0.8rem; margin-top: 1rem; }
+    .bp-box { padding: 0.9rem 1rem; border-radius: 14px; background: #111a2e; border: 1px solid var(--line); }
+    .bp-k { display: block; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; color: var(--mute); margin-bottom: 0.55rem; }
+    .bp-have { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+    .bp-have div b { display: block; font-size: 0.82rem; color: #93c5fd; } .bp-have div span { font-size: 0.8rem; color: #cbd5e1; line-height: 1.5; }
+    .bp-axes { display: grid; gap: 0.4rem; }
+    .bp-axes div { display: flex; gap: 0.55rem; align-items: center; font-size: 0.9rem; color: var(--ink); }
+    .bp-axes i { font-style: normal; display: inline-flex; align-items: center; justify-content: center; width: 1.4rem; height: 1.4rem; border-radius: 6px; background: #3b0764; color: #e9d5ff; font-size: 0.75rem; font-weight: 700; }
+    .bp-goal { background: #1e1b4b; border-color: rgba(168,85,247,0.55); }
+    .bp-goal .bp-k { color: #d8b4fe; }
+    .post-body .bp-goal p { margin: 0; font-size: 1rem; line-height: 1.65; color: #f5f3ff; font-weight: 600; }
+    .post-body .bp-tag { margin: 1rem 0 0; text-align: center; font-size: 0.82rem; color: var(--mute); }
+    @media (max-width: 760px) { .bp-cols, .bp-foot { grid-template-columns: minmax(0, 1fr); } .bp-col:not(:last-child)::after { content: '⬇'; right: 50%; top: auto; bottom: -1.3rem; } }
+    /* roadmap cards */
+    .rm { display: grid; gap: 0.7rem; margin-top: 1rem; }
+    .rm-card { padding: 1rem 1.1rem; }
+    .rm-top { display: flex; flex-wrap: wrap; gap: 0.3rem 0.7rem; align-items: baseline; }
+    .rm-when { font-family: var(--display); font-weight: 700; color: #93c5fd; }
+    .post-body .rm-card h3 { margin: 0 !important; font-size: 1.02rem; }
+    .rm-lv { font-size: 0.72rem; color: #d8b4fe; }
+    .rm-steps { display: flex; flex-wrap: wrap; gap: 0.3rem; margin: 0.55rem 0 0.7rem; }
+    .rm-steps span { font-size: 0.74rem; padding: 0.1rem 0.5rem; border-radius: 6px; background: #1e293b; color: #cbd5e1; }
+    .rm-steps span + span::before { content: '› '; color: #64748b; }
+    .rm-body { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.45fr) minmax(0, 1fr); gap: 0.9rem; }
+    .rm-k { display: block; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; margin-bottom: 0.3rem; }
+    .k-focus { color: #fbbf24; } .k-plan { color: #93c5fd; } .k-out { color: #86efac; } .k-use { color: var(--mute); margin-top: 0.5rem; }
+    .rm-focus b { display: block; color: #fde68a; font-size: 0.88rem; line-height: 1.6; }
+    .rm-focus em { display: block; font-style: normal; color: #cbd5e1; font-size: 0.82rem; }
+    .post-body .rm-body ul { margin: 0; padding: 0; }
+    .post-body .rm-body li { font-size: 0.84rem; line-height: 1.55; margin: 0 0 0.2rem; padding-left: 0.9rem; color: var(--ink); }
+    /* cycle */
+    .cy { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.5rem; margin: 1rem 0 0.4rem; counter-reset: c; }
+    .cy-step { padding: 0.7rem 0.8rem; position: relative; }
+    .cy-step.gate { border: 1px solid rgba(245,158,11,0.7); background: #241c0b; }
+    .cy-i { font-family: var(--display); font-size: 0.72rem; color: var(--mute); }
+    .cy-step b { display: block; font-size: 0.9rem; color: var(--ink); margin: 0.1rem 0 0.1rem; }
+    .loop { font-size: 0.8rem; color: #86efac; }
+    /* measures */
+    .ms { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; margin: 1rem 0; }
+    .ms div { padding: 0.7rem 0.85rem; }
+    .ms b { display: block; font-size: 0.88rem; color: var(--ink); } .ms span { font-size: 0.8rem; color: var(--mute); }
+    .ck { list-style: none; padding: 0 !important; margin: 0.6rem 0 !important; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.4rem; }
+    .post-body .ck li { padding: 0.55rem 0.8rem 0.55rem 2rem; position: relative; background: var(--box); border: 1px solid var(--line); border-radius: 10px; font-size: 0.86rem; margin: 0; }
+    .post-body .ck li::before { content: ''; position: absolute; left: 0.75rem; top: 0.85rem; width: 0.7rem; height: 0.7rem; border: 2px solid #86efac; border-radius: 3px; background: none; }
+    .traits { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.4rem; margin-top: 1rem; }
+    .traits div { padding: 0.6rem 0.8rem; font-size: 0.85rem; color: #cbd5e1; } .traits b { display: block; color: var(--ink); font-size: 0.88rem; }
+    .updated { color: var(--dim); font-size: 0.85rem; margin-top: 2rem; }
+    .error { color: #f59e0b; }
+    @media (max-width: 760px) {
+      .sum, .lv, .two, .rm-body, .ms, .ck, .traits { grid-template-columns: minmax(0, 1fr); }
+      .lv-card { min-height: 0 !important; }
+      .cy { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .gantt-wrap { overflow-x: auto; } .gantt-wrap svg { min-width: 620px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="post-nav">
+    <a href="index.html" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      <span id="backText">回到首頁</span>
+    </a>
+    <button class="lang-toggle" id="langToggle" aria-label="Switch language">EN</button>
+  </nav>
+  <article class="post">
+    <header class="post-header">
+      <p class="eyebrow">IDP · Individual Development Plan</p>
+      <h1 id="title">個人發展計畫</h1>
+      <p class="goal" id="goal"></p>
+      <p class="tagline" id="tagline"></p>
+      <div class="sum" id="sum"></div>
+    </header>
+    <div class="post-body" id="idp"><p>Loading...</p></div>
+  </article>
+  <script src="assets/js/common.js?v=20261120b"></script>
+  <script>
+    const { esc, dataPath, getJSON } = Site;
+    const I18N = {
+      en: { title: 'Individual Development Plan', back: 'Back to the homepage', toggle: '中文',
+        milestone: 'Milestone', q1: 'Where I am going', h1: 'Three levels of growth',
+        q2: 'Where I am now', h2: 'Eight competencies: now vs three-year target', now: 'Now', target: 'Three-year target', comp: 'Competency', ev: 'Evidence',
+        q3: 'What to build first', h3: 'Priority quadrant', xAxis: 'Importance to the goal →', yAxis: 'Gap to target →',
+        q4: 'How I will get there', h4: 'Three-year roadmap', months: 'Month', steps: 'Steps', focus: 'Build', use: 'Use my strengths', plan: 'Plan', out: 'Deliverables',
+        q5: 'Steps I have walked', h5: 'The AI value cycle', loop: '↺ Results feed the next problem',
+        q6: 'How I will know', h6: 'Measures and yearly checklist', check: 'Yearly minimum',
+        h7: 'How I work', updated: 'Last updated', level: 'Level', loadError: 'Content failed to load. A network filter may block this site.' },
+      zh: { title: '個人發展計畫', back: '回到首頁', toggle: 'EN',
+        milestone: '里程碑', q1: '我要去哪裡', h1: '三個成長層級',
+        q2: '我現在在哪裡', h2: '八項職能：目前與三年目標', now: '目前', target: '三年目標', comp: '職能', ev: '證據',
+        q3: '先培養什麼', h3: '優先順序象限圖', xAxis: '對目標的重要性 →', yAxis: '與目標的差距 →',
+        q4: '怎麼走', h4: '三年發展路徑', months: '月', steps: '工作步驟', focus: '重點培養', use: '運用優勢', plan: '規劃方案', out: '產出',
+        q5: '我走過哪些步驟', h5: 'AI 價值循環', loop: '↺ 成效回饋到下一個問題',
+        q6: '怎麼知道做到了', h6: '衡量方式與年度檢核', check: '每年至少完成',
+        h7: '我的工作方式', updated: '最後更新', level: '第 {n} 層', loadError: '內容載入失敗。可能是網路過濾設備封鎖了本站。' },
+    };
+    const T = k => I18N[Site.getLang()][k];
+    const chips = l => (l || []).length ? `<div class="chips">${l.map(([t, h]) => `<a href="${esc(h)}">${esc(t)} →</a>`).join('')}</div>` : '';
+    const ul = l => `<ul>${l.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
+    const head = (q, h) => `<p class="q">${esc(q)}</p><h2 style="margin-top:0.2rem">${esc(h)}</h2>`;
+
+    // Three-year blueprint: three phase columns (tasks and milestone), then current abilities, upgrade axes and the goal.
+    function blueprint(b) {
+      const cols = b.phases.map((p, i) => `<div class="bp-col"><div><span class="bp-no">${i + 1}</span><span class="bp-when">${esc(p.when)}</span></div>
+        <h3>${esc(p.name)}</h3><p class="bp-line">${esc(p.line)}</p>
+        ${p.tasks.map((t, j) => `<div class="bp-task"><b><i>${j + 1}</i>${esc(t.t)}</b><p>${esc(t.d)}</p></div>`).join('')}
+        <div class="bp-ms"><span>${esc(T('milestone'))}</span><p>${esc(p.milestone)}</p></div></div>`).join('');
+      return `<section class="bp"><h2 class="bp-h">${esc(b.title)}</h2><p class="bp-sub">${esc(b.sub)}</p><div class="bp-cols">${cols}</div>
+        <div class="bp-foot">
+          <div class="bp-box"><span class="bp-k">${esc(b.have_title)}</span><div class="bp-have">${b.have.map(h => `<div><b>${esc(h.k)}</b><span>${esc(h.v)}</span></div>`).join('')}</div></div>
+          <div class="bp-box"><span class="bp-k">${esc(b.axes_title)}</span><div class="bp-axes">${b.axes.map((a, i) => `<div><i>${i + 1}</i>${esc(a)}</div>`).join('')}</div></div>
+          <div class="bp-box bp-goal"><span class="bp-k">${esc(b.goal_title)}</span><p>${esc(b.goal)}</p></div>
+        </div><p class="bp-tag">${esc(b.tag)}</p></section>`;
+    }
+
+    // Radar: eight axes 0..4; "now" solid green, "target" dashed violet.
+    function radar(d) {
+      const C = d.competencies, n = C.length, cx = 210, cy = 200, R = 140, max = 4;
+      const pt = (i, v) => { const a = -Math.PI / 2 + i * 2 * Math.PI / n; return [cx + Math.cos(a) * R * v / max, cy + Math.sin(a) * R * v / max]; };
+      const poly = key => C.map((c, i) => pt(i, c[key]).map(x => x.toFixed(1)).join(',')).join(' ');
+      let g = '';
+      for (let r = 1; r <= max; r++) g += `<polygon points="${C.map((_, i) => pt(i, r).join(',')).join(' ')}" fill="none" stroke="#1e293b" stroke-width="1"/>`;
+      C.forEach((c, i) => { const [x, y] = pt(i, max); g += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#1e293b"/>`; });
+      g += `<polygon points="${poly('target')}" fill="none" stroke="var(--tgt)" stroke-width="2" stroke-dasharray="5 4"/>`;
+      g += `<polygon points="${poly('now')}" fill="rgba(22,163,74,0.18)" stroke="var(--now)" stroke-width="2"/>`;
+      C.forEach((c, i) => { const [x, y] = pt(i, c.now); g += `<circle cx="${x}" cy="${y}" r="4.5" fill="var(--now)" stroke="#111a2e" stroke-width="2"><title>${esc(c.name)}: ${c.now} → ${c.target}</title></circle>`; });
+      C.forEach((c, i) => { const [x, y] = pt(i, max + 0.55); const anchor = Math.abs(x - cx) < 8 ? 'middle' : x > cx ? 'start' : 'end';
+        g += `<text x="${x}" y="${y + 4}" text-anchor="${anchor}" font-size="14" fill="#cbd5e1">${esc(c.name)}</text>`; });
+      [1, 2, 3, 4].forEach(r => g += `<text x="${cx + 3}" y="${cy - R * r / max - 2}" font-size="9.5" fill="#64748b">${r}</text>`);
+      return `<svg viewBox="-60 -10 540 420" role="img" aria-label="${esc(T('h2'))}">${g}</svg>`;
+    }
+    // Quadrant (2x2 matrix): x = importance to the goal (high >= 3.5), y = gap to target (large >= 2).
+    function quadrant(d) {
+      const cell = (pri, big) => d.competencies.filter(c => (c.importance >= 3.5) === pri && (c.target - c.now >= 2) === big);
+      const chip = c => `<span class="qc"><b>${esc(c.name)}</b><em>${c.now} → ${c.target}</em></span>`;
+      const box = (cls, title, list) => `<div class="qd ${cls}"><span class="qd-t">${esc(title)}</span><div>${list.map(chip).join('') || '<span class="qd-e">—</span>'}</div></div>`;
+      const Q = d.quadrants;
+      return `<div class="quad"><div class="qy">${esc(T('yAxis'))}</div>
+        <div class="qg">${box('tl', Q.tl, cell(false, true))}${box('tr', Q.tr, cell(true, true))}${box('bl', Q.bl, cell(false, false))}${box('br', Q.br, cell(true, false))}</div>
+        <div class="qx">${esc(T('xAxis'))}</div></div>`;
+    }
+    // Gantt: 0..36 months; level band, five phases, milestones.
+    function gantt(d) {
+      const W = 760, L = 150, Rr = 16, rowH = 30, top = 30, pw = W - L - Rr, X = m => L + m / 36 * pw;
+      const rows = d.roadmap.length, H = top + (rows + 1) * rowH + 40;
+      let g = '';
+      for (let m = 0; m <= 36; m += 6) g += `<line x1="${X(m)}" y1="${top - 6}" x2="${X(m)}" y2="${H - 34}" stroke="#1e293b"/><text x="${X(m)}" y="${top - 12}" text-anchor="middle" font-size="10.5" fill="#64748b">${m}</text>`;
+      g += `<text x="${L - 10}" y="${top - 12}" text-anchor="end" font-size="10.5" fill="#64748b">${esc(T('months'))}</text>`;
+      const ly = top + 4;
+      g += `<rect x="${X(0)}" y="${ly}" width="${X(12) - X(0) - 2}" height="18" rx="4" fill="#1e3a8a"/><text x="${X(6)}" y="${ly + 13}" text-anchor="middle" font-size="11" fill="#bfdbfe">${esc(d.levels[1].name)}</text>`;
+      g += `<rect x="${X(12)}" y="${ly}" width="${X(36) - X(12)}" height="18" rx="4" fill="#3b0764"/><text x="${X(24)}" y="${ly + 13}" text-anchor="middle" font-size="11" fill="#e9d5ff">${esc(d.levels[2].name)}</text>`;
+      d.roadmap.forEach((r, i) => {
+        const y = top + (i + 1) * rowH + 4;
+        g += `<text x="${L - 10}" y="${y + 13}" text-anchor="end" font-size="11.5" fill="#cbd5e1">${esc(r.when)}</text>`;
+        g += `<rect x="${X(r.start)}" y="${y}" width="${Math.max(X(r.end) - X(r.start) - 2, 6)}" height="18" rx="4" fill="#2563eb"><title>${esc(r.title)}</title></rect>`;
+        const tx = X(r.end) + 6, fits = X(r.end) + 6 + r.title.length * 11 < W;
+        g += `<text x="${fits ? tx : X(r.start) - 6}" y="${y + 13}" text-anchor="${fits ? 'start' : 'end'}" font-size="11" fill="#e2e8f0">${esc(r.title)}</text>`;
+      });
+      const my = H - 26;
+      d.milestones.forEach((m, i) => {
+        const x = X(m.m);
+        g += `<path d="M${x} ${my - 7} L${x + 7} ${my} L${x} ${my + 7} L${x - 7} ${my} Z" fill="#f59e0b"/>`;
+        g += `<text x="${Math.min(Math.max(x, L + 20), W - 30)}" y="${my + 21}" text-anchor="middle" font-size="10.5" fill="#fde68a">${esc(m.label)}</text>`;
+      });
+      return `<div class="gantt-wrap"><svg viewBox="0 0 ${W} ${H + 8}" role="img" aria-label="${esc(T('h4'))}">${g}</svg></div>`;
+    }
+
+    function render() {
+      document.documentElement.lang = Site.getLang() === 'en' ? 'en' : 'zh-Hant';
+      document.title = `${T('title')} IDP | Alex Li (李翔緯)`;
+      ['title'].forEach(id => document.getElementById(id).textContent = T(id));
+      document.getElementById('backText').textContent = T('back');
+      document.getElementById('langToggle').textContent = T('toggle');
+      getJSON(dataPath('idp.json')).then(d => {
+        document.getElementById('goal').textContent = d.goal;
+        document.getElementById('tagline').textContent = d.tagline;
+        document.getElementById('sum').innerHTML = d.summary.map(s => `<div class="box"><b>${esc(s.value)}</b><span>${esc(s.label)}</span></div>`).join('');
+        const lvl = d.levels.map(l => `<div class="box lv-card l${l.n}"><span class="lv-n">${esc(T('level').replace('{n}', l.n))}</span><h3>${esc(l.name)}</h3><p>${esc(l.does)}</p>
+          <span class="pill ${l.state}">${esc(l.when)}</span>${chips(l.proof)}</div>`).join('');
+        const rows = d.competencies.map(c => `<tr><td>${esc(c.name)}</td><td class="num">${c.now}${c.target > c.now ? ` <span class="up">→ ${c.target}</span>` : ''}</td><td>${chips(c.evidence)}</td></tr>`).join('');
+        const scale = d.scale.map((s, i) => `${i + 1}＝${esc(s)}`).join('　');
+        const rm = d.roadmap.map(r => `<div class="box rm-card">
+          <div class="rm-top"><span class="rm-when">${esc(r.when)}</span><h3>${esc(r.title)}</h3><span class="rm-lv">${esc(d.levels[r.level - 1].name)}</span></div>
+          <div class="rm-steps">${r.steps.map(x => `<span>${esc(x)}</span>`).join('')}</div>
+          <div class="rm-body">
+            <div class="rm-focus"><span class="rm-k k-focus">${esc(T('focus'))}</span>${r.focus.map(x => `<b>${esc(x)}</b>`).join('')}
+              <span class="rm-k k-use">${esc(T('use'))}</span>${r.use.map(x => `<em>${esc(x)}</em>`).join('')}</div>
+            <div><span class="rm-k k-plan">${esc(T('plan'))}</span>${ul(r.plan)}</div>
+            <div><span class="rm-k k-out">${esc(T('out'))}</span>${ul(r.output)}</div>
+          </div></div>`).join('');
+        const cy = d.cycle.map((c, i) => `<div class="box cy-step ${c.gate ? 'gate' : ''}"><span class="cy-i">${c.gate ? '◆' : String(i < 5 ? i + 1 : i).padStart(2, '0')}</span>
+          <b>${esc(c.name)}</b><span class="pill ${c.state}">${esc(d.states[c.state])}</span>${c.proof ? chips([c.proof]) : ''}</div>`).join('');
+        document.getElementById('idp').innerHTML = `
+          ${d.blueprint ? blueprint(d.blueprint) : ''}
+          ${head('1 · ' + T('q1'), T('h1'))}<div class="lv">${lvl}</div>
+          ${head('2 · ' + T('q2'), T('h2'))}
+          <div class="two"><div class="box chart">${radar(d)}<div class="legend"><span><i style="border-color:var(--now)"></i>${esc(T('now'))}</span><span><i style="border-color:var(--tgt);border-top-style:dashed"></i>${esc(T('target'))}</span></div></div>
+            <div><table class="tbl"><thead><tr><th>${esc(T('comp'))}</th><th>${esc(T('now'))} → ${esc(T('target'))}</th><th>${esc(T('ev'))}</th></tr></thead><tbody>${rows}</tbody></table>
+            <p class="note">${scale}</p></div></div>
+          ${head('3 · ' + T('q3'), T('h3'))}<div class="box chart">${quadrant(d)}</div><p class="note">${esc(d.selfNote)}</p>
+          ${head('4 · ' + T('q4'), T('h4'))}<div class="box chart">${gantt(d)}</div><div class="rm">${rm}</div>
+          ${head('5 · ' + T('q5'), T('h5'))}<div class="cy">${cy}</div><p class="loop">${esc(T('loop'))}</p>
+          ${head('6 · ' + T('q6'), T('h6'))}<div class="ms">${d.measures.map(m => `<div class="box"><b>${esc(m.name)}</b><span>${esc(m.what)}</span></div>`).join('')}</div>
+          <p class="rm-k k-out">${esc(T('check'))}</p><ul class="ck">${d.checklist.map(x => `<li>${esc(x)}</li>`).join('')}</ul><p class="lead2">${esc(d.review)}</p>
+          <h2>${esc(T('h7'))}</h2><div class="traits">${d.traits.map(([a, b]) => `<div class="box"><b>${esc(a)}</b>${esc(b)}</div>`).join('')}</div>
+          <p class="updated">${esc(T('updated'))}：${esc(d.updated)}</p>`;
+      }).catch(e => { console.error(e); document.getElementById('idp').innerHTML = `<p class="error">${esc(T('loadError'))}</p>`; });
+    }
+    document.getElementById('langToggle').addEventListener('click', () => { Site.toggleLang(); render(); });
+    render();
+  </script>
+</body>
+</html>

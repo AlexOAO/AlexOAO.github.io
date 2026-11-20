@@ -1,0 +1,584 @@
+{
+ "blueprint": {
+  "title": "三年發展藍圖",
+  "sub": "從「和業務一起證明價值」，到「對 AI 的成效與投資負責」",
+  "phases": [
+   {
+    "when": "0–12 個月",
+    "name": "價值共創",
+    "line": "用證據說服組織投資",
+    "tasks": [
+     {
+      "t": "找到值得改的旅程",
+      "d": "選定一個 AI Agent 場景，確認業務負責人、基準與目標，畫出現況與未來的旅程，寫出效益論證"
+     },
+     {
+      "t": "試行並走過投資關卡",
+      "d": "在真實流程跑 8–12 週試行，整理證據與能力缺口，寫出投資建議書，帶業務、IT 與資安做出決策"
+     }
+    ],
+    "milestone": "至少 1 個場景有可量化的試行成效；完成第一份投資建議書"
+   },
+   {
+    "when": "13–24 個月",
+    "name": "能力建置",
+    "line": "把投資變成能力與成效",
+    "tasks": [
+     {
+      "t": "和 IT 一起建能力",
+      "d": "排出資料、API 與系統的建置路線，讓 AI Agent 從輔助走到可控的自動執行"
+     },
+     {
+      "t": "追蹤成效",
+      "d": "每月檢視採用、成本與效益，用實現率決定加碼或調整"
+     }
+    ],
+    "milestone": "1 條客戶旅程完成改造；連續 2 期效益追蹤達標"
+   },
+   {
+    "when": "25–36 個月",
+    "name": "價值負責",
+    "line": "對價值流與投資組合負責",
+    "tasks": [
+     {
+      "t": "管理投資組合",
+      "d": "對一條價值流與它的投資組合負責，主持每季的投資組合檢視"
+     },
+     {
+      "t": "讓方法可以複製",
+      "d": "把案例與方法整理成團隊可重用的手冊，帶領新進同仁"
+     }
+    ],
+    "milestone": "主責 1 套可重用的 AI 方法或模組；成為價值負責人"
+   }
+  ],
+  "have_title": "既有能力",
+  "have": [
+   {
+    "k": "金融／研究",
+    "v": "財務金融碩士、量化研究、論文實證"
+   },
+   {
+    "k": "資料／開發",
+    "v": "Python、SQL、PostgreSQL、FastAPI、React"
+   },
+   {
+    "k": "AI／Agent",
+    "v": "RAG、Multi-Agent、MCP、VLM、LLM 評測"
+   },
+   {
+    "k": "治理／成本",
+    "v": "上線前檢核、護欄測試、成本效益框架"
+   }
+  ],
+  "axes_title": "能力升級主軸",
+  "axes": [
+   "流程設計",
+   "效益論證",
+   "跨部門協作",
+   "規模化與治理"
+  ],
+  "goal_title": "3 年目標",
+  "goal": "把業務問題變成「有證據、可投資、可規模化」的 AI 方案，並對成效負責。",
+  "tag": "金融 × AI × 價值 × 協作｜從找問題到規模化"
+ },
+ "updated": "2026/11",
+ "goal": "三年內，從「把流程轉成 AI 方案」，走到「對 AI 的成效與投資負責」。",
+ "tagline": "先用 AI 改變工作方式，再用證據說服組織投資。",
+ "summary": [
+  {
+   "value": "第二層 → 第三層",
+   "label": "現在 → 三年目標"
+  },
+  {
+   "value": "3 項",
+   "label": "優先培養的職能"
+  },
+  {
+   "value": "第 9 個月",
+   "label": "第一份投資建議書"
+  }
+ ],
+ "scale": [
+  "了解",
+  "能獨立執行",
+  "能帶領他人",
+  "能定義方法、推動組織"
+ ],
+ "levels": [
+  {
+   "n": 1,
+   "name": "方案設計者",
+   "does": "把流程轉成可執行的 AI 方案",
+   "when": "已具備",
+   "state": "done",
+   "proof": [
+    [
+     "四大 Agent 原型",
+     "project.html?id=agent-cost-roi"
+    ],
+    [
+     "RAG 智能客服",
+     "project.html?id=rag-support-bot"
+    ]
+   ]
+  },
+  {
+   "n": 2,
+   "name": "價值共創者",
+   "does": "和業務單位一起證明 AI 的價值",
+   "when": "現在｜0–12 個月",
+   "state": "now",
+   "proof": [
+    [
+     "成本效益框架",
+     "project.html?id=agent-cost-roi"
+    ],
+    [
+     "Guardrails PoC",
+     "project.html?id=guardrails-poc"
+    ]
+   ]
+  },
+  {
+   "n": 3,
+   "name": "價值負責人",
+   "does": "對 AI 的成效與投資組合負責",
+   "when": "目標｜12–36 個月",
+   "state": "next",
+   "proof": []
+  }
+ ],
+ "competencies": [
+  {
+   "key": "biz",
+   "name": "業務與金融",
+   "now": 3,
+   "target": 3,
+   "importance": 3.0,
+   "evidence": [
+    [
+     "碩士論文",
+     "project.html?id=thesis-rag-panel"
+    ],
+    [
+     "Vibe-Edge",
+     "project.html?id=vibe-edge"
+    ]
+   ]
+  },
+  {
+   "key": "flow",
+   "name": "流程設計",
+   "now": 2,
+   "target": 4,
+   "importance": 4.6,
+   "evidence": [
+    [
+     "四大 Agent 客戶旅程",
+     "project.html?id=agent-cost-roi"
+    ]
+   ]
+  },
+  {
+   "key": "data",
+   "name": "資料分析",
+   "now": 3,
+   "target": 3,
+   "importance": 2.4,
+   "evidence": [
+    [
+     "FinCLI",
+     "project.html?id=fincli"
+    ],
+    [
+     "法說會事件研究",
+     "project.html?id=openstrategy"
+    ]
+   ]
+  },
+  {
+   "key": "ai",
+   "name": "AI 技術",
+   "now": 3,
+   "target": 3,
+   "importance": 3.2,
+   "evidence": [
+    [
+     "FinLLM 評測",
+     "project.html?id=finllm"
+    ],
+    [
+     "RAG 智能客服",
+     "project.html?id=rag-support-bot"
+    ]
+   ]
+  },
+  {
+   "key": "agent",
+   "name": "AI Agent 方案",
+   "now": 3,
+   "target": 4,
+   "importance": 4.0,
+   "evidence": [
+    [
+     "智富管家原型",
+     "project.html?id=agent-wealth-assistant"
+    ],
+    [
+     "FinJourney",
+     "project.html?id=finjourney"
+    ]
+   ]
+  },
+  {
+   "key": "case",
+   "name": "效益論證",
+   "now": 2,
+   "target": 4,
+   "importance": 5.0,
+   "evidence": [
+    [
+     "成本效益框架",
+     "project.html?id=agent-cost-roi"
+    ]
+   ]
+  },
+  {
+   "key": "gov",
+   "name": "治理與風險",
+   "now": 3,
+   "target": 4,
+   "importance": 4.3,
+   "evidence": [
+    [
+     "上線前檢核機制",
+     "project.html?id=agent-governance"
+    ],
+    [
+     "Guardrails PoC",
+     "project.html?id=guardrails-poc"
+    ]
+   ]
+  },
+  {
+   "key": "team",
+   "name": "跨部門協作",
+   "now": 2,
+   "target": 4,
+   "importance": 4.8,
+   "evidence": [
+    [
+     "平台選型評測",
+     "project.html?id=agentic-platform-eval"
+    ]
+   ]
+  }
+ ],
+ "quadrants": {
+  "tr": "優先培養",
+  "br": "保持並深化",
+  "tl": "之後補強",
+  "bl": "維持優勢"
+ },
+ "roadmap": [
+  {
+   "start": 0,
+   "end": 3,
+   "when": "0–3 個月",
+   "title": "找到值得改的旅程",
+   "level": 2,
+   "steps": [
+    "找問題",
+    "對旅程"
+   ],
+   "focus": [
+    "流程設計",
+    "效益論證"
+   ],
+   "use": [
+    "業務與金融"
+   ],
+   "plan": [
+    "選定一個 AI Agent 場景，確認業務負責人",
+    "補齊現況基準與目標值",
+    "畫出現況與未來的旅程，寫出效益假設"
+   ],
+   "output": [
+    "目標與 KPI 樹",
+    "旅程地圖",
+    "效益論證初稿"
+   ]
+  },
+  {
+   "start": 3,
+   "end": 6,
+   "when": "3–6 個月",
+   "title": "用小規模試行拿到證據",
+   "level": 2,
+   "steps": [
+    "盤點可重用",
+    "小規模試行",
+    "整理證據"
+   ],
+   "focus": [
+    "跨部門協作",
+    "流程設計"
+   ],
+   "use": [
+    "資料分析",
+    "AI 技術"
+   ],
+   "plan": [
+    "盤點可重用的平台、資料與 API",
+    "在真實流程跑 8–12 週的試行，每兩週檢視一次",
+    "追蹤處理時間、產能與採用率"
+   ],
+   "output": [
+    "重用清單",
+    "試行計畫",
+    "證據包與能力缺口清單"
+   ]
+  },
+  {
+   "start": 6,
+   "end": 12,
+   "when": "6–12 個月",
+   "title": "第一次投資關卡",
+   "level": 2,
+   "steps": [
+    "投資關卡"
+   ],
+   "focus": [
+    "效益論證",
+    "跨部門協作"
+   ],
+   "use": [
+    "治理與風險"
+   ],
+   "plan": [
+    "寫出投資建議書：成果、證據、缺口、需要的投資與回收",
+    "把治理控制納入關卡的門檻",
+    "帶業務、IT 與資安做出停止、暫緩、投資或擴大的決策"
+   ],
+   "output": [
+    "投資建議書",
+    "關卡決策紀錄"
+   ]
+  },
+  {
+   "start": 12,
+   "end": 24,
+   "when": "1–2 年",
+   "title": "把投資變成能力與成效",
+   "level": 3,
+   "steps": [
+    "建能力",
+    "追成效"
+   ],
+   "focus": [
+    "跨部門協作",
+    "效益論證"
+   ],
+   "use": [
+    "AI Agent 方案"
+   ],
+   "plan": [
+    "和 IT 排出資料、API 與系統的建置路線",
+    "讓 AI Agent 從輔助走到可控的自動執行",
+    "每月檢視採用、成本與效益，連續兩期追蹤"
+   ],
+   "output": [
+    "能力建置路線",
+    "成效儀表板",
+    "效益追蹤報告"
+   ]
+  },
+  {
+   "start": 24,
+   "end": 36,
+   "when": "2–3 年",
+   "title": "成為價值負責人",
+   "level": 3,
+   "steps": [
+    "投資組合管理"
+   ],
+   "focus": [
+    "效益論證",
+    "跨部門協作"
+   ],
+   "use": [
+    "業務與金融",
+    "治理與風險"
+   ],
+   "plan": [
+    "對一條價值流與它的投資組合負責",
+    "主持每季的投資組合檢視",
+    "把案例與方法整理成團隊可重用的手冊"
+   ],
+   "output": [
+    "年度能力地圖",
+    "方法手冊與案例庫"
+   ]
+  }
+ ],
+ "milestones": [
+  {
+   "m": 3,
+   "label": "旅程地圖"
+  },
+  {
+   "m": 6,
+   "label": "證據包"
+  },
+  {
+   "m": 9,
+   "label": "投資建議書"
+  },
+  {
+   "m": 24,
+   "label": "兩期效益追蹤"
+  },
+  {
+   "m": 36,
+   "label": "價值負責人"
+  }
+ ],
+ "cycle": [
+  {
+   "name": "找問題",
+   "state": "done",
+   "proof": [
+    "四大 Agent",
+    "project.html?id=agent-cost-roi"
+   ]
+  },
+  {
+   "name": "對旅程",
+   "state": "done",
+   "proof": [
+    "客戶旅程",
+    "project.html?id=agent-cost-roi"
+   ]
+  },
+  {
+   "name": "盤點可重用",
+   "state": "done",
+   "proof": [
+    "平台選型",
+    "project.html?id=agentic-platform-eval"
+   ]
+  },
+  {
+   "name": "小規模試行",
+   "state": "done",
+   "proof": [
+    "Guardrails PoC",
+    "project.html?id=guardrails-poc"
+   ]
+  },
+  {
+   "name": "整理證據",
+   "state": "now",
+   "proof": [
+    "Guardrails 評估",
+    "project.html?id=guardrails-poc"
+   ]
+  },
+  {
+   "name": "投資關卡",
+   "state": "gap",
+   "gate": true,
+   "proof": null
+  },
+  {
+   "name": "建能力",
+   "state": "done",
+   "proof": [
+    "FinJourney",
+    "project.html?id=finjourney"
+   ]
+  },
+  {
+   "name": "追成效",
+   "state": "now",
+   "proof": [
+    "AI 營運成效",
+    "project.html?id=ai-ops-dashboard"
+   ]
+  }
+ ],
+ "states": {
+  "done": "已具備",
+  "now": "進行中",
+  "gap": "尚未"
+ },
+ "measures": [
+  {
+   "name": "業務價值",
+   "what": "KPI 達成、效益金額"
+  },
+  {
+   "name": "試行成效",
+   "what": "試行成功率、採用率、證據品質"
+  },
+  {
+   "name": "投資影響",
+   "what": "投資建議書被採納"
+  },
+  {
+   "name": "能力重用",
+   "what": "重用比率、元件落地"
+  },
+  {
+   "name": "AI 治理",
+   "what": "評估時效、控制覆蓋、零重大事件"
+  },
+  {
+   "name": "知識傳承",
+   "what": "手冊、案例、可重用資產"
+  }
+ ],
+ "checklist": [
+  "1 條正在改造的客戶旅程",
+  "1 份證據包",
+  "1 份投資建議書或擴大計畫",
+  "連續 2 期效益追蹤"
+ ],
+ "review": "每月檢視成效，每季檢視投資，每年更新這份計畫。",
+ "traits": [
+  [
+   "對業務好奇",
+   "主動理解業務，不等需求"
+  ],
+  [
+   "拆解問題",
+   "把模糊問題拆成可驗證的問題"
+  ],
+  [
+   "對技術好奇",
+   "主動探索新的 AI 能力"
+  ],
+  [
+   "用證據說話",
+   "用資料，而不是感覺"
+  ],
+  [
+   "跨部門合作",
+   "能和業務、IT、資料、資安一起工作"
+  ],
+  [
+   "為價值負責",
+   "上線不是終點"
+  ],
+  [
+   "挑戰現狀",
+   "敢問「為什麼一直這樣做」"
+  ],
+  [
+   "務實",
+   "知道什麼時候不該用 AI"
+  ]
+ ],
+ "selfNote": "職能程度、目標與重要性為自評。"
+}

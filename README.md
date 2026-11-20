@@ -160,6 +160,10 @@ Each stage box on the AI SDLC chart (and the governance band) opens `project.htm
 - The body is the story file `data/stories/stage-<key>.md`. Outline: 這個階段在做什麼 → 誰參與 (by role: AIBU, AIBA, SA, IT PM, TPM, Infra, PMO, 資安, 法遵／風控, 資料團隊) → 交接與檢核 → 我在這個階段做什麼.
 - The roles are described as common practice in financial AI projects, not as any bank's official split.
 
+### IDP page (`idp.html`, `data/idp.json`)
+
+The individual development plan, linked from the hero's IDP button: goal, strengths (each with links to project pages as evidence), abilities to build, a dated action plan (ability, action, when, how I will know) and the review cadence. Update `updated` when it changes; English is `data/en/idp.json`.
+
 ### Roles page (`roles.html`, `data/roles.json`)
 
 `roles.html` lists every role used in the role charts (the traditional vs AI post and the stage pages): name, one-line definition, full definition, and what the role does in traditional development, AI development and the outsourcing examples. Each entry has the id `role-<key>`.

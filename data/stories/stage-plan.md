@@ -67,7 +67,7 @@ AI 推不動，常常不是技術問題，而是推動方式。三個轉變：
 
 ## 我在這個階段做什麼
 
-我在這個階段的角色是 PM 兼 SA：
+部門成立初期，我一人兼任 PM、SA、BA 與技術架構分析師；在這個階段：
 
 - 替四個業務服務 Agent 建立原型，並設計共同的成本效益框架。見[四大 AI Agent](project.html?id=agent-cost-roi)。
 - 設計 Agent 上線前的檢核機制，讓風險分級對應到具體的檢查。見[AI 治理](project.html?id=agent-governance)。
