@@ -60,7 +60,7 @@
       },
       {
         "k": "Data / development",
-        "v": "Python, SQL, PostgreSQL, FastAPI, React"
+        "v": "Python、SQL、PostgreSQL、FastAPI、React"
       },
       {
         "k": "AI / agents",
@@ -110,7 +110,7 @@
       "n": 1,
       "name": "Solution designer",
       "does": "Turns processes into workable AI solutions",
-      "when": "In place",
+      "when": "Done",
       "state": "done",
       "proof": [
         [
@@ -317,7 +317,7 @@
       "title": "Get evidence from a small pilot",
       "level": 2,
       "steps": [
-        "Inventory what to reuse",
+        "Inventory reuse",
         "Pilot",
         "Gather evidence"
       ],
