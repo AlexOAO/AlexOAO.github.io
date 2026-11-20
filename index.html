@@ -830,27 +830,6 @@
     </div>
   </section>
 
-  <!-- Blog -->
-  <section id="blog">
-    <div class="section-container">
-      <div class="sec-head rv">
-        <p class="sec-idx">04 — Blog</p>
-        <h2 class="section-title" data-i18n="t04">Blog</h2>
-        <p class="section-subtitle" data-i18n="blogSub">Notes, learnings &amp; things I find interesting</p>
-      </div>
-      <div class="blog-nav">
-        <span class="blog-count" id="blogCount"></span>
-        <a class="blog-all" href="blog/" data-i18n="blogAll">All posts →</a>
-        <button class="blog-btn" id="blogPrev" aria-label="Previous posts"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-        <button class="blog-btn" id="blogNext" aria-label="Next posts"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
-      </div>
-      <div class="blog-slider">
-        <div class="blog-grid" id="blogGrid">
-          <div class="blog-empty">Loading...</div>
-        </div>
-      </div>
-    </div>
-  </section>
 
   </main>
 
@@ -870,7 +849,7 @@
     </div>
   </footer>
 
-  <script src="assets/js/common.js?v=20261120d"></script>
+  <script src="assets/js/common.js?v=20261120e"></script>
   <script>
     // ── Navbar scroll ──
     const navbar = document.getElementById('navbar');
@@ -1259,58 +1238,6 @@
       }).catch(() => {});
     }
 
-    // ── Blog: load from posts/posts.json ──
-    const blogGrid = document.getElementById('blogGrid');
-    // Slider: the arrows move one card width; swipe and trackpad scroll also work.
-    const blogPrev = document.getElementById('blogPrev'), blogNext = document.getElementById('blogNext');
-    const blogStep = () => { const c = blogGrid.querySelector('.blog-card'); return c ? c.offsetWidth + 24 : blogGrid.clientWidth; };
-    const blogNav = () => {
-      const max = blogGrid.scrollWidth - blogGrid.clientWidth - 2;
-      blogPrev.disabled = blogGrid.scrollLeft <= 2; blogNext.disabled = blogGrid.scrollLeft >= max;
-      blogGrid.parentElement.classList.toggle('at-end', blogGrid.scrollLeft >= max);
-    };
-    blogPrev.onclick = () => blogGrid.scrollBy({ left: -blogStep() });
-    blogNext.onclick = () => blogGrid.scrollBy({ left: blogStep() });
-    blogGrid.addEventListener('scroll', blogNav, { passive: true });
-    // Mouse drag to scroll (touch already swipes natively). A drag of more than 6px cancels the click.
-    let drag = null;
-    blogGrid.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && e.button === 0) drag = { x: e.clientX, left: blogGrid.scrollLeft, moved: false }; });
-    window.addEventListener('pointermove', e => {
-      if (!drag) return;
-      const dx = e.clientX - drag.x;
-      if (!drag.moved && Math.abs(dx) > 6) { drag.moved = true; blogGrid.classList.add('dragging'); }
-      if (drag.moved) blogGrid.scrollLeft = drag.left - dx;
-    });
-    window.addEventListener('pointerup', () => {
-      if (!drag) return;
-      const moved = drag.moved; drag = null;
-      if (moved) {
-        blogGrid.classList.remove('dragging');
-        const step = blogStep(); blogGrid.scrollTo({ left: Math.round(blogGrid.scrollLeft / step) * step, behavior: 'smooth' });
-      }
-    });
-    window.addEventListener('resize', blogNav);
-    const en = Site.getLang() === 'en';
-    // Each post gets cover art generated from its id: same post, same picture; no image files to maintain.
-    const cover = Site.blogCover;
-    getJSON('posts/posts.json').then(posts => {
-      if (!posts.length) { blogGrid.innerHTML = `<div class="blog-empty">${esc(T('soon'))}</div>`; return; }
-      posts.sort((a, b) => new Date(b.date) - new Date(a.date));
-      blogGrid.innerHTML = posts.map(p => `
-        <a href="${esc(p.file)}" class="blog-card spot-card">
-          <div class="blog-cover">${cover(p.id || p.file)}<span class="tag">${esc(p.tags[0] || '')}</span></div>
-          <div class="blog-date">${esc(p.date)}</div>
-          <h3>${esc(en && p.title_en ? p.title_en : p.title)}</h3>
-          <div class="summary">${esc(en && p.summary_en ? p.summary_en : p.summary)}</div>
-          <div class="blog-footer">
-            <div class="blog-tags">${p.tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>
-            <span class="read-more">${esc(T('read'))} ${arrowSvg}</span>
-          </div>
-        </a>
-      `).join('');
-      document.getElementById('blogCount').textContent = T('postCount').replace('{n}', posts.length);
-      blogNav();
-    }).catch(() => { blogGrid.innerHTML = `<div class="blog-empty">${esc(T('soon'))}</div>`; });
     }
 
     // Linked highlighting: hover (or keyboard-focus) a bar to light the stages it spans;
