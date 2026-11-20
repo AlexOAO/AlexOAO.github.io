@@ -15,7 +15,7 @@
     .post-nav { display: flex; justify-content: space-between; align-items: center; }
     .lang-toggle { font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--text);
       background: rgba(30,41,59,0.6); border: 1px solid var(--line); border-radius: 20px; padding: 0.35rem 0.9rem; cursor: pointer; }
-    .wrap { max-width: 1100px; margin: 0 auto; padding: 3rem 2rem 5rem; }
+    .wrap { max-width: 1340px; margin: 0 auto; padding: 3rem 2rem 5rem; }
     .eyebrow { font-family: var(--display); font-size: 0.8rem; letter-spacing: 0.12em; color: var(--accent-2); text-transform: uppercase; }
     h1 { font-family: var(--display); font-size: clamp(2.6rem, 6vw, 4rem); font-weight: 800; letter-spacing: -0.03em; margin: 0.4rem 0 0.5rem; }
     .sub { color: var(--muted); }
@@ -78,8 +78,31 @@
       transition: gap 0.3s;
     }
     .blog-card:hover .read-more { gap: 0.7rem; }
-    .blog-card .blog-tags { flex-wrap: wrap; }
+    .blog-card .blog-footer { align-items: flex-end; gap: 0.75rem; }
+    .blog-card .blog-tags { flex-wrap: wrap; flex: 1; min-width: 0; gap: 0.4rem; }
+    .blog-card .read-more { flex-shrink: 0; white-space: nowrap; padding-bottom: 0.2rem; }
     .empty { color: var(--dim); padding: 2rem 0; }
+    .layout { display: block; }
+    .side { display: none; }
+    @media (min-width: 1180px) {
+      .layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 2.5rem; align-items: start; margin-top: 2rem; }
+      .layout .filters { margin-top: 0; }
+      .side ol.tags { display: flex; flex-wrap: wrap; gap: 0.35rem; border-left: 0; }
+      .side ol.tags li button { width: auto; display: inline-flex; gap: 0.35rem; padding: 0.2rem 0.6rem; margin: 0; border: 1px solid var(--line); border-radius: 999px; font-size: 0.76rem; background: rgba(30,41,59,0.5); }
+      .side ol.tags li button[aria-pressed="true"] { background: rgba(139,92,246,0.2); border-color: rgba(167,139,250,0.6); }
+      .side { display: block; position: sticky; top: 90px; max-height: calc(100vh - 110px); overflow-y: auto; }
+      .filters .chip { display: none; }
+      .side h2 { font-family: var(--display); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); margin: 0 0 0.6rem; }
+      .side ol { list-style: none; padding: 0; margin: 0 0 1.8rem; border-left: 1px solid var(--line); }
+      .side li button, .side li a { display: flex; justify-content: space-between; gap: 0.5rem; width: 100%; text-align: left; background: none; border: 0; border-left: 2px solid transparent; margin-left: -1px;
+        padding: 0.32rem 0 0.32rem 0.85rem; font: inherit; font-size: 0.84rem; line-height: 1.4; color: var(--muted); cursor: pointer; text-decoration: none; }
+      .side li button:hover, .side li a:hover { color: var(--text); }
+      .side li button[aria-pressed="true"] { color: #ddd6fe; border-left-color: #a78bfa; }
+      .side li button span { font-family: var(--display); font-size: 0.72rem; color: var(--dim); }
+      .side li a { display: block; font-size: 0.8rem; }
+      .side li a small { display: block; font-family: var(--display); font-size: 0.68rem; color: var(--dim); }
+      .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
     @media (max-width: 960px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     @media (max-width: 620px) { .grid { grid-template-columns: minmax(0, 1fr); } .wrap { padding: 2rem 1.25rem 4rem; } }
   </style>
@@ -96,15 +119,18 @@
     <p class="eyebrow">Blog</p>
     <h1>Blog</h1>
     <p class="sub" id="sub"></p>
-    <div class="filters" id="filters"></div>
-    <div class="grid" id="grid"><p class="empty">Loading...</p></div>
+    <div class="layout">
+      <aside class="side" id="side" aria-label="Topics and posts"></aside>
+      <div><div class="filters" id="filters"></div>
+      <div class="grid" id="grid"><p class="empty">Loading...</p></div></div>
+    </div>
   </main>
   <script src="/assets/js/common.js?v=20261120e"></script>
   <script>
     const { esc, getJSON, blogCover, arrowSvg } = Site;
     const I18N = {
-      en: { back: 'Back to the homepage', toggle: '中文', sub: 'Notes on taking AI in finance from governance to production.', all: 'All', count: '{n} posts', read: 'Read', none: 'No posts with this tag.', err: 'Content failed to load.' },
-      zh: { back: '回到首頁', toggle: 'EN', sub: '金融業 AI 從治理到上線的筆記、學習心得與有趣的事。', all: '全部', count: '共 {n} 篇', read: '閱讀', none: '沒有這個標籤的文章。', err: '內容載入失敗。' },
+      en: { topics: 'Topics', posts: 'All posts', back: 'Back to the homepage', toggle: '中文', sub: 'Notes on taking AI in finance from governance to production.', all: 'All', count: '{n} posts', read: 'Read', none: 'No posts with this tag.', err: 'Content failed to load.' },
+      zh: { topics: '主題', posts: '全部文章', back: '回到首頁', toggle: 'EN', sub: '金融業 AI 從治理到上線的筆記、學習心得與有趣的事。', all: '全部', count: '共 {n} 篇', read: '閱讀', none: '沒有這個標籤的文章。', err: '內容載入失敗。' },
     };
     const T = k => I18N[Site.getLang()][k];
     let posts = [], tag = new URLSearchParams(location.search).get('tag') || '';
@@ -123,7 +149,11 @@
           <div class="blog-footer"><div class="blog-tags">${p.tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>
             <span class="read-more">${esc(T('read'))} ${arrowSvg}</span></div>
         </a>`).join('') : `<p class="empty">${esc(T('none'))}</p>`;
-      document.querySelectorAll('.chip').forEach(b => b.onclick = () => {
+      const n = t => posts.filter(p => p.tags.includes(t)).length;
+      document.getElementById('side').innerHTML = `<h2>${esc(T('topics'))}</h2><ol class="tags">${[['', T('all'), posts.length], ...tags.map(t => [t, t, n(t)])]
+          .map(([v, l, c]) => `<li><button class="chip-s" data-tag="${esc(v)}" aria-pressed="${v === tag}">${esc(l)}<span>${c}</span></button></li>`).join('')}</ol>
+        <h2>${esc(T('posts'))}</h2><ol>${posts.map(p => `<li><a href="/${esc(p.file)}">${esc(en && p.title_en ? p.title_en : p.title)}<small>${esc(p.date)}</small></a></li>`).join('')}</ol>`;
+      document.querySelectorAll('.chip, .chip-s').forEach(b => b.onclick = () => {
         tag = b.dataset.tag;
         history.replaceState(null, '', tag ? `?tag=${encodeURIComponent(tag)}` : location.pathname);
         draw();
