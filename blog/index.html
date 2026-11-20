@@ -80,7 +80,7 @@
     .blog-card:hover .read-more { gap: 0.7rem; }
     .blog-cover { height: auto; aspect-ratio: 16 / 10; margin-bottom: 1.3rem; }
     .blog-cover .tag { font-size: 0.75rem; }
-    .blog-card h3 { margin-bottom: 1.2rem; }
+    .blog-card .summary { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; flex-grow: 0; font-size: 0.88rem; margin-bottom: 1.1rem; }
     .blog-card .blog-footer { margin-top: auto; }
     .blog-card .blog-footer { align-items: flex-end; gap: 0.75rem; }
     .blog-card .blog-tags { flex-wrap: wrap; flex: 1; min-width: 0; gap: 0.4rem; }
@@ -151,6 +151,7 @@
           <div class="blog-cover">${blogCover(p.id || p.file)}<span class="tag">${esc(p.tags[0] || '')}</span></div>
           <div class="blog-date">${esc(p.date)}</div>
           <h3>${esc(en && p.title_en ? p.title_en : p.title)}</h3>
+          <div class="summary">${esc(en && p.summary_en ? p.summary_en : p.summary)}</div>
           <div class="blog-footer"><div class="blog-tags">${p.tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>
             <span class="read-more">${esc(T('read'))} ${arrowSvg}</span></div>
         </a>`).join('') : `<p class="empty">${esc(T('none'))}</p>`;
