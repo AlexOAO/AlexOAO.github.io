@@ -71,7 +71,30 @@ const Site = (() => {
     return `<span class="stage-pill" style="--c:${QUANT_COLOR[a]};--c2:${QUANT_COLOR[b]}">${esc(names[a])}${a !== b ? ` → ${esc(names[b])}` : ''}</span>`;
   }
 
+  const COVER_HUES = [['#3b82f6', '#22d3ee'], ['#8b5cf6', '#3b82f6'], ['#06b6d4', '#10b981'], ['#a78bfa', '#22d3ee'], ['#f59e0b', '#8b5cf6']];
+  // Blog cover art: a small generated picture per post (orbits, bars or lines), seeded by the post id.
+  function blogCover(id) {
+    let h = 2166136261;
+    for (const ch of id) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
+    const rnd = () => (h = Math.imul(h ^ (h >>> 15), 2246822507) >>> 0) / 4294967296;
+    const [c1, c2] = COVER_HUES[h % COVER_HUES.length], g = `g${id.replace(/\W/g, '')}`;
+    const kind = Math.floor(rnd() * 3);
+    let art = '';
+    if (kind === 0) {        // orbits
+      const cx = 220 + rnd() * 120, cy = 40 + rnd() * 50;
+      for (let i = 1; i <= 7; i++) art += `<circle cx="${cx}" cy="${cy}" r="${i * 22}" fill="none" stroke="url(#${g})" stroke-opacity="${0.9 - i * 0.11}" stroke-width="1"/>`;
+      art += `<circle cx="${cx}" cy="${cy}" r="5" fill="${c2}"/>`;
+    } else if (kind === 1) { // bars, like a small chart
+      for (let i = 0; i < 22; i++) { const bh = 14 + rnd() * 92; art += `<rect x="${20 + i * 18}" y="${132 - bh}" width="9" height="${bh}" rx="2" fill="url(#${g})" fill-opacity="${0.25 + rnd() * 0.6}"/>`; }
+    } else {                 // flowing lines
+      for (let i = 0; i < 9; i++) { const y = 20 + i * 12, a = 18 + rnd() * 30; art += `<path d="M-10 ${y} C 110 ${y - a}, 230 ${y + a}, 420 ${y - a / 2}" fill="none" stroke="url(#${g})" stroke-opacity="${0.25 + i * 0.08}" stroke-width="1.2"/>`; }
+    }
+    return `<svg viewBox="0 0 400 132" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="${g}" x1="0" x2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient>
+      <radialGradient id="${g}r" cx="0.8" cy="0" r="1"><stop offset="0" stop-color="${c1}" stop-opacity="0.35"/><stop offset="1" stop-color="${c1}" stop-opacity="0"/></radialGradient></defs>
+      <rect width="400" height="132" fill="url(#${g}r)"/>${art}</svg>`;
+  }
+
   const arrowSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
 
-  return { esc, getLang, toggleLang, dataPath, getJSON, STAGE_COLOR, STAGE_ORDER, stageNames, stageSpan, isGov, stagePills, visibleGroups, QUANT_ORDER, QUANT_COLOR, quantSpan, quantPill, arrowSvg };
+  return { esc, getLang, toggleLang, dataPath, getJSON, STAGE_COLOR, STAGE_ORDER, stageNames, stageSpan, isGov, stagePills, visibleGroups, QUANT_ORDER, QUANT_COLOR, quantSpan, quantPill, blogCover, arrowSvg };
 })();
