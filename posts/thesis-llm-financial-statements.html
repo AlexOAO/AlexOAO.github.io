@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="../assets/images/favicon.svg">
+  <title>讓 LLM 讀財報：股價報酬的解釋力從 5.14% 到 63.73% | Alex Li</title>
+  <meta name="description" content="Alex Li（李翔緯）的碩士論文：用 RAG-LLM 讀 592 家上市電子公司的財報、打出 6 個構面評分，加進固定效果縱橫資料模型後，within R² 從 5.14% 提高到 63.73%，並說明這個數字該怎麼解讀。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/post.css?v=20261120g">
+</head>
+<body>
+  <nav class="post-nav">
+    <a href="../blog/" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Blog
+    </a>
+  </nav>
+
+  <article class="post">
+    <header class="post-header">
+      <div class="post-meta">
+        <time>2026-11-16</time>
+        <div class="post-tags">
+          <span>LLM</span><span>RAG</span><span>Panel Data</span>
+        </div>
+      </div>
+      <h1>讓 LLM 讀財報：股價報酬的解釋力從 5.14% 到 63.73%</h1>
+    </header>
+
+    <div class="post-body">
+      <p>研究股價報酬時，大家最常用的是財務比率，例如獲利率、負債比。這些比率好算、好比較，但只能解釋股價報酬變化的一小部分。財報裡其實還有大量的文字和數字，沒有被比率抓到。我的碩士論文想回答一個問題：<strong>大型語言模型（LLM，能讀懂並產生文字的 AI 模型）能不能從財報中，萃取出比傳統比率更有解釋力的訊號？</strong></p>
+
+      <h2>一、資料：同一批公司，追蹤很多季</h2>
+      <p>研究對象是臺灣的電子產業。樣本是 592 家上市電子公司，期間 64 季，從 2009Q3 到 2025Q2，一共 37,888 筆「公司 × 季度」資料。</p>
+      <p>這種資料叫縱橫資料（Panel Data），意思是同一批公司、在很多個時間點各有一筆紀錄。它的好處是可以看「同一家公司隨時間怎麼變」，而不只是「不同公司之間有什麼差別」。</p>
+
+      <h2>二、方法：讓 AI 先查資料，再打分數</h2>
+      <p>我建了一套 RAG-LLM 系統。RAG（檢索增強生成）的意思是：AI 回答前，先去查指定的資料，再根據查到的內容作答，而不是只憑記憶。流程分三步：</p>
+      <ul>
+        <li><strong>查</strong>：AI 先查該公司該季的財報資料。</li>
+        <li><strong>讀</strong>：分析 101 個財務變數。</li>
+        <li><strong>評</strong>：給出 6 個構面的評分。</li>
+      </ul>
+      <p>接著我用固定效果模型來比較。固定效果的意思是：先把每家公司長期不變的特性扣掉，例如產業地位或經營風格，只看同一家公司跨時間的變化。我比較兩個模型：</p>
+      <ul>
+        <li><strong>基準模型</strong>：只用傳統財務變數。</li>
+        <li><strong>增強模型</strong>：傳統財務變數，再加上 6 個 LLM 評分。</li>
+      </ul>
+      <p>兩個模型用同一批資料、同一套設定，唯一的差別是有沒有那 6 個 LLM 評分。這樣一來，兩個模型的差距，就是 LLM 評分多帶來的解釋力，而不是樣本或設定不同造成的。</p>
+      <p>為什麼要用固定效果？因為公司之間本來就差很多。如果不先扣掉這些長期差異，模型很容易把「這家公司本來就比較好」誤當成「評分有用」。扣掉之後，留下來的才是評分真正多解釋到的部分。</p>
+
+      <h2>三、結果：解釋力明顯提高</h2>
+      <p>我用 within R² 衡量解釋力。它代表模型能解釋多少股價報酬的變化，數字越高，解釋力越強；「within」指的是同一家公司內部、跨時間的變化。</p>
+      <svg viewBox="0 0 640 170" role="img" aria-label="within R² 比較：基準模型 5.14%，加入 6 個 LLM 評分後 63.73%" style="width:100%;height:auto;display:block;margin:1.75rem 0 2rem;font-family:Inter,'Noto Sans TC',sans-serif;">
+        <rect x="0" y="0" width="640" height="170" rx="14" style="fill:rgba(30,41,59,.6);"/>
+        <line x1="170" y1="22" x2="170" y2="118" style="stroke:#475569;stroke-width:1;"/>
+        <line x1="610" y1="22" x2="610" y2="118" style="stroke:#334155;stroke-width:1;stroke-dasharray:3 4;"/>
+        <text x="160" y="56" text-anchor="end" style="fill:#e2e8f0;font-size:14px;">基準模型</text>
+        <rect x="170" y="40" width="22.6" height="24" rx="3" style="fill:#64748b;"/>
+        <text x="200" y="57" style="fill:#e2e8f0;font-size:14px;font-weight:600;">5.14%</text>
+        <text x="160" y="98" text-anchor="end" style="fill:#e2e8f0;font-size:14px;">加入 6 個 LLM 評分</text>
+        <rect x="170" y="82" width="280.4" height="24" rx="3" style="fill:#3b82f6;"/>
+        <text x="458" y="99" style="fill:#e2e8f0;font-size:14px;font-weight:600;">63.73%</text>
+        <text x="170" y="136" text-anchor="middle" style="fill:#94a3b8;font-size:12px;">0%</text>
+        <text x="610" y="136" text-anchor="middle" style="fill:#94a3b8;font-size:12px;">100%</text>
+        <text x="320" y="160" text-anchor="middle" style="fill:#94a3b8;font-size:12px;">within R²：模型能解釋多少股價報酬的變化</text>
+      </svg>
+      <ul>
+        <li><strong>within R² 從 5.14% 提高到 63.73%。</strong></li>
+        <li>6 個 LLM 構面評分，全部在 1% 水準下統計顯著。「顯著」的意思是：這個關係是純屬巧合的機率很低。</li>
+        <li>試行的信度評估中，ICC 是 0.759。</li>
+      </ul>
+      <p>換句話說，傳統財務變數只解釋到一小塊；加進 LLM 從財報讀出的評分後，模型能解釋的部分大幅增加。這支持我的假設：財報裡確實有比率沒抓到的訊號，而 LLM 能把它讀出來。</p>
+
+      <h2>四、這個數字該怎麼讀</h2>
+      <p>數字變大很吸引人，但我希望讀者把它放在正確的位置。以下是讀這類研究時的一般提醒，不是額外的發現：</p>
+      <ul>
+        <li><strong>解釋力不等於交易策略。</strong>模型能解釋股價報酬的變化，不代表照著它買賣就能賺錢。真正的策略還要考慮評分什麼時候拿得到、交易成本，以及事前能不能預測。</li>
+        <li><strong>LLM 的評分要先證明穩定。</strong>同一份財報讓 AI 再評一次，分數可能不一樣。所以我用 ICC（組內相關係數）做試行的信度評估。ICC 衡量評分穩不穩定、前後一不一致，越接近 1 越一致。</li>
+        <li><strong>樣本外還沒有驗證。</strong>結果來自臺灣上市電子公司這段期間。換一個產業、市場或時間，效果會不會一樣，需要另外檢驗。</li>
+      </ul>
+
+      <h2>學到的事</h2>
+      <p><strong>用 AI 產生的變數做研究，信度要和結果一起交代。</strong>LLM 的分數不是量出來的，是「讀」出來的。如果只報告解釋力，不交代分數穩不穩定，讀者無從判斷提升是訊號還是雜訊。這個原則我在工作中也照用：AI 的輸出，要先能重現，再談成效。</p>
+      <p>做法上，我會先回答三個問題：同樣的輸入，分數會不會一樣？分數和結果的關係，是不是扣掉其他因素後還在？換一批資料，關係還成不成立？前兩題這篇論文有交代，第三題還需要另外檢驗。</p>
+      <p>這篇論文在臺科大財務金融研究所完成，指導教授是周志隆教授與謝劍平教授。</p>
+
+      <h2>參考資料</h2>
+      <ul>
+        <li><a href="https://etheses.lib.ntust.edu.tw/detail/27b99ae63b98c427ee18434207d7cdc4/?seq=18">論文全文：結合檢索增強生成與縱橫資料模型之股價報酬預測：以臺灣電子產業為例（臺科大博碩士論文系統）</a></li>
+      </ul>
+
+      <p>專案的完整脈絡，請見<a href="../project.html?id=thesis-rag-panel">論文專案頁：結合檢索增強生成與縱橫資料模型之股價報酬預測</a>。</p>
+    </div>
+  </article>
+
+  <footer class="post-footer">
+    <a href="../blog/" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      All Posts
+    </a>
+  </footer>
+</body>
+</html>

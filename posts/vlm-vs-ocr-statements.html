@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="../assets/images/favicon.svg">
+  <title>掃描財報為什麼 OCR 不夠：視覺語言模型多看懂了什麼 | Alex Li</title>
+  <meta name="description" content="Alex Li（李翔緯）談掃描版財報的辨識：OCR 只把圖片轉成文字，視覺語言模型能同時看懂版面、表格和文字，讓每個數字對到正確的科目與期間。也整理什麼時候 OCR 就夠、什麼時候該用視覺語言模型，以及數字仍要怎麼檢查。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/post.css?v=20261120g">
+</head>
+<body>
+  <nav class="post-nav">
+    <a href="../blog/" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Blog
+    </a>
+  </nav>
+
+  <article class="post">
+    <header class="post-header">
+      <div class="post-meta">
+        <time>2026-11-17</time>
+        <div class="post-tags">
+          <span>VLM</span><span>OCR</span><span>Document AI</span>
+        </div>
+      </div>
+      <h1>掃描財報為什麼 OCR 不夠：視覺語言模型多看懂了什麼</h1>
+    </header>
+
+    <div class="post-body">
+      <p>TEJ 的財報資料來自上市櫃公司的財務報表。其中一部分是掃描檔，也就是一張張圖片，不是可以複製的文字。財報的重點在表格：同一個數字，放在「營業收入」和放在「營業成本」，意思完全不同；放在今年和放在去年，也完全不同。<strong>每個數字都要對到正確的科目和期間，資料才能用。</strong>這篇整理我在一個團隊專案裡看到的事：為什麼傳統 OCR 在這裡不夠，視覺語言模型又多看懂了什麼。</p>
+      <p>先說清楚背景。這是一個協作專案，我參與其中用 Gemini 做進階影像辨識的開發。現在上市櫃財報裡的掃描檔，改用雲端 Gemini 的視覺語言模型來辨識，已經上線使用。辨識成效的數字還沒有整理公開，所以這篇不談數字，只談觀念。</p>
+
+      <h2>一、OCR 做的事：把像素變成文字</h2>
+      <p>OCR（光學字元辨識，把圖片裡的字認出來、轉成文字）解決的是「這裡寫了什麼字」。它的強項是一個字一個字辨識，對乾淨的段落文字很有效。</p>
+      <p>問題出在表格。OCR 的輸出通常是一串文字，一行一行往下排。原本表格裡「哪個數字在哪一列、哪一欄」的關係，在這一步就散掉了。結果是：</p>
+      <ul>
+        <li>數字認對了，卻不知道它屬於哪個科目。</li>
+        <li>多期並列的欄位攪在一起，分不出哪個是本期、哪個是上期。</li>
+        <li>合併儲存格（一個標題橫跨好幾欄或好幾列）被拆開，標題和數字對不上。</li>
+      </ul>
+      <p>最後還是要有人回頭看原圖，把每個數字手動對到欄位。字認得再準，結構不見了，工作就沒有省下來。</p>
+
+      <h2>二、視覺語言模型多看懂的：版面、表格和文字一起讀</h2>
+      <p>視覺語言模型（VLM，同時能看圖、也能讀寫文字的 AI 模型）的做法不一樣。它不是只把字認出來，而是把整頁當成一張圖來理解：哪裡是表頭，哪裡是科目欄，哪幾欄是不同期間，哪個標題跨了好幾欄。</p>
+      <p>因為版面、表格和文字是一起看的，它可以直接讀出每個數字和它對應的欄位。這正是財報最需要的東西。下面這張圖是兩種做法的差別：</p>
+
+      <div class="flow">
+        <p class="flow-title">同一張掃描財報，兩種讀法</p>
+        <p class="flow-stage" style="--c:#94a3b8">傳統 OCR</p>
+        <div class="flow-row chain">
+          <div class="flow-box"><b>掃描圖片</b><span>財報頁面是圖，不是文字</span></div>
+          <div class="flow-link"><span>→</span></div>
+          <div class="flow-box"><b>一串文字</b><span>字認出來，表格結構散掉</span></div>
+          <div class="flow-link"><span>→</span></div>
+          <div class="flow-box"><b>人工對欄位</b><span>回頭看原圖，逐一對科目</span></div>
+        </div>
+        <p class="flow-stage" style="--c:#a78bfa">視覺語言模型</p>
+        <div class="flow-row chain">
+          <div class="flow-box"><b>掃描圖片</b><span>同一張財報頁面</span></div>
+          <div class="flow-link"><span>→</span></div>
+          <div class="flow-box ai"><b>看懂版面與表格</b><span>版面、表格、文字一起讀</span></div>
+          <div class="flow-link"><span>→</span></div>
+          <div class="flow-box"><b>數字對到科目與期間</b><span>直接輸出有結構的資料</span></div>
+          <div class="flow-link"><span>→</span></div>
+          <div class="flow-box gate"><b>規則檢查</b><span>數字仍要驗證</span></div>
+        </div>
+      </div>
+
+      <h2>三、什麼時候 OCR 就夠了</h2>
+      <p>視覺語言模型不是每個情境都需要。以下這些情況，OCR 通常就夠用，也更便宜、更好掌控：</p>
+      <ul>
+        <li>文件本身是乾淨的文字，例如段落式的說明或附註。</li>
+        <li>版面簡單，沒有複雜表格，只要把字找出來做搜尋或歸檔。</li>
+        <li>文件原本就是可複製文字的電子檔，根本不需要辨識圖片。</li>
+      </ul>
+
+      <h2>四、什麼時候視覺語言模型有幫助</h2>
+      <p>當「結構」比「字」更重要時，視覺語言模型的價值就出來了：</p>
+      <ul>
+        <li><strong>掃描的表格</strong>：圖片裡的格線、對齊方式，本身就帶著資訊。</li>
+        <li><strong>合併儲存格</strong>：一個標題涵蓋好幾欄，要看版面才知道它管哪些數字。</li>
+        <li><strong>多期並列的欄位</strong>：本期、上期並排，要靠表頭判斷每一欄是哪個期間。</li>
+      </ul>
+
+      <h2>五、讀得懂，不等於數字就對</h2>
+      <p>不管用哪一種方法，辨識出來的數字都還要檢查。模型可能把相近的數字看錯，也可能把數字放到隔壁的欄位。財務資料錯一個數字，下游的分析就跟著錯。一般常見的檢查方式有：</p>
+      <ul>
+        <li><strong>加總檢查</strong>：明細加起來要等於小計，小計加起來要等於合計。</li>
+        <li><strong>勾稽檢查</strong>：同一個科目在不同報表之間要對得起來，例如資產要等於負債加權益。</li>
+        <li><strong>交叉比對</strong>：和其他來源的同一筆資料比對，差異大的挑出來給人看。</li>
+      </ul>
+      <p>這些規則不靠模型，是寫死的檢查。模型負責讀，規則負責把關。</p>
+
+      <h2>學到的事</h2>
+      <p><strong>選文件辨識工具前，先問：這份文件的價值在「字」，還是在「字和字之間的關係」？</strong>如果是前者，OCR 就夠。如果是後者，像財報裡的科目、期間和數字，就需要一個能看懂版面的模型，再加上一層規則檢查。工具的選擇，跟著資料的結構走。</p>
+
+      <p>專案的背景與階段，請見<a href="../project.html?id=financial-statement-vlm">用 Gemini 視覺語言模型讀懂掃描財報</a>。</p>
+    </div>
+  </article>
+
+  <footer class="post-footer">
+    <a href="../blog/" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      All Posts
+    </a>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="../assets/images/favicon.svg">
+  <title>不讓回測騙自己：AI 寫策略，誰來當裁判 | Alex Li</title>
+  <meta name="description" content="Alex Li（李翔緯）整理 Vibe-Edge 台股量化研究平台的把關規則：AI 代理人寫策略，但不能當裁判；每一次嘗試都記帳，用洩漏哨兵、輪次制與時點資料防止回測騙人。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/post.css?v=20261120g">
+</head>
+<body>
+  <nav class="post-nav">
+    <a href="../blog/" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Blog
+    </a>
+  </nav>
+
+  <article class="post">
+    <header class="post-header">
+      <div class="post-meta">
+        <time>2026-11-19</time>
+        <div class="post-tags">
+          <span>Quant</span><span>Backtest</span><span>AI Agent</span>
+        </div>
+      </div>
+      <h1>不讓回測騙自己：AI 寫策略，誰來當裁判</h1>
+    </header>
+
+    <div class="post-body">
+      <p>我在 Vibe-Edge 裡讓 AI 代理人（能自己寫程式、自己跑實驗的 AI）幫我寫台股的研究策略。它想出策略變化版本的速度，比人快太多。快本身不是問題。問題是：試得越多，越容易「碰巧」找到一個回測很漂亮的策略。回測就是用歷史資料模擬一個策略過去會賺多少。漂亮的回測，最容易騙到的人是我自己。所以我定了兩條規則：<strong>代理人不能同時當裁判，每一次嘗試都要記帳。</strong></p>
+
+      <h2>一、回測最常騙人的三種錯</h2>
+      <p>平台要擋的是三種常見錯誤：</p>
+      <ul>
+        <li><strong>前視偏差</strong>：誤用了當時還看不到的資料。等於拿明天的報紙決定今天的買賣，回測當然好看。</li>
+        <li><strong>過擬合</strong>：策略只在過去的資料上有效。像背熟了考古題，換一份考卷就不會。</li>
+        <li><strong>多重檢定偏誤</strong>：試太多次，總有一次碰巧看起來很好。那一次不是本事，是運氣。</li>
+      </ul>
+      <p>AI 代理人會讓第三種錯特別嚴重。人一天試幾個版本，代理人可以試非常多個。如果只看最好的那一個，就會把運氣當成發現。</p>
+
+      <h2>二、裁判不能是選手</h2>
+      <p>如果寫策略的代理人也能改檢定規則，它就能自己繞過「找出回測盲點」這道關卡。所以我把平台拆成五層，代理人只負責研究層的節點，也就是一個個研究步驟。檢定層是一套固定的統計驗證引擎，寫死在平台裡，代理人改不到。</p>
+
+      <div class="flow">
+        <p class="flow-title">Vibe-Edge 五層流程：代理人只寫研究節點，檢定由平台把關</p>
+        <div class="flow-row">
+          <div class="flow-box wide"><b>資料層</b><span>每個數值標上「公告後才看得到」的日期</span></div>
+        </div>
+        <div class="flow-arrow"><em>只讀不寫</em></div>
+        <div class="flow-row">
+          <div class="flow-box ai"><b>AI 代理人寫研究節點</b><span>大量產生與實作想法</span></div>
+          <div class="flow-box"><b>研究層</b><span>研究流程固定成十步</span></div>
+        </div>
+        <div class="flow-arrow"><em>每次嘗試都記帳</em></div>
+        <div class="flow-row">
+          <div class="flow-box gate wide"><b>檢定層</b><span>代理人改不到</span></div>
+        </div>
+        <div class="flow-arrow"><em>通過才入庫</em></div>
+        <div class="flow-row">
+          <div class="flow-box wide"><b>配置層</b><span>入庫版本進訊號日曆，分配紙上資金</span></div>
+        </div>
+        <div class="flow-arrow"><em>整張為單位的交易清單</em></div>
+        <div class="flow-row">
+          <div class="flow-box wide"><b>交易層（紙上交易）</b><span>模擬下單，不動用真錢</span></div>
+        </div>
+      </div>
+
+      <p>每個節點都要先過 <code>vibe-edge validate</code> 的三項檢查：格式檢查、洩漏哨兵測試，以及在隔離環境試跑。洩漏哨兵測試是我最喜歡的一項。它會故意塞進一個「未來才會發生」的價格跳空，再看節點的輸出會不會跟著變。<strong>如果輸出變了，代表這個節點偷看了未來。</strong>這比靠人讀程式碼抓前視偏差可靠得多。</p>
+
+      <h2>三、先鎖定，再量；樣本外只開一次</h2>
+      <p>多重檢定的校正，需要知道總共比較了幾個，這個數字叫 m。少記一次，校正就算不準。所以我把檢定改成「輪次」制：</p>
+      <ul>
+        <li>每一輪先鎖定要測哪些格子，也就是這一輪要比較的策略版本，鎖定之後才開始量。量完再加格子，等於事後挑結果。</li>
+        <li>m 等於研究案裡不同格子的數量，由平台自己數，不由寫策略的人報。</li>
+        <li>晉級的格子，只能打開一次保留起來的樣本外資料。樣本外資料是研究時刻意不碰的一段資料，用來模擬「沒看過的未來」。只能開一次，是為了不讓人看了答案再回頭改題目。</li>
+      </ul>
+      <p>績效指標也會依嘗試次數打折。夏普比率衡量每承擔一分波動換到多少報酬；Deflated Sharpe Ratio 是它依嘗試次數打折的版本：試得越多，同樣的回測成績能證明的越少。切分樣本則用 walk-forward 和 purged k-fold 兩種方法，避免訓練和測試的資料重疊。</p>
+
+      <h2>四、資料本身也要誠實</h2>
+      <p>檢定再嚴，資料偷看未來也沒用。資料層的倉儲層存每檔股票每天的標準欄位，每個數值都標上「公告之後才看得到」的日期。這種做法叫時點資料：回測走到哪一天，就只能看到那天已經公開的東西。</p>
+      <p>除權息和減資用的調整係數，是我用交易所的參考價自己算的。拿 13,093 個事件和 TEJ 對照，97.6% 一致。股票池也去除了倖存者偏差，不會只看存活到今天的股票。每一輪都記下資料指紋，事後能查出當時用的是哪一份資料。</p>
+
+      <h2>五、練習的結果不算證據</h2>
+      <p>我在練習區試跑過完整流程。「處置股持有 10 天」晉級，也通過了樣本外測試。我把同一個想法借用到均線黃金交叉的研究案，結果沒有重現。<strong>這次失敗也一樣記進戰績。</strong>只記成功、不記失敗，就是在替多重檢定偏誤開後門。</p>
+      <p>而且練習的結果不算證據，不能入庫。誠實地說，目前還沒有真實研究案的版本通過檢定、進入新因子庫，也就是正式收錄研究成果的地方。平台已經能從原始資料一路跑到紙上交易清單，但第一個真正過關的研究，還在路上。</p>
+
+      <h2>學到的事</h2>
+      <p>看任何一份漂亮的回測，我現在第一個問題都是：「總共試了幾次？」<strong>沒有分母的成績不是證據。</strong>AI 可以把研究速度拉得很快，但可信度只能來自兩件事：裁判和選手分開，以及每一次嘗試，包括失敗的那些，都被記下來。</p>
+
+      <p>完整的架構、統計方法與效能優化，請看 <a href="../project.html?id=vibe-edge">Vibe-Edge 專案頁</a>。</p>
+    </div>
+  </article>
+
+  <footer class="post-footer">
+    <a href="../blog/" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      All Posts
+    </a>
+  </footer>
+</body>
+</html>

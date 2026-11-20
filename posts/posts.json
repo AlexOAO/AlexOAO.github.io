@@ -1,5 +1,33 @@
 [
   {
+    "id": "finjourney-two-weeks",
+    "title": "一個人兩週做出 AI 理財產品：AI 只提方案，數字交給系統",
+    "date": "2026-11-20",
+    "summary": "一個人不到兩週做出並上線 AI 理財產品 FinJourney。AI 只能從系統給的選項提方案，所有數字由系統檢查與模擬試算，再加上 656 個自動化測試和營運保護。",
+    "tags": [
+      "AI Product",
+      "Guardrails",
+      "FastAPI"
+    ],
+    "file": "posts/finjourney-two-weeks.html",
+    "title_en": "Building an AI Finance Product Alone in Two Weeks: The AI Proposes, the System Does the Math",
+    "summary_en": "I built and launched FinJourney, an AI personal-finance product, on my own in under two weeks. The AI can only propose plans from options the system provides; the system checks and simulates every number, backed by 656 automated tests and operational safeguards."
+  },
+  {
+    "id": "vibe-edge-backtest-trust",
+    "title": "不讓回測騙自己：AI 寫策略，誰來當裁判",
+    "date": "2026-11-19",
+    "summary": "AI 代理人產生策略版本比人快太多，最大的風險是騙了自己。我在 Vibe-Edge 定下規則：代理人不能當裁判，每次嘗試都記帳，再用洩漏哨兵、輪次制與時點資料擋住三種回測錯誤。",
+    "tags": [
+      "Quant",
+      "Backtest",
+      "AI Agent"
+    ],
+    "file": "posts/vibe-edge-backtest-trust.html",
+    "title_en": "Don't Let the Backtest Fool You: When AI Writes the Strategy, Who Referees?",
+    "summary_en": "AI agents produce strategy variants far faster than people, and the biggest risk is fooling yourself. In Vibe-Edge, the agent never referees and every attempt is counted, with a leak canary, locked rounds and point-in-time data guarding against three backtest errors."
+  },
+  {
     "id": "traditional-vs-ai-development",
     "title": "傳統開發 vs. AI 開發：分工圖哪裡不一樣",
     "date": "2026-11-18",
@@ -12,6 +40,34 @@
     "file": "posts/traditional-vs-ai-development.html",
     "title_en": "Traditional vs. AI Development: How the Team Chart Changes",
     "summary_en": "Traditional system development and the AI SDLC, side by side: AI projects add tuning and evaluation roles, bring security, compliance and IT in earlier, and feed operating results back to the start; plus where AI BAs come from and how to drive adoption."
+  },
+  {
+    "id": "vlm-vs-ocr-statements",
+    "title": "掃描財報為什麼 OCR 不夠：視覺語言模型多看懂了什麼",
+    "date": "2026-11-17",
+    "summary": "財報的重點是每個數字對到正確的科目與期間。OCR 只把圖片轉成文字，表格結構會散掉；視覺語言模型能同時看懂版面、表格和文字。整理兩者各自適用的情境，以及數字仍要怎麼檢查。",
+    "tags": [
+      "VLM",
+      "OCR",
+      "Document AI"
+    ],
+    "file": "posts/vlm-vs-ocr-statements.html",
+    "title_en": "Why OCR Falls Short on Scanned Financial Statements: What a Vision-Language Model Sees",
+    "summary_en": "In a financial statement, every figure has to match the right line item and period. OCR turns images into text but loses the table structure; a vision-language model reads layout, tables and text together. When each fits, and why the numbers still need checks."
+  },
+  {
+    "id": "thesis-llm-financial-statements",
+    "title": "讓 LLM 讀財報：股價報酬的解釋力從 5.14% 到 63.73%",
+    "date": "2026-11-16",
+    "summary": "碩士論文用 RAG-LLM 讀 592 家上市電子公司財報、打出 6 個構面評分，加進固定效果模型後，within R² 從 5.14% 升到 63.73%；也談這個數字怎麼讀。",
+    "tags": [
+      "LLM",
+      "RAG",
+      "Panel Data"
+    ],
+    "file": "posts/thesis-llm-financial-statements.html",
+    "title_en": "Letting an LLM Read Financial Statements: Explanatory Power from 5.14% to 63.73%",
+    "summary_en": "My master's thesis had a RAG-LLM read the financial statements of 592 listed electronics companies and score 6 dimensions. Adding the scores to a fixed-effects model raised within R² from 5.14% to 63.73%; plus how to read that number."
   },
   {
     "id": "ai-agent-gpu-cost",

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="../assets/images/favicon.svg">
+  <title>一個人兩週做出 AI 理財產品：AI 只提方案，數字交給系統 | Alex Li</title>
+  <meta name="description" content="Alex Li（李翔緯）一個人在不到兩週內做出並上線 AI 理財產品 FinJourney：AI 只提修正方案，所有數字由系統檢查與模擬試算，再加上 656 個自動化測試與營運保護。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/post.css?v=20261120g">
+</head>
+<body>
+  <nav class="post-nav">
+    <a href="../blog/" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Blog
+    </a>
+  </nav>
+
+  <article class="post">
+    <header class="post-header">
+      <div class="post-meta">
+        <time>2026-11-20</time>
+        <div class="post-tags">
+          <span>AI Product</span><span>Guardrails</span><span>FastAPI</span>
+        </div>
+      </div>
+      <h1>一個人兩週做出 AI 理財產品：AI 只提方案，數字交給系統</h1>
+    </header>
+
+    <div class="post-body">
+      <p>理財觀念不難懂，難的是套用到自己的數字上。收支、預備金、投資、負債、保險、退休，各有各的算法，又散在不同的表格和 App 裡。我做了 FinJourney，把一個人的財務畫成一張「個人理財全貌」圖，右下角再放一位 AI 理財顧問。它已經上線，網址是 <a href="https://finjourney.xiang-wei-li.com">finjourney.xiang-wei-li.com</a>。從第一個 commit（第一次把程式存進版本紀錄）到上線不到兩週，全部由我一個人完成。但理財產品有一個風險：AI 只要算錯一個數字，使用者就可能照著錯的數字做決定。這篇整理我怎麼處理這件事。</p>
+
+      <h2>一、核心規則：AI 只提方案，數字由系統算</h2>
+      <p>語言模型擅長讀資料、說明問題、提出建議。它最容易出錯的，就是數字。所以我定了一條規則：</p>
+      <p><strong>AI 只負責提方案，數字一律由系統計算。</strong></p>
+      <p>AI 可以說「每月多存一點預備金」，但「存多少、十年後變多少」不是它說了算。它提出的方案要交給系統驗算，算出來的結果才是使用者看到的數字。</p>
+
+      <h2>二、讓 AI 只能在框框裡提方案</h2>
+      <p>光是叫 AI「不要亂算」不夠，要用設計讓它沒有機會亂算。我做了四層限制：</p>
+      <ul>
+        <li><strong>固定格式</strong>：AI 的「修正方案」必須照 JSON schema 寫。JSON schema 是一份格式規格，規定每個欄位叫什麼、放什麼型別的資料。</li>
+        <li><strong>只能從選項裡挑</strong>：能調整哪些項目、怎麼調整，都由系統先給好。AI 不能自己發明新項目。</li>
+        <li><strong>系統先檢查</strong>：每個調整用到的欄位和範圍對不對，系統先檢查一遍。</li>
+        <li><strong>系統再模擬</strong>：通過檢查的方案，放進「一輩子的收支模擬」和每一種壓力情境裡跑一遍。壓力情境就是假設景氣變差、收入中斷這類壞狀況，看方案撐不撐得住。</li>
+      </ul>
+      <p>另外，給 AI 的指令（prompt）會跟著使用者正在看的那張圖卡調整。使用者在看保險卡，AI 就扮演保險卡的專屬顧問，不會跳去談不相關的東西。</p>
+
+      <div class="flow">
+        <p class="flow-title">一個修正方案從提出到使用者手上</p>
+        <div class="flow-row"><div class="flow-box"><b>使用者看到圖卡</b><span>AI 的指令跟著這張卡調整</span></div></div>
+        <div class="flow-arrow"><em>讀取資料</em></div>
+        <div class="flow-row"><div class="flow-box ai"><b>AI 提出修正方案</b><span>照 JSON schema，只從系統給的選項挑</span></div></div>
+        <div class="flow-arrow"><em>交給系統</em></div>
+        <div class="flow-row"><div class="flow-box gate"><b>系統檢查格式與範圍</b><span>欄位和範圍不對就擋下</span></div></div>
+        <div class="flow-arrow"><em>通過檢查</em></div>
+        <div class="flow-row"><div class="flow-box gate"><b>系統模擬試算</b><span>一輩子的收支模擬＋每一種壓力情境</span></div></div>
+        <div class="flow-arrow"><em>算好的結果</em></div>
+        <div class="flow-row"><div class="flow-box me" style="--me-label:'使用者'"><b>使用者決定</b><span>看著系統算的數字，自己決定要不要採用</span></div></div>
+      </div>
+
+      <h2>三、一個人兩週，靠的是分工清楚的架構</h2>
+      <p>一個人做完規劃、調教、前後端、部署和營運，不能靠加班，要靠架構讓每一塊各管各的事。</p>
+      <ul>
+        <li><strong>先把業務切清楚</strong>：我參考《投資第一課》的「個人理財全貌」圖，把個人財務拆成十個管理項目。每個項目都走同一套流程：定目標、訂行動方案、每月比對實際和標準、調整方案或目標。流程一樣，程式就能重複使用。</li>
+        <li><strong>公式只放一個地方</strong>：後端用 FastAPI、SQLModel 和 SQLite，所有計算公式都集中在 domain 層，也就是只放業務規則的核心模組。AI 的方案要驗算，也是呼叫同一套公式。</li>
+        <li><strong>前端只負責顯示</strong>：前端用 React 和 TypeScript，只顯示 API 算好的結果，自己不做計算。數字只有一個來源，就不會出現畫面和後端算得不一樣。</li>
+      </ul>
+      <p>品質靠測試守住。後端有 656 個自動化測試，涵蓋計算公式、API 和 AI 流程。每次改程式都跑一遍，我才敢在短時間內一直往前推。</p>
+
+      <h2>四、上線之後的保護</h2>
+      <p>上線不是終點。財務資料很敏感，所以我在營運上也加了幾道保護：</p>
+      <ul>
+        <li><strong>邀請碼註冊</strong>：要有邀請碼才能註冊。</li>
+        <li><strong>每人一個資料庫檔案</strong>：每個使用者的資料各自獨立，不放在同一個檔案裡。</li>
+        <li><strong>每天自動備份</strong>：備份保留 14 天。</li>
+        <li><strong>先同意，再用 AI</strong>：第一次使用 AI 前，系統先請使用者同意把財務數字傳給 OpenAI，並記下同意的版本和時間。沒有同意，就不讀資料、也不呼叫 AI 模型。</li>
+        <li><strong>AI 使用上限</strong>：免費版每個月有 AI 使用次數上限，而且只有 AI 成功回答才算一次。AI 出錯，不該由使用者買單。</li>
+      </ul>
+
+      <h2>學到的事</h2>
+      <p><strong>要讓 AI 在數字上可靠，不是靠叫它小心，而是讓它碰不到數字。</strong>我把 AI 能做的事縮成「從選項裡挑方案」，把算數字、檢查範圍、模擬壓力全部留給系統。這樣 AI 就算提了不好的方案，最壞的結果也只是被系統擋下，不會變成使用者畫面上的錯誤數字。這條界線劃得越早，後面的測試、驗算和責任歸屬就越清楚。</p>
+
+      <p>專案的完整介紹在 <a href="../project.html?id=finjourney">FinJourney 個人理財全貌</a>。</p>
+    </div>
+  </article>
+
+  <footer class="post-footer">
+    <a href="../blog/" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      All Posts
+    </a>
+  </footer>
+</body>
+</html>
