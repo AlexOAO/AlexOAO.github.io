@@ -15,7 +15,7 @@
     .post-nav { display: flex; justify-content: space-between; align-items: center; }
     .lang-toggle { font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--text);
       background: rgba(30,41,59,0.6); border: 1px solid var(--line); border-radius: 20px; padding: 0.35rem 0.9rem; cursor: pointer; }
-    .wrap { max-width: 1340px; margin: 0 auto; padding: 3rem 2rem 5rem; }
+    .wrap { max-width: 1480px; margin: 0 auto; padding: 3rem 2rem 5rem; }
     .eyebrow { font-family: var(--display); font-size: 0.8rem; letter-spacing: 0.12em; color: var(--accent-2); text-transform: uppercase; }
     h1 { font-family: var(--display); font-size: clamp(2.6rem, 6vw, 4rem); font-weight: 800; letter-spacing: -0.03em; margin: 0.4rem 0 0.5rem; }
     .sub { color: var(--muted); }
@@ -83,26 +83,27 @@
     .blog-card .read-more { flex-shrink: 0; white-space: nowrap; padding-bottom: 0.2rem; }
     .empty { color: var(--dim); padding: 2rem 0; }
     .layout { display: block; }
-    .side { display: none; }
+    .side, .side-r { display: none; }
     @media (min-width: 1180px) {
-      .layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 2.5rem; align-items: start; margin-top: 2rem; }
+      .layout { display: grid; grid-template-columns: 200px minmax(0, 1fr) 210px; gap: 2.2rem; align-items: start; margin-top: 2rem; }
       .layout .filters { margin-top: 0; }
       .side ol.tags { display: flex; flex-wrap: wrap; gap: 0.35rem; border-left: 0; }
       .side ol.tags li button { width: auto; display: inline-flex; gap: 0.35rem; padding: 0.2rem 0.6rem; margin: 0; border: 1px solid var(--line); border-radius: 999px; font-size: 0.76rem; background: rgba(30,41,59,0.5); }
       .side ol.tags li button[aria-pressed="true"] { background: rgba(139,92,246,0.2); border-color: rgba(167,139,250,0.6); }
-      .side { display: block; position: sticky; top: 90px; max-height: calc(100vh - 110px); overflow-y: auto; }
+      .side, .side-r { display: block; position: sticky; top: 90px; max-height: calc(100vh - 110px); overflow-y: auto; }
       .filters .chip { display: none; }
-      .side h2 { font-family: var(--display); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); margin: 0 0 0.6rem; }
-      .side ol { list-style: none; padding: 0; margin: 0 0 1.8rem; border-left: 1px solid var(--line); }
-      .side li button, .side li a { display: flex; justify-content: space-between; gap: 0.5rem; width: 100%; text-align: left; background: none; border: 0; border-left: 2px solid transparent; margin-left: -1px;
+      .side h2, .side-r h2 { font-family: var(--display); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); margin: 0 0 0.6rem; }
+      .side ol, .side-r ol { list-style: none; padding: 0; margin: 0 0 1.8rem; border-left: 1px solid var(--line); }
+      .side li button, .side-r li a { display: flex; justify-content: space-between; gap: 0.5rem; width: 100%; text-align: left; background: none; border: 0; border-left: 2px solid transparent; margin-left: -1px;
         padding: 0.32rem 0 0.32rem 0.85rem; font: inherit; font-size: 0.84rem; line-height: 1.4; color: var(--muted); cursor: pointer; text-decoration: none; }
-      .side li button:hover, .side li a:hover { color: var(--text); }
+      .side li button:hover, .side-r li a:hover { color: var(--text); }
       .side li button[aria-pressed="true"] { color: #ddd6fe; border-left-color: #a78bfa; }
       .side li button span { font-family: var(--display); font-size: 0.72rem; color: var(--dim); }
-      .side li a { display: block; font-size: 0.8rem; }
-      .side li a small { display: block; font-family: var(--display); font-size: 0.68rem; color: var(--dim); }
-      .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .side-r li a { display: block; font-size: 0.8rem; }
+      .side-r li a small { display: block; font-family: var(--display); font-size: 0.68rem; color: var(--dim); }
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
+    @media (min-width: 1440px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } }
     @media (max-width: 960px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     @media (max-width: 620px) { .grid { grid-template-columns: minmax(0, 1fr); } .wrap { padding: 2rem 1.25rem 4rem; } }
   </style>
@@ -123,6 +124,7 @@
       <aside class="side" id="side" aria-label="Topics and posts"></aside>
       <div><div class="filters" id="filters"></div>
       <div class="grid" id="grid"><p class="empty">Loading...</p></div></div>
+      <aside class="side-r" id="sideR" aria-label="All posts"></aside>
     </div>
   </main>
   <script src="/assets/js/common.js?v=20261120e"></script>
@@ -151,8 +153,8 @@
         </a>`).join('') : `<p class="empty">${esc(T('none'))}</p>`;
       const n = t => posts.filter(p => p.tags.includes(t)).length;
       document.getElementById('side').innerHTML = `<h2>${esc(T('topics'))}</h2><ol class="tags">${[['', T('all'), posts.length], ...tags.map(t => [t, t, n(t)])]
-          .map(([v, l, c]) => `<li><button class="chip-s" data-tag="${esc(v)}" aria-pressed="${v === tag}">${esc(l)}<span>${c}</span></button></li>`).join('')}</ol>
-        <h2>${esc(T('posts'))}</h2><ol>${posts.map(p => `<li><a href="/${esc(p.file)}">${esc(en && p.title_en ? p.title_en : p.title)}<small>${esc(p.date)}</small></a></li>`).join('')}</ol>`;
+          .map(([v, l, c]) => `<li><button class="chip-s" data-tag="${esc(v)}" aria-pressed="${v === tag}">${esc(l)}<span>${c}</span></button></li>`).join('')}</ol>`;
+      document.getElementById('sideR').innerHTML = `<h2>${esc(T('posts'))}</h2><ol>${posts.map(p => `<li><a href="/${esc(p.file)}">${esc(en && p.title_en ? p.title_en : p.title)}<small>${esc(p.date)}</small></a></li>`).join('')}</ol>`;
       document.querySelectorAll('.chip, .chip-s').forEach(b => b.onclick = () => {
         tag = b.dataset.tag;
         history.replaceState(null, '', tag ? `?tag=${encodeURIComponent(tag)}` : location.pathname);
