@@ -498,6 +498,8 @@
       .exp-index .count { font-family: var(--display); font-size: 0.7rem; letter-spacing: 0.06em; color: var(--dim); margin-bottom: 0.9rem; }
       /* Blog rail hangs in the right margin, mirroring the index on the left. */
       .blog-rail { display: block; position: sticky; top: 110px; align-self: start; width: 150px; margin-left: 30px; }
+      .blog-rail .count a { color: inherit; }
+      .blog-rail .count a:hover { color: var(--text); }
       .blog-rail .count { font-family: var(--display); font-size: 0.7rem; letter-spacing: 0.06em; color: var(--dim); margin-bottom: 0.9rem; }
       .blog-rail ol { list-style: none; border-left: 1px solid var(--line); }
       .blog-rail li a { display: block; padding: 0.45rem 0 0.45rem 0.9rem; font-size: 0.8rem; line-height: 1.4; color: var(--dim); transition: color 0.3s; }
@@ -1231,7 +1233,7 @@
     function fillRails() {
       getJSON('posts/posts.json').then(posts => {
         const en = Site.getLang() === 'en';
-        const html = `<p class="count">${esc(T('railTitle'))}</p><ol>${posts.slice(0, 6).map(p =>
+        const html = `<p class="count"><a href="blog/">${esc(T('railTitle'))}</a></p><ol>${posts.slice(0, 6).map(p =>
           `<li><a href="${esc(p.file)}"><span>${esc(en && p.title_en ? p.title_en : p.title)}</span><small>${esc(p.date)}</small></a></li>`).join('')}</ol>
           <a class="all" href="blog/">${esc(T('railAll'))}</a>`;
         document.querySelectorAll('.blog-rail').forEach(r => { r.innerHTML = html; });
