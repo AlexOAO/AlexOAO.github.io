@@ -480,9 +480,10 @@
     /* Chapter index: on wide screens a sticky list of companies sits beside the timeline. */
     .exp-layout { display: block; }
     .exp-index { display: none; }
+    .blog-rail { display: none; }
     @media (min-width: 1520px) {
       /* The index hangs in the left margin, so the content keeps the same left edge as every other section. */
-      .exp-layout { display: grid; grid-template-columns: 0 minmax(0, 1fr); }
+      .exp-layout { display: grid; grid-template-columns: 0 minmax(0, 1fr) 0; }
       .exp-index { display: block; position: sticky; top: 110px; align-self: start; width: 132px; margin-left: -168px; }
       .exp-index ol { list-style: none; border-left: 1px solid var(--line); }
       .exp-index a {
@@ -495,6 +496,15 @@
       .exp-index a[aria-current] { color: var(--text); border-left-color: var(--accent-2); }
       .exp-index a[aria-current] small { color: var(--accent-2); opacity: 1; }
       .exp-index .count { font-family: var(--display); font-size: 0.7rem; letter-spacing: 0.06em; color: var(--dim); margin-bottom: 0.9rem; }
+      /* Blog rail hangs in the right margin, mirroring the index on the left. */
+      .blog-rail { display: block; position: sticky; top: 110px; align-self: start; width: 150px; margin-left: 30px; }
+      .blog-rail .count { font-family: var(--display); font-size: 0.7rem; letter-spacing: 0.06em; color: var(--dim); margin-bottom: 0.9rem; }
+      .blog-rail ol { list-style: none; border-left: 1px solid var(--line); }
+      .blog-rail li a { display: block; padding: 0.45rem 0 0.45rem 0.9rem; font-size: 0.8rem; line-height: 1.4; color: var(--dim); transition: color 0.3s; }
+      .blog-rail li a span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      .blog-rail li a small { display: block; font-family: var(--display); font-size: 0.68rem; opacity: 0.8; margin-top: 0.1rem; }
+      .blog-rail li a:hover { color: var(--text); }
+      .blog-rail .all { display: inline-block; margin-top: 0.7rem; font-size: 0.78rem; color: var(--accent-2); }
     }
     .other-exp h3 { font-size: 1rem; font-weight: 700; color: #94a3b8; margin-bottom: 0.75rem; }
     .other-row {
@@ -814,7 +824,7 @@
         <p class="section-subtitle" data-i18n="sideSub">Things I've built or contributed to</p>
       </div>
       <div class="sdlc" id="quantMap"></div>
-      <div class="card-grid" id="projectsList"></div>
+      <div class="exp-layout"><nav class="exp-index" id="qlIndex" aria-label="Quant Lab"></nav><div class="exp-main"><div class="card-grid" id="projectsList"></div></div><aside class="blog-rail" aria-label="Blog"></aside></div>
     </div>
   </section>
 
@@ -857,7 +867,7 @@
     </div>
   </footer>
 
-  <script src="assets/js/common.js?v=20261120b"></script>
+  <script src="assets/js/common.js?v=20261120c"></script>
   <script>
     // ── Navbar scroll ──
     const navbar = document.getElementById('navbar');
@@ -899,7 +909,7 @@
     // ── Progress bar, active nav link, pointer light ──
     const progress = document.getElementById('progress');
     const navMap = [...document.querySelectorAll('.nav-links a[href^="#"]')].map(a => ({ a, sec: document.querySelector(a.getAttribute('href')) }));
-    let coLinks = [];
+    let coLinks = [], qlLinks = [];
     // Runs on every scroll event: a few rect reads, cheap enough without frame batching.
     function onScroll() {
       const h = document.documentElement.scrollHeight - innerHeight;
@@ -907,9 +917,11 @@
       let cur = null;
       navMap.forEach(x => { if (x.sec && x.sec.getBoundingClientRect().top < innerHeight * 0.35) cur = x; });
       navMap.forEach(x => x === cur ? x.a.setAttribute('aria-current', 'true') : x.a.removeAttribute('aria-current'));
-      let co = null;
-      coLinks.forEach(x => { if (x.el.getBoundingClientRect().top < innerHeight * 0.4) co = x; });
-      coLinks.forEach(x => x === co ? x.a.setAttribute('aria-current', 'true') : x.a.removeAttribute('aria-current'));
+      [coLinks, qlLinks].forEach(links => {
+        let co = null;
+        links.forEach(x => { if (x.el.getBoundingClientRect().top < innerHeight * 0.4) co = x; });
+        links.forEach(x => x === co ? x.a.setAttribute('aria-current', 'true') : x.a.removeAttribute('aria-current'));
+      });
       revealCheck();
     }
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -960,7 +972,7 @@
         sideSub: 'Quant tools I built, or adapted from open source',
         demo: 'Live demo', upstream: 'Upstream', stageMore: 'Roles in this stage',
         blogSub: 'Notes, learnings & things I find interesting',
-        postCount: '{n} posts · swipe or use the arrows',
+        postCount: '{n} posts · swipe or use the arrows', railTitle: 'Latest posts', railAll: 'All posts →',
         footer: 'Personal website · Built with curiosity.',
         current: 'Current', readCase: 'Read the project story', chapters: 'chapters', otherExp: 'Other experience & education',
         read: 'Read', soon: 'Coming soon...',
@@ -977,7 +989,7 @@
         sideSub: '量化研究的工具：我自己寫的，或改自開源專案',
         demo: '線上試用', upstream: '原始 repo', stageMore: '看這個階段的分工',
         blogSub: '筆記、學習心得與有趣的事',
-        postCount: '共 {n} 篇 · 左右滑動或點箭頭看更多',
+        postCount: '共 {n} 篇 · 左右滑動或點箭頭看更多', railTitle: '最新文章', railAll: '全部文章 →',
         footer: '個人網站 · Built with curiosity.',
         current: '現職', readCase: '閱讀專案說明', chapters: '段經歷', otherExp: '其他經歷與學歷',
         read: '閱讀', soon: '即將推出...',
@@ -1205,9 +1217,10 @@
       const index = `<nav class="exp-index" aria-label="${esc(T('chapters'))}"><p class="count">${groups.length} ${esc(T('chapters'))}</p><ol>${groups.map((g, gi) =>
         `<li><a href="#co-${gi}" data-co="${gi}">${esc(g.short || g.org)}<small>${esc(g.period)}</small></a></li>`).join('')}</ol></nav>`;
       document.getElementById('expList').innerHTML = `<div class="exp-layout">${index}<div class="exp-main">${companies}` +
-        (rows ? `<div class="other-exp rv"><h3>${esc(T('otherExp'))}</h3>${rows}</div>` : '') + `</div></div>`;
-      coLinks = [...document.querySelectorAll('.exp-index a')].map(a => ({ a, el: document.getElementById(`co-${a.dataset.co}`) }));
+        (rows ? `<div class="other-exp rv"><h3>${esc(T('otherExp'))}</h3>${rows}</div>` : '') + `</div><aside class="blog-rail" aria-label="Blog"></aside></div>`;
+      coLinks = [...document.querySelectorAll('#expList .exp-index a')].map(a => ({ a, el: document.getElementById(`co-${a.dataset.co}`) }));
       coLinks.forEach(x => x.a.addEventListener('click', e => { e.preventDefault(); x.el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }));
+      fillRails();
       onScroll();
       observeReveal(document.getElementById('expList'));
     }).catch(() => { showError('expList'); showError('sdlcMap'); });
@@ -1222,8 +1235,26 @@
         return `<div class="card-family">${renderRepo(p, i, names)}
           <div class="kids">${kids.map(c => renderRepo(c.p, c.i, names)).join('')}</div></div>`;
       }).join('');
+      const heads = items.filter(x => !x.p.parent);
+      document.getElementById('qlIndex').innerHTML = `<p class="count">${esc(T('nItems').replace('{n}', list.length))}</p><ol>${heads.map(({ p, i }) => {
+        const n = items.filter(c => c.p.parent === p.name).length;
+        return `<li><a href="#side-${i}" data-ql="${i}">${esc(p.name)}${n ? `<small>+${n}</small>` : ''}</a></li>`; }).join('')}</ol>`;
+      qlLinks = [...document.querySelectorAll('#qlIndex a')].map(a => ({ a, el: document.getElementById(`side-${a.dataset.ql}`) }));
+      qlLinks.forEach(x => x.a.addEventListener('click', e => { e.preventDefault(); x.el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }));
+      fillRails();
       observeReveal(document.getElementById('projectsList'));
     }).catch(() => showError('projectsList'));
+
+    // Blog rails in the right margin (wide screens): the latest posts.
+    function fillRails() {
+      getJSON('posts/posts.json').then(posts => {
+        const en = Site.getLang() === 'en';
+        const html = `<p class="count">${esc(T('railTitle'))}</p><ol>${posts.slice(0, 6).map(p =>
+          `<li><a href="${esc(p.file)}"><span>${esc(en && p.title_en ? p.title_en : p.title)}</span><small>${esc(p.date)}</small></a></li>`).join('')}</ol>
+          <a class="all" href="#blog">${esc(T('railAll'))}</a>`;
+        document.querySelectorAll('.blog-rail').forEach(r => { r.innerHTML = html; });
+      }).catch(() => {});
+    }
 
     // ── Blog: load from posts/posts.json ──
     const blogGrid = document.getElementById('blogGrid');
