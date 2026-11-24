@@ -148,6 +148,24 @@
         "source": "S2,S4,S5"
       },
       {
+        "short": "AI 營運平台：預期與實際",
+        "slug": "ai-ops-platform",
+        "parent": "agent-cost-roi",
+        "title": "AI 營運平台：四大 Agent 的營運、旅程與預期對實際",
+        "summary": "把四個 Agent 的營運、成本、效能和治理收在一起，串起客戶旅程，並比較業務規劃的預期與實際。",
+        "sdlc": ["ops"],
+        "ownership": "主責",
+        "period": "2026/11 ~ Now",
+        "milestones": [
+          {"date": "2026/11", "text": "框架設計：資料交換格式", "status": "done"},
+          {"date": "2026/11", "text": "實作：平台與四個出口", "status": "done"},
+          {"date": "2026/11", "text": "驗證：一位客戶走完四個 Agent", "status": "done"},
+          {"date": "2026/11", "text": "業務規劃：預期與實際", "status": "done"},
+          {"date": "TBD", "text": "制度化：真實數字與定期檢討", "status": "todo"}
+        ],
+        "tags": ["Ops Platform", "Customer Journey", "Benefit Realization", "Business Plan"]
+      },
+      {
         "short": "AI 治理：Agent 上線檢測機制",
         "slug": "agent-governance",
         "title": "AI Agent 技術規格與治理機制",
