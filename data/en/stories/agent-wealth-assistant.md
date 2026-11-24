@@ -59,9 +59,11 @@ I led PoC testing and launch resource planning, and built the Wealth Assistant m
 - **Admin.** A 12-page admin back office with three role levels, approval workflow, change logs, and CSV export.
 - **Ready to plug into the bank's systems.** All language models use the OpenAI API format, so any compatible service can be swapped in, or a small on-premises model. Connecting to the bank's test environment only needs a settings change and an API mapping table.
 
+**Trial Prototype:** [kgib-app.xiang-wei-li.com](https://kgib-app.xiang-wei-li.com). Log in with the test account shown on the screen, then open the AI Financial Assistant to ask questions. Both the account and the data are simulated.
+
 **Phase 4 | Launch readiness.** I estimated three-year usage from the number of logins and confirmed the resources for the production and test environments.
 
-**Phase 5 | Launch.** Led by the team that took over. After launch, track two kinds of metrics:
+**Phase 5 | Launch.** Driven by the team taking over. Track two types of metrics after launch:
 
 - Business ratios: users of AI Q&A ÷ users who log in (engagement rate).
 - Realization ratios: actual usage ÷ baseline usage; benefit realization measured by engagement and asset size.
@@ -70,4 +72,4 @@ I led PoC testing and launch resource planning, and built the Wealth Assistant m
 
 A2UI technical research will start from the Wealth Assistant's business scenarios. The prototype already has A2UI built in, so it can be used to test it right away.
 
-Back to the parent project: [The Four Major AI Agents](project.html?id=agent-cost-roi).
+Back to the parent project: [The Four Major AI Agents](project.html?id=agent-cost-roi) 。

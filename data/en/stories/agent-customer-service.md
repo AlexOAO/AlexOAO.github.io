@@ -49,6 +49,8 @@ I built the prototype for the Customer Service Assistant. The cost-benefit work 
 
 Test results: The word error rate of the local Whisper is approximately 14%. The identification of speakers, classification of incoming calls, and assessment of serious issues were all accurate, and the full card number did not appear in the summary.
 
+**Trial Prototype:** [kgib-service.xiang-wei-li.com](https://kgib-service.xiang-wei-li.com). Select a test customer service representative to log in, and then select a call from the call queue to play. Both the recording and the customer information are simulated.
+
 **Phase 2 | Framework design.** Voice and text workloads are counted in different units. I converted both into one unit cost: the service cost per call.
 
 **Phase 3 | Data collection and calculation.** The business unit gave us monthly call volume and placed the workload into peak business hours. We held a first computing meeting with the vendor to agree on assumptions, then asked the vendor to update its estimate. We are waiting for the vendor's reply.

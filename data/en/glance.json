@@ -2,7 +2,7 @@
   "guardrails-poc": {
     "before": "Vendor reports looked good, but none of them tested our own bank's business",
     "after": "One guardrail fully tested on 3,600 questions; advice: skip the add-on guardrail for now",
-    "status": "In progress",
+    "status": "進行中",
     "proofs": [
       {
         "value": "3,600",
@@ -34,7 +34,7 @@
   "agent-cost-roi": {
     "before": "The four AI assistants served different people at different costs, so none could be compared",
     "after": "Four working prototypes share one cost-benefit method; their baselines are being built",
-    "status": "In progress",
+    "status": "進行中",
     "proofs": [
       {
         "value": "4",
@@ -46,28 +46,28 @@
   "agent-loan-assistant": {
     "before": "Loan applicants with questions often left when no one replied in time",
     "after": "The prototype chats with customers, explains products, guides the application and negotiates within limits",
-    "status": "Prototype",
+    "status": "原型",
     "proofs": [],
     "did": "Built the prototype and brought it into the shared cost-benefit framework"
   },
   "agent-credit-review": {
     "before": "Underwriters checked income papers one by one, slowly and unevenly",
     "after": "The prototype reads papers, checks them and works out income with reasons; cost per case is set",
-    "status": "Prototype",
+    "status": "原型",
     "proofs": [],
     "did": "Built the prototype and led its cost-benefit assessment"
   },
   "agent-customer-service": {
     "before": "Call agents looked things up while listening, then wrote notes after every call",
     "after": "In the prototype, an AI sidekick finds facts, drafts replies and sums up each call",
-    "status": "Prototype",
+    "status": "原型",
     "proofs": [],
     "did": "Built the prototype and supplied the cost framework; a colleague led the computing estimate"
   },
   "agent-wealth-assistant": {
     "before": "Customers dug through many accounts to piece together what they own",
     "after": "A working mobile banking prototype: ask once in the app to check accounts or money questions",
-    "status": "Prototype",
+    "status": "原型",
     "proofs": [
       {
         "value": "118",
@@ -80,38 +80,45 @@
     ],
     "did": "Led the PoC and launch resource planning, and built the prototype myself"
   },
+  "ai-ops-platform": {
+    "before": "Each of the four agents has its own backend. You need to piece together information from various sources to determine whether it's worth it, how much to spend, and which paths customers have taken.",
+    "after": "One platform for four agents, connecting the customer journey and comparing the expected and actual business plans side by side.",
+    "status": "原型",
+    "proofs": [],
+    "did": "Responsible for designing and implementing the data exchange format, platform, and the outlets for the four Agents."
+  },
   "agent-governance": {
     "before": "Project teams did not know what to check before an AI went live",
     "after": "A nine-box checklist is designed: fill every box with proof and the AI passes",
-    "status": "Planning",
+    "status": "規劃中",
     "proofs": [],
     "did": "Led the design of the bank's pre-launch check for AI"
   },
   "finllm": {
     "before": "Flawed training data could teach a finance AI model errors, even answers that break rules",
     "after": "Cleaning now follows fixed steps; batch 2-1 cleaning and batch 4 scoring are done",
-    "status": "In progress",
+    "status": "進行中",
     "proofs": [],
     "did": "Contributor: cleaned the data and scored how well the model reads regulations"
   },
   "gemini-training": {
     "before": "Staff got the AI tool but did not know which tasks suit it",
     "after": "The outline is set; classes will practise safe AI use on each unit's own work",
-    "status": "Planning",
+    "status": "規劃中",
     "proofs": [],
     "did": "Led the course design and gathered real work cases from each unit"
   },
   "ai-ops-dashboard": {
     "before": "Each AI effort kept its own numbers, and no single view showed if AI was worth it",
     "after": "A five-part metric set is designed, shared by internal tools and customer-facing AI",
-    "status": "Planning",
+    "status": "規劃中",
     "proofs": [],
     "did": "Contributor: helped design the metrics and planned how cost and safety data feed in"
   },
   "a2ui-research": {
     "before": "Money answers came as long text that customers found hard to read",
     "after": "Three uses picked: asset overview, product comparison and form filling; resources being confirmed",
-    "status": "Research",
+    "status": "研究中",
     "proofs": [],
     "did": "Led the research into whether this technology can become a bank product feature"
   },

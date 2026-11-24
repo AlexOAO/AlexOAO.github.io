@@ -55,6 +55,8 @@ Actual test results (actually running OCR, without using pre-stored results):
 - 12 case studies: Field accuracy of 97.7%, all annual revenues were calculated correctly, and all issues embedded in the documents were identified.
 - Four sets of paired tests for fairness yielded identical results: in each set, two applicants had identical qualifications, differing only in one aspect—gender, age, place of residence, or name.
 
+**Trial Prototype:** [kgib-credit.xiang-wei-li.com](https://kgib-credit.xiang-wei-li.com). Log in to the Underwriting Workbench using the test account shown on the screen. Both the documents and the applicants are simulated.
+
 **Phase 2 | Framework design.** I split the process into two parts: reading and re-checking on-premises, and processing in the cloud. Each part is costed in the unit that best matches its workload, then added up into a cost per case.
 
 **Phase 3 | Data collection and calculation.** The business unit gave me current case volume and a three-year growth forecast. From that I worked out the cost per case and the three-year cost baseline, and confirmed how much computing the live system needs.

@@ -49,6 +49,8 @@ I built the Loan Assistant's project prototype and was responsible for bringing 
 
 The prototype passed automated tests, including negotiation limits, single-round dialogue flows, and end-to-end processes from chat to application to supervisor approval.
 
+**Trial Prototype:** [kgib-sales.xiang-wei-li.com](https://kgib-sales.xiang-wei-li.com). You can chat directly with the assistant without logging in. To apply, log in with the test account shown on the screen. All data is simulated.
+
 **Phase 2 | Framework design.** I first worked out where the costs go, then defined its metrics:
 
 - Business ratios: applications completed with AI help ÷ all applications; application conversion rate.

@@ -387,6 +387,51 @@
         "source": "S2,S4,S5"
       },
       {
+        "short": "AI Operations Platform: Expectations vs. Reality",
+        "slug": "ai-ops-platform",
+        "parent": "agent-cost-roi",
+        "title": "AI Operations Platform: Operations, Journeys, and Expectations vs. Reality of the Four Agents",
+        "summary": "Bring together the operations, costs, performance, and governance of four agents, connect the customer journey, and compare the expected and actual business plans.",
+        "sdlc": [
+          "ops"
+        ],
+        "ownership": "Lead",
+        "period": "2026/11 ~ Now",
+        "milestones": [
+          {
+            "date": "2026/11",
+            "text": "Framework Design: Data Exchange Format",
+            "status": "done"
+          },
+          {
+            "date": "2026/11",
+            "text": "Implementation: Platform with Four Exits",
+            "status": "done"
+          },
+          {
+            "date": "2026/11",
+            "text": "Verification: One customer goes through four agents",
+            "status": "done"
+          },
+          {
+            "date": "2026/11",
+            "text": "Business Planning: Expected vs. Actual",
+            "status": "done"
+          },
+          {
+            "date": "TBD",
+            "text": "Institutionalization: Real numbers and regular reviews",
+            "status": "todo"
+          }
+        ],
+        "tags": [
+          "Ops Platform",
+          "Customer Journey",
+          "Benefit Realization",
+          "Business Plan"
+        ]
+      },
+      {
         "short": "AI governance: Agent pre-launch checks",
         "slug": "agent-governance",
         "title": "AI Agent Technical Specifications & Governance",
@@ -813,7 +858,7 @@
         "short": "AI speech recognition: earnings call transcripts",
         "slug": "asr-transcription",
         "title": "ASR Earnings Call Transcription",
-        "summary": "Cut the time the research team spends on earnings call notes.",
+        "summary": "Cut the time the research team spends writing up earnings calls.",
         "sdlc": [
           "build"
         ],
@@ -1168,7 +1213,7 @@
         "source": "title from user; abstract pending"
       },
       {
-        "short": "English-taught TA",
+        "short": "English-taught courses",
         "slug": "tunghai-english-ta",
         "kind": "Teaching",
         "title": "Teaching Assistant for English-Taught Courses: Statistics, Economics, Financial Management",

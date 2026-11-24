@@ -55,10 +55,12 @@ I did two things:
 
 **Phase 4 | Institutionalize.** I plan to build these metrics into how resources are allocated. Each Agent sets a baseline before launch, and its business ratios and realization ratios are tracked regularly after launch. When a realization ratio falls below the threshold, a review starts and resources or scope are adjusted.
 
+I did it so that I could really see this every day. [AI Operations Platform](project.html?id=ai-ops-platform): It gathers the actual data of four agents, places each agent's business plan (forecast) and actual figures side by side, calculates the achievement rate, and lists it under "Needs Review" if it falls below the threshold.
+
 ## Next steps
 
-- Complete the baselines for the four Agents.
-- Connect to the AI operations dashboard so realization ratios are produced regularly.
+- Complete the benchmarks for four agents: After obtaining the actual figures from the business unit, update the business plans for each agent.
+- Integration with the AI Operations Performance Dashboard enables regular generation of achievement rates. Half of the four agents have already been [AI Operations Platform](project.html?id=ai-ops-platform) Connect.
 
 ## Further reading
 
