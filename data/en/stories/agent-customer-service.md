@@ -4,7 +4,7 @@ title: agent-customer-service
 
 ## Results
 
-**I built the prototype for the Customer Service Assistant and provided its cost-benefit framework.** It is measured in service terms: how many calls the AI helps handle, how many have to go to a person, and what each call costs to serve. The measurement framework and call-volume baseline are done. How much computing it needs will be confirmed once the vendor updates its estimate.
+**I built the prototype for the Customer Service Assistant and provided its cost-benefit framework.** The prototype can start by playing a phone call and then go through the real-time transcript, knowledge base suggestions, post-call summary, and quality control. It should be measured in terms of service: how many calls are handled by AI, how many need to be transferred to a human agent, and the cost of service per call. The measurement framework and call volume benchmarks have been completed. The amount of resources required will be confirmed after the vendor updates its assessment.
 
 ## Why this project
 
@@ -16,7 +16,7 @@ title: agent-customer-service
 
 **What it can do on its own:**
 
-- Search the knowledge base for the information needed to answer the customer.
+- Search the Knowledge Base to find the information needed to answer the customer's question.
 - Draft replies in advance.
 - Write a post-call summary, a short recap of the call, after it ends.
 - Do a first check on service quality (quality check).
@@ -25,7 +25,7 @@ It works from the call recording and the full transcript of the call turned into
 
 **What it hands to people:** When a quality check finds a serious problem, a person handles it.
 
-**What it can't do:** Reply to customers directly. Staff must confirm anything written into the records.
+**What it can't do:** Respond directly to the customer. All content entered into the records must be confirmed by customer service personnel.
 
 **How people supervise.** A person confirms every item, which is called human-in-the-loop.
 
@@ -39,7 +39,15 @@ I built the prototype for the Customer Service Assistant. The cost-benefit work 
 
 ## What I did
 
-**Phase 1 | Prototype.** I built the prototype around how customer service really works, so the business unit could see it search the knowledge base, draft replies, and write post-call summaries. Prototype details: to be added.
+**Phase 1 | prototype** I created a prototype based on the customer service team's work context, allowing the business unit to see firsthand how it searches the knowledge base, drafts responses, and writes post-call summaries. The prototype can be operated in practice:
+
+- **Synthesized call recording.** I made 12 customer service calls using computer-generated speech, covering scenarios such as lost cards, billing disputes, failed transfers, customer complaints, and suspected fraud. The recordings are in dual-channel audio, with one channel for the customer service representative and the other for the customer. This is a common recording method used in customer service centers. The recordings do not contain any real customer information.
+- **It's real speech-to-text, and you can switch the engine.** By default, the Whisper model is run locally, representing the on-premises side. You can also switch to a speech service in OpenAI API format, or directly read a pre-prepared transcript. The system identifies who is speaking based on the audio channel. When set to "Local Only," the service refuses to start as soon as a cloud address is detected.
+- **Customer service staff's workstation.** The transcript appears in real time as the call progresses. Alongside it are customer details with personal information redacted, knowledge base suggestions updated based on the conversation, and draft responses. The draft is read to the customer by the customer service representative themselves; the AI does not respond directly to the customer. You can also make live calls using your browser's microphone.
+- **Post-call summary and quality check.** After the call ends, the AI first writes a summary. The summary will only be entered into the customer record after the customer service representative has revised and confirmed it. Personal data will be redacted again before it is entered. Quality control scores each item according to the scoring rubric. If serious issues are identified, they are automatically forwarded to the supervisor.
+- **Admin** 12-page admin dashboard, including the Quality Control Center (comparing AI and human scores), critical to-do items, peak capacity (comparing underestimation and overestimation of resources), and costs and benchmarks.
+
+Test results: The word error rate of the local Whisper is approximately 14%. The identification of speakers, classification of incoming calls, and assessment of serious issues were all accurate, and the full card number did not appear in the summary.
 
 **Phase 2 | Framework design.** Voice and text workloads are counted in different units. I converted both into one unit cost: the service cost per call.
 
@@ -54,4 +62,4 @@ I built the prototype for the Customer Service Assistant. The cost-benefit work 
 
 Once the vendor's updated estimate arrives, confirm the resources and finish the Customer Service Assistant's baseline.
 
-Back to the parent project: [The Four Major AI Agents](project.html?id=agent-cost-roi).
+Back to the parent project: [The Four Major AI Agents](project.html?id=agent-cost-roi) 。
