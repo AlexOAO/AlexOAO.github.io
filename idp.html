@@ -179,7 +179,9 @@
         h7: '我的工作方式', updated: '最後更新', level: '第 {n} 層', loadError: '內容載入失敗。可能是網路過濾設備封鎖了本站。' },
     };
     const T = k => I18N[Site.getLang()][k];
-    const chips = l => (l || []).length ? `<div class="chips">${l.map(([t, h]) => `<a href="${esc(h)}">${esc(t)} →</a>`).join('')}</div>` : '';
+    // Evidence links: {text, href} (older data used [text, href] pairs).
+    const link = x => Array.isArray(x) ? { text: x[0], href: x[1] } : x;
+    const chips = l => (l || []).length ? `<div class="chips">${l.map(link).map(x => `<a href="${esc(x.href)}">${esc(x.text)} →</a>`).join('')}</div>` : '';
     const ul = l => `<ul>${l.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
     const head = (q, h) => `<p class="q">${esc(q)}</p><h2 style="margin-top:0.2rem">${esc(h)}</h2>`;
 
@@ -286,7 +288,7 @@
           ${head('5 · ' + T('q5'), T('h5'))}<div class="cy">${cy}</div><p class="loop">${esc(T('loop'))}</p>
           ${head('6 · ' + T('q6'), T('h6'))}<div class="ms">${d.measures.map(m => `<div class="box"><b>${esc(m.name)}</b><span>${esc(m.what)}</span></div>`).join('')}</div>
           <p class="rm-k k-out">${esc(T('check'))}</p><ul class="ck">${d.checklist.map(x => `<li>${esc(x)}</li>`).join('')}</ul><p class="lead2">${esc(d.review)}</p>
-          <h2>${esc(T('h7'))}</h2><div class="traits">${d.traits.map(([a, b]) => `<div class="box"><b>${esc(a)}</b>${esc(b)}</div>`).join('')}</div>
+          <h2>${esc(T('h7'))}</h2><div class="traits">${d.traits.map(t => Array.isArray(t) ? { name: t[0], desc: t[1] } : t).map(t => `<div class="box"><b>${esc(t.name)}</b>${esc(t.desc)}</div>`).join('')}</div>
           <p class="updated">${esc(T('updated'))}：${esc(d.updated)}</p>`;
       }).catch(e => { console.error(e); document.getElementById('idp').innerHTML = `<p class="error">${esc(T('loadError'))}</p>`; });
     }

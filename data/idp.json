@@ -113,14 +113,14 @@
    "when": "已具備",
    "state": "done",
    "proof": [
-    [
-     "四大 Agent 原型",
-     "project.html?id=agent-cost-roi"
-    ],
-    [
-     "RAG 智能客服",
-     "project.html?id=rag-support-bot"
-    ]
+    {
+     "text": "四大 Agent 原型",
+     "href": "project.html?id=agent-cost-roi"
+    },
+    {
+     "text": "RAG 智能客服",
+     "href": "project.html?id=rag-support-bot"
+    }
    ]
   },
   {
@@ -130,14 +130,14 @@
    "when": "現在｜0–12 個月",
    "state": "now",
    "proof": [
-    [
-     "成本效益框架",
-     "project.html?id=agent-cost-roi"
-    ],
-    [
-     "Guardrails PoC",
-     "project.html?id=guardrails-poc"
-    ]
+    {
+     "text": "成本效益框架",
+     "href": "project.html?id=agent-cost-roi"
+    },
+    {
+     "text": "Guardrails PoC",
+     "href": "project.html?id=guardrails-poc"
+    }
    ]
   },
   {
@@ -157,14 +157,14 @@
    "target": 3,
    "importance": 3.0,
    "evidence": [
-    [
-     "碩士論文",
-     "project.html?id=thesis-rag-panel"
-    ],
-    [
-     "Vibe-Edge",
-     "project.html?id=vibe-edge"
-    ]
+    {
+     "text": "碩士論文",
+     "href": "project.html?id=thesis-rag-panel"
+    },
+    {
+     "text": "Vibe-Edge",
+     "href": "project.html?id=vibe-edge"
+    }
    ]
   },
   {
@@ -174,10 +174,10 @@
    "target": 4,
    "importance": 4.6,
    "evidence": [
-    [
-     "四大 Agent 客戶旅程",
-     "project.html?id=agent-cost-roi"
-    ]
+    {
+     "text": "四大 Agent 客戶旅程",
+     "href": "project.html?id=agent-cost-roi"
+    }
    ]
   },
   {
@@ -187,14 +187,14 @@
    "target": 3,
    "importance": 2.4,
    "evidence": [
-    [
-     "FinCLI",
-     "project.html?id=fincli"
-    ],
-    [
-     "法說會事件研究",
-     "project.html?id=openstrategy"
-    ]
+    {
+     "text": "FinCLI",
+     "href": "project.html?id=fincli"
+    },
+    {
+     "text": "法說會事件研究",
+     "href": "project.html?id=openstrategy"
+    }
    ]
   },
   {
@@ -204,14 +204,14 @@
    "target": 3,
    "importance": 3.2,
    "evidence": [
-    [
-     "FinLLM 評測",
-     "project.html?id=finllm"
-    ],
-    [
-     "RAG 智能客服",
-     "project.html?id=rag-support-bot"
-    ]
+    {
+     "text": "FinLLM 評測",
+     "href": "project.html?id=finllm"
+    },
+    {
+     "text": "RAG 智能客服",
+     "href": "project.html?id=rag-support-bot"
+    }
    ]
   },
   {
@@ -221,14 +221,14 @@
    "target": 4,
    "importance": 4.0,
    "evidence": [
-    [
-     "智富管家原型",
-     "project.html?id=agent-wealth-assistant"
-    ],
-    [
-     "FinJourney",
-     "project.html?id=finjourney"
-    ]
+    {
+     "text": "智富管家原型",
+     "href": "project.html?id=agent-wealth-assistant"
+    },
+    {
+     "text": "FinJourney",
+     "href": "project.html?id=finjourney"
+    }
    ]
   },
   {
@@ -238,10 +238,10 @@
    "target": 4,
    "importance": 5.0,
    "evidence": [
-    [
-     "成本效益框架",
-     "project.html?id=agent-cost-roi"
-    ]
+    {
+     "text": "成本效益框架",
+     "href": "project.html?id=agent-cost-roi"
+    }
    ]
   },
   {
@@ -251,14 +251,14 @@
    "target": 4,
    "importance": 4.3,
    "evidence": [
-    [
-     "上線前檢核機制",
-     "project.html?id=agent-governance"
-    ],
-    [
-     "Guardrails PoC",
-     "project.html?id=guardrails-poc"
-    ]
+    {
+     "text": "上線前檢核機制",
+     "href": "project.html?id=agent-governance"
+    },
+    {
+     "text": "Guardrails PoC",
+     "href": "project.html?id=guardrails-poc"
+    }
    ]
   },
   {
@@ -268,10 +268,10 @@
    "target": 4,
    "importance": 4.8,
    "evidence": [
-    [
-     "平台選型評測",
-     "project.html?id=agentic-platform-eval"
-    ]
+    {
+     "text": "平台選型評測",
+     "href": "project.html?id=agentic-platform-eval"
+    }
    ]
   }
  ],
@@ -448,42 +448,42 @@
   {
    "name": "找問題",
    "state": "done",
-   "proof": [
-    "四大 Agent",
-    "project.html?id=agent-cost-roi"
-   ]
+   "proof": {
+    "text": "四大 Agent",
+    "href": "project.html?id=agent-cost-roi"
+   }
   },
   {
    "name": "對旅程",
    "state": "done",
-   "proof": [
-    "客戶旅程",
-    "project.html?id=agent-cost-roi"
-   ]
+   "proof": {
+    "text": "客戶旅程",
+    "href": "project.html?id=agent-cost-roi"
+   }
   },
   {
    "name": "盤點可重用",
    "state": "done",
-   "proof": [
-    "平台選型",
-    "project.html?id=agentic-platform-eval"
-   ]
+   "proof": {
+    "text": "平台選型",
+    "href": "project.html?id=agentic-platform-eval"
+   }
   },
   {
    "name": "小規模試行",
    "state": "done",
-   "proof": [
-    "Guardrails PoC",
-    "project.html?id=guardrails-poc"
-   ]
+   "proof": {
+    "text": "Guardrails PoC",
+    "href": "project.html?id=guardrails-poc"
+   }
   },
   {
    "name": "整理證據",
    "state": "now",
-   "proof": [
-    "Guardrails 評估",
-    "project.html?id=guardrails-poc"
-   ]
+   "proof": {
+    "text": "Guardrails 評估",
+    "href": "project.html?id=guardrails-poc"
+   }
   },
   {
    "name": "投資關卡",
@@ -494,18 +494,18 @@
   {
    "name": "建能力",
    "state": "done",
-   "proof": [
-    "FinJourney",
-    "project.html?id=finjourney"
-   ]
+   "proof": {
+    "text": "FinJourney",
+    "href": "project.html?id=finjourney"
+   }
   },
   {
    "name": "追成效",
    "state": "now",
-   "proof": [
-    "AI 營運成效",
-    "project.html?id=ai-ops-dashboard"
-   ]
+   "proof": {
+    "text": "AI 營運成效",
+    "href": "project.html?id=ai-ops-dashboard"
+   }
   }
  ],
  "states": {
@@ -547,38 +547,38 @@
  ],
  "review": "每月檢視成效，每季檢視投資，每年更新這份計畫。",
  "traits": [
-  [
-   "對業務好奇",
-   "主動理解業務，不等需求"
-  ],
-  [
-   "拆解問題",
-   "把模糊問題拆成可驗證的問題"
-  ],
-  [
-   "對技術好奇",
-   "主動探索新的 AI 能力"
-  ],
-  [
-   "用證據說話",
-   "用資料，而不是感覺"
-  ],
-  [
-   "跨部門合作",
-   "能和業務、IT、資料、資安一起工作"
-  ],
-  [
-   "為價值負責",
-   "上線不是終點"
-  ],
-  [
-   "挑戰現狀",
-   "敢問「為什麼一直這樣做」"
-  ],
-  [
-   "務實",
-   "知道什麼時候不該用 AI"
-  ]
+  {
+   "name": "對業務好奇",
+   "desc": "主動理解業務，不等需求"
+  },
+  {
+   "name": "拆解問題",
+   "desc": "把模糊問題拆成可驗證的問題"
+  },
+  {
+   "name": "對技術好奇",
+   "desc": "主動探索新的 AI 能力"
+  },
+  {
+   "name": "用證據說話",
+   "desc": "用資料，而不是感覺"
+  },
+  {
+   "name": "跨部門合作",
+   "desc": "能和業務、IT、資料、資安一起工作"
+  },
+  {
+   "name": "為價值負責",
+   "desc": "上線不是終點"
+  },
+  {
+   "name": "挑戰現狀",
+   "desc": "敢問「為什麼一直這樣做」"
+  },
+  {
+   "name": "務實",
+   "desc": "知道什麼時候不該用 AI"
+  }
  ],
  "selfNote": "職能程度、目標與重要性為自評。"
 }

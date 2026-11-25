@@ -113,14 +113,14 @@
       "when": "Done",
       "state": "done",
       "proof": [
-        [
-          "Four Agent prototypes",
-          "project.html?id=agent-cost-roi"
-        ],
-        [
-          "RAG support bot",
-          "project.html?id=rag-support-bot"
-        ]
+        {
+          "text": "Four Agent prototypes",
+          "href": "project.html?id=agent-cost-roi"
+        },
+        {
+          "text": "RAG support bot",
+          "href": "project.html?id=rag-support-bot"
+        }
       ]
     },
     {
@@ -130,14 +130,14 @@
       "when": "Now | months 0–12",
       "state": "now",
       "proof": [
-        [
-          "Cost-benefit framework",
-          "project.html?id=agent-cost-roi"
-        ],
-        [
-          "Guardrails PoC",
-          "project.html?id=guardrails-poc"
-        ]
+        {
+          "text": "Cost-benefit framework",
+          "href": "project.html?id=agent-cost-roi"
+        },
+        {
+          "text": "Guardrails PoC",
+          "href": "project.html?id=guardrails-poc"
+        }
       ]
     },
     {
@@ -157,14 +157,14 @@
       "target": 3,
       "importance": 3.0,
       "evidence": [
-        [
-          "Master's thesis",
-          "project.html?id=thesis-rag-panel"
-        ],
-        [
-          "Vibe-Edge",
-          "project.html?id=vibe-edge"
-        ]
+        {
+          "text": "Master's thesis",
+          "href": "project.html?id=thesis-rag-panel"
+        },
+        {
+          "text": "Vibe-Edge",
+          "href": "project.html?id=vibe-edge"
+        }
       ]
     },
     {
@@ -174,10 +174,10 @@
       "target": 4,
       "importance": 4.6,
       "evidence": [
-        [
-          "Four Agents' customer journey",
-          "project.html?id=agent-cost-roi"
-        ]
+        {
+          "text": "Four Agents' customer journey",
+          "href": "project.html?id=agent-cost-roi"
+        }
       ]
     },
     {
@@ -187,14 +187,14 @@
       "target": 3,
       "importance": 2.4,
       "evidence": [
-        [
-          "FinCLI",
-          "project.html?id=fincli"
-        ],
-        [
-          "Earnings-call study",
-          "project.html?id=openstrategy"
-        ]
+        {
+          "text": "FinCLI",
+          "href": "project.html?id=fincli"
+        },
+        {
+          "text": "Earnings-call study",
+          "href": "project.html?id=openstrategy"
+        }
       ]
     },
     {
@@ -204,14 +204,14 @@
       "target": 3,
       "importance": 3.2,
       "evidence": [
-        [
-          "FinLLM evaluation",
-          "project.html?id=finllm"
-        ],
-        [
-          "RAG support bot",
-          "project.html?id=rag-support-bot"
-        ]
+        {
+          "text": "FinLLM evaluation",
+          "href": "project.html?id=finllm"
+        },
+        {
+          "text": "RAG support bot",
+          "href": "project.html?id=rag-support-bot"
+        }
       ]
     },
     {
@@ -221,14 +221,14 @@
       "target": 4,
       "importance": 4.0,
       "evidence": [
-        [
-          "Wealth Assistant prototype",
-          "project.html?id=agent-wealth-assistant"
-        ],
-        [
-          "FinJourney",
-          "project.html?id=finjourney"
-        ]
+        {
+          "text": "Wealth Assistant prototype",
+          "href": "project.html?id=agent-wealth-assistant"
+        },
+        {
+          "text": "FinJourney",
+          "href": "project.html?id=finjourney"
+        }
       ]
     },
     {
@@ -238,10 +238,10 @@
       "target": 4,
       "importance": 5.0,
       "evidence": [
-        [
-          "Cost-benefit framework",
-          "project.html?id=agent-cost-roi"
-        ]
+        {
+          "text": "Cost-benefit framework",
+          "href": "project.html?id=agent-cost-roi"
+        }
       ]
     },
     {
@@ -251,14 +251,14 @@
       "target": 4,
       "importance": 4.3,
       "evidence": [
-        [
-          "Pre-launch checks",
-          "project.html?id=agent-governance"
-        ],
-        [
-          "Guardrails PoC",
-          "project.html?id=guardrails-poc"
-        ]
+        {
+          "text": "Pre-launch checks",
+          "href": "project.html?id=agent-governance"
+        },
+        {
+          "text": "Guardrails PoC",
+          "href": "project.html?id=guardrails-poc"
+        }
       ]
     },
     {
@@ -268,10 +268,10 @@
       "target": 4,
       "importance": 4.8,
       "evidence": [
-        [
-          "Platform evaluation",
-          "project.html?id=agentic-platform-eval"
-        ]
+        {
+          "text": "Platform evaluation",
+          "href": "project.html?id=agentic-platform-eval"
+        }
       ]
     }
   ],
@@ -448,42 +448,42 @@
     {
       "name": "Find the problem",
       "state": "done",
-      "proof": [
-        "Four Agents",
-        "project.html?id=agent-cost-roi"
-      ]
+      "proof": {
+        "text": "Four Agents",
+        "href": "project.html?id=agent-cost-roi"
+      }
     },
     {
       "name": "Map the journey",
       "state": "done",
-      "proof": [
-        "Customer journey",
-        "project.html?id=agent-cost-roi"
-      ]
+      "proof": {
+        "text": "Customer journey",
+        "href": "project.html?id=agent-cost-roi"
+      }
     },
     {
       "name": "Inventory reuse",
       "state": "done",
-      "proof": [
-        "Platform evaluation",
-        "project.html?id=agentic-platform-eval"
-      ]
+      "proof": {
+        "text": "Platform evaluation",
+        "href": "project.html?id=agentic-platform-eval"
+      }
     },
     {
       "name": "Pilot",
       "state": "done",
-      "proof": [
-        "Guardrails PoC",
-        "project.html?id=guardrails-poc"
-      ]
+      "proof": {
+        "text": "Guardrails PoC",
+        "href": "project.html?id=guardrails-poc"
+      }
     },
     {
       "name": "Gather evidence",
       "state": "now",
-      "proof": [
-        "Guardrails evaluation",
-        "project.html?id=guardrails-poc"
-      ]
+      "proof": {
+        "text": "Guardrails evaluation",
+        "href": "project.html?id=guardrails-poc"
+      }
     },
     {
       "name": "Investment gate",
@@ -494,18 +494,18 @@
     {
       "name": "Build capability",
       "state": "done",
-      "proof": [
-        "FinJourney",
-        "project.html?id=finjourney"
-      ]
+      "proof": {
+        "text": "FinJourney",
+        "href": "project.html?id=finjourney"
+      }
     },
     {
       "name": "Track results",
       "state": "now",
-      "proof": [
-        "AI ops results",
-        "project.html?id=ai-ops-dashboard"
-      ]
+      "proof": {
+        "text": "AI ops results",
+        "href": "project.html?id=ai-ops-dashboard"
+      }
     }
   ],
   "states": {
@@ -547,38 +547,38 @@
   ],
   "review": "Results reviewed monthly, investment quarterly, and this plan updated yearly.",
   "traits": [
-    [
-      "Business curiosity",
-      "Learns the business without waiting for requests"
-    ],
-    [
-      "Problem framing",
-      "Breaks vague problems into testable ones"
-    ],
-    [
-      "Tech curiosity",
-      "Explores new AI capabilities"
-    ],
-    [
-      "Data-driven",
-      "Uses data, not gut feeling"
-    ],
-    [
-      "Cross-functional",
-      "Works with business, IT, data and security"
-    ],
-    [
-      "Value ownership",
-      "Launch is not the finish line"
-    ],
-    [
-      "Challenge the status quo",
-      "Asks why it has always been done this way"
-    ],
-    [
-      "Pragmatism",
-      "Knows when not to use AI"
-    ]
+    {
+      "name": "Business curiosity",
+      "desc": "Learns the business without waiting for requests"
+    },
+    {
+      "name": "Problem framing",
+      "desc": "Breaks vague problems into testable ones"
+    },
+    {
+      "name": "Tech curiosity",
+      "desc": "Explores new AI capabilities"
+    },
+    {
+      "name": "Data-driven",
+      "desc": "Uses data, not gut feeling"
+    },
+    {
+      "name": "Cross-functional",
+      "desc": "Works with business, IT, data and security"
+    },
+    {
+      "name": "Value ownership",
+      "desc": "Launch is not the finish line"
+    },
+    {
+      "name": "Challenge the status quo",
+      "desc": "Asks why it has always been done this way"
+    },
+    {
+      "name": "Pragmatism",
+      "desc": "Knows when not to use AI"
+    }
   ],
   "selfNote": "Levels, targets and importance are self-assessed."
 }

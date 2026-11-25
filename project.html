@@ -239,6 +239,8 @@
     // An AI SDLC stage (id "stage-<key>", or "stage-gov" for the governance band): what the stage is, who takes part,
     // and every project that touches it.
     // Role flow for a stage (data/flows.json): rows of role boxes joined by labelled arrows.
+    // A link between two boxes is {left, right} (older data used a [left, right] pair).
+    const linkLabels = l => !l ? [] : Array.isArray(l) ? l : [l.left, l.right].filter(t => t);
     // A row with "links" joins its boxes with two-way labels (links[i] sits between box i and i + 1).
     // Box tags: "vendor" (outsourced), "ai" (a role AI projects add), "gate" (a checkpoint), "me" (where I work).
     // Boxes name a role ("key" in data/roles.json): the box shows the role and its one-line definition, links to
@@ -256,7 +258,7 @@
         : r.split
         ? `<div class="flow-split">${r.split.map(t => t ? `<div class="flow-arrow"><em>${esc(t)}</em></div>` : '<div></div>').join('')}</div>`
         : `<div class="flow-row ${r.links ? 'chain' : ''}">${r.boxes.map((b, i) =>
-            (i && r.links ? `<div class="flow-link">${(r.links[i - 1] || []).map(t => `<span>${esc(t)}</span>`).join('')}</div>` : '') + box(b)).join('')}</div>`).join('');
+            (i && r.links ? `<div class="flow-link">${linkLabels(r.links[i - 1]).map(t => `<span>${esc(t)}</span>`).join('')}</div>` : '') + box(b)).join('')}</div>`).join('');
       const legend = [['vendor', '#f9a8d4', 'flowVendor'], ['ai', '#a78bfa', 'flowAi'], ['gate', '#fbbf24', 'flowGate'], ['me', '#34d399', 'flowMe']]
         .filter(([tag]) => rows.some(r => (r.boxes || []).some(b => b.tag === tag)))
         .map(([, c, k]) => `<span><i style="border-color:${c};background:color-mix(in srgb, ${c} 25%, transparent)"></i>${esc(T(k))}</span>`).join('');

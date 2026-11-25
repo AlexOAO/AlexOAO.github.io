@@ -16,14 +16,14 @@
         }
       ],
       "links": [
-        [
-          "← Budget",
-          "Report →"
-        ],
-        [
-          "Strategy →",
-          "← Goals"
-        ]
+        {
+          "left": "← Budget",
+          "right": "Report →"
+        },
+        {
+          "left": "Strategy →",
+          "right": "← Goals"
+        }
       ]
     },
     {
@@ -52,14 +52,14 @@
         }
       ],
       "links": [
-        [
-          "Scenario →",
-          "← Limits"
-        ],
-        [
-          "Specs →",
-          "← UX"
-        ]
+        {
+          "left": "Scenario →",
+          "right": "← Limits"
+        },
+        {
+          "left": "Specs →",
+          "right": "← UX"
+        }
       ]
     },
     {
