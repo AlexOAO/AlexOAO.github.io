@@ -8,7 +8,7 @@ const ConceptModel = (() => {
   const css = `
   .cmod { margin: 2.2rem 0 2.4rem; }
   .cmod-k { font-size: 0.75rem; letter-spacing: 0.1em; color: #60a5fa; font-weight: 700; margin: 0 0 0.2rem !important; }
-  .cmod h2.cmod-t { margin: 0.1rem 0 0.4rem !important; font-size: 1.35rem; }
+  .cmod h2.cmod-t, .cmod .cmod-t { margin: 0.1rem 0 0.4rem !important; font-size: 1.35rem; font-weight: 800; color: #f1f5f9; }
   .cmod-sub { color: #94a3b8; margin: 0 0 1rem !important; line-height: 1.7; }
   .cmod-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 1.2rem; align-items: center; }
   .cmod-fig { border-radius: 14px; background: #0f172a; border: 1px solid rgba(148,163,184,0.16); padding: 0.6rem; }
@@ -30,6 +30,23 @@ const ConceptModel = (() => {
   .cmod-x { background: none; border: 0; color: #94a3b8; font-size: 1.5rem; line-height: 1; cursor: pointer; padding: 0.2rem 0.4rem; }
   .cmod-db { padding: 0 1.3rem 1.2rem; } .cmod-db ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.5rem; }
   .cmod-db li { padding: 0.6rem 0.8rem; border-radius: 10px; background: #0b1426; border-left: 3px solid var(--c); line-height: 1.6; font-size: 0.95rem; }
+  /* Side column: the model sits beside the article (sticky on wide screens, above it on narrow ones). */
+  .cmod-wrap { max-width: 720px; margin: 0 auto; }
+  .cmod-side { margin: 0 1.5rem 1.2rem; padding: 1rem; border: 1px solid rgba(148,163,184,0.18); border-radius: 16px; background: #0f172a; }
+  .cmod-side .cmod { margin: 0; }
+  .cmod-side .cmod-t { font-size: 1.1rem; }
+  .cmod-side .cmod-sub { font-size: 0.85rem; margin-bottom: 0.7rem !important; }
+  .cmod-side .cmod-grid { grid-template-columns: minmax(0, 1fr); gap: 0.7rem; }
+  .cmod-side .cmod-fig { padding: 0.3rem; }
+  .cmod-side .cmod-btns { grid-template-columns: minmax(0, 1fr); gap: 0.35rem; }
+  .cmod-side .cmod-btns button { padding: 0.45rem 0.65rem; }
+  .cmod-side .cmod-btns b { font-size: 0.86rem; } .cmod-side .cmod-btns span { font-size: 0.74rem; }
+  @media (min-width: 1180px) {
+    .cmod-wrap { max-width: 1140px; display: grid; grid-template-columns: 340px minmax(0, 720px); gap: 44px; align-items: start; }
+    .cmod-side { position: sticky; top: 1.5rem; margin: 3.5rem 0 0; max-height: calc(100vh - 3rem); overflow: auto; }
+    .cmod-wrap > article.post { margin: 0; }
+  }
+  @media (min-width: 761px) and (max-width: 1179px) { .cmod-side .cmod-grid { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); } }
   @media (max-width: 760px) { .cmod-grid { grid-template-columns: minmax(0, 1fr); } .cmod-btns { grid-template-columns: minmax(0, 1fr); } }`;
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const PAL = ['#2563eb', '#0891b2', '#7c3aed', '#d97706', '#16a34a', '#db2777'];
@@ -202,5 +219,19 @@ const ConceptModel = (() => {
     });
   }
 
-  return { html, bind, types: Object.keys(draw) };
+  // Put the model in a column beside the article and wire it up. Safe to call again (re-render, language switch).
+  function mountSide(article, m, opt = {}) {
+    if (!article) return;
+    let wrap = article.parentNode.classList.contains('cmod-wrap') ? article.parentNode : null;
+    if (wrap) wrap.querySelectorAll(':scope > .cmod-side').forEach(x => x.remove());
+    if (!m || !draw[m.type]) return;
+    if (!wrap) { wrap = document.createElement('div'); wrap.className = 'cmod-wrap'; article.parentNode.insertBefore(wrap, article); wrap.appendChild(article); }
+    const side = document.createElement('aside');
+    side.className = 'cmod-side';
+    side.innerHTML = html(m, opt).replace('<h2 class="cmod-t">', '<p class="cmod-t h2like">').replace(/<\/h2>/, '</p>');
+    wrap.insertBefore(side, article);
+    bind(m, side, opt);
+  }
+
+  return { html, bind, mountSide, types: Object.keys(draw) };
 })();

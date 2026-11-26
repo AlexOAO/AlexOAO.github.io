@@ -208,7 +208,6 @@
           </header>
           <div class="post-body story">
             ${view.stage ? '' : glancePanel(glances[slug])}
-            ${view.stage || !models[slug] ? '' : ConceptModel.html(models[slug], { kicker: T('cmKicker') })}
             ${view.diagram || ''}
             ${story ? markdown(story) : `<p class="error">${esc(T('noStory'))}</p>`}
             ${view.kids.length ? `<h2>${esc(view.kidsTitle || T('kids'))}</h2><div class="kids">${kidLinks}</div>` : ''}
@@ -218,7 +217,7 @@
         const link = (x, cls, label) => x ? `<a class="${cls}" href="${href(x)}">${cls === 'prev' ? '← ' : ''}${esc(label)}${colon()}${esc(x.name)}${cls === 'next' ? ' →' : ''}</a>` : '';
         pager.innerHTML = link(list[i - 1], 'prev', T(view.stage ? 'prevStage' : 'prev')) + link(list[i + 1], 'next', T(view.stage ? 'nextStage' : 'nextProj'));
         // Concept model (data/models.json): diagram nodes and buttons open a popup.
-        if (!view.stage && models[slug]) ConceptModel.bind(models[slug], root, { close: T('close') });
+        ConceptModel.mountSide(root, view.stage ? null : models[slug], { kicker: T('cmKicker'), close: T('close') });
       }).catch(() => { root.innerHTML = `<p class="lead error">${esc(T('loadError'))}</p>`; });
     }
 
