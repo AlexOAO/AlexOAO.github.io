@@ -249,27 +249,29 @@ p, li { text-wrap: pretty; }
 .role-back { font-size: 0.8rem; }
 
 /* Before -> After card on project pages: one frame; muted "before", highlighted "now" with proofs; "what I did" below. */
-.ba { margin: 0 0 2.5rem; border: 1px solid var(--line); border-radius: 16px; background: #111a2e; overflow: hidden; }
-/* Two equal halves; the arrow is a round badge sitting exactly on the line between them. */
-.ba-grid { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-.ba-before, .ba-after { padding: 1.1rem 1.6rem 1.2rem; }
-.ba-after { background: #0f2a26; border-left: 1px solid rgba(16,185,129,0.3); }
-.ba-arrow { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 1; width: 2.2rem; height: 2.2rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #34d399; font-size: 1.15rem; background: #0b1120; border: 1px solid rgba(16,185,129,0.45); }
-.post-body .ba-k { margin: 0 0 0.45rem; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; color: #94a3b8; display: flex; align-items: center; gap: 0.5rem; }
-.ba-after .ba-k { color: #6ee7b7; }
-.ba-status { font-size: 0.68rem; letter-spacing: 0; padding: 0.05rem 0.45rem; border-radius: 6px; color: #fbbf24; border: 1px solid rgba(251,191,36,0.45); font-weight: 600; }
-.post-body .ba-v { margin: 0; font-size: 1.02rem; line-height: 1.7; }
-.ba-before .ba-v { color: #94a3b8; }
-.ba-after .ba-v { color: #f0fdf4; font-weight: 500; }
-.ba-proofs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 0.9rem; }
-.ba-proof b { display: block; font-family: var(--display); font-size: 1.45rem; line-height: 1.15; color: #6ee7b7; }
-.ba-proof span { display: block; font-size: 0.8rem; color: #a7f3d0; opacity: 0.85; margin-top: 0.2rem; }
-.ba-did { display: flex; gap: 0.75rem; align-items: baseline; padding: 0.75rem 1.2rem; border-top: 1px solid var(--line); font-size: 0.92rem; color: #e2e8f0; }
-.post-body .ba-did .ba-k { margin: 0; white-space: nowrap; }
+/* Before -> After card, bright style: solid rounded blocks with white text (like the IDP growth steps).
+   Before is slate, now is green, "what I did" is a blue strip; the arrow badge sits in the gap between the blocks. */
+.ba { margin: 0 0 2.5rem; display: grid; gap: 0.7rem; }
+.ba-grid { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.9rem; }
+.ba-before, .ba-after { padding: 1.15rem 1.4rem 1.3rem; border-radius: 16px; }
+.ba-before { background: #64748b; }
+.ba-after { background: #15803d; box-shadow: 0 10px 30px -16px rgba(22,163,74,0.8); }
+.ba-arrow { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 1; width: 2.3rem; height: 2.3rem; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-size: 1.15rem; font-weight: 800; color: #15803d; background: #f8fafc; box-shadow: 0 4px 14px rgba(0,0,0,0.35); }
+.post-body .ba-k { margin: 0 0 0.45rem; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.06em; color: rgba(255,255,255,0.82); display: flex; align-items: center; gap: 0.5rem; }
+.ba-status { font-size: 0.7rem; letter-spacing: 0; padding: 0.05rem 0.5rem; border-radius: 6px; color: #14532d; background: #fde68a; font-weight: 800; }
+.post-body .ba-v { margin: 0; font-size: 1.05rem; line-height: 1.7; color: #fff; }
+.ba-before .ba-v { font-weight: 500; color: #f1f5f9; }
+.ba-after .ba-v { font-weight: 700; }
+.ba-proofs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; margin-top: 0.9rem; }
+.ba-proof { padding: 0.55rem 0.7rem; border-radius: 10px; background: rgba(255,255,255,0.16); }
+.ba-proof b { display: block; font-family: var(--display); font-size: 1.45rem; line-height: 1.15; color: #fff; }
+.ba-proof span { display: block; font-size: 0.8rem; color: #dcfce7; margin-top: 0.2rem; line-height: 1.45; }
+.ba-did { display: flex; gap: 0.75rem; align-items: baseline; padding: 0.75rem 1.4rem; border-radius: 14px; background: #2563eb; font-size: 0.95rem; color: #fff; font-weight: 600; }
+.post-body .ba-did .ba-k { margin: 0; white-space: nowrap; color: rgba(255,255,255,0.8); }
 @media (max-width: 640px) {
-  .ba-grid { grid-template-columns: minmax(0, 1fr); }
-  .ba-arrow { position: relative; left: auto; top: auto; transform: rotate(90deg); margin: -1.1rem auto; }
-  .ba-after { border-left: 0; }
+  .ba-grid { grid-template-columns: minmax(0, 1fr); gap: 0.5rem; }
+  .ba-arrow { position: relative; left: auto; top: auto; transform: rotate(90deg); margin: -0.9rem auto; }
   .ba-did { flex-direction: column; gap: 0.2rem; }
 }
 
