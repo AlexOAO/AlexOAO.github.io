@@ -34,12 +34,14 @@
       height: 100vh;
       height: 100svh;
       display: block;
-      touch-action: manipulation; /* no double-tap zoom: double-tap means replay */
+      touch-action: none; /* dragging turns the ring; no scroll or double-tap zoom */
       user-select: none;
       -webkit-user-select: none;
       -webkit-tap-highlight-color: transparent;
-      cursor: pointer;
+      cursor: grab;
     }
+    canvas.on-gem { cursor: pointer; }
+    canvas.dragging { cursor: grabbing; }
     .sr-only {
       position: absolute;
       width: 1px; height: 1px;
@@ -89,6 +91,9 @@
       .hud, .hint { font-size: 10px; }
       .hint { bottom: 30px; } /* stack above the HUD on narrow screens */
     }
+    @media (max-width: 980px) {
+      .hint { bottom: 30px; } /* the longer control hint needs its own line sooner */
+    }
   </style>
 </head>
 <body>
@@ -125,7 +130,7 @@
   const CAM_D = 3;
   const PIVOT = 0.06;
   const TILT = 0.1;
-  const ct = Math.cos(TILT), st = Math.sin(TILT);
+  let ct = Math.cos(TILT), st = Math.sin(TILT); // follows TILT + the dragged pitch, set per frame
   const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
   const norm3 = (x, y, z) => { const l = Math.hypot(x, y, z); return [x / l, y / l, z / l]; };
   const [LX, LY, LZ] = norm3(-0.42, 0.62, 0.66);     // key light, upper left front
@@ -401,6 +406,12 @@
   // ---------- Projection + z-buffered splat ----------
   let t = T_START, skyT = 0, rot = 0, scint = 0;
   let projX = 0, projY = 0;
+
+  // Interaction: dragged yaw (keeps its momentum) and pitch (springs back), plus a light at the pointer.
+  let userYaw = 0, userYawV = 0, userPitch = 0, userPitchV = 0, dragging = false;
+  let ptrA = 0, ptrOn = 0, ptrSX = 0, ptrSY = 0;           // pointer light strength, target, screen position
+  let PLX = 0, PLY = 0, PLZ = 1, PHX = 0, PHY = 0, PHZ = 1; // its direction and Blinn half vector (view space)
+  let burstGem = 0;                                        // extra facet brightness from a tap starburst
   const rotAt = tt => {
     const a = tt - T.SPIN;
     if (a <= 0) return 0;
@@ -441,8 +452,14 @@
         let s1 = rx * LX + ry * LY + rz * LZ; s1 = s1 > 0 ? s1 : 0; s1 *= s1; s1 *= s1; s1 *= s1;
         let s2 = rx * L2X + ry * L2Y + rz * L2Z; s2 = s2 > 0 ? s2 : 0; s2 *= s2; s2 *= s2; s2 *= s2;
         let s3 = ry > 0 ? ry : 0; s3 *= s3; s3 *= s3;
+        // Pointer light: facets that mirror the pointer take over from the fixed lights.
+        let s4 = 0;
+        if (ptrA > 0.01) {
+          let q = rx * PLX + ry * PLY + rz * PLZ; q = q > 0 ? q * q : 0;
+          s4 = q * q; s4 *= s4; s4 = (s4 + 0.22 * q) * ptrA;           // sharp ^8 flash on a soft ^2 sheen
+        }
         const sc = 0.5 + 0.5 * Math.sin(nx * 11 + ny2 * 7 + nz2 * 5 + scint);
-        b = 0.2 + 0.2 * lam + 1.1 * (s1 > s2 ? s1 : s2) + 0.3 * s3 + 0.28 * sc * sc + aux;
+        b = 0.2 + 0.2 * lam + 1.1 * (s1 > s2 ? s1 : s2) * (1 - 0.6 * ptrA) + 1.4 * s4 + 0.3 * s3 + 0.28 * sc * sc + aux;
         if (b > 1) b = 1;
         cc = b > 0.93 ? C_STAR : C_RAMP[1 + ((b * 7.99) | 0)];
       } else {
@@ -450,10 +467,12 @@
         h1 *= h1; h1 *= h1; h1 *= h1; h1 *= h1; h1 *= h1;           // ^32
         let h2 = nx * H2X + ny2 * H2Y + nz2 * H2Z; h2 = h2 > 0 ? h2 : 0;
         h2 *= h2; h2 *= h2; h2 *= h2; h2 *= h2; h2 *= h2;
+        let h3 = 0;
+        if (ptrA > 0.01) { h3 = nx * PHX + ny2 * PHY + nz2 * PHZ; h3 = h3 > 0 ? h3 : 0; h3 *= h3; h3 *= h3; h3 *= h3; h3 *= h3; h3 *= ptrA; }
         let rim = 1 - (nz2 < 0 ? -nz2 : nz2); rim = rim * rim * rim;  // bright silhouette edges
         let dd = (z2 + 0.6) / 1.2;
         dd = 0.6 + 0.4 * (dd < 0 ? 0 : dd > 1 ? 1 : dd);
-        b = (0.16 + 0.5 * lam) * dd + 0.95 * h1 + 0.55 * h2 + 0.38 * rim;
+        b = (0.16 + 0.5 * lam) * dd + 0.95 * h1 + 0.55 * h2 + 0.7 * h3 + 0.38 * rim;
         if (k === K_REFL) { b *= aux; cc = C_RAMP[b > 0.44 ? 4 : ((b * 9) | 0)]; }
         else { if (b > 1) b = 1; cc = C_RAMP[2 + ((b * 6.99) | 0)]; }
         if (b > 1) b = 1;
@@ -464,8 +483,17 @@
   }
 
   function buildScene() {
-    rot = reduced ? 0.5 + 0.18 * skyT : rotAt(t);
+    rot = (reduced ? 0.5 + 0.18 * skyT : rotAt(t)) + userYaw;
     const cr = Math.cos(rot), sr = Math.sin(rot);
+    const tl = TILT + userPitch;
+    ct = Math.cos(tl); st = Math.sin(tl);
+    // Light from the pointer, placed in front of the screen where it points, relative to the stone.
+    if (ptrA > 0.01) {
+      project(0, YG, 0);
+      const lx = clamp((ptrSX - projX) / S, -1.5, 1.5), ly = clamp((projY - ptrSY) / S, -1.5, 1.5);
+      [PLX, PLY, PLZ] = norm3(lx * 1.6, ly * 1.6, 1);
+      [PHX, PHY, PHZ] = norm3(PLX, PLY, PLZ + 1);
+    }
     scint = (reduced ? skyT * 0.5 : t) * 2.3;
     stamp++; nT = 0;
 
@@ -492,7 +520,7 @@
         continue;
       }
       const nx = NX[i] * cr + NZ[i] * sr, nz = NZ[i] * cr - NX[i] * sr, ny = NY[i];
-      splat(tx, ty, tz, nx, ny, nz, k, PP[i], k === K_GEM ? flash : 0);
+      splat(tx, ty, tz, nx, ny, nz, k, PP[i], k === K_GEM ? flash + burstGem : 0);
       if (REFL[i]) {
         const yr = 2 * FLOOR - ty, d = 1 - (FLOOR - yr) / REFL_D;
         splat(tx, yr, tz, nx, -ny, nz, K_REFL, P_REFL, 0.2 * d * d);
@@ -583,6 +611,11 @@
         const c = touched[(Math.random() * nT) | 0], k = ckind[c];
         if ((k !== K_GEM && k !== K_BAND && k !== K_PRONG) || clb[c] < (k === K_GEM ? 0.8 : 0.72)) continue;
         const row = (c / cols) | 0;
+        // With the pointer light on, glints gather near the pointer.
+        if (ptrA > 0.05) {
+          const d = Math.hypot((c - row * cols + 0.5) * cw - ptrSX, (row + 0.5) * ch - ptrSY);
+          if (Math.random() < ptrA * 0.85 * Math.min(1, d / (S * 0.5))) continue;
+        }
         gX[slot] = c - row * cols; gY[slot] = row;
         gB[slot] = skyT; gL[slot] = 0.35 + Math.random() * 0.5;
         gS[slot] = (k === K_GEM ? 6 : 3) + Math.random() * 5;
@@ -653,6 +686,70 @@
     ctx.globalAlpha = 1;
   }
 
+  // Tap starburst: rays shoot out of the stone and a spray of sparkles flies off, on its own clock
+  // (fxT keeps running while paused, so a tap still plays out).
+  const BURST_DUR = reduced ? 1.8 : 1.15;
+  const SPN = reduced ? 8 : 22;
+  const spA = new Float32Array(SPN), spV = new Float32Array(SPN), spD = new Float32Array(SPN), spC = new Uint8Array(SPN);
+  const RAYS = [[1, 0, '-', 1], [-1, 0, '-', 1], [0, 1, '|', 0.62], [0, -1, '|', 0.62],
+                [0.71, -0.71, '/', 0.55], [-0.71, 0.71, '/', 0.55], [0.71, 0.71, '\\', 0.55], [-0.71, -0.71, '\\', 0.55]];
+  let fxT = 0, burstT = -1e9;
+  function burst() {
+    burstT = fxT;
+    for (let j = 0; j < SPN; j++) {
+      spA[j] = (j + Math.random() * 0.8) / SPN * 6.2832;
+      spV[j] = 0.35 + Math.random() * 0.75;
+      spD[j] = Math.random() * 0.18;
+      spC[j] = (Math.random() * 3) | 0;
+    }
+    project(0, YG, 0);
+    music('event', 'burst', { x: clamp((projX - ox) / S, -1, 1) });
+  }
+  const SPCH = ['+', '*', '·'];
+  function drawBurst() {
+    const a = (fxT - burstT) / BURST_DUR;
+    if (a < 0 || a >= 1) { burstGem = 0; return; }
+    const peak = reduced ? 0.5 : 1;
+    burstGem = (1 - a) * (1 - a) * (reduced ? 0.2 : 0.65);
+    project(0, YG + HC * 0.5, 0);
+    const cx = projX, cy = projY, e = Math.pow(1 - a, 1.5) * peak;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    // Soft white bloom, growing as it fades.
+    const hs = 1.2 + 2.2 * easeOut(a * 1.6), hw = haloL.width * hs / 2;
+    ctx.globalAlpha = e * 0.9;
+    ctx.drawImage(haloL, cx - hw, cy - hw, hw * 2, hw * 2);
+    ctx.fillStyle = GLINT_COL;
+    // Rays: long across, shorter up and down, shortest on the diagonals; they shoot out, then thin away.
+    const reach = S * (reduced ? 0.55 : 0.95) * easeOut(a * 2.4), step = cw * 0.9;
+    for (const [dx, dy, chr, len] of RAYS) {
+      const n = Math.floor(reach * len / step);
+      for (let j = 1; j <= n; j++) {
+        const f = j / (n + 1);
+        ctx.globalAlpha = e * (1 - f) * (1 - f);
+        ctx.fillText(chr, cx + dx * j * step - cw / 2, cy + dy * j * step - ch / 2);
+        fx++;
+      }
+    }
+    ctx.globalAlpha = e;
+    ctx.fillText('*', cx - cw / 2, cy - ch / 2); fx++;
+    // Sparkles fly outward and twinkle (a steady fade with reduced motion).
+    const sw = haloS.width / 2;
+    for (let j = 0; j < SPN; j++) {
+      const q = clamp((a - spD[j]) / (1 - spD[j]), 0, 1);
+      if (q <= 0 || q >= 1) continue;
+      const r = S * (0.12 + 0.7 * spV[j] * easeOut(q));
+      const px = cx + Math.cos(spA[j]) * r, py = cy + Math.sin(spA[j]) * r * 0.8;
+      const tw = reduced ? 1 : 0.6 + 0.4 * Math.sin(fxT * 30 + j * 2.1);
+      const sa = (1 - q) * tw * peak;
+      ctx.globalAlpha = sa;
+      ctx.drawImage(haloS, px - sw, py - sw);
+      ctx.fillText(SPCH[spC[j]], px - cw / 2, py - ch / 2);
+      fx++;
+    }
+    ctx.restore();
+  }
+
   // Flash + thin halo ring that expands once when the stone locks in.
   function drawFlash() {
     const a = t - T.FLASH;
@@ -718,6 +815,7 @@
     drawSparkles();
     drawFlash();
     drawGlints();
+    drawBurst();
     drawGlow();
   }
 
@@ -736,10 +834,32 @@
 
   function clearGlints() { gOn.fill(0); gAcc = 0; }
 
+  // Drag momentum, the pitch spring and the pointer light run on real time, paused or not.
+  // Returns true while something is still moving, so a paused frame is redrawn.
+  let lastPtr = -1e9, yawStep = 0;
+  function stepInput(dt, now) {
+    if (!dragging) {
+      userYaw += userYawV * dt; userYawV *= Math.exp(-dt * 2.2);
+      userPitchV += (-26 * userPitch - 9 * userPitchV) * dt;   // near-critical spring back to the own tilt
+      userPitch += userPitchV * dt;
+    }
+    // A soft tick every 22.5° the ring is turned by hand (momentum included).
+    const ys = Math.floor(userYaw / (Math.PI / 8));
+    if (ys !== yawStep) { yawStep = ys; music('event', 'turn', { v: Math.abs(userYawV) }); }
+    if (ptrOn && now - lastPtr > 6000 && !dragging) ptrOn = 0;  // an idle pointer lets the light go
+    const pa = ptrA;
+    ptrA += (ptrOn - ptrA) * (1 - Math.exp(-dt * (reduced ? 2.5 : 5)));
+    if (ptrA < 0.005 && !ptrOn) ptrA = 0;
+    return dragging || Math.abs(userYawV) > 0.002 || Math.abs(userPitch) > 0.0005 || Math.abs(userPitchV) > 0.002 ||
+      Math.abs(ptrA - pa) > 0.0005 || fxT - burstT < BURST_DUR + 0.1;
+  }
+
   function frame(now) {
     const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); // no jumps after a hidden tab
     last = now;
     if (needResize) resize();
+    fxT += dt;
+    if (stepInput(dt, now)) dirty = true;
     if (!paused) {
       skyT += dt;
       const t1 = t;
@@ -773,13 +893,69 @@
     if (e.metaKey || e.ctrlKey || e.altKey) return; // leave Cmd/Ctrl+R alone
     if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
     else if (e.key === 'r' || e.key === 'R') replay();
+    else if (e.key === 'Enter') burstNow();
   });
-  // Single tap = pause (decided after 280 ms), two quick taps = replay.
-  let tapTimer = 0;
-  canvas.addEventListener('pointerup', e => {
+  // The stone is there to tap from the moment it lands until the ring falls back to dust.
+  const gemLive = () => reduced || (t > T.GEM + T.GEM_DUR * 0.5 && t < T.FADE + 0.8);
+  function onGem(x, y) {
+    project(0, YG, 0);
+    const r = Math.max(26, RG * S * 1.9);
+    return gemLive() && Math.hypot(x - projX, (y - projY) * 1.15) < r;
+  }
+  function burstNow() { if (gemLive()) { burst(); dirty = true; } }
+
+  // Drag to turn (sideways) and tilt (up/down) with momentum; the pointer is a light for the facets.
+  // A tap on the diamond fires a starburst; two quick taps pause or resume.
+  let downX = 0, downY = 0, prevX = 0, prevY = 0, prevT = 0, pressed = false, moved = false, pid = -1;
+  let lastTapT = -1e9, lastTapX = 0, lastTapY = 0;
+  function pointAt(e) {
+    const rc = canvas.getBoundingClientRect();
+    ptrSX = e.clientX - rc.left; ptrSY = e.clientY - rc.top;
+    lastPtr = performance.now(); ptrOn = 1; dirty = true;
+  }
+  canvas.addEventListener('pointerdown', e => {
     if (e.button > 0) return;
-    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; replay(); }
-    else tapTimer = setTimeout(() => { tapTimer = 0; togglePause(); }, 280);
+    pressed = true; moved = false; pid = e.pointerId;
+    downX = prevX = e.clientX; downY = prevY = e.clientY; prevT = performance.now();
+    pointAt(e);
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (!pressed) {                                  // hovering mouse or pen: move the light only
+      if (e.pointerType === 'touch') return;
+      pointAt(e);
+      const rc = canvas.getBoundingClientRect();
+      canvas.classList.toggle('on-gem', onGem(e.clientX - rc.left, e.clientY - rc.top));
+      return;
+    }
+    if (e.pointerId !== pid) return;
+    pointAt(e);
+    if (!moved && Math.hypot(e.clientX - downX, e.clientY - downY) < 8) return;
+    if (!moved) { moved = true; dragging = true; canvas.classList.add('dragging'); }
+    const now = performance.now(), dtm = Math.max(8, now - prevT) / 1000;
+    const dx = e.clientX - prevX, dy = e.clientY - prevY;
+    prevX = e.clientX; prevY = e.clientY; prevT = now;
+    const spin = dx / Math.max(120, S) * 1.6;
+    userYaw += spin; userYawV = spin / dtm * 0.6;
+    const pt = clamp(userPitch + dy / Math.max(120, S) * 0.9, -0.5, 0.6);
+    userPitchV = (pt - userPitch) / dtm * 0.4; userPitch = pt;
+  });
+  function release(e) {
+    if (!pressed || (e && e.pointerId !== pid)) return;
+    pressed = false; dragging = false; canvas.classList.remove('dragging');
+    if (e && e.pointerType === 'touch') ptrOn = 0;   // the finger lifted: its light fades out
+  }
+  canvas.addEventListener('pointercancel', release);
+  canvas.addEventListener('pointerleave', e => { if (!pressed) { ptrOn = 0; canvas.classList.remove('on-gem'); } });
+  canvas.addEventListener('pointerup', e => {
+    const wasTap = pressed && !moved && e.pointerId === pid;
+    release(e);
+    if (e.button > 0 || !wasTap) return;
+    const rc = canvas.getBoundingClientRect(), x = e.clientX - rc.left, y = e.clientY - rc.top;
+    const now = performance.now();
+    if (now - lastTapT < 320 && Math.hypot(x - lastTapX, y - lastTapY) < 40) { lastTapT = -1e9; togglePause(); return; }
+    lastTapT = now; lastTapX = x; lastTapY = y;
+    if (onGem(x, y)) burstNow();
   });
 
   // Hint language: ?lang= wins, then saved site preference, then browser.
@@ -791,9 +967,9 @@
   document.documentElement.lang = zh ? 'zh-Hant' : 'en';
   // Touch screens have no keyboard, and the full hint would not fit on a phone.
   const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
-  hintEl.textContent = touch ? (zh ? '點擊暫停 · 雙擊重播' : 'tap to pause · double-tap to replay')
-                             : (zh ? '空白鍵 暫停 · R 重播 · M 音樂 · 點擊暫停 · 雙擊重播'
-                                   : 'Space pause · R replay · M music · click to pause · double-click to replay');
+  hintEl.textContent = touch ? (zh ? '拖曳轉動 · 點鑽石閃耀 · 雙擊暫停' : 'drag to turn · tap the diamond to sparkle · double-tap to pause')
+                             : (zh ? '拖曳轉動 · 游標是光源 · 點鑽石閃耀 · 雙擊或空白鍵 暫停 · R 重播 · M 音樂'
+                                   : 'drag to turn · hover to light · click the diamond · double-click/Space pause · R replay · M music');
 
   // Score (original): a slow waltz in E major, 69 bpm in 3/4. Harp arpeggios in 8ths,
   // a celesta melody touched with bell, and a high shimmering pad.
@@ -856,6 +1032,20 @@
         const n = PENTA[(Math.random() * (d.gem ? 10 : 7)) | 0];
         a.bell(t, n, 0.6, { vel: d.gem ? 0.13 : 0.09, pan: clamp(d.x || 0, -1, 1) * 0.8, bus: 'sfx', wet: 0.55 });
       }, { gap: 0.15 });
+      // Interaction: a starburst when the diamond is tapped, soft ticks while it is turned by hand.
+      a.on('burst', (a, d, t) => {
+        const pan = clamp(d.x || 0, -1, 1) * 0.5;
+        a.whoosh(t, { dur: 0.5, freq: 1800, freqEnd: 7000, vel: 0.12 });
+        a.chime(t, 'B5', 2.2, { vel: 0.28 });
+        for (let i = 0; i < 7; i++)
+          a.bell(t + 0.05 + i * 0.045 + Math.random() * 0.015, PENTA[9 - i], 0.9,
+            { vel: 0.12 - i * 0.011, pan: pan + (i % 2 ? 0.35 : -0.35), bus: 'sfx', wet: 0.6 });
+      }, { gap: 0.12 });
+      a.on('turn', (a, d, t) => {
+        const n = PENTA[Math.min(6, (Math.random() * 3 + Math.min(4, (d.v || 0) * 0.8)) | 0)];
+        a.tick(t, { vel: 0.08, bus: 'sfx' });
+        a.bell(t + 0.005, n, 0.35, { vel: 0.05, pan: (Math.random() - 0.5) * 0.6, bus: 'sfx', wet: 0.5 });
+      }, { gap: 0.07 });
       a.on('orbit', (a, d, t) => {                                    // orbits trace in: airy hum
         a.pad(t, ['E4', 'B4', 'E5'], 1.6, { vel: 0.18, attack: 0.8, release: 1.6, cutoff: 1500, bus: 'sfx' });
         a.noise(t, { dur: 2.6, filter: 'bandpass', freq: 900, freqEnd: 2400, q: 5, attack: 1.2, vel: 0.1, bus: 'sfx', wet: 0.5 });

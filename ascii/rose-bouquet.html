@@ -34,12 +34,13 @@
       height: 100vh;
       height: 100svh;
       display: block;
-      touch-action: manipulation; /* no double-tap zoom: double-tap means replay */
+      touch-action: none; /* dragging turns the bouquet; no scrolling or double-tap zoom on the canvas */
       user-select: none;
       -webkit-user-select: none;
       -webkit-tap-highlight-color: transparent;
       cursor: pointer;
     }
+    canvas.grabbing { cursor: grabbing; }
     .sr-only {
       position: absolute;
       width: 1px; height: 1px;
@@ -121,6 +122,13 @@
   const T_START = reduced ? 15.0 : 0;     // reduced motion: open on the finished bouquet
   const SWAY_A = reduced ? 0.3 : 0.45;    // rad, sway around Y (never a full spin)
   const SWAY_W = reduced ? 0.25 : 0.55;   // rad/s of the sway phase
+  // Interaction: dragging turns the bouquet, a fling coasts, then it eases back to its own sway.
+  const SPIN_PX = 0.6;                    // drag of 0.6 S px = 1 rad of turn
+  const SPIN_DAMP = reduced ? 4 : 2.2;    // 1/s decay of the fling
+  const SPIN_BACK = reduced ? 1.2 : 1.6;  // 1/s ease back to the nearest whole turn
+  // A tapped rose closes a little and opens again; taps shed a few petals.
+  const REB_DUR = reduced ? 2.4 : 1.6, REB_DIP = reduced ? 0.45 : 0.75;
+  const SHED_N = reduced ? 2 : 4, FLURRY_N = reduced ? 3 : 7, SHAKE_A = reduced ? 0.025 : 0.07;
 
   // ---------- Camera / world ----------
   const CAM_D = 3;          // camera distance (world units)
@@ -419,6 +427,7 @@
   const LP = new Float32Array(15); // per-frame layer params: a0, k, len, r0, h0
   // Buds pop in at random; blooming follows a shuffled order so it ripples across the dome.
   const budT0 = new Float32Array(NR), bloomT0 = new Float32Array(NR), roseOpen = new Float32Array(NR);
+  const rebT = new Float32Array(NR).fill(-99); // sky time of each rose's last tap re-bloom
   const perm = [...Array(NR).keys()];
   for (let i = NR - 1; i > 0; i--) { const j = (rng() * (i + 1)) | 0; [perm[i], perm[j]] = [perm[j], perm[i]]; }
   for (let r = 0; r < NR; r++) {
@@ -473,7 +482,7 @@
   let W = 0, H = 0, fs = 10, cw = 6, ch = 11, cols = 0, rows = 0;
   let S = 300, ox = 0, oy = 0, msgY = 0, msgFs = 12, msgCw = 7;
   let cellFont = '', msgFont = '', bgGrad = null;
-  let zbuf, stampA, cchar, ccol, ckind, clb, touched, order, nT = 0, stamp = 0;
+  let zbuf, stampA, cchar, ccol, ckind, clb, crose, touched, order, nT = 0, stamp = 0;
   const counts = new Uint32Array(NCOLOR);
   let skyStars = [], sparks = null;
   let needResize = true, dirty = true;
@@ -497,6 +506,7 @@
     const n = cols * rows;
     zbuf = new Float32Array(n); stampA = new Uint32Array(n);
     cchar = new Uint8Array(n); ccol = new Uint16Array(n); ckind = new Uint8Array(n); clb = new Float32Array(n);
+    crose = new Uint8Array(n); // rose index + 1 per cell, for tap hit-testing
     makeHalos();
     touched = new Int32Array(n); order = new Int32Array(n); stamp = 0;
 
@@ -546,6 +556,7 @@
   // ---------- Projection + z-buffered splat ----------
   let cr = 1, sr = 0, t = T_START, rot = 0, skyT = 0;
   let projX = 0, projY = 0;
+  let curRose = 0; // rose index + 1 while its petals are splatted, else 0
 
   function project(x, y, z) {
     const rz = z * cr - x * sr, rx = x * cr + z * sr, yy = y - PIVOT;
@@ -612,7 +623,7 @@
         b = 1; cc = C_STAR;
     }
     if (fresh) { stampA[c] = stamp; touched[nT++] = c; }
-    zbuf[c] = z2; cchar[c] = cc; ccol[c] = p * LEVELS + ((b * 15.99) | 0); ckind[c] = k; clb[c] = b;
+    zbuf[c] = z2; cchar[c] = cc; ccol[c] = p * LEVELS + ((b * 15.99) | 0); ckind[c] = k; clb[c] = b; crose[c] = curRose;
   }
 
   const popBud = p => p < 0.7 ? 1.15 * p / 0.7 : 1.15 - 0.15 * (p - 0.7) / 0.3;
@@ -637,9 +648,13 @@
       const tb = t - budT0[r];
       if (tb < 0) { roseOpen[r] = 0; continue; }
       const R = roses[r];
-      const op = smooth((t - bloomT0[r]) / T.BLOOM_DUR);
+      let op = smooth((t - bloomT0[r]) / T.BLOOM_DUR);
       roseOpen[r] = op;
       if (op >= 1) nOpen++;
+      // Re-bloom after a tap: close quickly, then open again more slowly.
+      const rb = (skyT - rebT[r]) / REB_DUR;
+      if (rb >= 0 && rb < 1) op *= 1 - REB_DIP * (rb < 0.35 ? smooth(rb / 0.35) : 1 - smooth((rb - 0.35) / 0.65));
+      curRose = r + 1;
       const sc = popBud(Math.min(1, tb / 0.45)) * (0.66 + 0.34 * op);
       for (let L = 0; L < 3; L++) {
         const ly = LAY[L], o = smooth((op - LAG[L]) / 0.7), q = L * 5;
@@ -660,6 +675,7 @@
               ux * ca - wx * sa, uy * ca - wy * sa, uz * ca - wz * sa, K_PETAL, RP[i], 0, RF[i]);
       }
     }
+    curRose = 0;
 
     // Falling petals.
     for (let i = 0; i < FMAX; i++) {
@@ -670,25 +686,32 @@
     }
   }
 
+  // Release one petal from rose R, nudged toward the viewer along (fx, fz) in model space.
+  // Returns false when the pool is full.
+  function spawnPetal(R, fx, fz, spread) {
+    for (let i = 0; i < FMAX; i++) {
+      if (FON[i]) continue;
+      const d = 0.06 + Math.random() * 0.05; // in front of the bouquet
+      FON[i] = 1;
+      FX0[i] = R.hx + R.wx * 0.03 + (Math.random() - 0.5) * spread + fx * d;
+      FY[i] = R.hy + R.wy * 0.03 + (Math.random() - 0.5) * spread * 0.5;
+      FZ0[i] = R.hz + fz * d;
+      FVY[i] = -(0.09 + 0.07 * Math.random());
+      FAMP[i] = 0.03 + 0.05 * Math.random(); FFRQ[i] = 1.4 + 1.4 * Math.random();
+      FPH[i] = Math.random() * 6; FPAL[i] = R.face + (Math.random() < 0.5 ? 0 : 1);
+      return true;
+    }
+    return false;
+  }
+
   function updateFall(dt) {
     if (t >= T.FALL && t < T.FALL_END) {
       fallAcc += dt * 2.6;
       while (fallAcc >= 1) {
         fallAcc -= 1;
-        const r = (Math.random() * NR) | 0, R = roses[r];
+        const r = (Math.random() * NR) | 0;
         if (roseOpen[r] < 0.9) continue;
-        for (let i = 0; i < FMAX; i++) {
-          if (FON[i]) continue;
-          FON[i] = 1;
-          FX0[i] = R.hx + R.wx * 0.03 + (Math.random() - 0.5) * 0.06;
-          FY[i] = R.hy + R.wy * 0.03;
-          FZ0[i] = R.hz + 0.06 + Math.random() * 0.05; // in front of the bouquet
-          FVY[i] = -(0.09 + 0.07 * Math.random());
-          FAMP[i] = 0.03 + 0.05 * Math.random(); FFRQ[i] = 1.4 + 1.4 * Math.random();
-          FPH[i] = Math.random() * 6; FPAL[i] = R.face + (Math.random() < 0.5 ? 0 : 1);
-          window.AsciiAudio && AsciiAudio.event('petal');
-          break;
-        }
+        if (spawnPetal(roses[r], 0, 1, 0.06)) window.AsciiAudio && AsciiAudio.event('petal');
       }
     }
     nFall = 0;
@@ -882,6 +905,78 @@
     drawGlow();
   }
 
+  // ---------- Interaction: turn, re-bloom, shake ----------
+  let spinOff = 0, spinVel = 0, dragging = false, shakeA = 0, shakePh = 0;
+
+  // Fling momentum, then ease back to the nearest whole turn. Returns true while anything moves.
+  function updateSpin(dt) {
+    if (!dragging) {
+      spinOff += spinVel * dt;
+      spinVel *= Math.exp(-SPIN_DAMP * dt);
+      if (Math.abs(spinVel) < 0.8) {
+        const home = Math.round(spinOff / TAU) * TAU;
+        spinOff += (home - spinOff) * (1 - Math.exp(-SPIN_BACK * dt));
+        if (Math.abs(home - spinOff) < 1e-4 && Math.abs(spinVel) < 1e-3) { spinOff = 0; spinVel = 0; }
+      }
+    }
+    if (shakeA > 0) {
+      shakePh += dt * (reduced ? 9 : 17);
+      shakeA *= Math.exp(-5 * dt);
+      if (shakeA < 1e-3) shakeA = 0;
+    }
+    return dragging || spinOff !== 0 || shakeA > 0;
+  }
+
+  // Hit-test in grid space against last frame's cells within two cells of (x, y).
+  // Returns a rose index, -1 for another part of the bouquet, -2 for empty sky.
+  function pick(x, y) {
+    if (!reduced && t > T.FADE + T.FADE_DUR * 0.6) return -2; // bouquet has faded out
+    const c0 = Math.floor(x / cw), r0 = Math.floor(y / ch);
+    let best = 1e9, hit = -2;
+    for (let dr = -2; dr <= 2; dr++) for (let dc = -2; dc <= 2; dc++) {
+      const col = c0 + dc, row = r0 + dr;
+      if (col < 0 || row < 0 || col >= cols || row >= rows) continue;
+      const c = row * cols + col;
+      if (stampA[c] !== stamp || ckind[c] === K_FALL) continue;
+      let d = (dc * cw) ** 2 + (dr * ch) ** 2;
+      if (crose[c]) d *= 0.5; // a petal edge beats a leaf gap of the same distance
+      if (d < best) { best = d; hit = crose[c] - 1; }
+    }
+    return hit;
+  }
+  // Screen x of a rose head, relative to the bouquet centre in S units (for stereo pan).
+  const roseX = R => { project(R.hx, R.hy, R.hz); return (projX - ox) / S; };
+
+  // Tap a rose: it closes a little and opens again, shedding a few petals.
+  function rebloom(r) {
+    const R = roses[r], rb = (skyT - rebT[r]) / REB_DUR;
+    if (rb < 0 || rb >= 1) rebT[r] = skyT; // a tap mid-re-bloom just sheds more petals
+    if (roseOpen[r] > 0.5) for (let i = 0; i < SHED_N; i++) spawnPetal(R, -sr, cr, 0.08);
+    music('event', 'rebloom', { k: perm[r], x: roseX(R) });
+  }
+  // Tap elsewhere on the bouquet: a small shake and a flurry from the open roses nearest the tap.
+  function flurry(x, y) {
+    shakeA = Math.min(SHAKE_A * 1.6, shakeA + SHAKE_A);
+    const near = [];
+    for (let r = 0; r < NR; r++) {
+      if (roseOpen[r] < 0.5) continue;
+      project(roses[r].hx, roses[r].hy, roses[r].hz);
+      near.push([(projX - x) ** 2 + (projY - y) ** 2, r]);
+    }
+    near.sort((p, q) => p[0] - q[0]);
+    let n = 0;
+    for (let i = 0; i < FLURRY_N && near.length; i++) if (spawnPetal(roses[near[i % Math.min(3, near.length)][1]], -sr, cr, 0.12)) n++;
+    music('event', 'shake', { x: (x - ox) / S, n });
+  }
+  // A tap: hit the bouquet or not. A tap on the bouquet also resumes a paused scene.
+  function tap(x, y) {
+    const hit = pick(x, y);
+    if (hit === -2) return false;
+    if (paused) togglePause();
+    if (hit >= 0) rebloom(hit); else flurry(x, y);
+    return true;
+  }
+
   // ---------- Loop, HUD, controls ----------
   let paused = false, last = performance.now();
   let frames = 0, fpsT = last, fps = 0, hudT = 0;
@@ -905,10 +1000,12 @@
       t += dt; skyT += dt;
       if (reduced) { if (t > T.FADE) t = T.FADE; }   // reduced motion: hold the bouquet, no loop
       else if (t >= T.END) { t = 0; clearFall(); music('restart'); } // stars keep twinkling across the loop
-      rot = SWAY_A * Math.sin(skyT * SWAY_W);
       updateFall(dt);
       soundCues(t1, t);
     }
+    // The drag turn and tap shake run even while paused, so the frozen bouquet can still be turned.
+    if (updateSpin(dt) && paused) dirty = true;
+    rot = SWAY_A * Math.sin(skyT * SWAY_W) + spinOff + shakeA * Math.sin(shakePh);
     if (!paused || dirty) { render(); dirty = false; frames++; }
     if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
     if (now - hudT >= 250) updateHud(now);
@@ -940,14 +1037,49 @@
     if (e.metaKey || e.ctrlKey || e.altKey) return; // leave Cmd/Ctrl+R alone
     if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
     else if (e.key === 'r' || e.key === 'R') replay();
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); spinVel += (e.key === 'ArrowLeft' ? -1 : 1) * (reduced ? 1.5 : 2.5); }
   });
-  // Single tap = pause (decided after 280 ms), two quick taps = replay.
-  let tapTimer = 0;
-  canvas.addEventListener('pointerup', e => {
+  // Drag sideways turns the bouquet (a press counts as a drag after 8 px); a tap re-blooms a rose
+  // or shakes petals loose; two quick taps pause / resume.
+  let pressed = false, downX = 0, downY = 0, lastX = 0, lastMs = 0, dragV = 0, tapTimer = 0;
+  const local = e => { const b = canvas.getBoundingClientRect(); return [e.clientX - b.left, e.clientY - b.top]; };
+  canvas.addEventListener('pointerdown', e => {
     if (e.button > 0) return;
-    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; replay(); }
-    else tapTimer = setTimeout(() => { tapTimer = 0; togglePause(); }, 280);
+    pressed = true; dragging = false; downX = lastX = e.clientX; downY = e.clientY; lastMs = performance.now(); dragV = 0;
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
   });
+  canvas.addEventListener('pointermove', e => {
+    if (!pressed) return;
+    if (!dragging && Math.hypot(e.clientX - downX, e.clientY - downY) >= 8) {
+      dragging = true; spinVel = 0; lastX = e.clientX; lastMs = performance.now();
+      canvas.classList.add('grabbing');
+      return;
+    }
+    if (!dragging) return;
+    const now = performance.now(), d = (e.clientX - lastX) / (SPIN_PX * S), dts = (now - lastMs) / 1000;
+    spinOff += d;
+    if (dts > 0) dragV += (clamp(d / dts, -12, 12) - dragV) * Math.min(1, dts * 12);
+    lastX = e.clientX; lastMs = now; dirty = true;
+  });
+  function endDrag() {
+    if (!dragging) return;
+    dragging = false;
+    canvas.classList.remove('grabbing');
+    spinVel = performance.now() - lastMs < 90 ? dragV * (reduced ? 0.5 : 1) : 0; // a held finger does not fling
+    if (Math.abs(spinVel) > 1.5) music('event', 'spin', { v: Math.abs(spinVel) });
+  }
+  canvas.addEventListener('pointerup', e => {
+    if (!pressed) return;
+    pressed = false;
+    if (dragging) { endDrag(); return; }
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; togglePause(); return; }
+    const [x, y] = local(e), wasPaused = paused;
+    // Resuming with a tap on the bouquet should not arm the double-tap that would pause again.
+    if (tap(x, y) && wasPaused) return;
+    tapTimer = setTimeout(() => { tapTimer = 0; }, 280);
+  });
+  canvas.addEventListener('pointercancel', () => { pressed = false; endDrag(); });
+  canvas.addEventListener('pointerleave', () => { if (pressed) { pressed = false; endDrag(); } });
 
   // Hint language: ?lang= wins, then saved site preference, then browser.
   let pref = null;
@@ -958,9 +1090,9 @@
   document.documentElement.lang = zh ? 'zh-Hant' : 'en';
   // Touch screens have no keyboard, and the full hint would not fit on a phone.
   const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
-  hintEl.textContent = touch ? (zh ? '點擊暫停 · 雙擊重播' : 'tap to pause · double-tap to replay')
-                             : (zh ? '空白鍵 暫停 · R 重播 · M 音樂 · 點擊暫停 · 雙擊重播'
-                                   : 'Space pause · R replay · M music · click to pause · double-click to replay');
+  hintEl.textContent = touch ? (zh ? '拖曳轉動花束 · 點玫瑰重新綻放 · 雙擊暫停' : 'drag to turn · tap a rose to re-bloom · double-tap to pause')
+                             : (zh ? '拖曳轉動花束 · 點玫瑰重新綻放 · 雙擊/空白鍵 暫停 · R 重播 · M 音樂'
+                                   : 'drag to turn · click a rose to re-bloom · double-click / Space pause · R replay · M music');
 
   // Score: an original waltz in F major, 3/4. Music-box melody over a harp arpeggio, warm pad
   // and soft bass. The tempo makes one 10-bar pass last exactly one 22 s loop of the bouquet:
@@ -1018,7 +1150,21 @@
         a.tick(t, { vel: 0.16 });
         if (d.last) a.heart(t + 0.05, { note: 'A6', vel: 0.22 });
       });
-      a.on('petal', (a, d, t) => a.sparkle(t, { count: 2, vel: 0.1, spread: 0.11, notes: ['C7', 'A6', 'F6', 'D6', 'C6'] }), { gap: 0.3 });
+      const PETAL_NOTES = ['C7', 'A6', 'F6', 'D6', 'C6'];
+      a.on('petal', (a, d, t) => a.sparkle(t, { count: 2, vel: 0.1, spread: 0.11, notes: PETAL_NOTES }), { gap: 0.3 });
+      // Interaction: a tapped rose sighs down a step and rings back up as it re-opens; a tap on the
+      // bouquet is a soft paper rustle with falling-petal bells; a fling is a short airy whoosh.
+      a.on('rebloom', (a, d, t) => {
+        const i = Math.floor(d.k * 10 / NR), p = pan(d.x);
+        a.celesta(t, PENT[i], 0.8, { vel: 0.16, bus: 'sfx', pan: p, wet: 0.4 });
+        a.celesta(t + 0.5, PENT[i + 2], 1.6, { vel: 0.24, bus: 'sfx', pan: p, wet: 0.45 });
+        a.sparkle(t + 0.55, { count: 2, vel: 0.08, spread: 0.12, notes: PETAL_NOTES });
+      }, { gap: 0.12 });
+      a.on('shake', (a, d, t) => {
+        a.noise(t, { dur: 0.4, filter: 'bandpass', freq: 3200, freqEnd: 1400, q: 0.9, attack: 0.03, vel: 0.14, bus: 'sfx', pan: pan(d.x), wet: 0.3 });
+        if (d.n) a.sparkle(t + 0.06, { count: 3, vel: 0.08, spread: 0.09, notes: PETAL_NOTES });
+      }, { gap: 0.15 });
+      a.on('spin', (a, d, t) => a.whoosh(t, { dur: 0.6, freq: 500, freqEnd: 1800, vel: Math.min(0.16, 0.04 + d.v * 0.015), wet: 0.35 }), { gap: 0.3 });
       a.on('fade', (a, d, t) => a.whoosh(t, { dur: T.FADE_DUR, freq: 2600, freqEnd: 300, attack: 0.6, vel: 0.16, wet: 0.5 }));
     }
   });

@@ -34,7 +34,7 @@
       height: 100vh;
       height: 100svh;
       display: block;
-      touch-action: manipulation; /* no double-tap zoom: double-tap means replay */
+      touch-action: none; /* a finger drag bends the stem; also no double-tap zoom */
       user-select: none;
       -webkit-user-select: none;
       -webkit-tap-highlight-color: transparent;
@@ -94,7 +94,7 @@
 <body>
   <h1 class="sr-only">ASCII Red Rose</h1>
   <a class="back" href="./">← ASCII</a>
-  <canvas id="c" role="img" aria-label="Animated 3D long-stemmed red rose drawn with ASCII characters: the stem grows, leaves unfold and a bud blooms into a large crimson rose that sways gently among twinkling stars"></canvas>
+  <canvas id="c" role="img" aria-label="Animated 3D long-stemmed red rose drawn with ASCII characters: the stem grows, leaves unfold and a bud blooms into a large crimson rose that sways gently among twinkling stars; the pointer bends the stem and a tap on the rose makes it re-bloom and shed petals"></canvas>
   <div class="hud" id="hud" aria-hidden="true"></div>
   <div class="hint" id="hint"></div>
 
@@ -421,8 +421,14 @@
   // Pose: turn about the stem axis (Y), then roll about the stem base (Z), then camera tilt.
   let cr = 1, sr = 0, cf = 1, sf = 0, t = T_START, turn = 0, roll = 0, skyT = 0;
   let projX = 0, projY = 0;
+  // Pointer bend: `lean` is the head's sideways offset (world units), sprung toward `leanTgt`.
+  // Most of it curves the stem (x shifts with height squared), the rest rolls the whole plant.
+  let lean = 0, leanV = 0, leanTgt = 0, bendS = 0;
+  const LEAN_MAX = reduced ? 0.11 : 0.2, LEAN_SHEAR = 0.65, LEAN_ROLL = 0.35;
+  const bendX = (x, y) => { const yc = y < STEM_TOP ? (y > 0 ? y : 0) : STEM_TOP; return x + bendS * yc * yc; };
 
   function project(x, y, z) {
+    x = bendX(x, y);
     const x1 = x * cr + z * sr, z1 = z * cr - x * sr;
     const x2 = x1 * cf - y * sf, yy = x1 * sf + y * cf - PIVOT;
     const y2 = yy * ct - z1 * st, z2 = yy * st + z1 * ct;
@@ -438,6 +444,7 @@
   }
 
   function splat(x, y, z, nx, ny, nz, k, p, aux) {
+    if (bendS) x = bendX(x, y);
     const x1 = x * cr + z * sr, z1 = z * cr - x * sr;
     const x2 = x1 * cf - y * sf, yy = x1 * sf + y * cf - PIVOT;
     const y2 = yy * ct - z1 * st, z2 = yy * st + z1 * ct;
@@ -491,6 +498,11 @@
     zbuf[c] = z2; cchar[c] = cc; ccol[c] = p * LEVELS + ((b * 15.99) | 0); ckind[c] = k;
   }
 
+  // Re-bloom (tap on the rose): the petals close a little, then unfurl again. Real seconds.
+  const RB_IN = reduced ? 0.6 : 0.35, RB_OUT = reduced ? 2.4 : 1.7, RB_CLOSE = reduced ? 0.18 : 0.38;
+  let rbAge = -1;
+  const rbEnv = () => rbAge < 0 ? 0 : rbAge < RB_IN ? smooth(rbAge / RB_IN) : 1 - smooth((rbAge - RB_IN) / RB_OUT);
+
   const popBud = p => p < 0.7 ? 1.15 * p / 0.7 : 1.15 - 0.15 * (p - 0.7) / 0.3;
   let bloom = 0;
 
@@ -516,7 +528,9 @@
   }
 
   function buildScene() {
-    cr = Math.cos(turn); sr = Math.sin(turn); cf = Math.cos(roll); sf = Math.sin(roll);
+    const rl = roll + lean * LEAN_ROLL;
+    cr = Math.cos(turn); sr = Math.sin(turn); cf = Math.cos(rl); sf = Math.sin(rl);
+    bendS = lean * LEAN_SHEAR;
     stamp++; nT = 0;
 
     for (let i = 0; i < N; i++) {
@@ -558,10 +572,10 @@
     const tb = t - T.BUD;
     bloom = 0;
     if (tb < 0) return;
-    const op = smooth((t - T.BLOOM) / T.BLOOM_DUR);
+    const rb = rbEnv(), op = smooth((t - T.BLOOM) / T.BLOOM_DUR) * (1 - RB_CLOSE * rb);
     bloom = op;
     const pop = popBud(Math.min(1, tb / T.BUD_POP));
-    const sc = pop * (0.52 + 0.08 * smooth((t - T.BUD - T.BUD_POP) / 1.4) + 0.4 * op);
+    const sc = pop * (0.52 + 0.08 * smooth((t - T.BUD - T.BUD_POP) / 1.4) + 0.4 * op) * (1 - 0.05 * rb);
     const hy = HEAD_Y + 0.03 * (1 - op);
 
     // Receptacle.
@@ -728,6 +742,61 @@
     ctx.globalAlpha = 1;
   }
 
+  // Shed petals: a few rim cells of the head come loose, tumble down on the breeze and settle
+  // around the foot of the stem, then fade. [x, y, vx, vy, phase, age, ground y, colour, landed age]
+  const FALL = ['@', 'o', '-', 'o'];
+  let fallen = [];
+  function shedPetals() {
+    if (bloom < 0.35) return;
+    project(HEAD_X, HEAD_Y + 0.08, 0);
+    const hx = projX, hy = projY;
+    project(0, 0, 0);
+    const gy = projY;
+    let far = 0;
+    const cand = [];
+    for (let i = 0; i < nT; i++) {
+      const c = touched[i];
+      if (ckind[c] !== K_PETAL) continue;
+      const row = (c / cols) | 0, x = (c - row * cols + 0.5) * cw, y = (row + 0.5) * ch, d = Math.hypot(x - hx, y - hy);
+      cand.push(x, y, d);
+      if (d > far) far = d;
+    }
+    const n = reduced ? 4 : 6 + ((Math.random() * 3) | 0);
+    for (let k = 0, tries = 0; k < n && tries < 200 && cand.length; tries++) {
+      const j = ((Math.random() * cand.length / 3) | 0) * 3;
+      if (cand[j + 2] < 0.6 * far) continue; // only from the outer rim
+      const side = cand[j] < hx ? -1 : 1;
+      fallen.push({ x: cand[j], y: cand[j + 1], vx: side * (0.08 + 0.12 * Math.random()) * S * (reduced ? 0.5 : 1),
+        vy: -0.04 * S * Math.random(), ph: Math.random() * TAU, age: 0, gy: gy + (Math.random() * 2.2 - 0.6) * ch,
+        col: (P_ROSE[(Math.random() * 3) | 0] + (Math.random() < 0.4 ? 1 : 0)) * LEVELS + 10 + ((Math.random() * 3) | 0), land: -1 });
+      k++;
+    }
+    if (fallen.length > 40) fallen = fallen.slice(-40);
+  }
+  function stepPetals(dt) {
+    const VT = (reduced ? 0.2 : 0.34) * S, DRIFT = (reduced ? 0.05 : 0.14) * S;
+    for (let i = fallen.length - 1; i >= 0; i--) {
+      const f = fallen[i];
+      f.age += dt;
+      if (f.land >= 0) { f.land += dt; if (f.land > 8) fallen.splice(i, 1); continue; }
+      f.vy += (VT - f.vy) * 1.8 * dt;
+      f.vx *= Math.exp(-1.2 * dt);
+      f.x = clamp(f.x + (f.vx + DRIFT * Math.sin(f.age * 2.1 + f.ph)) * dt, 0, W - cw);
+      f.y += f.vy * dt;
+      if (f.y >= f.gy) { f.y = f.gy; f.land = 0; music('event', 'land', { pan: clamp((f.x - ox) / (0.6 * S), -1, 1) * 0.6 }); }
+    }
+  }
+  function drawPetals(fade) {
+    for (const f of fallen) {
+      const a = f.land < 0 ? 1 : 1 - smooth((f.land - 5) / 3);
+      ctx.globalAlpha = a * fade;
+      ctx.fillStyle = COLSTR[f.col];
+      const c = f.land < 0 ? FALL[((f.age * (reduced ? 3 : 6) + f.ph) | 0) % 4] : '~';
+      ctx.fillText(c, Math.floor(f.x / cw) * cw, Math.floor(f.y / ch) * ch);
+    }
+    ctx.globalAlpha = 1;
+  }
+
   // Bloom: shrink the frame, remove the background with 'difference', blur, and add it back on top.
   const glow = document.createElement('canvas'), gctx = glow.getContext('2d');
   const GLOW_DIV = 5, GLOW_A = 0.9;
@@ -757,19 +826,21 @@
     ctx.font = cellFont;
     // Rose, stars and sparkles all fade back to black before the loop restarts.
     const fade = reduced ? 1 : 1 - smooth((t - T.FADE) / T.FADE_DUR);
+    sceneFade = fade;
     drawSky(fade);
     drawSparkles(fade);
     buildScene();
     ctx.globalAlpha = fade;
     drawCells();
     ctx.globalAlpha = 1;
+    drawPetals(fade);
     drawHalos();
     drawSprout();
     drawGlow();
   }
 
   // ---------- Loop, HUD, controls ----------
-  let paused = false, last = performance.now();
+  let paused = false, last = performance.now(), sceneFade = 1;
   let frames = 0, fpsT = last, fps = 0, hudT = 0;
 
   function updateHud(now) {
@@ -787,6 +858,24 @@
     turn = TURN_A * e * Math.sin(ph * 0.7 + 0.6);
   }
 
+  // The stem leans toward the pointer (hover with a mouse, drag with a finger) and springs back.
+  let ptrX = 0, ptrY = 0, ptrOn = false;
+  function stepBend(dt) {
+    leanTgt = 0;
+    if (ptrOn) {
+      project(0, 0, 0);
+      const dx = ptrX - ox, h = clamp((projY - ptrY) / S, 0, 1.3);
+      // Strongest near the head; a mouse far off to the side lets go, a dragging finger does not.
+      const near = pressed ? 1 : 1 - smooth((Math.abs(dx) - 0.55 * S) / (0.5 * S));
+      leanTgt = LEAN_MAX * clamp(dx / (0.45 * S), -1, 1) * (0.35 + 0.65 * smooth(h)) * near * (pressed ? 1.25 : 1);
+    }
+    const K = reduced ? 20 : 34, D = reduced ? 2 * Math.sqrt(K) : 3.4; // calm: critically damped, no wobble
+    leanV += ((leanTgt - lean) * K - leanV * D) * dt;
+    lean += leanV * dt;
+    if (Math.abs(leanV) > LEAN_MAX * 1.6) music('event', 'rustle', { side: Math.sign(leanV), v: Math.min(1, Math.abs(leanV) / (LEAN_MAX * 5)) });
+    if (Math.abs(leanV) > 1e-4 || Math.abs(leanTgt - lean) > 1e-4) dirty = true;
+  }
+
   function frame(now) {
     const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); // no jumps after a hidden tab
     last = now;
@@ -795,10 +884,14 @@
       const t1 = t, s1 = skyT;
       t += dt; skyT += dt;
       if (reduced) { if (t > T.FADE) t = T.FADE; }   // reduced motion: hold the open rose, no loop
-      else if (t >= T.END) { t = 0; music('restart'); }
+      else if (t >= T.END) { t = 0; fallen = []; music('restart'); }
       pose();
       soundCues(t1, t, s1, skyT);
     }
+    // Interaction runs on real time, so it still answers while the scene is paused.
+    stepBend(dt);
+    if (rbAge >= 0) { rbAge += dt; if (rbAge > RB_IN + RB_OUT) rbAge = -1; dirty = true; }
+    if (fallen.length) { stepPetals(dt); dirty = true; }
     if (!paused || dirty) { render(); dirty = false; frames++; }
     if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
     if (now - hudT >= 250) updateHud(now);
@@ -826,7 +919,26 @@
   }
 
   function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
-  function replay() { t = 0; pose(); paused = false; dirty = true; music('resume'); music('restart'); }
+  function replay() { t = 0; pose(); fallen = []; rbAge = -1; paused = false; dirty = true; music('resume'); music('restart'); }
+  function rebloom() {
+    // A tap mid re-bloom picks up from the current closed amount instead of snapping open.
+    rbAge = rbAge < 0 ? 0 : rbAge <= RB_IN ? rbAge : RB_IN * rbEnv();
+    shedPetals(); dirty = true;
+    music('event', 'rebloom', { open: bloom });
+  }
+
+  // Did this point land on the rose head in the last frame? (3x3 cells, 5x5 for a finger)
+  function hitHead(x, y, r) {
+    if (sceneFade < 0.3) return false;
+    const c0 = Math.floor(x / cw), r0 = Math.floor(y / ch);
+    for (let dr = -r; dr <= r; dr++) for (let dc = -r; dc <= r; dc++) {
+      const rr = r0 + dr, cl = c0 + dc;
+      if (rr < 0 || cl < 0 || rr >= rows || cl >= cols) continue;
+      const c = rr * cols + cl;
+      if (stampA[c] === stamp && (ckind[c] === K_PETAL || ckind[c] === K_BULB)) return true;
+    }
+    return false;
+  }
 
   addEventListener('resize', () => { needResize = true; });
   addEventListener('keydown', e => {
@@ -834,12 +946,36 @@
     if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
     else if (e.key === 'r' || e.key === 'R') replay();
   });
-  // Single tap = pause (decided after 280 ms), two quick taps = replay.
-  let tapTimer = 0;
-  canvas.addEventListener('pointerup', e => {
+  // Pointer bends the stem; a press only counts as a tap if it moved less than 8 px.
+  // Tap on the rose = re-bloom; two quick taps anywhere = pause / resume.
+  let downX = 0, downY = 0, pressed = false, dragged = false, lastTap = 0;
+  function setPtr(e) {
+    const rc = canvas.getBoundingClientRect();
+    ptrX = e.clientX - rc.left; ptrY = e.clientY - rc.top; ptrOn = true;
+  }
+  canvas.addEventListener('pointerdown', e => {
     if (e.button > 0) return;
-    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; replay(); }
-    else tapTimer = setTimeout(() => { tapTimer = 0; togglePause(); }, 280);
+    setPtr(e); pressed = true; dragged = false; downX = e.clientX; downY = e.clientY;
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (e.pointerType !== 'mouse' && !pressed) return;
+    setPtr(e);
+    if (pressed && Math.hypot(e.clientX - downX, e.clientY - downY) >= 8) dragged = true;
+  });
+  const ptrOff = () => { ptrOn = false; pressed = false; };
+  canvas.addEventListener('pointerleave', ptrOff);
+  canvas.addEventListener('pointercancel', ptrOff);
+  canvas.addEventListener('pointerup', e => {
+    const wasTap = pressed && !dragged;
+    pressed = false;
+    if (e.pointerType !== 'mouse') ptrOn = false;
+    if (e.button > 0 || !wasTap) return;
+    const now = performance.now();
+    if (now - lastTap < 300) { lastTap = 0; togglePause(); return; }
+    lastTap = now;
+    const rc = canvas.getBoundingClientRect();
+    if (hitHead(e.clientX - rc.left, e.clientY - rc.top, e.pointerType === 'mouse' ? 1 : 2)) rebloom();
   });
 
   // Hint language: ?lang= wins, then saved site preference, then browser.
@@ -850,9 +986,9 @@
   const zh = String(pref).toLowerCase().startsWith('zh');
   document.documentElement.lang = zh ? 'zh-Hant' : 'en';
   const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
-  hintEl.textContent = touch ? (zh ? '點擊暫停 · 雙擊重播' : 'tap to pause · double-tap to replay')
-                             : (zh ? '空白鍵 暫停 · R 重播 · M 音樂 · 點擊暫停 · 雙擊重播'
-                                   : 'Space pause · R replay · M music · click to pause · double-click to replay');
+  hintEl.textContent = touch ? (zh ? '拖曳彎動花莖 · 點玫瑰重新綻放 · 雙擊暫停' : 'drag to bend the stem · tap the rose to re-bloom · double-tap to pause')
+                             : (zh ? '移動游標彎動花莖 · 點玫瑰重新綻放 · 雙擊或空白鍵 暫停 · R 重播 · M 音樂'
+                                   : 'move to bend the stem · click the rose to re-bloom · double-click or Space pause · R replay · M music');
 
   // Score: an original slow piano-like piece, A minor turning to C major as the rose opens.
   // Celesta melody, plucked broken chords and a soft pad and bass. Six 4/4 bars last exactly one 22 s
@@ -899,6 +1035,21 @@
           a.bell(t + i * 0.12, n, 2.6, { vel: 0.36 - i * 0.04, bus: 'sfx', pan: (i - 1.5) * 0.25, wet: 0.5 }));
       });
       a.on('spark', (a, d, t) => a.sparkle(t, { count: 2, vel: 0.14, spread: 0.07, notes: SP }), { gap: 0.35 });
+
+      // Interaction: a leafy rustle when the stem is swung, a soft fold-and-open for the
+      // re-bloom, and a faint tap as each shed petal settles.
+      a.on('rustle', (a, d, t) => {
+        for (let k = 0; k < 2; k++)
+          a.noise(t + k * 0.09 + Math.random() * 0.03, { dur: 0.16 + Math.random() * 0.08, filter: 'bandpass',
+            freq: 1900 + k * 600 + Math.random() * 400, q: 0.9, attack: 0.03, vel: (0.08 + 0.12 * d.v) * (1 - k * 0.3),
+            pan: d.side * 0.4, bus: 'sfx', wet: 0.2 });
+      }, { gap: 0.45 });
+      a.on('rebloom', (a, d, t) => {
+        a.whoosh(t, { dur: 0.45, freq: 2600, freqEnd: 700, vel: 0.14 });
+        ['A5', 'C6', 'E6', 'A6'].forEach((n, i) =>
+          a.bell(t + RB_IN + i * 0.1, n, 1.8, { vel: 0.26 - i * 0.04, bus: 'sfx', pan: (i - 1.5) * 0.2, wet: 0.5 }));
+      }, { gap: 0.25 });
+      a.on('land', (a, d, t) => a.bell(t, ['A5', 'C6', 'E6'][(Math.random() * 3) | 0], 0.7, { vel: 0.07, bus: 'sfx', pan: d.pan, wet: 0.4 }), { gap: 0.12 });
     }
   });
 

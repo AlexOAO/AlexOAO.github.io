@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>ASCII Running Shiba | Alex Li (李翔緯)</title>
-  <meta name="description" content="A cute Shiba Inu gallops through a sunset meadow, drawn entirely with ASCII characters: a big low sun, parallax hills, trees and swaying grass, drifting clouds, dust puffs and a butterfly to chase. Tap to jump. Vanilla JS on a single canvas.">
+  <meta name="description" content="A cute Shiba Inu gallops through a sunset meadow, drawn entirely with ASCII characters: a big low sun, parallax hills, trees and swaying grass, drifting clouds, dust puffs and a butterfly to chase. Move the pointer left or right to slow it to a trot or push it into a full sprint; tap to jump. Vanilla JS on a single canvas.">
   <meta name="theme-color" content="#1a0f2e">
   <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,7 +35,7 @@
       height: 100vh;
       height: 100svh;
       display: block;
-      touch-action: manipulation; /* no double-tap zoom: double-tap means restart */
+      touch-action: none; /* horizontal drags set the pace and double-tap pauses, so no scrolling or zooming */
       user-select: none;
       -webkit-user-select: none;
       -webkit-tap-highlight-color: transparent;
@@ -96,7 +96,7 @@
 <body>
   <h1 class="sr-only">ASCII Running Shiba</h1>
   <a class="back" href="./">← ASCII</a>
-  <canvas id="c" role="img" aria-label="Animated cute Shiba Inu drawn with ASCII characters, bouncing along through a sunset meadow with parallax hills, trees, swaying grass and drifting clouds, and jumping after a butterfly"></canvas>
+  <canvas id="c" role="img" aria-label="Animated cute Shiba Inu drawn with ASCII characters, bouncing along through a sunset meadow with parallax hills, trees, swaying grass and drifting clouds, and jumping after a butterfly; the pointer sets its pace from a slow trot to a full sprint"></canvas>
   <div class="hud" id="hud" aria-hidden="true"></div>
   <div class="hint" id="hint"></div>
 
@@ -115,6 +115,10 @@
     ? { f: 1.3, amp: 0.3, lift: 0.025, bob: 0.012, sq: 0.012, pitch: 0.02, speed: 0.5, mps: 1.6 }
     : { f: 2.6, amp: 0.55, lift: 0.06, bob: 0.045, sq: 0.045, pitch: 0.06, speed: 1.3, mps: 4.6 };
   const LEG_OFF = [0.07, 0, 0.57, 0.5];
+  // Pace 0..1 (slow trot .. full sprint), set by the pointer's x; PACE0 is the normal run. It maps to a speed
+  // multiplier; stride rate, stride length and bounce grow more gently than ground speed, as in a real dog.
+  const PACE0 = 0.4, MUL_LO = reduced ? 0.7 : 0.45, MUL_HI = reduced ? 1.4 : 1.9;
+  const PACE_HOLD = 1.6, PACE_BACK = 0.9;       // s held after the pointer goes, then ease rate (1/s) back to PACE0
   const JUMP_DUR = 0.8, JUMP_H = 0.27;          // seconds, body units
   const BF_FIRST = 4.0, BF_MIN = 8, BF_MAX = 12; // butterfly schedule (s)
 
@@ -645,6 +649,7 @@
   let headSX = 0, headSY = 0, shadowX = 0, liftNow = 0;
   let eyeOpen = 1, happy = 0, mouthOpen = 0, earFold0 = 0, earFold1 = 0, earTw0 = 0, earTw1 = 0;
   let projX = 0, projY = 0;
+  let pace = PACE0, paceTarget = PACE0, paceHold = 0, steering = false, mul = 1, sprint = 0, sprintWas = 0;
 
   // World (dog frame, ground y = 0) -> screen.
   function project(x, y, z) {
@@ -664,10 +669,12 @@
       w = smooth(u / 0.15) * (1 - smooth((u - 0.82) / 0.18));   // legs tucked while airborne
     }
     const r = 1 - w;
+    // Pace: a trot is low and gentle, a sprint reaches long and bounces high.
+    const sa = Math.pow(mul, 0.35), sb = Math.pow(mul, 0.6);
     // Rock: nose dips as the front pair lands, rises as the hind pair lands; nose up on a leap.
-    const up = -GAIT.pitch * Math.cos(TAU * fr) * r + 0.12 * Math.cos(Math.PI * u) * w;
+    const up = -GAIT.pitch * sb * Math.cos(TAU * fr) * r + 0.12 * Math.cos(Math.PI * u) * w;
     // Squash on each landing, stretch at the top of each bounce; a stretch on take-off, a squash on landing.
-    let sy = 1 - GAIT.sq * Math.cos(ph2) * r;
+    let sy = 1 - GAIT.sq * sb * Math.cos(ph2) * r;
     if (jt >= 0 && u < 0.25) sy += 0.1 * Math.sin(Math.PI * u / 0.25);
     const ld = t - landT;
     if (ld >= 0 && ld < 0.3 && !reduced) sy -= 0.11 * Math.sin(Math.PI * ld / 0.3);
@@ -682,7 +689,7 @@
       const L = LEGS[l], hind = l >= 2;
       let p = gph - LEG_OFF[l]; p -= Math.floor(p);
       legP[l] = p;
-      let th = GAIT.amp * Math.cos(TAU * p), lift = p > 0.5 ? GAIT.lift * Math.sin(TAU * (p - 0.5)) : 0;
+      let th = GAIT.amp * sa * Math.cos(TAU * p), lift = p > 0.5 ? GAIT.lift * sb * Math.sin(TAU * (p - 0.5)) : 0;
       th += ((hind ? -0.8 : 0.9) - th) * w; lift += ((hind ? 0.05 : 0.07) - lift) * w;
       mAxis(MA, 1, 0, 0, -th); mPivot(MA, L[0], L[1], L[2]); MA[7] += lift;
       mMul(MB, BM, MA);
@@ -695,7 +702,7 @@
     }
     // Keep the planted paws on the ground; hop up between landings.
     if (jt < 0) {
-      const hop = GAIT.bob * Math.pow(Math.sin(TAU * fr), 2);
+      const hop = GAIT.bob * sb * Math.pow(Math.sin(TAU * fr), 2);
       yGround += (-minY + hop - yGround) * Math.min(1, dt * 25);
     }
     const yo = yGround + jy;
@@ -709,7 +716,8 @@
 
     // Head: rides on the squashed neck, nods a beat behind the bounce, wobbles a little; cheeks jiggle.
     const nod = (reduced ? 0.02 : 0.06) * Math.sin(ph2 - 1.3) * r;
-    const hPitch = 0.6 * up + nod + 0.04 * w, hRoll = (reduced ? 0.02 : 0.05) * Math.sin(TAU * fr) * r;
+    const hPitch = 0.6 * up + nod + 0.04 * w - 0.07 * sprint * r,   // head low and forward in a sprint
+          hRoll = (reduced ? 0.02 : 0.05) * Math.sin(TAU * fr) * r;
     mAxis(MA, 0, 1, 0, -0.34); mAxis(MB, 1, 0, 0, hPitch); mMul(MC, MA, MB);
     mAxis(MA, 0, 0, 1, hRoll); mMul(HM, MC, MA);
     const jg = 1 + (reduced ? 0.006 : 0.022) * Math.sin(ph2 - 2.2) * r;
@@ -721,10 +729,11 @@
     HW[7] += nyS - nyB;
     mMul(HV, VIEW, HW); PM.set(HV, R_HEAD * 12);
 
-    // Ears: swept back a touch, bouncing with the hop; flapping in a leap.
-    const eb = reduced ? 0.04 : 0.13;
-    earFold0 = -0.12 + eb * Math.sin(ph2 - 2) * r + w * (-0.3 + 0.28 * Math.sin(jt * 30));
-    earFold1 = -0.12 + eb * Math.sin(ph2 - 2.4) * r + w * (-0.3 + 0.28 * Math.sin(jt * 30 + 1));
+    // Ears: swept back a touch, bouncing with the hop (more at speed); flapping in a leap; pinned back and
+    // fluttering in the wind at a full sprint.
+    const eb = (reduced ? 0.04 : 0.13) * sb, pin = sprint * r * (-0.26 + (reduced ? 0 : 0.07 * Math.sin(t * 38)));
+    earFold0 = -0.12 + eb * Math.sin(ph2 - 2) * r + w * (-0.3 + 0.28 * Math.sin(jt * 30)) + pin;
+    earFold1 = -0.12 + eb * Math.sin(ph2 - 2.4) * r + w * (-0.3 + 0.28 * Math.sin(jt * 30 + 1)) + pin;
     earTw0 = 0.07 * Math.sin(TAU * fr) * r; earTw1 = -earTw0;
     for (let e = 0; e < 2; e++) {
       const E = EARS[e];
@@ -734,12 +743,17 @@
       mMul(MA, HV, MC);
       PM.set(MA, (R_EARL + e) * 12);
     }
-    // Tongue: out in a happy pant, bouncing with each hop.
-    mAxis(MA, 1, 0, 0, (reduced ? 0.05 : 0.22) * Math.sin(ph2 - 1.6) * r + 0.15 * w);
-    mPivot(MA, TAS[0], TAS[1], TAS[2]);
-    mMul(MB, HV, MA); PM.set(MB, R_TONGUE * 12);
+    // Tongue: out in a happy pant, bouncing with each hop; at a full sprint it flops out long and flaps.
+    const tl = sprint * (reduced ? 0.35 : 0.8), fl = reduced ? 0.08 * Math.sin(t * 9) : 0.3 * Math.sin(t * 27);
+    mScale(MC, 1 + 0.2 * tl, 1 + 0.5 * tl, 1 + 0.3 * tl);
+    mAxis(MB, 0, 0, 1, sprint * fl * 1.2);
+    mMul(MA, MB, MC);
+    mAxis(MB, 1, 0, 0, (reduced ? 0.05 : 0.22) * sb * Math.sin(ph2 - 1.6) * r + 0.15 * w + sprint * (0.25 + fl) * r);   // blown back in the wind
+    mMul(MC, MB, MA);
+    mPivot(MC, TAS[0], TAS[1], TAS[2]);
+    mMul(MB, HV, MC); PM.set(MB, R_TONGUE * 12);
     // Tail: the curl wiggles side to side.
-    mAxis(MA, TAX[0], TAX[1], TAX[2], (reduced ? 0.08 : 0.22) * Math.sin(ph2 + 1) + 0.15 * w * Math.sin(jt * 24));
+    mAxis(MA, TAX[0], TAX[1], TAX[2], (reduced ? 0.08 : 0.22) * sb * Math.sin(ph2 + 1) + 0.15 * w * Math.sin(jt * 24));
     mPivot(MA, TB[0], TB[1], TB[2]);
     mMul(MB, BS, MA); mMul(MA, VIEW, MB); PM.set(MA, R_TAIL * 12);
     // Bell: a little pendulum under the collar, swinging behind the bounce.
@@ -752,6 +766,7 @@
     const hc = t % 7.3;
     happy = Math.max(w, hc > 5.6 && hc < 6.9 && !reduced ? 1 : 0);
     mouthOpen = happy > 0.35 ? 0.85 : (reduced ? 0.5 : 0.6) + 0.3 * Math.sin(ph2);
+    mouthOpen += (0.95 - mouthOpen) * sprint;   // wide open, tongue out, at a full sprint
     const bt = t % 4.3;
     eyeOpen = bt > 4.1 ? 1 - Math.sin(Math.PI * (bt - 4.1) / 0.2) : 1;
 
@@ -1113,7 +1128,7 @@
   let nDust = 0;
   function puff(wx, wz, n, power) {
     project(wx, 0, wz);
-    const vPx = GAIT.speed * S;
+    const vPx = GAIT.speed * mul * S;
     for (let k = 0; k < n && nDust < MAXD; k++) {
       const i = nDust++;
       dX[i] = projX + (Math.random() - 0.5) * cw * 2; dY[i] = projY - ch * 0.3;
@@ -1139,6 +1154,39 @@
     for (let i = 0; i < nDust; i++) {
       const a = dAge[i] / dLife[i];
       putXY(dX[i], dY[i], a < 0.3 ? C_COLON : a < 0.65 ? C_COMMA : C_DOT, P_DUST, 1 - 0.55 * a);
+    }
+  }
+
+  // ---------- Speed lines: streaks whipping past behind the dog at a full sprint ----------
+  const MAXL = 48;
+  const lX = new Float32Array(MAXL), lY = new Float32Array(MAXL), lV = new Float32Array(MAXL),
+        lN = new Uint8Array(MAXL), lAge = new Float32Array(MAXL), lLife = new Float32Array(MAXL);
+  let nLine = 0, lineAcc = 0;
+  function updateLines(dt) {
+    lineAcc += (reduced ? 0 : 42) * sprint * dt;
+    while (lineAcc >= 1 && nLine < MAXL) {
+      lineAcc--;
+      const i = nLine++;
+      lX[i] = ox - S * 0.1 + Math.random() * (W - ox + S * 0.3);
+      lY[i] = groundY - S * (0.05 + 0.85 * Math.random());
+      lV[i] = GAIT.speed * mul * S * (1.6 + 1.2 * Math.random());
+      lN[i] = 4 + ((Math.random() * 8) | 0); lAge[i] = 0; lLife[i] = 0.25 + 0.3 * Math.random();
+    }
+    if (lineAcc > 1) lineAcc = 1;
+    for (let i = 0; i < nLine; i++) {
+      lAge[i] += dt; lX[i] -= lV[i] * dt;
+      if (lAge[i] >= lLife[i] || lX[i] < -lN[i] * cw) {
+        nLine--;
+        lX[i] = lX[nLine]; lY[i] = lY[nLine]; lV[i] = lV[nLine]; lN[i] = lN[nLine];
+        lAge[i] = lAge[nLine]; lLife[i] = lLife[nLine]; i--;
+      }
+    }
+  }
+  function putLines() {
+    for (let i = 0; i < nLine; i++) {
+      const a = lAge[i] / lLife[i], fade = Math.sin(Math.PI * a);   // fade in and out
+      for (let k = 0; k < lN[i]; k++)                                // bright head on the left, fading tail
+        putXY(lX[i] + k * cw, lY[i], k ? C_DASH : C_EQ, P_CR, (0.9 - 0.45 * k / lN[i]) * fade);
     }
   }
 
@@ -1204,6 +1252,7 @@
     putHills();
     putTrees();
     putMeadow();
+    putLines();
     putDust();
     splatDog();
   }
@@ -1304,11 +1353,25 @@
     puff(pwX[3], pwZ[3], 4, 1);
   }
 
+  // Pace: follows the pointer while it steers, holds a moment after it goes, then eases back to normal.
+  function updatePace(dt) {
+    if (!steering) {
+      if (paceHold > 0) paceHold -= dt;
+      else paceTarget += (PACE0 - paceTarget) * Math.min(1, dt * PACE_BACK);
+    }
+    pace += (paceTarget - pace) * Math.min(1, dt * (steering ? 4 : 2.5));
+    mul = pace < PACE0 ? MUL_LO + (1 - MUL_LO) * pace / PACE0 : 1 + (MUL_HI - 1) * (pace - PACE0) / (1 - PACE0);
+    sprint = smooth((pace - 0.78) / 0.2);
+    if (sprint > 0.6 && sprintWas <= 0.6) music('event', 'sprint');
+    sprintWas = sprint;
+  }
+
   function update(dt) {
     t += dt; skyT += dt;
-    gph += GAIT.f * dt;
-    worldU += GAIT.speed * dt;
-    dist += GAIT.mps * dt;
+    updatePace(dt);
+    gph += GAIT.f * Math.pow(mul, 0.6) * dt;
+    worldU += GAIT.speed * mul * dt;
+    dist += GAIT.mps * mul * dt;
     if (jt >= 0) {
       jt += dt;
       if (jt >= JUMP_DUR) {
@@ -1322,8 +1385,10 @@
     if (jt < 0) {
       for (let l = 0; l < 4; l++) {
         if (legP[l] < lastP[l] - 0.5) {
-          puff(pwX[l], pwZ[l], reduced ? 1 : 4, (l & 1) ? 1 : 0.7);
-          music('event', 'step', { l });
+          // more and higher dust the faster it runs; a sprint kicks up a spray behind the hind paws
+          puff(pwX[l], pwZ[l], reduced ? 1 : Math.round(2 + 1.5 * mul + (l >= 2 ? 4 : 1) * sprint),
+               ((l & 1) ? 1 : 0.7) * (0.75 + 0.25 * mul) * (reduced ? 1 : 1 + 0.4 * sprint));
+          music('event', 'step', { l, v: mul });
           if (l === 1) music('event', 'jingle', { v: 0.5 });   // the collar bell, once per stride
         }
       }
@@ -1331,16 +1396,18 @@
     for (let l = 0; l < 4; l++) lastP[l] = legP[l];
     for (let i = 0; i < nCloud; i++) {
       const o = i * 5;
-      CLOUD[o] -= (CLOUD[o + 4] + GAIT.speed * S * 0.015) * dt;
+      CLOUD[o] -= (CLOUD[o + 4] + GAIT.speed * mul * S * 0.015) * dt;
       if (CLOUD[o] < -CLOUD[o + 2] * 1.3) seedCloud(i, Math.random, W + CLOUD[o + 2] * (1.3 + Math.random()));
     }
     updateDust(dt);
+    updateLines(dt);
     updateButterfly(dt);
   }
 
   function updateHud(now) {
     const tail = paused ? 'paused' : `${fps} fps`;
-    const head = `distance ${Math.floor(dist).toLocaleString('en-US')} m  jumps ${jumps}  `;
+    const kmh = Math.round(GAIT.mps * mul * 3.6);
+    const head = `distance ${Math.floor(dist).toLocaleString('en-US')} m  ${kmh} km/h  jumps ${jumps}  `;
     // Narrow screens drop the letter count so nothing is clipped.
     hudEl.textContent = W < 640 ? head + tail : head + `letters ${letters.toLocaleString('en-US')}  ${tail}`;
     hudT = now;
@@ -1359,7 +1426,8 @@
 
   function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
   function replay() {
-    t = 0; skyT = 0; gph = 0; worldU = 0; dist = 0; jumps = 0; jt = -1; nDust = 0;
+    t = 0; skyT = 0; gph = 0; worldU = 0; dist = 0; jumps = 0; jt = -1; nDust = 0; nLine = 0;
+    pace = paceTarget = PACE0; paceHold = 0; mul = 1; sprint = sprintWas = 0;
     bfState = 0; bfT = BF_FIRST; paused = false; dirty = true;
     pose(1);
     for (let l = 0; l < 4; l++) lastP[l] = legP[l];
@@ -1372,16 +1440,50 @@
     if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
     else if (e.key === 'r' || e.key === 'R') replay();
     else if (e.key === 'ArrowUp') { e.preventDefault(); if (paused) togglePause(); jump(); }
+    else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {   // nudge the pace; it eases back later
+      e.preventDefault();
+      paceTarget = clamp(paceTarget + (e.key === 'ArrowRight' ? 0.2 : -0.2), 0, 1); paceHold = 3;
+    }
   });
-  // A tap jumps right away (and resumes if paused); a second tap within 280 ms restarts instead.
-  let tapTimer = 0;
-  canvas.addEventListener('pointerup', e => {
+  // Pointer x sets the pace: behind the dog (left) slows it to a trot, ahead of it (right) pushes it into a
+  // sprint, so the normal pace sits right about where the dog is. A mouse steers by hovering; on touch a
+  // sideways drag does (a press only counts as a tap if it moved less than 8 px). When the pointer leaves or
+  // the finger lifts, the pace holds a moment and then eases back to normal.
+  function steer(x) { paceTarget = clamp((x / W - 0.05) / 0.9, 0, 1); steering = true; }
+  function letGo() { if (steering) { steering = false; paceHold = PACE_HOLD; } }
+  let down = null;
+  canvas.addEventListener('pointermove', e => {
+    if (e.pointerType === 'mouse' || (down && down.id === e.pointerId)) {
+      if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 8) down.drag = true;
+      if (e.pointerType === 'mouse' || down.drag) steer(e.clientX);
+    }
+  });
+  canvas.addEventListener('pointerdown', e => {
     if (e.button > 0) return;
-    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; replay(); return; }
+    down = { id: e.pointerId, x: e.clientX, y: e.clientY, drag: false };
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+    if (e.pointerType === 'mouse') steer(e.clientX);
+  });
+  // A tap jumps right away (and resumes if paused); a second tap within 280 ms toggles pause instead.
+  let tapTimer = 0, tapResumed = false;
+  canvas.addEventListener('pointerup', e => {
+    if (!down || down.id !== e.pointerId) return;
+    const tap = !down.drag;
+    down = null;
+    if (e.pointerType !== 'mouse') letGo();
+    if (!tap) return;
+    if (tapTimer) {
+      clearTimeout(tapTimer); tapTimer = 0;
+      if (!tapResumed) togglePause();   // if the first tap just resumed, the double tap means "resume"
+      return;
+    }
     tapTimer = setTimeout(() => { tapTimer = 0; }, 280);
+    tapResumed = paused;
     if (paused) togglePause();
     jump();
   });
+  canvas.addEventListener('pointercancel', () => { down = null; letGo(); });
+  canvas.addEventListener('pointerleave', () => { if (!down) letGo(); });
 
   // Hint language: ?lang= wins, then saved site preference, then browser.
   let pref = null;
@@ -1392,8 +1494,9 @@
   document.documentElement.lang = zh ? 'zh-Hant' : 'en';
   // Touch screens have no keyboard, and the full hint would not fit on a phone.
   const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
-  hintEl.textContent = touch ? (zh ? '點擊跳躍 · 雙擊重新開始' : 'tap to jump · double-tap to restart')
-                             : (zh ? '點擊跳躍 · 空白鍵暫停 · R 重新開始 · M 音樂' : 'tap to jump · Space pause · R restart · M music');
+  hintEl.textContent = touch ? (zh ? '左右拖曳調速度 · 點擊跳躍 · 雙擊暫停' : 'drag ←→ for speed · tap to jump · double-tap pause')
+                             : (zh ? '滑鼠左右 = 慢跑 ↔ 衝刺 · 點擊跳躍 · 雙擊 / 空白鍵 暫停 · ←→ 速度 · R 重新開始 · M 音樂'
+                                   : 'mouse left/right: trot ↔ sprint · click to jump · double-click / Space pause · ←→ speed · R restart · M music');
 
 
   // Score: an original sunny gallop in D major, 132 bpm, 16-bar (64-beat) loop. Plucked lead,
@@ -1470,8 +1573,14 @@
         a.thud(t, { vel: 0.45, freq: 115 });
         a.noise(t, { dur: 0.22, filter: 'lowpass', freq: 900, freqEnd: 300, vel: 0.14, bus: 'sfx', wet: 0.08 });
       }, { gap: 0.3 });
-      a.on('step', (a, d, t) => a.noise(t, { dur: 0.035, filter: 'bandpass', freq: 900 + 500 * Math.random(), q: 1.4,
-        vel: 0.12, bus: 'sfx', wet: 0, pan: d.l & 1 ? -0.2 : 0.2 }), { gap: 0.07 });
+      // Paw patter: follows the stride, so its tempo tracks the pace; lighter at a trot, crisper at a sprint.
+      a.on('step', (a, d, t) => a.noise(t, { dur: 0.035, filter: 'bandpass', freq: 800 + 300 * d.v + 500 * Math.random(), q: 1.4,
+        vel: 0.08 + 0.04 * d.v, bus: 'sfx', wet: 0, pan: d.l & 1 ? -0.2 : 0.2 }), { gap: 0.055 });
+      // Breaking into a full sprint: a rush of wind and a happy yip.
+      a.on('sprint', (a, d, t) => {
+        a.whoosh(t, { dur: 0.7, vel: 0.3, freq: 300, freqEnd: 1800 });
+        yip(t + 0.08);
+      }, { gap: 1.5 });
       // The little collar bell: a quiet two-partial tinkle, throttled.
       a.on('jingle', (a, d, t) => {
         a.bell(t, 'A6', 0.35, { vel: 0.035 * d.v, bus: 'sfx', wet: 0.3, pan: 0.1 });

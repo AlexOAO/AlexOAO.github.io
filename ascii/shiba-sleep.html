@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>ASCII Sleeping Shiba | Alex Li (李翔緯)</title>
-  <meta name="description" content="A Shiba Inu curled up asleep on a knitted cushion under a glowing crescent moon, drawn entirely with ASCII characters: slow breathing, floating Z z z, ear twitches, dream bubbles and shooting stars. Tap the dog to make it stir. Vanilla JS on a single canvas.">
+  <meta name="description" content="A Shiba Inu curled up asleep on a knitted cushion under a glowing crescent moon, drawn entirely with ASCII characters: slow breathing, floating Z z z, ear twitches, dream bubbles and shooting stars. Pat the dog to make it stir, or pat it a few times to wake it for a yawn and a stretch. Vanilla JS on a single canvas.">
   <meta name="theme-color" content="#0a0a24">
   <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,7 +35,7 @@
       height: 100vh;
       height: 100svh;
       display: block;
-      touch-action: manipulation; /* no double-tap zoom: double-tap means replay */
+      touch-action: manipulation; /* no double-tap zoom: double-tap means pause */
       user-select: none;
       -webkit-user-select: none;
       -webkit-tap-highlight-color: transparent;
@@ -113,6 +113,9 @@
   const Z_GAP = reduced ? 1.7 : 1.15, Z_LIFE = reduced ? 7 : 4.8, Z_RISE = reduced ? 0.045 : 0.075;
   const DREAM_T0 = 7, DREAM_GAP = 15, DREAM_LEN = 5.4;
   const STIR_LEN = 3.2;
+  const WAKE_LEN = 10.4;                      // woken by a few pats: yawn, stretch, look, curl back up
+  const PAT_WIN = 3.5, PAT_WAKE = 3;          // this many pats within PAT_WIN seconds wake it
+  const IX = reduced ? 0.55 : 1;              // pose size for the interactions (calmer when reduced)
 
   // ---------- Camera / world (y up, dog faces +z toward the viewer, cushion top y = 0) ----------
   const CAM_D = 3.2;        // camera distance
@@ -145,7 +148,7 @@
   const NFUR = C_FUR.length;
   const C_EQ = ci('='), C_TL = ci('~'), C_DASH = ci('-'), C_US = ci('_'), C_SL = ci('/'), C_BS = ci('\\'),
         C_BAR = ci('|'), C_o = ci('o'), C_AT = ci('@'), C_STAR = ci('*'), C_PCT = ci('%'), C_COLON = ci(':'),
-        C_SP = ci(' ');
+        C_SP = ci(' '), C_HASH = ci('#');
 
   const LEVELS = 16;
   const PAL = [];
@@ -156,6 +159,7 @@
   const P_EYE = pal(34, 20, 16), P_CATCH = pal(255, 255, 255);
   const P_NOSE = pal(44, 30, 28), P_MOUTH = pal(120, 58, 38), P_LID = pal(140, 60, 38);
   const P_CUSH = [pal(78, 80, 168), pal(52, 128, 150)];
+  const P_MIN = pal(150, 40, 55), P_TONGUE = pal(250, 120, 140), P_HEART = pal(255, 92, 128);
 
   // Parts (how a point moves) and looks (how it is shaded).
   const K_BODY = 0, K_HEAD = 1, K_EAR = 2, K_TAIL = 3, K_PAW = 4, K_CUSH = 5;
@@ -288,9 +292,11 @@
   })();
   const hv = (x, y, z) => [HR[0] * x + HR[1] * y + HR[2] * z, HR[3] * x + HR[4] * y + HR[5] * z, HR[6] * x + HR[7] * y + HR[8] * z];
   const hp = (x, y, z) => { const v = hv(x * HSC, y * HSC, z * HSC); return [HP[0] + v[0], HP[1] + v[1], HP[2] + v[2]]; };
+  // The head lifts and turns when woken, so keep points down to a deeper back-facing angle.
   function addHead(x, y, z, nx, ny, nz, k, l, p, a1, a2, aux, keep) {
     const q = hp(x, y, z), n = hv(nx, ny, nz);
-    add(q[0], q[1], q[2], n[0], n[1], n[2], k, l, p, a1, a2, aux, keep);
+    if (!keep && n[1] * st + n[2] * ct < -0.75 * Math.hypot(n[0], n[1], n[2])) return;
+    add(q[0], q[1], q[2], n[0], n[1], n[2], k, l, p, a1, a2, aux, true);
   }
   const HEAD = [
     sol(0, 0.01, 0, 0.19, 0.165, 0.165, 0, 'cranium'),
@@ -326,8 +332,9 @@
   // Eye centres (for the catchlight when an eye opens, and the blush), on the head surface.
   const eyeSurf = (lx, ly) => hp(lx, ly, 0.165 * Math.sqrt(1 - (lx / 0.19) ** 2 - ((ly - 0.01) / 0.165) ** 2) + 0.004);
   const EYEP = [eyeSurf(EX, EY), eyeSurf(-EX, EY)];
-  const CATCHP = eyeSurf(EX - 0.3 * EW, EY + 0.35 * EH);
+  const CATCHP = [eyeSurf(EX - 0.3 * EW, EY + 0.35 * EH), eyeSurf(-EX - 0.3 * EW, EY + 0.35 * EH)];
   const HEADTOP = hp(0, 0.2, 0);
+  const NECK = [-0.01, 0.2, 0.1];                         // pivot the head lifts and turns about
 
   // Ears: the cupped triangles of the sitting Shiba (pink inside, cream fluff, ginger behind),
   // folded back a little because it is asleep. Hinged at the base so they can flick and perk.
@@ -415,7 +422,8 @@
   }
 
   // Occlusion cull: the camera never moves, so any point sitting well behind the dog's own
-  // surface (cushion under the curl, body behind the head) can be dropped once, up front.
+  // surface (cushion under the curl) can be dropped once, up front. The head moves when the
+  // dog wakes, so it neither hides nor loses points here.
   {
     const G = 0.01, GW = 260, GH = 200, zmax = new Float32Array(GW * GH).fill(-9);
     const n0 = B.x.length, gi = new Int32Array(n0), vz = new Float32Array(n0);
@@ -424,12 +432,12 @@
       const gx = Math.floor(B.x[i] * f / G) + GW / 2, gy = Math.floor(y2 * f / G) + GH / 2;
       gi[i] = gx < 1 || gy < 1 || gx >= GW - 1 || gy >= GH - 1 ? -1 : gy * GW + gx; vz[i] = z2;
       const k = B.k[i];
-      if (gi[i] >= 0 && k !== K_CUSH && k !== K_EAR && z2 > zmax[gi[i]]) zmax[gi[i]] = z2;
+      if (gi[i] >= 0 && k !== K_CUSH && k !== K_EAR && k !== K_HEAD && z2 > zmax[gi[i]]) zmax[gi[i]] = z2;
     }
     const keep = [];
     for (let i = 0; i < n0; i++) {
       const g = gi[i];
-      if (g >= 0 && B.k[i] !== K_EAR && B.l[i] === L_COAT || g >= 0 && B.k[i] === K_CUSH) {
+      if (g >= 0 && B.k[i] !== K_EAR && B.k[i] !== K_HEAD && B.l[i] === L_COAT || g >= 0 && B.k[i] === K_CUSH) {
         let hid = true;
         for (let dy = -1; dy <= 1 && hid; dy++) for (let dx = -1; dx <= 1; dx++)
           if (zmax[g + dy * GW + dx] < vz[i] + 0.07) { hid = false; break; }
@@ -481,6 +489,10 @@
     '   `-..___..-\'   '
   ];
   const DREAMS = [{ s: '=o==o=', c: 'rgb(255,246,228)' }, { s: '(@)', c: 'rgb(214,240,96)' }];
+  // Little heart for pats (the sitting Shiba's), made of '@' with one highlight.
+  const HEART = ['.@@.@@.', '@*@@@@@', '.@@@@@.', '..@@@..', '...@...'];
+  const HEART_CELLS = [];
+  HEART.forEach((row, r) => [...row].forEach((c, k) => { if (c !== '.') HEART_CELLS.push(k - 3, r - 2, c === '*' ? 1 : 0); }));
 
   // ---------- Canvas, grid, layout ----------
   const canvas = document.getElementById('c');
@@ -490,7 +502,7 @@
 
   let W = 0, H = 0, fs = 10, cw = 6, ch = 11, cols = 0, rows = 0;
   let S = 300, ox = 0, oy = 0;
-  let cellFont = '', bigFont = '', bubFont = '', wufFont = '', bubCw = 7, bgGrad = null;
+  let cellFont = '', bigFont = '', bubFont = '', wufFont = '', heartFont = '', bubCw = 7, bgGrad = null;
   let zbuf, stampA, cchar, ccol, ckind, touched, order, nT = 0, stamp = 0;
   const counts = new Uint32Array(NCOLOR);
   let skyStars = null, nSky = 0, sparks = null;
@@ -540,6 +552,7 @@
     bigFont = `700 ${Math.round(fs * 1.5)}px ${MONO}`;
     bubFont = `${Math.round(fs * 1.9)}px ${MONO}`;
     wufFont = `700 ${Math.round(fs * 1.7)}px ${MONO}`;
+    heartFont = `${Math.round(fs * 1.05)}px ${MONO}`;
     ctx.font = bubFont; bubCw = ctx.measureText('M').width;
     Z_FONTS.length = 0;
     for (let i = 0; i < 12; i++) Z_FONTS.push(`700 ${Math.round(fs * (1.5 + 2.6 * i / 11))}px ${MONO}`);
@@ -594,7 +607,17 @@
   // ---------- Animation state ----------
   let t = T_START, skyT = 0, breath = 0, headDy = 0, tailTw = 0;
   const earAng = new Float32Array(2), EM = new Float32Array(18);
-  let twEar = 0, twT = -99, nextTw = 5, tailT = -99, nextTail = 8, stirT = -99, eyeOpen = 0;
+  let twEar = 0, twT = -99, nextTw = 5, tailT = -99, nextTail = 8, stirT = -99;
+  const eyeO = new Float32Array(2);           // per eye: 1 = open (0 is the near, peeking eye)
+  // Pats and waking: head pose on top of the sleeping one, yawn, stretch, tail thumps.
+  let pats = 0, wakeT = -99, thumpT = -99, tailTh = 0, wakeVis = 0;
+  let hPitch = 0, hYaw = 0, hRoll = 0, hLift = 0, mouthOpen = 0, pawSt = 0;
+  const patTimes = [], earLean = new Float32Array(2);
+  let ptrX = 0, ptrY = 0, ptrOn = false;
+  // Floaters above the head: 0 = heart, 1 = sleepy sigh "~".
+  const FN = 10;
+  const flX = new Float32Array(FN), flY = new Float32Array(FN), flA = new Float32Array(FN), flL = new Float32Array(FN);
+  const flK = new Uint8Array(FN);
   let nextZ = 1.2, nextShoot = 9, shootT = -99, shX = 0, shY = 0, shVX = 0, shVY = 0;
   const ZN = 12;
   const zX = new Float32Array(ZN), zY = new Float32Array(ZN), zA = new Float32Array(ZN), zP = new Float32Array(ZN);
@@ -605,6 +628,7 @@
   function resetState() {
     t = T_START; twT = -99; nextTw = 5; tailT = -99; nextTail = 8; stirT = -99;
     nextZ = 1.2; nextShoot = 9; shootT = -99; zOn.fill(0); dreamsShown = 0;
+    wakeT = -99; thumpT = -99; hYaw = 0; patTimes.length = 0; flL.fill(0); flA.fill(1);
   }
 
   // ---------- Projection + z-buffered splat ----------
@@ -639,8 +663,9 @@
     switch (l) {
       case L_EYE: {
         const sd = p ? -1 : 1, cu = A1[i], cv = A2[i], eu = cu * sd, ev = cv - 0.3 * eu;
+        const open = eyeO[p];
         coat = true; p = P_OR_L;
-        if (sd > 0 && eyeOpen > 0.5) {            // stirred: this eye peeks open
+        if (open > 0.5) {                         // stirred: the near eye peeks open; woken: both
           if (Math.abs(eu) < 1) {
             const hh = Math.pow(1 - eu * eu, 0.55);
             if (Math.abs(ev) < hh) { coat = false; feat = 1; p = P_EYE; b = 0.24; cc = C_AT; }
@@ -660,12 +685,18 @@
         if (Math.abs(lx) < 0.048) {
           // A small "w" under the nose, with a short philtrum.
           const ph = TAU * lx / 0.048, yc = -0.086 + 0.008 * Math.cos(ph);
+          // It drops open for a yawn (as the sitting Shiba's does when panting), tongue curled low.
+          const open = mouthOpen * 0.05 * (1 - (lx / 0.042) ** 2);
           if (Math.abs(ly - yc) < 0.0045) {
             coat = false; feat = 1; p = P_MOUTH; b = 0.55;
             const sl = 1.05 * Math.sin(ph);
             cc = sl > 0.45 ? C_SL : sl < -0.45 ? C_BS : C_US;
           } else if (Math.abs(lx) < 0.004 && ly > yc && ly < -0.05) {
             coat = false; feat = 1; p = P_MOUTH; b = 0.55; cc = C_BAR;
+          } else if (open > 0 && ly < yc && ly > yc - open) {
+            coat = false; feat = 1;
+            if (ly < yc - open * 0.6 && Math.abs(lx) < 0.026) { p = P_TONGUE; b = 0.55; cc = C_AT; }
+            else { p = P_MIN; b = 0.4; cc = C_HASH; }
           }
         }
         break;
@@ -723,10 +754,34 @@
     EM[m + 6] = az * ax * C - ay * s; EM[m + 7] = az * ay * C + ax * s; EM[m + 8] = c + az * az * C;
   }
 
+  // Head pose when woken: HM = Ry(yaw) Rx(pitch, + = nose up) Rz(roll) about NECK, then lifted.
+  const HM = new Float32Array(9);
+  let headOn = false, qx = 0, qy = 0, qz = 0;
+  function headMatrix() {
+    headOn = hPitch !== 0 || hYaw !== 0 || hRoll !== 0 || hLift !== 0;
+    if (!headOn) return;
+    const cy = Math.cos(hYaw), sy = Math.sin(hYaw), cp = Math.cos(hPitch), sp = Math.sin(hPitch),
+          cr = Math.cos(hRoll), sr = Math.sin(hRoll);
+    // Rx * Rz, then Ry * that.
+    const a0 = cr, a1 = -sr, a2 = 0, a3 = cp * sr, a4 = cp * cr, a5 = sp, a6 = -sp * sr, a7 = -sp * cr, a8 = cp;
+    HM[0] = cy * a0 + sy * a6; HM[1] = cy * a1 + sy * a7; HM[2] = cy * a2 + sy * a8;
+    HM[3] = a3;                HM[4] = a4;                HM[5] = a5;
+    HM[6] = -sy * a0 + cy * a6; HM[7] = -sy * a1 + cy * a7; HM[8] = -sy * a2 + cy * a8;
+  }
+  function headXf(x, y, z) {    // -> qx, qy, qz (a point; headDy not included)
+    if (!headOn) { qx = x; qy = y; qz = z; return; }
+    const dx = x - NECK[0], dy = y - NECK[1], dz = z - NECK[2];
+    qx = NECK[0] + HM[0] * dx + HM[1] * dy + HM[2] * dz;
+    qy = NECK[1] + HM[3] * dx + HM[4] * dy + HM[5] * dz + hLift;
+    qz = NECK[2] + HM[6] * dx + HM[7] * dy + HM[8] * dz;
+  }
+  function projHead(p) { headXf(p[0], p[1], p[2]); project(qx, qy + headDy, qz); }
+
   const FX = new Float32Array(4);   // eye centres on screen (for the blush)
   function buildScene() {
     stamp++; nT = 0;
     earMatrix(0, earAng[0]); earMatrix(1, earAng[1]);
+    headMatrix();
     const introOn = t < INTRO + 1.4;
     for (let i = 0; i < N; i++) {
       let x = PX[i], y = PY[i], z = PZ[i], nx = NX[i], ny = NY[i], nz = NZ[i];
@@ -739,19 +794,34 @@
       if (k === K_BODY) {
         const o = BR_A * breath * aux; x += nx * o; y += ny * o; z += nz * o;
       } else if (k === K_HEAD) {
+        if (headOn) {
+          headXf(x, y, z); x = qx; y = qy; z = qz;
+          const ax = HM[0] * nx + HM[1] * ny + HM[2] * nz, ay = HM[3] * nx + HM[4] * ny + HM[5] * nz;
+          nz = HM[6] * nx + HM[7] * ny + HM[8] * nz; nx = ax; ny = ay;
+        }
         y += headDy;
       } else if (k === K_EAR) {
         const e3 = aux * 3, m = aux * 9, hx = EARH[e3], hy = EARH[e3 + 1], hz = EARH[e3 + 2];
         const dx = x - hx, dy = y - hy, dz = z - hz;
         x = hx + EM[m] * dx + EM[m + 1] * dy + EM[m + 2] * dz;
-        y = hy + EM[m + 3] * dx + EM[m + 4] * dy + EM[m + 5] * dz + headDy;
+        y = hy + EM[m + 3] * dx + EM[m + 4] * dy + EM[m + 5] * dz;
         z = hz + EM[m + 6] * dx + EM[m + 7] * dy + EM[m + 8] * dz;
-        const ax = EM[m] * nx + EM[m + 1] * ny + EM[m + 2] * nz;
-        const ay = EM[m + 3] * nx + EM[m + 4] * ny + EM[m + 5] * nz;
+        let ax = EM[m] * nx + EM[m + 1] * ny + EM[m + 2] * nz;
+        let ay = EM[m + 3] * nx + EM[m + 4] * ny + EM[m + 5] * nz;
         nz = EM[m + 6] * nx + EM[m + 7] * ny + EM[m + 8] * nz; nx = ax; ny = ay;
+        if (headOn) {
+          headXf(x, y, z); x = qx; y = qy; z = qz;
+          ax = HM[0] * nx + HM[1] * ny + HM[2] * nz; ay = HM[3] * nx + HM[4] * ny + HM[5] * nz;
+          nz = HM[6] * nx + HM[7] * ny + HM[8] * nz; nx = ax; ny = ay;
+        }
+        y += headDy;
       } else if (k === K_TAIL) {
         if (aux > 0.6) { const q = (aux - 0.6) / 0.4, o = tailTw * q * q; x += TT[0] * o; y += TT[1] * o; z += TT[2] * o; }
+        if (tailTh > 0 && aux > 0.3) { const q = (aux - 0.3) / 0.7, o = tailTh * q * q; x += TT[0] * o; y += TT[1] * o; z += TT[2] * o; }
         y += BR_A * 0.3 * breath;
+      } else if (k === K_PAW && pawSt > 0) {
+        // Stretch: the toes reach forward while the back of each paw stays put.
+        z += pawSt * 0.09 * clamp((z - 0.3) / 0.26, 0, 1);
       }
       splat(x, y, z, nx, ny, nz, k, LK[i], PP[i], i);
     }
@@ -760,17 +830,18 @@
       if (col + 1 < cols) edgeTest(c, c + 1, z);
       if (c + cols < zbuf.length) edgeTest(c, c + cols, z);
     }
-    // Catchlight in the eye that peeks open.
-    if (eyeOpen > 0.5) {
-      project(CATCHP[0], CATCHP[1] + headDy, CATCHP[2]);
+    // Catchlight in each eye that is open.
+    for (let e = 0; e < 2; e++) {
+      if (eyeO[e] < 0.5) continue;
+      projHead(CATCHP[e]);
       const col = (projX / cw) | 0, row = (projY / ch) | 0;
       if (col >= 0 && row >= 0 && col < cols && row < rows) {
         const c = row * cols + col;
         if (stampA[c] === stamp && cchar[c] === C_AT) { cchar[c] = C_o; ccol[c] = P_CATCH * LEVELS + 15; }
       }
     }
-    for (let e = 0; e < 2; e++) { project(EYEP[e][0], EYEP[e][1] + headDy, EYEP[e][2]); FX[e * 2] = projX; FX[e * 2 + 1] = projY; }
-    project(HEADTOP[0], HEADTOP[1] + headDy, HEADTOP[2]); headX = projX; headY = projY;
+    for (let e = 0; e < 2; e++) { projHead(EYEP[e]); FX[e * 2] = projX; FX[e * 2 + 1] = projY; }
+    projHead(HEADTOP); headX = projX; headY = projY;
   }
 
   // Bucket by colour so fillStyle changes once per colour, not once per cell.
@@ -883,14 +954,15 @@
     if (t < DREAM_T0) return;
     const k = Math.floor((t - DREAM_T0) / DREAM_GAP), d = t - DREAM_T0 - k * DREAM_GAP;
     if (d > 1.1) dreamsShown = k + 1; else dreamsShown = k;
-    if (d > DREAM_LEN) return;
+    const df = 1 - wakeVis;                // a dream fades away while the dog is awake
+    if (d > DREAM_LEN || df <= 0) return;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.font = bubFont;
     const lw = CLOUD[0].length * bubCw, lh = bubCw * 1.9;
     const cx = clamp(headX - S * 0.26, lw / 2 + 8, W - lw / 2 - 8);
     const cyy = Math.max(lh * 3 + 50, headY - S * 0.4);
-    const out = d > DREAM_LEN - 0.9 ? 1 - (d - (DREAM_LEN - 0.9)) / 0.9 : 1;
+    const out = (d > DREAM_LEN - 0.9 ? 1 - (d - (DREAM_LEN - 0.9)) / 0.9 : 1) * df;
     const pop = d - (DREAM_LEN - 0.6);
     ctx.fillStyle = 'rgb(232,226,255)';
     // Small rising bubbles: o, then O.
@@ -901,7 +973,7 @@
     ctx.fillText('o', bx1, by1 - b1 * 4 + Math.sin(t * 2) * 2);
     ctx.globalAlpha = b2 * out * 0.9;
     ctx.fillText('O', bx2, by2 - b2 * 4 + Math.sin(t * 2 + 1) * 2);
-    const ca = smooth((d - 0.9) / 0.45) * (pop > 0 ? Math.max(0, 1 - pop / 0.15) : 1);
+    const ca = smooth((d - 0.9) / 0.45) * (pop > 0 ? Math.max(0, 1 - pop / 0.15) : 1) * df;
     if (ca > 0) {
       const bob = Math.sin(t * 1.7) * 2.5;
       ctx.globalCompositeOperation = 'lighter';
@@ -918,7 +990,7 @@
     if (pop > 0) { // pop: a ring of sparkles flying out
       const p = clamp(pop / 0.6, 0, 1);
       ctx.fillStyle = 'rgb(245,240,255)';
-      ctx.globalAlpha = 1 - p;
+      ctx.globalAlpha = (1 - p) * df;
       for (let j = 0; j < 10; j++) {
         const an = j / 10 * Math.PI * 2;
         ctx.fillText(j & 1 ? '.' : '*', cx + Math.cos(an) * lw * (0.25 + 0.35 * p), cyy + Math.sin(an) * lh * (1 + 1.4 * p));
@@ -945,6 +1017,47 @@
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
     }
+  }
+
+  // Hearts from pats and a sleepy "~" sigh, drifting up from the head.
+  function spawnFloat(kind) {
+    for (let i = 0; i < FN; i++) {
+      if (flA[i] < flL[i]) continue;
+      flK[i] = kind; flA[i] = 0; flL[i] = kind ? 2.6 : 2.0;
+      flX[i] = headX + S * (kind ? 0.2 : -0.16 + 0.08 * Math.random()); flY[i] = headY - S * (kind ? 0.02 : 0.03);
+      return;
+    }
+  }
+  function drawFloats() {
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i < FN; i++) {
+      const age = flA[i], life = flL[i];
+      if (age >= life) continue;
+      const p = age / life, al = smooth(age / 0.2) * (1 - smooth((p - 0.55) / 0.45));
+      const x = flX[i] + Math.sin(age * 3 + i) * cw * (reduced ? 0.4 : 1), y = flY[i];
+      if (flK[i]) {           // sigh: a soft wavy "~" that widens as it rises
+        ctx.globalAlpha = al * 0.9;
+        ctx.font = Z_FONTS[(3 + p * 5) | 0];
+        ctx.fillStyle = 'rgb(226,218,255)';
+        ctx.fillText('~', x, y);
+        continue;
+      }
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = al * 0.8;
+      ctx.drawImage(haloBlush, x - haloBlush.width, y - haloBlush.height, haloBlush.width * 2, haloBlush.height * 2);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = al;
+      ctx.font = heartFont;
+      const hw = cw * 1.05, hh = ch * 1.05;
+      for (let j = 0; j < HEART_CELLS.length; j += 3) {
+        ctx.fillStyle = HEART_CELLS[j + 2] ? '#fff0f4' : COLSTR[P_HEART * LEVELS + 12];
+        ctx.fillText(HEART_CELLS[j + 2] ? '*' : '@', x + HEART_CELLS[j] * hw, y + HEART_CELLS[j + 1] * hh);
+      }
+    }
+    ctx.globalAlpha = 1;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
   }
 
   function drawBlush(fade) {
@@ -1000,29 +1113,67 @@
     drawZs();
     drawDream();
     drawStir();
+    drawFloats();
   }
 
   // ---------- Simulation ----------
   function step(dt) {
+    const t0 = t;
     t += dt; skyT += dt;
     breath = 0.5 - 0.5 * Math.cos(2 * Math.PI * BR_F * t);
     // Stir: ears perk, near eye opens, head lifts a touch, then everything settles.
     const a = t - stirT, stirring = a >= 0 && a < STIR_LEN;
     const perk = stirring ? smooth(a / 0.25) * (1 - smooth((a - 1.9) / 1.1)) : 0;
-    eyeOpen = stirring && a > 0.35 && a < 1.75 && !(a > 1.0 && a < 1.12) ? 1 : 0; // with one blink
+    const peek = stirring && a > 0.35 && a < 1.75 && !(a > 1.0 && a < 1.12) ? 1 : 0; // with one blink
+    // Woken (a few pats): lift the head, yawn, stretch the front paws, look at you, curl back up.
+    const wa = t - wakeT, waking = wa >= 0 && wa < WAKE_LEN;
+    let up = 0, yawnE = 0, strE = 0, lookE = 0;
+    if (waking) {
+      up = smooth(wa / 0.9) * (1 - smooth((wa - 8.0) / 1.6));
+      yawnE = smooth((wa - 1.1) / 0.5) * (1 - smooth((wa - 2.4) / 0.5));
+      strE = smooth((wa - 3.1) / 0.7) * (1 - smooth((wa - 4.5) / 0.8));
+      lookE = smooth((wa - 5.0) / 0.6) * (1 - smooth((wa - 7.5) / 0.7));
+    }
+    wakeVis = up;
+    // Both eyes open while awake, squeezed shut for the yawn, with one blink while looking at you.
+    const awake = waking && wa > 0.45 && wa < 8.1 && yawnE < 0.3 && !(wa > 6.3 && wa < 6.42) ? 1 : 0;
+    eyeO[0] = Math.max(peek, awake); eyeO[1] = awake;
     headDy = 0.004 * breath + perk * 0.014;
+    // The sleeping pose already faces the camera, so the head mostly rises; the yawn tips it back.
+    hPitch = IX * (0.05 * up + 0.16 * yawnE - 0.14 * strE);
+    hLift = IX * (0.085 * up + 0.01 * yawnE - 0.035 * strE);
+    hRoll = IX * 0.2 * lookE;
+    mouthOpen = yawnE; pawSt = IX * strE;
+    // Looking at you: face the camera, then follow the pointer left and right.
+    const yawT = lookE * (ptrOn ? clamp((ptrX - headX) / (S * 0.8), -1, 1) * 0.28 : 0) - 0.1 * up;
+    hYaw += (yawT - hYaw) * (1 - Math.exp(-dt * 5));
+    if (!waking && Math.abs(hYaw) < 1e-4) hYaw = 0;
     // Occasional single-ear flick.
-    if (t > nextTw && !stirring) { twT = t; twEar = Math.random() < 0.5 ? 0 : 1; nextTw = t + (reduced ? 9 : 5) + Math.random() * 6; }
+    if (t > nextTw && !stirring && !waking) { twT = t; twEar = Math.random() < 0.5 ? 0 : 1; nextTw = t + (reduced ? 9 : 5) + Math.random() * 6; }
     const tw = t - twT, flick = tw < 0.9 ? 0.42 * Math.exp(-5 * tw) * Math.sin(tw * 24) : 0;
-    earAng[0] = perk * 0.45 + (twEar === 0 ? flick : 0);
-    earAng[1] = perk * 0.45 + (twEar === 1 ? flick : 0);
+    // A pointer near the head swivels the ear on its side toward it.
+    const pd = ptrOn ? Math.hypot(ptrX - headX, ptrY - headY) / S : 9, near = 1 - smooth((pd - 0.2) / 0.7);
+    for (let e = 0; e < 2; e++) {
+      const want = near * 0.32 * ((ptrX > headX) === (e === 0) ? 1 : 0.25);
+      earLean[e] += (want - earLean[e]) * (1 - Math.exp(-dt * (reduced ? 3 : 7)));
+      earAng[e] = perk * 0.45 + (twEar === e ? flick : 0) + earLean[e] + IX * (0.42 * up - 0.2 * yawnE + 0.1 * lookE);
+    }
     if (t > nextTail) { tailT = t; nextTail = t + 6 + Math.random() * 7; }
     const ta = t - tailT;
     tailTw = ta < 1.2 ? 0.03 * Math.exp(-3.5 * ta) * Math.sin(ta * 17) : 0;
-    // Z z z from the nose (not while stirred).
+    // Tail thumps: the tip lifts and drops on the cushion twice; again and again while it looks at you.
+    if (waking && lookE > 0.5 && t - thumpT > 0.62) thumpT = t;
+    const th = t - thumpT;
+    tailTh = th >= 0 && th < 0.55 ? IX * 0.05 * Math.abs(Math.sin(th / 0.55 * TAU)) : 0;
+    // Floaters: a sigh as a stir settles, a heart when it looks at you, a sigh as it curls back up.
+    if (!waking && crossed(t0, t, stirT + 2.3)) spawnFloat(1);
+    if (crossed(t0, t, wakeT + 5.3)) spawnFloat(0);
+    if (crossed(t0, t, wakeT + 8.3)) spawnFloat(1);
+    for (let i = 0; i < FN; i++) if (flA[i] < flL[i]) { flA[i] += dt; flY[i] -= S * (reduced ? 0.05 : 0.08) * dt; }
+    // Z z z from the nose (not while stirred or awake).
     if (t > nextZ && headY > 0) {
       nextZ = t + Z_GAP;
-      if (t > 1.6 && !(a >= 0 && a < STIR_LEN + 0.3)) {
+      if (t > 1.6 && !(a >= 0 && a < STIR_LEN + 0.3) && !(wa >= 0 && wa < WAKE_LEN + 0.3)) {
         for (let i = 0; i < ZN; i++) if (!zOn[i]) {
           zOn[i] = 1; zA[i] = 0; zP[i] = Math.random() * 6.283;
           zX[i] = headX + S * 0.3; zY[i] = headY + S * 0.02; break;
@@ -1050,7 +1201,7 @@
 
   function updateHud(now) {
     const tail = paused ? 'paused' : `${fps} fps`;
-    const head = `breaths ${Math.floor(t * BR_F)}  dreams ${dreamsShown}  `;
+    const head = `breaths ${Math.floor(t * BR_F)}  dreams ${dreamsShown}  pats ${pats}  `;
     // Narrow screens drop the letter count so nothing is clipped.
     hudEl.textContent = W < 640 ? head + tail : head + `letters ${nT.toLocaleString('en-US')}  ${tail}`;
     hudT = now;
@@ -1074,8 +1225,9 @@
   function soundCues(a, b) {
     if (!window.AsciiAudio) return;
     const sa = b - stirT, stirring = sa >= 0 && sa < STIR_LEN + 0.3;
-    if (b > INTRO && !stirring && Math.floor(b * BR_F) > Math.floor(a * BR_F)) music('event', 'breath');
-    if (b >= DREAM_T0) {
+    const wa = b - wakeT, waking = wa >= 0 && wa < WAKE_LEN + 0.3;
+    if (b > INTRO && !stirring && !waking && Math.floor(b * BR_F) > Math.floor(a * BR_F)) music('event', 'breath');
+    if (b >= DREAM_T0 && !waking) {
       const t0 = DREAM_T0 + Math.floor((b - DREAM_T0) / DREAM_GAP) * DREAM_GAP;
       if (crossed(a, b, t0 + 0.05)) music('event', 'bubble', { big: false });
       if (crossed(a, b, t0 + 0.5)) music('event', 'bubble', { big: true });
@@ -1084,6 +1236,12 @@
     }
     if (crossed(a, b, shootT)) music('event', 'shoot');
     if (crossed(a, b, stirT + 0.35)) music('event', 'wuf');
+    if (!waking && crossed(a, b, stirT + 2.3)) music('event', 'sigh');
+    if (crossed(a, b, thumpT + 0.27) || crossed(a, b, thumpT + 0.54)) music('event', 'thump');
+    if (crossed(a, b, wakeT + 1.15)) music('event', 'yawn');
+    if (crossed(a, b, wakeT + 3.1)) music('event', 'stretch');
+    if (crossed(a, b, wakeT + 5.3)) music('event', 'heart');
+    if (crossed(a, b, wakeT + 8.3)) music('event', 'sigh');
   }
 
   function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
@@ -1097,10 +1255,28 @@
     }
     return false;
   }
-  function tap(x, y) {
+  // Pat: a heart, an ear twitch and two tail thumps. One pat stirs it; PAT_WAKE quick pats wake it.
+  function pat() {
+    if (paused) togglePause();
+    pats++; thumpT = t; spawnFloat(0);
+    if (!reduced) { twT = t; twEar = Math.random() < 0.5 ? 0 : 1; }
+    while (patTimes.length && t - patTimes[0] > PAT_WIN) patTimes.shift();
+    patTimes.push(t);
+    const wa = t - wakeT;
+    if (wa >= 0 && wa < WAKE_LEN) { /* already awake: the heart and thumps are enough */ }
+    else if (patTimes.length >= PAT_WAKE) { wakeT = t; stirT = -99; patTimes.length = 0; }
+    else if (t - stirT > STIR_LEN) stirT = t;
+    else stirT = Math.max(stirT, t - 0.5);    // patted again mid-stir: keep the eye open a little longer
+    dirty = true; updateHud(performance.now());
+    music('event', 'pat', { n: pats });
+  }
+  // Tap on the sky (not the dog): a shooting star from there; while paused it resumes.
+  function skyTap(x, y) {
     if (paused) { togglePause(); return; }
-    if (t > 1.5 && onDog(x, y)) { if (t - stirT > STIR_LEN) stirT = t; }
-    else togglePause();
+    shootT = t + 1e-4; nextShoot = Math.max(nextShoot, t + 8);
+    const sp = Math.max(W, 500) * (reduced ? 0.4 : 0.75), an = (14 + Math.random() * 14) * DEG;
+    const dir = x > W * 0.3 ? -1 : 1;
+    shX = x; shY = y; shVX = dir * Math.cos(an) * sp; shVY = Math.sin(an) * sp;
   }
 
   addEventListener('resize', () => { needResize = true; });
@@ -1109,13 +1285,34 @@
     if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
     else if (e.key === 'r' || e.key === 'R') replay();
   });
-  // Single tap = stir the dog / pause (decided after 280 ms), two quick taps = replay.
+  // The pointer is tracked for the ear swivel; a press only counts as a tap if it moved less than 8 px.
+  let downX = 0, downY = 0, pressed = false, dragged = false;
+  function setPtr(e) {
+    const rc = canvas.getBoundingClientRect();
+    ptrX = e.clientX - rc.left; ptrY = e.clientY - rc.top; ptrOn = true;
+  }
+  canvas.addEventListener('pointerdown', e => {
+    setPtr(e); pressed = true; dragged = false; downX = e.clientX; downY = e.clientY;
+  });
+  canvas.addEventListener('pointermove', e => {
+    setPtr(e);
+    if (pressed && Math.hypot(e.clientX - downX, e.clientY - downY) >= 8) dragged = true;
+  });
+  const ptrOff = () => { ptrOn = false; pressed = false; };
+  canvas.addEventListener('pointerleave', ptrOff);
+  canvas.addEventListener('pointercancel', ptrOff);
+  // Tap on the dog = pat (at once, so quick pats add up). Elsewhere: single tap = shooting star
+  // (decided after 280 ms), two quick taps = pause / resume.
   let tapTimer = 0;
   canvas.addEventListener('pointerup', e => {
-    if (e.button > 0) return;
+    const wasTap = pressed && !dragged;
+    pressed = false;
     const r = canvas.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
-    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; replay(); }
-    else tapTimer = setTimeout(() => { tapTimer = 0; tap(x, y); }, 280);
+    if (e.pointerType !== 'mouse') ptrOn = false;
+    if (e.button > 0 || !wasTap) return;
+    if (t > 1.5 && onDog(x, y)) { pat(); return; }
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; togglePause(); }
+    else tapTimer = setTimeout(() => { tapTimer = 0; skyTap(x, y); }, 280);
   });
 
   // Hint language: ?lang= wins, then saved site preference, then browser.
@@ -1127,9 +1324,9 @@
   document.documentElement.lang = zh ? 'zh-Hant' : 'en';
   // Touch screens have no keyboard, and the full hint would not fit on a phone.
   const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
-  hintEl.textContent = touch ? (zh ? '點狗狗 · 點空白暫停 · 雙擊重播' : 'tap the dog · tap sky to pause · double-tap replay')
-                             : (zh ? '點狗狗叫醒牠 · 空白鍵 暫停 · R 重播 · M 音樂 · 雙擊重播'
-                                   : 'click the dog · Space pause · R replay · M music · double-click to replay');
+  hintEl.textContent = touch ? (zh ? '摸摸狗狗 · 連摸三下叫醒 · 點天空放流星 · 雙擊暫停' : 'tap to pat · 3 pats wake it · tap sky: star · double-tap pause')
+                             : (zh ? '點狗狗摸摸 · 連摸三下叫醒牠 · 點天空放流星 · 雙擊或空白鍵 暫停 · R 重播 · M 音樂'
+                                   : 'click the dog to pat · pat 3x to wake it · click the sky for a star · double-click / Space pause · R replay · M music');
 
 
   // Score: an original lullaby in F major, 3/4 at 66 bpm, 16 bars (48 beats), for music box over
@@ -1193,6 +1390,30 @@
         a.noise(t, { dur: 0.12, filter: 'bandpass', freq: 500, q: 1, vel: 0.08, bus: 'sfx', wet: 0.3 });
         tone(t + 0.22, 240, 380, 0.2, 0.12);
       }, { gap: 1 });
+      // Pat: a soft, muffled thump on fur with a brush of noise.
+      a.on('pat', (a, d, t) => {
+        a.thud(t, { freq: 120, vel: 0.22, pan: -0.05 });
+        a.noise(t, { dur: 0.16, filter: 'lowpass', freq: 900, vel: 0.08, bus: 'sfx', wet: 0.2 });
+      }, { gap: 0.08 });
+      // Tail thump on the cushion: lower and further right.
+      a.on('thump', (a, d, t) => a.thud(t, { freq: 80, vel: 0.18, pan: 0.3 }), { gap: 0.1 });
+      // Sleepy sigh: a long breath falling in pitch, with a faint low hum.
+      a.on('sigh', (a, d, t) => {
+        a.noise(t, { dur: 1.4, attack: 0.3, filter: 'bandpass', freq: 950, freqEnd: 360, q: 0.8, vel: 0.16, bus: 'sfx', wet: 0.4 });
+        tone(t + 0.05, 230, 170, 0.55, 0.045);
+      }, { gap: 1 });
+      // Little yawn: a breathy rising "aah" that sinks into a squeaky "...wuh".
+      a.on('yawn', (a, d, t) => {
+        a.noise(t, { dur: 1.3, attack: 0.4, filter: 'bandpass', freq: 600, freqEnd: 900, q: 0.9, vel: 0.12, bus: 'sfx', wet: 0.4 });
+        tone(t + 0.1, 280, 520, 0.55, 0.08);
+        tone(t + 0.75, 520, 250, 0.6, 0.07);
+      }, { gap: 2 });
+      // Stretch: a soft creaky "mmm" swelling up.
+      a.on('stretch', (a, d, t) => {
+        a.noise(t, { dur: 1, attack: 0.35, filter: 'bandpass', freq: 380, freqEnd: 700, q: 1.2, vel: 0.1, bus: 'sfx', wet: 0.35 });
+        tone(t + 0.2, 200, 260, 0.6, 0.05);
+      }, { gap: 2 });
+      a.on('heart', (a, d, t) => a.heart(t, { note: 'A5', vel: 0.14 }), { gap: 1 });
     }
   });
 

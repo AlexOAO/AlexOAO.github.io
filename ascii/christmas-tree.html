@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>ASCII Christmas Tree | Alex Li (李翔緯)</title>
-  <meta name="description" content="A rotating 3D Christmas tree drawn entirely with ASCII characters: growing needles, garlands, baubles, twinkling lights, a shining star, gifts and falling snow. Vanilla JS on a single canvas.">
+  <meta name="description" content="A rotating 3D Christmas tree drawn entirely with ASCII characters: growing needles, garlands, baubles, twinkling lights, a shining star, gifts and falling snow. Drag to spin it, tap to change the light pattern, tap the star to make it flare. Vanilla JS on a single canvas.">
   <meta name="theme-color" content="#0b1120">
   <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,7 +35,7 @@
       height: 100vh;
       height: 100svh;
       display: block;
-      touch-action: manipulation; /* no double-tap zoom: double-tap means replay */
+      touch-action: none; /* dragging spins the tree; double-tap means pause */
       user-select: none;
       -webkit-user-select: none;
       -webkit-tap-highlight-color: transparent;
@@ -95,7 +95,7 @@
 <body>
   <h1 class="sr-only">ASCII Christmas Tree</h1>
   <a class="back" href="./">← ASCII</a>
-  <canvas id="c" role="img" aria-label="Animated rotating 3D Christmas tree drawn with ASCII characters, with falling snow and the words Merry Christmas"></canvas>
+  <canvas id="c" role="img" aria-label="Animated rotating 3D Christmas tree drawn with ASCII characters, with falling snow and the words Merry Christmas; drag to spin it, tap it to change the lights, tap the star to make it flare"></canvas>
   <div class="hud" id="hud" aria-hidden="true"></div>
   <div class="hint" id="hint"></div>
 
@@ -122,6 +122,12 @@
   const ROT_SPEED = reduced ? 0.12 : 0.35; // rad/s
   const ROT0 = 0.6;
   const SNOW_FACTOR = reduced ? 0.35 : 1;
+  // Interaction: drag spin (rad per S pixels, max fling speed, momentum decay rate 1/s),
+  // light pattern sweep (duration s, needle lift) and star flare (duration s, size bump).
+  const SPIN_GAIN = 3, SPIN_MAX = reduced ? 3 : 9, SPIN_DECAY = reduced ? 3 : 1.6;
+  const SWEEP_DUR = reduced ? 1.6 : 0.9, SWEEP_LIFT = reduced ? 0.18 : 0.45;
+  const FLARE_DUR = 1.6, FLARE_POP = reduced ? 0.08 : 0.35;
+  const CHASE = reduced ? 0.5 : 1.8, WAVE = reduced ? 0.08 : 0.3; // pattern motion speeds
 
   // ---------- Camera / world ----------
   const CAM_D = 3;          // camera distance (world units)
@@ -175,6 +181,16 @@
   const P_STARC = pal(255, 214, 92);
   const P_LIGHTS = [pal(255, 236, 170), pal(255, 206, 90), pal(255, 250, 225), pal(255, 236, 170), pal(255, 206, 90),
                     pal(255, 90, 90), pal(110, 170, 255), pal(120, 255, 140), pal(255, 130, 220)];
+  // Light patterns, cycled by tapping the tree: 0 classic (P_LIGHTS above), 1 warm white,
+  // 2 blue & silver, 3 red & gold chase, 4 rainbow wave. P_FLASH rides the sweep front.
+  const PAT_NAMES = ['classic', 'warm', 'ice', 'chase', 'rainbow'];
+  const WARM = [pal(255, 214, 150), pal(255, 190, 110), pal(255, 232, 190)];
+  const COOL = [pal(90, 150, 255), pal(170, 210, 255), pal(225, 232, 245)];
+  const P_CR = pal(255, 60, 60), P_CG = pal(255, 196, 70);
+  const RAINBOW = [pal(255, 70, 70), pal(255, 150, 50), pal(255, 230, 80), pal(110, 240, 110),
+                   pal(80, 220, 240), pal(100, 130, 255), pal(200, 110, 255)];
+  const P_FLASH = pal(255, 255, 255);
+  const LIGHT_PALS = new Set([...P_LIGHTS, ...WARM, ...COOL, P_CR, P_CG, ...RAINBOW, P_FLASH]);
 
   // Kinds of points
   const K_NEEDLE = 0, K_TRUNK = 1, K_CAP = 2, K_GARLAND = 3, K_BAUBLE = 4,
@@ -241,13 +257,14 @@
     }
   }
 
-  // Lights: single emissive points; aux = twinkle frequency.
-  const lightT0 = [];
+  // Lights: single emissive points; aux = twinkle frequency. lightPt/lightA keep each light's
+  // point index and angle on the tree for the light patterns.
+  const lightT0 = [], lightPt = [], lightA = [];
   for (let i = 0; i < 260; i++) {
     const y = 0.02 + 0.93 * (1 - Math.sqrt(rng()));
     const a = rng() * Math.PI * 2, r = env(y) * 1.035;
     const t0 = T.LIGHTS + rng() * T.LIGHTS_DUR;
-    lightT0.push(t0);
+    lightT0.push(t0); lightPt.push(B.x.length); lightA.push(a);
     add(Math.cos(a) * r, y, Math.sin(a) * r, Math.cos(a), 0.4, Math.sin(a), K_LIGHT,
         P_LIGHTS[(rng() * P_LIGHTS.length) | 0], t0, rng() * 6.283, 2 + 3 * rng());
   }
@@ -316,6 +333,8 @@
   const NX = Float32Array.from(B.nx), NY = Float32Array.from(B.ny), NZ = Float32Array.from(B.nz);
   const KD = Uint8Array.from(B.k), PP = Uint16Array.from(B.p);
   const T0 = Float32Array.from(B.t0), PH = Float32Array.from(B.ph), AUX = Float32Array.from(B.aux);
+  const LI = new Int16Array(N).fill(-1); // point -> light number
+  lightPt.forEach((p, i) => { LI[p] = i; });
 
   // Snow cap: dynamic pile riding on the growth front.
   const CAP_N = 600;
@@ -437,6 +456,11 @@
   // ---------- Projection + z-buffered splat ----------
   let cr = 1, sr = 0, t = reduced ? T.DONE : 0, rot = ROT0, skyT = 0;
   let projX = 0, projY = 0;
+  // Interaction state: light pattern (and the one the sweep is replacing), sweep and flare ages (s),
+  // extra spin speed on top of the auto-rotation, and the flare's sparkles.
+  let pat = 0, patFrom = 0, sweepAge = 1e9, flareAge = 1e9, spinV = 0, dragging = false;
+  let sweepY = -9, lgain = 1, lboost = 0;
+  const sparks = [];
 
   function project(x, y, z) {
     const rz = z * cr - x * sr, rx = x * cr + z * sr, yy = y - PIVOT;
@@ -468,7 +492,9 @@
     let b, cc;
     switch (k) {
       case K_NEEDLE:
-        b = clamp((0.28 + 0.72 * lam) * dd, 0, 1); cc = C_RAMP[(b * 8.99) | 0]; break;
+        b = clamp((0.28 + 0.72 * lam) * dd, 0, 1);
+        if (sweepY > -9 && Math.abs(y - sweepY) < 0.05) b = Math.min(1, b + (1 - Math.abs(y - sweepY) / 0.05) * SWEEP_LIFT);
+        cc = C_RAMP[(b * 8.99) | 0]; break;
       case K_TRUNK:
         b = clamp((0.2 + 0.8 * lam) * dd, 0, 1); cc = b > 0.55 ? C_HASH : C_BAR; break;
       case K_CAP:
@@ -482,6 +508,7 @@
       case K_LIGHT:
         b = 0.5 + 0.5 * Math.sin(t * aux + ph);
         b = 0.35 + 0.65 * b * b; // emissive, ignores lighting; mostly dim with sharp bright peaks
+        b = clamp(b * lgain + lboost, 0, 1); // pattern chase + sweep front
         cc = b > 0.6 ? C_STAR : C_PLUS; break;
       case K_GIFT:
         b = clamp((0.2 + 0.8 * lam) * dd, 0, 1); cc = b > 0.5 ? C_HASH : C_EQ; break;
@@ -502,8 +529,37 @@
     return 1.3 - 0.3 * x * x * (3 - 2 * x);
   }
 
+  // Palette for light point i at height y under the current pattern; also sets lgain / lboost.
+  // Lights below the sweep front show the new pattern, a bright band rides on the front.
+  function lightPal(i, y) {
+    const li = LI[i];
+    let mode = pat;
+    lgain = 1; lboost = 0;
+    if (sweepY > -9) {
+      const d = (sweepY - y) / 0.08;
+      if (d < 0) mode = patFrom;
+      else if (d < 1) lboost = (1 - d) * (reduced ? 0.25 : 0.7);
+    }
+    if (lboost > 0.45) return P_FLASH; // never in reduced motion
+    switch (mode) {
+      case 1: return WARM[li % 3];
+      case 2: return COOL[li % 3];
+      case 3: { // red and gold bands spiralling up, each brightest at its leading edge
+        const u = lightA[li] * 3 / 6.283 + y * 7 - t * CHASE, f = u - Math.floor(u);
+        lgain = 0.35 + 0.9 * f * f;
+        return (Math.floor(u) & 1) ? P_CR : P_CG;
+      }
+      case 4: { // hue drifts up the tree
+        const h = y * 1.1 + lightA[li] / 6.283 * 0.5 - t * WAVE;
+        return RAINBOW[((h - Math.floor(h)) * 7) | 0];
+      }
+      default: return PP[i];
+    }
+  }
+
   function buildTree() {
     cr = Math.cos(rot); sr = Math.sin(rot);
+    sweepY = sweepAge < SWEEP_DUR ? -0.06 + 1.2 * (1 - Math.pow(1 - sweepAge / SWEEP_DUR, 2)) : -9;
     stamp++; nT = 0;
 
     for (let g = 0; g < GIFTS.length; g++) {
@@ -511,7 +567,8 @@
       giftDy[g] = a < 0 ? 0 : a < T.GIFT_DROP ? 0.4 * (1 - (a / T.GIFT_DROP) ** 2)
         : a < T.GIFT_DROP + 0.25 ? 0.018 * Math.sin(Math.PI * (a - T.GIFT_DROP) / 0.25) : 0;
     }
-    const starS = popStar((t - T.STAR) / 0.5);
+    let starS = popStar((t - T.STAR) / 0.5);
+    if (flareAge < 0.7) starS *= 1 + FLARE_POP * Math.sin(Math.PI * flareAge / 0.7);
 
     for (let i = 0; i < N; i++) {
       const t0 = T0[i];
@@ -526,7 +583,7 @@
       } else if (k === K_STARK) {
         x *= starS; z *= starS; y = STAR_Y + (y - STAR_Y) * starS;
       }
-      splat(x, y, z, NX[i], NY[i], NZ[i], k, PP[i], PH[i], AUX[i]);
+      splat(x, y, z, NX[i], NY[i], NZ[i], k, k === K_LIGHT ? lightPal(i, y) : PP[i], PH[i], AUX[i]);
     }
 
     // Snow cap: a flat pile on the growth front, narrowing as it climbs, then melting.
@@ -574,7 +631,7 @@
   function makeHalos() {
     const R = Math.max(6, cw * 2.4);
     halos = PAL.map(([r, g, b], p) => {
-      if (!P_LIGHTS.includes(p)) return null;
+      if (!LIGHT_PALS.has(p)) return null;
       const c = document.createElement('canvas');
       c.width = c.height = Math.ceil(R * 2);
       const x = c.getContext('2d'), gr = x.createRadialGradient(R, R, 0, R, R, R);
@@ -609,6 +666,25 @@
   const RAYS = [[1, 0, '-'], [-1, 0, '-'], [0, -1, '|'], [0, 1, '|'],
                 [1, -1, '/'], [-1, 1, '/'], [-1, -1, '\\'], [1, 1, '\\']];
 
+  const SPARK_CH = ['*', '+', '·', '.'];
+  function spawnSparks() {
+    const n = reduced ? 8 : 34;
+    for (let i = 0; i < n; i++) {
+      const an = Math.random() * 6.283, sp = reduced ? 0.08 + 0.08 * Math.random() : 0.35 + 0.9 * Math.random();
+      sparks.push({ x: 0, y: 0, vx: Math.cos(an) * sp, vy: Math.sin(an) * sp - (reduced ? 0.03 : 0.25),
+                    age: 0, life: reduced ? 2 + Math.random() : 0.8 + 0.8 * Math.random(), w: Math.random() < 0.4 });
+    }
+  }
+  function updateSparks(dt) {
+    const drag = Math.exp(-dt * 1.8), grav = reduced ? 0 : 0.9;
+    for (let i = sparks.length - 1; i >= 0; i--) {
+      const s = sparks[i];
+      s.age += dt;
+      if (s.age >= s.life) { sparks.splice(i, 1); continue; }
+      s.x += s.vx * dt; s.y += s.vy * dt; s.vx *= drag; s.vy = s.vy * drag + grav * dt;
+    }
+  }
+
   function drawStarFx() {
     if (t < T.STAR) return;
     const a = t - T.STAR;
@@ -634,11 +710,39 @@
       ctx.fillStyle = g;
       ctx.fillRect(sx - fr, sy - fr, fr * 2, fr * 2);
     }
+    // Tap flare: a bigger glow swell; with full motion also a white flash and rays (below).
+    if (flareAge < FLARE_DUR) {
+      const p = flareAge / FLARE_DUR, fa = (1 - p) * (1 - p) * (reduced ? 0.22 : 0.55);
+      const fr = S * (0.22 + (reduced ? 0.08 : 0.3) * p);
+      g = ctx.createRadialGradient(sx, sy, 0, sx, sy, fr);
+      g.addColorStop(0, `rgba(255,215,120,${fa.toFixed(3)})`);
+      g.addColorStop(1, 'rgba(255,170,60,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(sx - fr, sy - fr, fr * 2, fr * 2);
+      if (!reduced && flareAge < 0.45) {
+        const q = flareAge / 0.45, wa = (1 - q) * (1 - q) * 0.7, wr = S * (0.1 + 0.25 * q);
+        g = ctx.createRadialGradient(sx, sy, 0, sx, sy, wr);
+        g.addColorStop(0, `rgba(255,255,255,${wa.toFixed(3)})`);
+        g.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(sx - wr, sy - wr, wr * 2, wr * 2);
+      }
+    }
+    // Flare sparkles (positions in S units from the star).
+    if (sparks.length) {
+      ctx.font = cellFont;
+      for (let i = 0; i < sparks.length; i++) {
+        const s = sparks[i], q = s.age / s.life;
+        ctx.fillStyle = `rgba(255,${s.w ? 250 : 215},${s.w ? 230 : 120},${((1 - q) * (reduced ? 0.6 : 1)).toFixed(3)})`;
+        ctx.fillText(SPARK_CH[Math.min(3, (q * 4) | 0)], sx + s.x * S, sy + s.y * S);
+      }
+    }
     ctx.globalCompositeOperation = 'source-over';
 
-    // Ray lines that shrink back into the star.
-    if (a < 1.6) {
-      const p = a / 1.6, len = Math.pow(1 - p, 1.5);
+    // Ray lines that shrink back into the star (on arrival, and again on a full-motion flare).
+    const ra = reduced ? a : Math.min(a, flareAge);
+    if (ra < 1.6) {
+      const p = ra / 1.6, len = Math.pow(1 - p, 1.5);
       ctx.font = cellFont;
       ctx.fillStyle = `rgba(255,230,150,${(0.4 + 0.6 * (1 - p)).toFixed(3)})`;
       const scol = Math.floor(sx / cw), srow = Math.floor(sy / ch);
@@ -728,7 +832,7 @@
     let nl = 0;
     for (let i = 0; i < lightT0.length; i++) if (t >= lightT0[i]) nl++;
     const deg = ((rot * 180 / Math.PI) % 360 + 360) % 360;
-    hudEl.textContent = `rotation ${deg.toFixed(1)}°  lights ${nl}  letters ${lettersShown}  ` +
+    hudEl.textContent = `rotation ${deg.toFixed(1)}°  lights ${nl} ${PAT_NAMES[pat]}  letters ${lettersShown}  ` +
       (paused ? 'paused' : `${fps} fps`);
     hudT = now;
   }
@@ -739,7 +843,10 @@
     if (needResize) resize();
     if (!paused) {
       const t1 = t;
-      t += dt; rot += dt * ROT_SPEED; skyT += dt;
+      t += dt; skyT += dt;
+      // Auto-rotation plus fling momentum, which decays back to the auto speed. A drag holds the tree.
+      if (!dragging) { rot += dt * (ROT_SPEED + spinV); spinV *= Math.exp(-dt * SPIN_DECAY); }
+      sweepAge += dt; flareAge += dt; updateSparks(dt);
       updateSnow(snowBack, dt); updateSnow(snowFront, dt);
       soundCues(t1, t);
     }
@@ -764,21 +871,93 @@
   }
 
   function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
-  function replay() { t = 0; rot = ROT0; paused = false; dirty = true; music('resume'); music('restart'); }
+  function replay() {
+    t = 0; rot = ROT0; paused = false; dirty = true; music('resume'); music('restart');
+    pat = patFrom = 0; sweepAge = flareAge = 1e9; spinV = 0; sparks.length = 0;
+  }
+  // Next light pattern, swept in from the bottom of the tree.
+  function cyclePattern() {
+    patFrom = pat; pat = (pat + 1) % PAT_NAMES.length; sweepAge = 0; dirty = true;
+    music('event', 'pattern', { p: pat });
+  }
+  function flare() {
+    if (t < T.STAR) return;
+    flareAge = 0; spawnSparks(); dirty = true;
+    music('event', 'flare');
+  }
+  // Hit tests against the last frame: the star by distance, the tree by its grid cells (1-cell slack).
+  function hitStar(x, y) {
+    if (t < T.STAR) return false;
+    project(0, STAR_Y, 0);
+    return Math.hypot(x - projX, y - projY) < Math.max(S * 0.11, ch * 2.2);
+  }
+  function hitTree(x, y) {
+    const c0 = Math.floor(x / cw), r0 = Math.floor(y / ch);
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+      const r = r0 + dr, c = c0 + dc;
+      if (r < 0 || c < 0 || r >= rows || c >= cols) continue;
+      const k = r * cols + c;
+      if (stampA[k] === stamp && ckind[k] !== K_GIFT && ckind[k] !== K_RIBBON) return true;
+    }
+    return false;
+  }
 
   addEventListener('resize', () => { needResize = true; });
   addEventListener('keydown', e => {
     if (e.metaKey || e.ctrlKey || e.altKey) return; // leave Cmd/Ctrl+R alone
     if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
     else if (e.key === 'r' || e.key === 'R') replay();
+    else if (e.key === 'c' || e.key === 'C') { if (paused) togglePause(); cyclePattern(); }
+    else if (e.key === 's' || e.key === 'S') { if (paused) togglePause(); flare(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      spinV = clamp(spinV + (e.key === 'ArrowRight' ? 1 : -1) * (reduced ? 0.6 : 1.5), -SPIN_MAX, SPIN_MAX);
+    }
   });
-  // Single tap = pause (decided after 280 ms), two quick taps = replay.
-  let tapTimer = 0;
-  canvas.addEventListener('pointerup', e => {
+  // Drag sideways to spin the tree; a press only counts as a tap if it moved less than 8 px.
+  // Tap the star = flare, tap the tree = next light pattern (decided after 280 ms);
+  // two quick taps = pause / resume.
+  let downX = 0, downY = 0, lastX = 0, lastMt = 0, pressed = false, dragVel = 0, tapTimer = 0;
+  canvas.addEventListener('pointerdown', e => {
     if (e.button > 0) return;
-    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; replay(); }
-    else tapTimer = setTimeout(() => { tapTimer = 0; togglePause(); }, 280);
+    pressed = true; dragging = false; downX = lastX = e.clientX; downY = e.clientY;
+    lastMt = performance.now(); dragVel = 0;
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
   });
+  canvas.addEventListener('pointermove', e => {
+    if (!pressed) return;
+    if (!dragging && Math.hypot(e.clientX - downX, e.clientY - downY) >= 8) { dragging = true; spinV = 0; }
+    if (!dragging) return;
+    const now = performance.now(), d = (e.clientX - lastX) * SPIN_GAIN / S;
+    const dtm = Math.max(1 / 240, (now - lastMt) / 1000);
+    rot += d; dragVel = 0.6 * dragVel + 0.4 * d / dtm;
+    lastX = e.clientX; lastMt = now; dirty = true;
+  });
+  // Release: keep the finger's speed, then ease back to the auto-rotation.
+  function endDrag() {
+    pressed = false;
+    if (!dragging) return;
+    dragging = false;
+    const v = performance.now() - lastMt > 90 ? 0 : clamp(dragVel, -SPIN_MAX, SPIN_MAX);
+    spinV = v - ROT_SPEED;
+    if (Math.abs(v) > 2) music('event', 'spin', { v });
+  }
+  canvas.addEventListener('pointerup', e => {
+    if (!pressed) return;
+    const wasTap = !dragging;
+    endDrag();
+    if (!wasTap) return;
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; togglePause(); return; }
+    const rc = canvas.getBoundingClientRect(), x = e.clientX - rc.left, y = e.clientY - rc.top;
+    const act = hitStar(x, y) ? flare : hitTree(x, y) ? cyclePattern : null;
+    tapTimer = setTimeout(() => {
+      tapTimer = 0;
+      if (!act) return;
+      if (paused) togglePause();
+      act();
+    }, 280);
+  });
+  canvas.addEventListener('pointercancel', endDrag);
 
   // Hint language: ?lang= wins, then saved site preference, then browser.
   let pref = null;
@@ -789,9 +968,9 @@
   document.documentElement.lang = zh ? 'zh-Hant' : 'en';
   // Touch screens have no keyboard, and the full hint would not fit on a phone.
   const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
-  hintEl.textContent = touch ? (zh ? '點擊暫停 · 雙擊重播' : 'tap to pause · double-tap to replay')
-                             : (zh ? '空白鍵 暫停 · R 重播 · M 音樂 · 點擊暫停 · 雙擊重播'
-                                   : 'Space pause · R replay · M music · click to pause · double-click to replay');
+  hintEl.textContent = touch ? (zh ? '拖曳旋轉 · 點樹換燈光 · 點星星閃耀 · 雙擊暫停' : 'drag to spin · tap tree: lights · tap star · double-tap pause')
+                             : (zh ? '拖曳旋轉 · 點樹換燈光 (C) · 點星星閃耀 (S) · 空白鍵/雙擊 暫停 · R 重播 · M 音樂'
+                                   : 'drag to spin · click tree: lights (C) · click star (S) · Space/double-click pause · R replay · M music');
 
   // Score: "Deck the Halls" (traditional Welsh carol, public domain) for music box, after an
   // original 4-bar intro. Celesta arpeggios, soft pad, sine bass and sleigh bells. 80-beat loop.
@@ -840,6 +1019,22 @@
       a.on('star', (a, d, t) => { a.whoosh(t, { dur: 0.7, vel: 0.3 }); a.chime(t + 0.05, 'C6', 3, { vel: 0.4 }); });
       a.on('gift', (a, d, t) => { a.thud(t, { vel: 0.5, freq: 150 - d.i * 12 }); a.pop(t + 0.03, { freq: 380 + d.i * 60, vel: 0.25 }); });
       a.on('letter', (a, d, t) => a.tick(t, { vel: 0.3, bell: d.last, note: 'C7' }));
+      // Interaction sounds: a rising sweep and sparkles per light pattern, a chime for the star
+      // flare, and a soft whoosh for a fast fling.
+      const PAT_SP = ['C6', 'F5', 'A5', 'D6', 'G5'].map(r => AsciiAudio.scale(r, 'pentatonic', 8));
+      a.on('pattern', (a, d, t) => {
+        a.sweep(t, 0.55, { from: 400, to: 6000, vel: 0.16, bus: 'sfx' });
+        a.sparkle(t + 0.12, { count: 5, spread: 0.07, vel: 0.2, notes: PAT_SP[d.p] });
+      }, { gap: 0.15 });
+      a.on('flare', (a, d, t) => {
+        a.whoosh(t, { dur: 0.4, vel: 0.22 });
+        a.chime(t + 0.03, 'G6', 2.6, { vel: 0.34 });
+        a.sparkle(t + 0.12, { count: 6, spread: 0.06, vel: 0.18 });
+      }, { gap: 0.2 });
+      a.on('spin', (a, d, t) => {
+        const k = Math.min(1, Math.abs(d.v) / SPIN_MAX);
+        a.whoosh(t, { dur: 0.3 + 0.2 * k, vel: 0.1 + 0.14 * k, freq: 250, freqEnd: 1800, pan: d.v > 0 ? 0.4 : -0.4 });
+      }, { gap: 0.25 });
     }
   });
 

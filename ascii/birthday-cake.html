@@ -34,7 +34,7 @@
       height: 100vh;
       height: 100svh;
       display: block;
-      touch-action: manipulation; /* no double-tap zoom: double-tap means replay */
+      touch-action: manipulation; /* no double-tap zoom: double-tap means pause */
       user-select: none;
       -webkit-user-select: none;
       -webkit-tap-highlight-color: transparent;
@@ -94,7 +94,7 @@
 <body>
   <h1 class="sr-only">ASCII Birthday Cake</h1>
   <a class="back" href="./">← ASCII</a>
-  <canvas id="c" role="img" aria-label="Animated 3D chocolate birthday cake drawn with ASCII characters: particles assemble the cake, a striped candle lights, the words Happy Birthday drop in as glowing block letters and confetti falls"></canvas>
+  <canvas id="c" role="img" aria-label="Animated 3D chocolate birthday cake drawn with ASCII characters: particles assemble the cake, a striped candle lights, the words Happy Birthday drop in as glowing block letters and confetti falls. Tap to blow out the candle or light it again"></canvas>
   <div class="hud" id="hud" aria-hidden="true"></div>
   <div class="hint" id="hint"></div>
 
@@ -444,6 +444,10 @@
   // ---------- Projection + z-buffered splat ----------
   let cr = 1, sr = 0, t = 0, rot = ROT0, skyT = 0;
   let projX = 0, projY = 0, flameI = 0, flameShow = 0, flameN = 0, flameN2 = 0;
+  // Flame control: 'tl' follows the timeline, 'out' = blown out at blowAt, 'lit' = relit at lightAt.
+  let flameMode = 'tl', blowAt = -1, lightAt = -1, outFrom = 0, outDur = T.BLOW_DUR, blowDir = 0;
+  let lean = 0, breath = 0, smokeAt = -1, burstAt = -1;
+  const STRIKE = 0.35;      // match-strike flicker before the relit flame catches
 
   function project(x, y, z) {
     const rz = z * cr - x * sr, rx = x * cr + z * sr, yy = y - PIVOT;
@@ -557,14 +561,15 @@
     if (flameShow <= 0.01) return;
     const Hf = S * 0.2 * flameShow * (0.92 + 0.1 * flameN), Wf = S * 0.06 * Math.sqrt(flameShow);
     const baseY = wickY + S * 0.012;
-    const c0 = Math.floor((wickX - Wf * 1.6) / cw), c1 = Math.ceil((wickX + Wf * 1.6) / cw);
+    const reach = Wf * (1.6 + Math.abs(lean));
+    const c0 = Math.floor((wickX - reach) / cw), c1 = Math.ceil((wickX + reach) / cw);
     const r0 = Math.floor((baseY - Hf * 1.1) / ch), r1 = Math.ceil(baseY / ch);
     for (let row = r0; row <= r1; row++) {
       const s = (baseY - (row + 0.5) * ch) / Hf;
       if (s <= 0 || s >= 1) continue;
       // Teardrop: round belly low down, a point at the tip, swaying more toward the tip.
       const rad = 1.75 * Math.sqrt(s) * Math.pow(1 - s, 1.05);
-      const sway = flameN2 * 0.55 * s * s;
+      const sway = (flameN2 * (0.55 + 0.5 * breath) + lean) * s * s; // breath / blow bends the tip away
       for (let col = c0; col <= c1; col++) {
         const u = ((col + 0.5) * cw - wickX) / Wf - sway;
         const q = 1 - Math.abs(u) / (rad + 0.18);
@@ -621,6 +626,20 @@
       const p = a / 0.5, r = S * (0.05 + 0.2 * p);
       ctx.globalAlpha = (1 - p) * (1 - p);
       ctx.drawImage(sparkHalo, wickX - r, wickY - r, r * 2, r * 2);
+    }
+    // Match strike when relit by a tap.
+    const m = skyT - lightAt;
+    if (flameMode === 'lit' && m >= 0 && m < STRIKE + 0.2) {
+      const p = m / (STRIKE + 0.2), r = S * (0.04 + 0.12 * p);
+      ctx.globalAlpha = (1 - p) * (1 - p) * (reduced ? 0.5 : 0.7 + 0.3 * Math.sin(m * 70));
+      ctx.drawImage(sparkHalo, wickX - r, wickY - r * 0.6 - r, r * 2, r * 2);
+    }
+    // Confetti pop flash at the wick.
+    const b = skyT - popAt;
+    if (b >= 0 && b < 0.35) {
+      const p = b / 0.35, r = S * (0.06 + 0.3 * p);
+      ctx.globalAlpha = (1 - p) * (1 - p) * (reduced ? 0.35 : 0.6);
+      ctx.drawImage(sparkHalo, popX - r, popY - r, r * 2, r * 2);
     }
     ctx.restore();
   }
@@ -732,21 +751,66 @@
     ctx.globalAlpha = 1;
   }
 
+  // Party-popper burst when a tap blows the candle out: [x, y, vx, vy, phase, flutter, colour, char, age, life]
+  const PF = 10, POP_MAX = 60, POP_N = reduced ? 18 : 48;
+  const pop = new Float32Array(POP_MAX * PF);
+  let popAlive = 0, popAt = -99, popX = 0, popY = 0;
+  function clearPop() { for (let o = 0; o < pop.length; o += PF) pop[o + 9] = 0; popAlive = 0; burstAt = -1; }
+  function spawnPop() {
+    project(0, FLAME_Y, 0);
+    popX = projX; popY = projY; popAt = skyT;
+    const sp = reduced ? 0.55 : 1;
+    for (let i = 0; i < POP_N; i++) {
+      const o = i * PF, a = -Math.PI / 2 + (cr2() - 0.5) * 2.4, v = S * (1.1 + 1.6 * cr2()) * sp;
+      pop[o] = popX; pop[o + 1] = popY; pop[o + 2] = Math.cos(a) * v * 1.3; pop[o + 3] = Math.sin(a) * v;
+      pop[o + 4] = cr2() * TAU; pop[o + 5] = 3 + 6 * cr2();
+      pop[o + 6] = (cr2() * CONF_COLS.length) | 0; pop[o + 7] = (cr2() * CONF_CH.length) | 0;
+      pop[o + 8] = 0; pop[o + 9] = (2.2 + cr2()) * (reduced ? 1.3 : 1);
+    }
+  }
+  function updatePop(dt) {
+    popAlive = 0;
+    const drag = Math.exp(-1.6 * dt), g = S * (reduced ? 1.2 : 2.2) * dt;
+    for (let o = 0; o < pop.length; o += PF) {
+      if (!pop[o + 9]) continue;
+      pop[o + 8] += dt;
+      if (pop[o + 8] > pop[o + 9]) { pop[o + 9] = 0; continue; }
+      pop[o + 2] *= drag; pop[o + 3] = pop[o + 3] * drag + g;
+      pop[o] += pop[o + 2] * dt; pop[o + 1] += pop[o + 3] * dt;
+      pop[o + 4] += pop[o + 5] * dt;
+      popAlive++;
+    }
+  }
+  function drawPop(fade) {
+    if (!popAlive) return;
+    ctx.font = confFont;
+    for (let o = 0; o < pop.length; o += PF) {
+      if (!pop[o + 9]) continue;
+      const fl = Math.sin(pop[o + 4]), q = pop[o + 8] / pop[o + 9];
+      ctx.globalAlpha = fade * (0.45 + 0.55 * Math.abs(fl)) * (q > 0.6 ? (1 - q) / 0.4 : 1);
+      ctx.fillStyle = CONF_COLS[pop[o + 6]];
+      const k = pop[o + 7];
+      ctx.fillText(fl > -0.3 ? CONF_CH[k] : CONF_ALT[k], pop[o], pop[o + 1]);
+    }
+    ctx.globalAlpha = 1;
+  }
+
   // Smoke after the blow-out: [x0, y, age, life, phase, alive]
   const SF = 6, SMOKE_N = 60;
   const smoke = new Float32Array(SMOKE_N * SF);
   let smokeAcc = 0, smokeNext = 0;
   const SMOKE_COLS = [];
   for (let l = 0; l < 8; l++) SMOKE_COLS.push(`rgba(200,196,192,${(0.1 + 0.75 * l / 7).toFixed(3)})`);
-  function clearSmoke() { for (let o = 0; o < smoke.length; o += SF) smoke[o + 5] = 0; smokeAcc = 0; }
+  function clearSmoke() { for (let o = 0; o < smoke.length; o += SF) smoke[o + 5] = 0; smokeAcc = 0; smokeAt = -1; }
   function updateSmoke(dt) {
-    if (t >= T.BLOW + 0.1 && t < T.SMOKE_END) {
+    // Rises for 1.5 s after any blow-out (the scripted one at T.BLOW or a tap).
+    if (smokeAt >= 0 && skyT >= smokeAt + 0.1 && skyT < smokeAt + (T.SMOKE_END - T.BLOW)) {
       smokeAcc += dt;
       project(0, WICK_Y, 0);
       while (smokeAcc > 0.045) {
         smokeAcc -= 0.045;
         const o = smokeNext * SF; smokeNext = (smokeNext + 1) % SMOKE_N;
-        smoke[o] = projX + (cr2() - 0.5) * cw; smoke[o + 1] = projY - ch * 0.5;
+        smoke[o] = projX + (cr2() - 0.5) * cw + blowDir * S * 0.02; smoke[o + 1] = projY - ch * 0.5;
         smoke[o + 2] = 0; smoke[o + 3] = 1.4 + cr2() * 0.9; smoke[o + 4] = cr2() * 0.8; smoke[o + 5] = 1;
       }
     }
@@ -807,37 +871,74 @@
     drawGlow();
     drawSmoke();
     drawConf(fade);
+    drawPop(fade);
   }
 
   // ---------- Time, loop, HUD, controls ----------
-  function updateFlame() {
+  function updateFlame(dt) {
     // Sum of incommensurate sines as cheap 1D noise.
     flameN = 0.5 * Math.sin(skyT * 11.3) + 0.3 * Math.sin(skyT * 17.9 + 1.3) + 0.2 * Math.sin(skyT * 29.1 + 4.1);
     flameN2 = 0.6 * Math.sin(skyT * 3.1 + 0.4) + 0.4 * Math.sin(skyT * 7.7 + 2.2);
-    const grow = smooth((t - T.LIGHT - 0.1) / (T.LIGHT_DUR - 0.1));
-    const out = 1 - smooth((t - T.BLOW) / T.BLOW_DUR);
-    flameShow = grow * out;
-    flameI = flameShow * (0.88 + 0.1 * flameN);
+    if (flameMode === 'tl') flameShow = smooth((t - T.LIGHT - 0.1) / (T.LIGHT_DUR - 0.1));
+    else if (flameMode === 'out') flameShow = outFrom * (1 - smooth((skyT - blowAt) / outDur));
+    else {
+      // Relit: a few sputtering sparks while the match strikes, then the flame grows back.
+      const m = skyT - lightAt;
+      const sputter = !reduced && m < STRIKE ? 0.16 * (0.5 + 0.5 * Math.sin(m * 70)) * (1 - m / STRIKE) : 0;
+      flameShow = Math.min(1, smooth((m - 0.15) / (reduced ? 1.2 : 0.8)) + sputter);
+    }
+    // Lean: a tap's blow bends the flame hard; a pointer near it is a soft breath it shies away from.
+    let leanTo = 0;
+    breath = 0;
+    if (flameMode === 'out' && blowDir) leanTo = blowDir * (reduced ? 1 : 2.2);
+    else if (ptrOn && flameShow > 0.05) {
+      const dx = ptrX - wickX, dy = ptrY - (wickY - S * 0.1), R = S * 0.4;
+      const k = 1 - Math.hypot(dx, dy * 0.8) / R;
+      if (k > 0) { breath = k * (reduced ? 0.4 : 1); leanTo = -Math.sign(dx || 1) * breath * 1.1; }
+    }
+    lean += (leanTo - lean) * Math.min(1, dt * (flameMode === 'out' ? 14 : 6));
+    flameI = flameShow * (0.88 + 0.1 * flameN * (1 + breath));
+  }
+
+  // Tap: blow the flame out (it bends away from the tap), or strike a match and relight it.
+  function blowOut(dir, user) {
+    flameMode = 'out'; blowAt = skyT; outFrom = flameShow; blowDir = dir;
+    outDur = user ? (reduced ? 0.7 : 0.45) : T.BLOW_DUR;
+    smokeAt = skyT; smokeAcc = 0;
+    if (user) { burstAt = skyT + 0.3; music('event', 'puff'); }
+  }
+  function tapCandle(x) {
+    // Only once the candle has landed, and not while the scene fades out.
+    if (t < T.CANDLE + T.CANDLE_DUR * 0.7 || (!reduced && t >= T.FADE)) return;
+    if (flameShow > 0.05 && flameMode !== 'out') blowOut(x < wickX ? 1 : -1, true);
+    else if (flameMode === 'out' && skyT - blowAt < 0.2) return; // still going out
+    else { flameMode = 'lit'; lightAt = skyT; blowDir = 0; music('event', 'strike'); }
   }
 
   function advance(dt) {
     t += dt; skyT += dt;
     if (reduced) { if (t > T_HOLD) t = T_HOLD; }
-    else if (t >= T.END) { t = 0; clearConf(); clearSmoke(); }
+    else if (t >= T.END) { t = 0; clearConf(); clearSmoke(); clearPop(); flameMode = 'tl'; }
     rot = ROT0 + SWAY_A * Math.sin(skyT * SWAY_W);
     cr = Math.cos(rot); sr = Math.sin(rot);
-    updateFlame();
+    // The scripted blow-out also puts out a flame that was relit by a tap.
+    autoBlew = t - dt < T.BLOW && T.BLOW <= t && flameMode !== 'out';
+    if (autoBlew) blowOut(0, false);
+    updateFlame(dt);
+    if (burstAt >= 0 && skyT >= burstAt) { burstAt = -1; spawnPop(); music('event', 'burst'); }
     updateConf(dt);
+    updatePop(dt);
     updateSmoke(dt);
   }
 
-  let paused = false, last = performance.now();
+  let paused = false, last = performance.now(), autoBlew = false;
+  let ptrOn = false, ptrX = 0, ptrY = 0;
   let frames = 0, fpsT = last, fps = 0, hudT = 0, warmed = false;
 
   function updateHud(now) {
     const lit = flameShow > 0.05 ? 'candle lit' : 'candle off';
     const tail = paused ? 'paused' : `${fps} fps`;
-    const head = `${lit}  flame ${flameI.toFixed(2)}  confetti ${confAlive}  `;
+    const head = `${lit}  flame ${flameI.toFixed(2)}  confetti ${confAlive + popAlive}  `;
     hudEl.textContent = W < 640 ? head + tail
       : head + `letters ${(nT + letterChars).toLocaleString('en-US')}  ${tail}`;
     hudT = now;
@@ -876,11 +977,11 @@
     for (let i = 0; i < NLET; i++) if (crossed(a, b, T.WORDS + i * T.LETTER + T.DROP * 0.6)) music('event', 'letter', { i });
     if (crossed(a, b, T.CONF)) music('event', 'popper');
     for (let x = T.CONF + 0.6; x < T.CONF_END; x += 0.7) if (crossed(a, b, x)) music('event', 'tinkle');
-    if (crossed(a, b, T.BLOW)) music('event', 'blow');
+    if (crossed(a, b, T.BLOW) && autoBlew) music('event', 'blow');
   }
 
   function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
-  function replay() { t = 0; clearConf(); clearSmoke(); paused = false; dirty = true; music('resume'); music('restart'); }
+  function replay() { t = 0; clearConf(); clearSmoke(); clearPop(); flameMode = 'tl'; lean = 0; paused = false; dirty = true; music('resume'); music('restart'); }
 
   addEventListener('resize', () => { needResize = true; });
   addEventListener('keydown', e => {
@@ -888,12 +989,25 @@
     if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
     else if (e.key === 'r' || e.key === 'R') replay();
   });
-  // Single tap = pause (decided after 280 ms), two quick taps = replay.
+  // Pointer near the flame = a soft breath (mouse hover, or a finger while pressed).
+  const setPtr = e => { const r = canvas.getBoundingClientRect(); ptrX = e.clientX - r.left; ptrY = e.clientY - r.top; ptrOn = true; };
+  canvas.addEventListener('pointerdown', setPtr);
+  canvas.addEventListener('pointermove', e => { if (e.pointerType === 'mouse' || e.buttons) setPtr(e); });
+  const ptrOff = () => { ptrOn = false; };
+  canvas.addEventListener('pointerleave', ptrOff);
+  canvas.addEventListener('pointercancel', ptrOff);
+  // Single tap = blow out / relight the candle (decided after 280 ms), two quick taps = pause.
   let tapTimer = 0;
   canvas.addEventListener('pointerup', e => {
+    if (e.pointerType !== 'mouse') ptrOn = false;
     if (e.button > 0) return;
-    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; replay(); }
-    else tapTimer = setTimeout(() => { tapTimer = 0; togglePause(); }, 280);
+    const x = e.clientX - canvas.getBoundingClientRect().left;
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; togglePause(); }
+    else tapTimer = setTimeout(() => {
+      tapTimer = 0;
+      if (paused) togglePause();
+      tapCandle(x);
+    }, 280);
   });
 
   // Hint language: ?lang= wins, then saved site preference, then browser.
@@ -905,9 +1019,9 @@
   document.documentElement.lang = zh ? 'zh-Hant' : 'en';
   // Touch screens have no keyboard, and the full hint would not fit on a phone.
   const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
-  hintEl.textContent = touch ? (zh ? '點擊暫停 · 雙擊重播' : 'tap to pause · double-tap to replay')
-                             : (zh ? '空白鍵 暫停 · R 重播 · M 音樂 · 點擊暫停 · 雙擊重播'
-                                   : 'Space pause · R replay · M music · click to pause · double-click to replay');
+  hintEl.textContent = touch ? (zh ? '點擊吹熄／點亮蠟燭 · 雙擊暫停' : 'tap to blow out / relight · double-tap to pause')
+                             : (zh ? '點擊吹熄／點亮蠟燭 · 游標靠近火焰會搖曳 · 空白鍵／雙擊 暫停 · R 重播 · M 音樂'
+                                   : 'click to blow out / relight · hover to sway the flame · Space / double-click pause · R replay · M music');
 
   // Score: "Happy Birthday to You" (public domain) in 3/4 for music box, after an original
   // 3-bar intro. Oom-pah-pah: bouncy bass on 1, pluck chords on 2 and 3, light shaker.
@@ -975,6 +1089,23 @@
         ['G6', 'E6', 'C6', 'G5'].forEach((n, i) =>
           a.bell(t + 0.4 + i * 0.16, n, 2.2, { vel: 0.26 - i * 0.03, bus: 'sfx', wet: 0.5, pan: 0.3 - i * 0.2 }));
       });
+      // Tap interaction: a soft breath, the party-popper burst, and a match strike to relight.
+      a.on('puff', (a, d, t) => {
+        a.noise(t, { dur: 0.45, filter: 'bandpass', freq: 1500, freqEnd: 700, q: 0.7, attack: 0.08, vel: 0.32, bus: 'sfx' });
+        a.whoosh(t + 0.05, { dur: 0.4, freq: 900, freqEnd: 300, vel: 0.14 });
+      }, { gap: 0.2 });
+      a.on('burst', (a, d, t) => {
+        a.noise(t, { dur: 0.05, filter: 'bandpass', freq: 1600, q: 0.8, vel: 0.36, bus: 'sfx' });
+        for (let i = 0; i < 6; i++)
+          a.noise(t + 0.04 + Math.random() * 0.35, { dur: 0.02, filter: 'highpass', freq: 4000 + Math.random() * 2500,
+            vel: 0.12 + Math.random() * 0.1, bus: 'sfx', pan: Math.random() * 1.2 - 0.6 });
+        a.sparkle(t + 0.08, { count: 4, vel: 0.13, notes: SP.slice(3) });
+      }, { gap: 0.3 });
+      a.on('strike', (a, d, t) => {
+        a.noise(t, { dur: 0.08, filter: 'bandpass', freq: 3000, q: 0.8, vel: 0.42, bus: 'sfx' });
+        a.noise(t + 0.03, { dur: 0.2, filter: 'highpass', freq: 5000, vel: 0.18, bus: 'sfx' });
+        a.whoosh(t + 0.2, { dur: 0.6, freq: 250, freqEnd: 1200, vel: 0.22 });
+      }, { gap: 0.2 });
     }
   });
 

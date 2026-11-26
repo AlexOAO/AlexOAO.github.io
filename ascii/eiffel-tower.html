@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>ASCII Eiffel Tower | Alex Li (李翔緯)</title>
-  <meta name="description" content="The Eiffel Tower over a Paris skyline at night, drawn entirely with ASCII characters: the tower builds itself in blue, turns gold, sweeps its searchlights, sparkles and lights up with fireworks. Vanilla JS on a single canvas.">
+  <meta name="description" content="The Eiffel Tower over a Paris skyline at night, drawn entirely with ASCII characters: the tower builds itself in blue, turns gold, sweeps its searchlights, sparkles and lights up with fireworks. Tap the sky for your own fireworks or the tower to make it sparkle. Vanilla JS on a single canvas.">
   <meta name="theme-color" content="#03050a">
   <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,7 +35,7 @@
       height: 100vh;
       height: 100svh;
       display: block;
-      touch-action: manipulation; /* no double-tap zoom: double-tap means replay */
+      touch-action: none; /* taps launch fireworks, a drag pans the skyline; also no double-tap zoom */
       user-select: none;
       -webkit-user-select: none;
       -webkit-tap-highlight-color: transparent;
@@ -95,7 +95,7 @@
 <body>
   <h1 class="sr-only">ASCII Eiffel Tower</h1>
   <a class="back" href="./">← ASCII</a>
-  <canvas id="c" role="img" aria-label="Animated Eiffel Tower over a Paris skyline at night drawn with ASCII characters: the tower builds up in blue, turns gold, sweeps searchlights across the sky, sparkles and is surrounded by fireworks"></canvas>
+  <canvas id="c" role="img" aria-label="Animated Eiffel Tower over a Paris skyline at night drawn with ASCII characters: the tower builds up in blue, turns gold, sweeps searchlights across the sky, sparkles and is surrounded by fireworks; tapping the sky launches a firework and tapping the tower makes it sparkle"></canvas>
   <div class="hud" id="hud" aria-hidden="true"></div>
   <div class="hint" id="hint"></div>
 
@@ -117,6 +117,8 @@
   const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   const T_START = reduced ? 10.0 : 0;   // reduced motion: open (and stay) on the lit gold tower
   const BEAM_W = reduced ? 0.12 : 0.42; // rad/s of the searchlight rotation
+  const TAP_SPARK = 4.5;                // seconds of light show after a tap on the tower
+  const PAN = 1.0;                      // pointer parallax: skyline shift in cells (stars move 0.3x)
   const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
 
   function mulberry32(a) {
@@ -460,7 +462,7 @@
     put(row * cols + col, chr, p, b, halo);
   }
 
-  let t = T_START, skyT = 0, nSpark = 0, letters = 0;
+  let t = T_START, skyT = 0, nSpark = 0, letters = 0, tapSparkT = -99;
 
   function drawBeams() {
     if (t < T.BEAM) return;
@@ -492,9 +494,12 @@
     nSpark = 0;
     if (t < T.BUILD) return;
     const goldGlow = smooth((t - T.GOLD - 0.8) / 1.4);
-    const sEnv = (!reduced && t >= T.SHOW && t < T.SHOW_END)
+    let sEnv = (!reduced && t >= T.SHOW && t < T.SHOW_END)
       ? Math.min(1, (t - T.SHOW) / 0.6, (T.SHOW_END - t) / 0.6) : 0;
-    const pS = 0.06 * sEnv, ep = skyT * 7;
+    // A tap on the tower runs the same show on the sky clock (reduced motion: sparser, slower, no halos).
+    const uEnv = clamp(Math.min((skyT - tapSparkT) / 0.6, (tapSparkT + TAP_SPARK - skyT) / 0.6), 0, 1);
+    if (uEnv > sEnv) sEnv = uEnv;
+    const pS = (reduced ? 0.025 : 0.06) * sEnv, ep = skyT * (reduced ? 2.5 : 7);
     const gw = T.GOLD_DUR - 0.7;
     for (let i = 0; i < nTw; i++) {
       const age = t - tT0[i];
@@ -508,7 +513,7 @@
       let chr = tCh[i], p = TW[(mix * 8 + 0.5) | 0], halo = 0;
       if (pS > 0) {
         const h = hash2(i, (ep + tPh[i]) | 0);
-        if (h < pS) { chr = h < pS * 0.5 ? C_STAR : C_PLUS; p = P_WHITE; b = 1; halo = 1; nSpark++; }
+        if (h < pS) { chr = h < pS * 0.5 ? C_STAR : C_PLUS; p = P_WHITE; b = reduced ? 0.85 : 1; halo = reduced ? 0 : 1; nSpark++; }
       }
       put(tC[i], chr, p, b, halo);
     }
@@ -551,24 +556,30 @@
   const fx = new Float32Array(MAXP), fy = new Float32Array(MAXP), fvx = new Float32Array(MAXP), fvy = new Float32Array(MAXP),
         fage = new Float32Array(MAXP), flife = new Float32Array(MAXP), fp = new Uint16Array(MAXP);
   const rx = new Float32Array(MAXR), ry = new Float32Array(MAXR), rvy = new Float32Array(MAXR), rty = new Float32Array(MAXR),
-        rp = new Uint16Array(MAXR);
+        rg = new Float32Array(MAXR), rp = new Uint16Array(MAXR), ru = new Uint8Array(MAXR);
   let np = 0, nr = 0, nextLaunch = 0, frameNo = 0;
   function clearFireworks() { np = 0; nr = 0; nextLaunch = 0; }
 
-  function launch() {
-    const i = nr++;
-    rx[i] = W * (0.1 + 0.8 * Math.random());
+  // With x/y: a tapped rocket that rises from the street below the tap, faster, and bursts right there.
+  function launch(x, y) {
+    if (nr >= MAXR) return;
+    const i = nr++, user = x !== undefined;
+    rx[i] = user ? x : W * (0.1 + 0.8 * Math.random());
     ry[i] = gy;
-    rty[i] = H * (0.07 + 0.3 * Math.random());
-    rvy[i] = -Math.sqrt(2 * H * 0.45 * (ry[i] - rty[i]));
+    rty[i] = user ? Math.min(y, gy - 6 * ch) : H * (0.07 + 0.3 * Math.random());
+    rg[i] = H * (user ? (reduced ? 0.8 : 1.2) : 0.45);
+    rvy[i] = -Math.sqrt(2 * rg[i] * (ry[i] - rty[i]));
     rp[i] = P_FW[(Math.random() * P_FW.length) | 0];
-    music('event', 'launch', { x: rx[i] / W, dur: Math.sqrt(2 * (ry[i] - rty[i]) / (H * 0.45)) });
+    ru[i] = user ? 1 : 0;
+    music('event', 'launch', { x: rx[i] / W, dur: Math.sqrt(2 * (ry[i] - rty[i]) / rg[i]) });
   }
-  function burst(x, y, p) {
-    const n = 120 + ((Math.random() * 80) | 0);
-    const p2 = Math.random() < 0.35 ? P_FW[(Math.random() * P_FW.length) | 0] : p;
-    const sp = H * (0.12 + 0.08 * Math.random());
-    music('event', 'burst', { x: x / W });
+  function burst(x, y, p, user) {
+    const calm = user && reduced;   // reduced motion: a small, slow bloom
+    const n = calm ? 50 + ((Math.random() * 20) | 0) : 120 + ((Math.random() * 80) | 0);
+    let p2 = Math.random() < 0.35 ? P_FW[(Math.random() * P_FW.length) | 0] : p;
+    if (user) while (p2 === p) p2 = P_FW[(Math.random() * P_FW.length) | 0]; // tapped bursts are always two-tone
+    const sp = H * (0.12 + 0.08 * Math.random()) * (calm ? 0.55 : 1);
+    music('event', 'burst', { x: x / W, calm });
     for (let j = 0; j < n && np < MAXP; j++) {
       const z = 2 * Math.random() - 1, a = Math.random() * 6.2832, rr = Math.sqrt(1 - z * z);
       const v = sp * (0.85 + 0.15 * Math.random());
@@ -576,18 +587,25 @@
       fx[i] = x; fy[i] = y; fvx[i] = rr * Math.cos(a) * v; fvy[i] = rr * Math.sin(a) * v;
       fage[i] = 0; flife[i] = 1.3 + Math.random() * 0.9; fp[i] = j % 3 ? p : p2;
     }
+    // Tapped bursts also shed slow gold glitter that hangs, then drifts down.
+    const ng = user ? (calm ? 14 : 36) : 0;
+    for (let j = 0; j < ng && np < MAXP; j++) {
+      const a = Math.random() * 6.2832, v = sp * 0.3 * Math.random();
+      const i = np++;
+      fx[i] = x; fy[i] = y; fvx[i] = Math.cos(a) * v; fvy[i] = Math.sin(a) * v - H * 0.02;
+      fage[i] = 0; flife[i] = 2.4 + Math.random() * 1.0; fp[i] = P_ROCKET;
+    }
   }
   function updateFireworks(dt) {
     if (!reduced && t >= T.SHOW && t < T.SHOW_END - 0.6) {
       nextLaunch -= dt;
       if (nextLaunch <= 0 && nr < MAXR) { launch(); nextLaunch = 0.28 + Math.random() * 0.45; }
     }
-    const RG = H * 0.45;
     for (let i = 0; i < nr; i++) {
-      rvy[i] += RG * dt; ry[i] += rvy[i] * dt;
+      rvy[i] += rg[i] * dt; ry[i] += rvy[i] * dt;
       if (ry[i] <= rty[i] || rvy[i] > -H * 0.05) {
-        burst(rx[i], ry[i], rp[i]);
-        nr--; rx[i] = rx[nr]; ry[i] = ry[nr]; rvy[i] = rvy[nr]; rty[i] = rty[nr]; rp[i] = rp[nr]; i--;
+        burst(rx[i], Math.max(ry[i], rty[i]), rp[i], ru[i]);
+        nr--; rx[i] = rx[nr]; ry[i] = ry[nr]; rvy[i] = rvy[nr]; rty[i] = rty[nr]; rg[i] = rg[nr]; rp[i] = rp[nr]; ru[i] = ru[nr]; i--;
       }
     }
     const g = H * 0.075, drag = 1 - Math.min(0.5, 0.9 * dt);
@@ -602,29 +620,32 @@
     }
   }
   function drawFireworks() {
+    // Kind bit 2 marks firework cells: they stay at full alpha through the loop's fade (taps can come any time).
     for (let i = 0; i < nr; i++) {
-      putXY(rx[i], ry[i], C_CARET, P_ROCKET, 1, 1);
-      for (let k = 1; k <= 4; k++) putXY(rx[i], ry[i] + k * ch, k < 3 ? C_COLON : C_DOT, P_ROCKET, 0.75 - 0.14 * k, 0);
+      putXY(rx[i], ry[i], C_CARET, P_ROCKET, 1, 3);
+      for (let k = 1; k <= 4; k++) putXY(rx[i], ry[i] + k * ch, k < 3 ? C_COLON : C_DOT, P_ROCKET, 0.75 - 0.14 * k, 2);
     }
     for (let i = 0; i < np; i++) {
       const a = fage[i] / flife[i];
       if (a > 0.55 && hash2(i, frameNo) < 0.25) continue; // late sparks twinkle out
       const chr = a < 0.25 ? C_STAR : a < 0.4 ? C_o : a < 0.7 ? C_PLUS : C_DOT;
-      putXY(fx[i], fy[i], chr, fp[i], 0.3 + 0.8 * Math.pow(1 - a, 0.7), 0);
+      putXY(fx[i], fy[i], chr, fp[i], 0.3 + 0.8 * Math.pow(1 - a, 0.7), 2);
     }
   }
 
   // Bucket by colour so fillStyle changes once per colour, not once per cell.
-  function drawCells() {
+  function drawCells(alpha) {
     counts.fill(0);
     for (let i = 0; i < nT; i++) counts[ccol[touched[i]]]++;
     let acc = 0;
     for (let c = 0; c < NCOLOR; c++) { const n = counts[c]; counts[c] = acc; acc += n; }
     for (let i = 0; i < nT; i++) { const c = touched[i]; order[counts[ccol[c]]++] = c; }
-    let cur = -1, n = 0;
+    let cur = -1, n = 0, fw = -1;
     for (let i = 0; i < nT; i++) {
       const c = order[i];
       if (cchar[c] === C_SP) continue;
+      const f = ckind[c] & 2;
+      if (f !== fw) { fw = f; ctx.globalAlpha = f ? 1 : alpha; }
       const cc = ccol[c];
       if (cc !== cur) { cur = cc; ctx.fillStyle = COLSTR[cc]; }
       const row = (c / cols) | 0;
@@ -635,10 +656,11 @@
   }
 
   function drawSky() {
+    const ox = -0.3 * par * PAN * cw;   // far layer: a fraction of the skyline's parallax shift
     for (let i = 0; i < skyStars.length; i++) {
       const s = skyStars[i];
       ctx.fillStyle = STAR_COLS[((0.5 + 0.5 * Math.sin(skyT * s.sp + s.ph)) * 7.99) | 0];
-      ctx.fillText(s.c, s.x, s.y);
+      ctx.fillText(s.c, s.x + ox, s.y);
     }
   }
 
@@ -664,10 +686,10 @@
     ctx.globalCompositeOperation = 'lighter';
     for (let i = 0; i < nT; i++) {
       const c = touched[i];
-      if (ckind[c] !== 1) continue;
+      if (!(ckind[c] & 1)) continue;
       const img = halos[(ccol[c] / LEVELS) | 0], row = (c / cols) | 0;
       if (!img) continue;
-      ctx.globalAlpha = clb[c] * alpha * 0.8;
+      ctx.globalAlpha = clb[c] * (ckind[c] & 2 ? 1 : alpha) * 0.8;
       ctx.drawImage(img, (c - row * cols + 0.5) * cw - img.width / 2, (row + 0.5) * ch - img.height / 2);
     }
     ctx.restore();
@@ -717,23 +739,27 @@
     drawSky();
     // Everything but the sky fades in at the loop start and out before the loop ends.
     const alpha = reduced ? 1 : Math.min(smooth(t / T.CITY_IN), 1 - smooth((t - T.FADE) / T.FADE_DUR));
-    if (alpha <= 0.001) { nT = 0; letters = 0; nSpark = 0; return; }
+    const live = alpha > 0.001;
+    nSpark = 0;
+    if (!live && !np && !nr) { nT = 0; letters = 0; return; }
     stamp++; nT = 0;
-    drawBeams();
+    if (live) drawBeams();
     drawFireworks();   // behind the tower, so its silhouette always reads
-    drawTower();
-    drawBeacon();
-    drawCity();
-    drawTowerGlow(alpha);
-    ctx.globalAlpha = alpha;
-    drawCells();
+    if (live) { drawTower(); drawBeacon(); drawCity(); }
+    // Near layer (tower, city, fireworks) shifts with the pointer parallax.
+    ctx.save();
+    ctx.translate(-par * PAN * cw, 0);
+    if (live) drawTowerGlow(alpha);
+    drawCells(alpha);
     ctx.globalAlpha = 1;
     drawHalos(alpha);
+    ctx.restore();
     drawGlow();
   }
 
   // ---------- Loop, HUD, controls ----------
   let paused = false, last = performance.now();
+  let par = 0, parTo = 0;   // pointer parallax, -1..1 (eased; reduced motion keeps it at 0)
   let frames = 0, fpsT = last, fps = 0, hudT = 0;
 
   function updateHud(now) {
@@ -753,13 +779,14 @@
       skyT += dt;
       if (!reduced) {
         t += dt;
-        if (t >= T.END) { t = 0; clearFireworks(); musicLoop++; music('restart'); } // music re-syncs to the loop
+        if (t >= T.END) { t = 0; nextLaunch = 0; musicLoop++; music('restart'); } // music re-syncs; tapped fireworks fly on
       }
       frameNo++;
       updateCars(dt);
       updateFireworks(dt);
       soundCues(t1, t, s1, skyT);
     }
+    if (Math.abs(parTo - par) > 0.002) { par += (parTo - par) * Math.min(1, dt * 1.8); dirty = true; } // slow drift
     if (!paused || dirty) { render(); dirty = false; frames++; }
     if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
     if (now - hudT >= 250) updateHud(now);
@@ -779,12 +806,29 @@
     if (crossed(a, b, T.BUILD)) music('event', 'build');
     if (crossed(a, b, T.GOLD)) music('event', 'gold');
     if (b >= T.BEAM && b < T.FADE && Math.floor(beamPh(sa)) !== Math.floor(beamPh(sb))) music('event', 'beam');
-    if (!reduced && b >= T.SHOW && b < T.SHOW_END && nSpark > 0) music('event', 'sparkle', { n: nSpark });
+    if (nSpark > 0) music('event', 'sparkle', { n: nSpark });   // scheduled show or a tap on the tower
     if (crossed(a, b, T.FADE)) music('event', 'fade');
   }
 
   function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
-  function replay() { t = T_START; clearFireworks(); paused = false; dirty = true; music('resume'); music('restart'); }
+  function replay() { t = T_START; clearFireworks(); tapSparkT = -99; paused = false; dirty = true; music('resume'); music('restart'); }
+
+  // Is the screen point on the tower? Tested in tower space against its outline (legs' arch included),
+  // only up to the height built so far.
+  function onTower(x, y) {
+    if (t < T.BUILD || t > T.FADE + T.FADE_DUR * 0.6) return false;
+    const yy = (gy - y) / TH, top = reduced ? 1 : clamp((t - T.BUILD) / (T.BUILD_DUR * 0.97), 0, 1);
+    if (yy < 0 || yy > Math.min(top, 0.96)) return false;
+    return Math.abs(x - cxp) <= hwo(yy) * TH + cw * 1.5;
+  }
+  function tapAt(x, y) {
+    x += par * PAN * cw;   // into skyline space
+    if (onTower(x, y)) {
+      // Restart the light show, or extend it if it is already running.
+      tapSparkT = skyT - tapSparkT < TAP_SPARK ? Math.max(tapSparkT, skyT - 0.6) : skyT;
+      music('event', 'twinkle', { x: x / W });
+    } else launch(x, Math.min(y, H * 0.62));
+  }
 
   addEventListener('resize', () => { needResize = true; });
   addEventListener('keydown', e => {
@@ -792,12 +836,31 @@
     if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
     else if (e.key === 'r' || e.key === 'R') replay();
   });
-  // Single tap = pause (decided after 280 ms), two quick taps = replay.
-  let tapTimer = 0;
+  // Tap the sky = firework there, tap the tower = light show, two quick taps = pause / resume.
+  // A press only counts as a tap if it moved less than 12 px; moving (or dragging a finger) pans the parallax.
+  let downX = 0, downY = 0, pressed = false, dragged = false, tapTimer = 0, tapResumed = false;
+  const setPar = e => { if (!reduced) parTo = clamp(e.clientX / W * 2 - 1, -1, 1); };
+  canvas.addEventListener('pointerdown', e => {
+    pressed = true; dragged = false; downX = e.clientX; downY = e.clientY;
+    if (e.pointerType !== 'mouse') setPar(e);
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (e.pointerType === 'mouse' || pressed) setPar(e);
+    if (pressed && Math.hypot(e.clientX - downX, e.clientY - downY) >= 12) dragged = true;
+  });
+  const ptrOff = () => { pressed = false; parTo = 0; };
+  canvas.addEventListener('pointerleave', ptrOff);
+  canvas.addEventListener('pointercancel', ptrOff);
   canvas.addEventListener('pointerup', e => {
-    if (e.button > 0) return;
-    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; replay(); }
-    else tapTimer = setTimeout(() => { tapTimer = 0; togglePause(); }, 280);
+    const wasTap = pressed && !dragged;
+    pressed = false;
+    if (e.pointerType !== 'mouse') parTo = 0;
+    if (e.button > 0 || !wasTap) return;
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; if (!tapResumed) togglePause(); return; }
+    tapTimer = setTimeout(() => { tapTimer = 0; }, 280);
+    tapResumed = paused;
+    if (paused) { togglePause(); return; }   // a tap on the paused scene just resumes it
+    tapAt(e.clientX, e.clientY);
   });
 
   // Hint language: ?lang= wins, then saved site preference, then browser.
@@ -809,9 +872,9 @@
   document.documentElement.lang = zh ? 'zh-Hant' : 'en';
   // Touch screens have no keyboard, and the full hint would not fit on a phone.
   const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
-  hintEl.textContent = touch ? (zh ? '點擊暫停 · 雙擊重播' : 'tap to pause · double-tap to replay')
-                             : (zh ? '空白鍵 暫停 · R 重播 · M 音樂 · 點擊暫停 · 雙擊重播'
-                                   : 'Space pause · R replay · M music · click to pause · double-click to replay');
+  hintEl.textContent = touch ? (zh ? '點天空放煙火 · 點鐵塔閃爍 · 雙擊暫停' : 'tap sky: fireworks · tap tower: sparkle · double-tap pause')
+                             : (zh ? '點擊天空放煙火 · 點擊鐵塔閃爍 · 雙擊/空白鍵 暫停 · R 重播 · M 音樂'
+                                   : 'click sky for fireworks · click tower to sparkle · double-click / Space pause · R replay · M music');
 
   // Score: an original musette waltz in D minor, 3/4. Tempo set so 20 bars = the 23 s scene loop:
   // bar 0 intro as the city fades in, bars 1-16 tune (two alternating melodies), 17-18 fade-out
@@ -875,10 +938,16 @@
       }, { gap: 0.25 });
       a.on('burst', (a, d, t) => {
         const p = pan(d.x);
-        a.boom(t, { vel: 0.34, pan: p });
-        for (let i = 0; i < 10; i++) a.noise(t + 0.25 + Math.random() * 0.9, { dur: 0.02 + Math.random() * 0.03, filter: 'highpass',
+        a.boom(t, { vel: d.calm ? 0.18 : 0.34, pan: p });
+        for (let i = 0; i < (d.calm ? 4 : 10); i++) a.noise(t + 0.25 + Math.random() * 0.9, { dur: 0.02 + Math.random() * 0.03, filter: 'highpass',
           freq: 3000 + Math.random() * 3000, vel: 0.1 + Math.random() * 0.1, pan: p + (Math.random() - 0.5) * 0.4, bus: 'sfx', wet: 0.2 });
       }, { gap: 0.2 });
+      // Tap on the tower: a rising shimmer of bell tones into the sparkle show.
+      a.on('twinkle', (a, d, t) => {
+        a.whoosh(t, { dur: 0.7, freq: 1800, freqEnd: 6000, q: 1.2, vel: 0.08, pan: pan(d.x), wet: 0.5 });
+        ['D6', 'F6', 'A6', 'D7'].forEach((n, i) => a.ding(t + i * 0.07, n, { vel: 0.12 - i * 0.015, pan: pan(d.x) }));
+        a.sparkle(t + 0.3, { count: 5, vel: 0.12, notes: SP });
+      }, { gap: 0.3 });
       a.on('fade', (a, d, t) => a.sweep(t, T.FADE_DUR, { from: 3000, to: 400, q: 1.2, attack: 0.8, vel: 0.12, bus: 'sfx', wet: 0.6 }));
     }
   });

@@ -35,12 +35,13 @@
       height: 100vh;
       height: 100svh;
       display: block;
-      touch-action: manipulation; /* no double-tap zoom: double-tap means replay */
+      touch-action: none; /* dragging tilts the view; also no scrolling or double-tap zoom */
       user-select: none;
       -webkit-user-select: none;
       -webkit-tap-highlight-color: transparent;
       cursor: pointer;
     }
+    canvas.dragging { cursor: grabbing; }
     .sr-only {
       position: absolute;
       width: 1px; height: 1px;
@@ -122,7 +123,7 @@
   const RIN = 1.5, ROUT = 4.5;         // accretion disk radii
   const W0 = 1.25;                      // rad/s at the inner edge; omega ~ r^-1.5
   const ROLL = -0.33;                    // in-screen roll: left end of the disk sits higher
-  const cR = Math.cos(ROLL), sR = Math.sin(ROLL);
+  let roll = ROLL, cR = Math.cos(ROLL), sR = Math.sin(ROLL); // dragging sideways adds to the roll
   const INC0 = 62 * Math.PI / 180, INC1 = 36 * Math.PI / 180, INC2 = 17 * Math.PI / 180;
   const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
 
@@ -153,6 +154,7 @@
   const P_DISK = [pal(255, 240, 214), pal(250, 222, 172), pal(238, 190, 124), pal(218, 148, 84), pal(170, 104, 58)];
   const NDP = P_DISK.length;
   const P_RING = pal(255, 196, 110);
+  const P_STAR = pal(84, 145, 255);    // a dropped star burns blue-white against the amber disk
 
   const NCOLOR = PAL.length * LEVELS;
   const COLSTR = new Array(NCOLOR);
@@ -187,6 +189,15 @@
   const NR = 1400;
   const RA = new Float32Array(NR), RRR = new Float32Array(NR), RS = new Float32Array(NR);
   for (let i = 0; i < NR; i++) { RA[i] = rng() * 6.283; RRR[i] = 1.0 + 0.05 * rng(); RS[i] = rng() * 6.283; }
+  // Dropped star: a blob of gas whose particles sit along a future stream. FS = place along the
+  // stream (0 = head), FA/FB/FC = gaussian offsets that make the round blob before tides take over.
+  const NF = 260;
+  const FS = new Float32Array(NF), FA = new Float32Array(NF), FB = new Float32Array(NF), FC = new Float32Array(NF);
+  for (let i = 0; i < NF; i++) {
+    FS[i] = Math.pow(rng(), 1.4);
+    FA[i] = rng() + rng() + rng() - 1.5; FB[i] = rng() + rng() + rng() - 1.5; FC[i] = rng() + rng() + rng() - 1.5;
+  }
+  const C_HEAD = [ci('*'), ci('#'), ci('@')];
 
   // ---------- Canvas, grid, layout ----------
   const canvas = document.getElementById('c');
@@ -267,6 +278,12 @@
   let t = T_START, rt = T_START, skyT = 0;   // rt = disk rotation clock
   let ringAmt = 0, rmax = 0, inc = INC0, ci_ = 1, si_ = 0, lens = 0, heat = 0, heatB = 0;
   let letters = 0;
+  // Interaction: drag offsets of the view (ease back after release), infalling stars, flare.
+  let tiltInc = 0, tiltRoll = 0, flare = 0, flareIn = 0;
+  const INC_MIN = 3 * Math.PI / 180, INC_MAX = 84 * Math.PI / 180;
+  const stars = [];
+  const MAX_STARS = 5;
+  let starK = 0;
 
   function sceneParams() {
     ringAmt = smooth((t - T.RING) / T.RING_DUR);
@@ -274,10 +291,63 @@
     // Outer edge of the visible disk grows: torus first, then the wide disk.
     rmax = t < T.THICK ? 0 : RIN + 0.15 + 1.05 * a + (ROUT - RIN - 1.0) * b;
     inc = INC0 + (INC1 - INC0) * a + (INC2 - INC1) * b + 0.012 * Math.sin(skyT * 0.4) * b;
+    inc = clamp(inc + tiltInc, INC_MIN, INC_MAX);
     ci_ = Math.cos(inc); si_ = Math.sin(inc);
+    roll = ROLL + tiltRoll; cR = Math.cos(roll); sR = Math.sin(roll);
     lens = smooth((48 * Math.PI / 180 - inc) / (30 * Math.PI / 180));
     heat = 2.3 * smooth((t - T.THICK) / (T.HOLD - T.THICK));
-    heatB = 0.8 + 0.2 * heat / 2.3;
+    heatB = 0.8 + 0.2 * heat / 2.3 + 0.3 * flare;   // a swallowed star lights up the whole disk
+  }
+
+  // ---------- Infalling stars ----------
+  // A star dropped at screen point (px, py) is placed in the disk frame so it shows exactly there:
+  // its in-plane position comes from the click, and whatever does not fit the plane becomes height.
+  function dropStar(px, py) {
+    if (stars.length >= MAX_STARS) stars.shift();
+    sceneParams();
+    const qx = (px - ox) / S, qy = (oy - py) / S;              // rolled screen frame, Y up
+    const X = qx * cR + qy * sR, Y = -qx * sR + qy * cR;        // undo the roll
+    const lim = Math.sqrt(Math.max(0, 6.5 * 6.5 - X * X));
+    let x = clamp(X, -6.5, 6.5), zd = clamp(-Y / Math.max(si_, 0.05), -lim, lim);
+    const r = Math.hypot(x, zd), R0 = 1.9;
+    if (r < R0) { const k = R0 / Math.max(r, 1e-3); x = r < 1e-3 ? R0 : x * k; zd *= k; }
+    const h = clamp((Y + zd * si_) / ci_, -4, 4);
+    const s = { r: Math.hypot(x, zd), phi: Math.atan2(zd, x), h, age: 0, L: 0.05, k: starK++,
+                stretched: false, flared: false, pan: clamp((px / W) * 2 - 1, -1, 1) };
+    s.r0 = s.r;
+    stars.push(s);
+    dirty = true;
+    music('event', 'drop', { pan: s.pan });
+    return s;
+  }
+
+  const IN_SPEED = reduced ? 0.6 : 1;
+  function updateStars(dt) {
+    for (let j = stars.length - 1; j >= 0; j--) {
+      const s = stars[j];
+      s.age += dt;
+      // Sinks quickly from afar, lingers as it winds through the disk, then plunges at the end.
+      // It orbits faster than the disk does.
+      const rr = Math.max(s.r, 0.3);
+      s.r -= dt * IN_SPEED * (0.1 + 0.25 * rr + 0.9 * smooth((1.4 - rr) / 0.4));
+      s.phi += dt * IN_SPEED * 2.2 * W0 * Math.pow(Math.max(rr, 0.8) / RIN, -1.5);
+      s.h *= Math.exp(-dt * 0.9 * IN_SPEED);                    // settles into the disk plane
+      // Tides: the closer it gets, the longer the stream it is pulled into.
+      const tide = clamp((s.r0 - Math.max(s.r, 1)) / Math.max(0.5, s.r0 - 1), 0, 1);
+      s.L = 0.05 + 3.2 * Math.pow(tide, 1.2);
+      if (!s.stretched && tide > 0.3) { s.stretched = true; music('event', 'stretch', { pan: s.pan }); }
+      if (!s.flared && s.r < 1.12) {
+        s.flared = true;
+        flareIn += reduced ? 0.25 : 0.8;
+        music('event', 'swallow', { pan: s.pan });
+      }
+      if (s.r + s.L * 0.3 < 0.9) stars.splice(j, 1);           // the whole stream is gone
+    }
+    // The flare jumps up at once; with reduced motion it swells gently instead (no flash).
+    const add = reduced ? Math.min(flareIn, dt * 0.4) : flareIn;
+    flareIn -= add;
+    flare = Math.min(reduced ? 0.35 : 1, flare * Math.exp(-dt * (reduced ? 0.6 : 1.4)) + add);
+    if (flare < 0.002) flare = 0;
   }
 
   // ---------- Projection + z-buffered splat ----------
@@ -315,6 +385,37 @@
     }
   }
 
+  const TAU = Math.PI * 2;
+  const HOT = new Float32Array(MAX_STARS * 4);
+
+  // A star's particles: a round blob at first, then a thin trailing spiral stream as tides
+  // stretch it; anything inside the horizon is gone. The far side is lensed like the disk.
+  function drawStars() {
+    for (const st of stars) {
+      const pop = reduced ? smooth(st.age / 0.6) : smooth(st.age / 0.25) * (1 + 0.5 * Math.exp(-st.age * 4));
+      const blob = 0.03 + 0.1 * (1 - smooth((st.L - 0.05) / 1.2));
+      const off = (st.k * 97) % NF;
+      for (let n = 0; n < NF; n++) {
+        const i = (n + off) % NF, f = FS[n];
+        const r = st.r + f * st.L * 0.3 + FA[i] * blob;
+        if (r < 1.0) continue;                                  // swallowed
+        const ph = st.phi - f * st.L + FB[i] * blob / Math.max(r, 1);
+        const c = Math.cos(ph), sn = Math.sin(ph);
+        const x = r * c, zd = r * sn, h = st.h * (1 - 0.3 * f) + FC[i] * blob * 1.6;
+        const Y = -zd * si_ + h * ci_, Z = zd * ci_ + h * si_;
+        // Bright at the head, hotter as it nears the horizon.
+        // Capped below the white wash of the palette so the stream stays blue against the disk.
+        const b = Math.min(f < 0.05 ? 0.88 : 0.78,
+          pop * (1 - 0.45 * f) * (0.85 + 0.35 * smooth((2.2 - r) / 1.2)) * (1 - 0.5 * Math.abs(FA[i])));
+        splat(x, Y, Z + 0.45, b, P_STAR, f < 0.05 && b > 0.6 ? C_HEAD[((b - 0.6) / 0.29 * 2.99) | 0] : -1);
+        if (zd < 0 && lens > 0 && (n & 1) === 0) {
+          const rho = 1.06 + 0.5 * Math.pow(clamp((r - RIN) / (ROUT - RIN), 0, 1.3), 0.8);
+          splat(rho * c, -rho * sn, 0.41, b * 0.75 * lens, P_STAR, -1);
+        }
+      }
+    }
+  }
+
   function buildScene() {
     stamp++; nT = 0;
     stampHole();
@@ -325,10 +426,18 @@
         const a = RA[i] + rt * 0.9, r = RRR[i];
         const fl = 0.8 + 0.2 * Math.sin(skyT * 3 + RS[i]);
         const b = ringAmt * fl * (0.75 + 0.25 * heatB);
-        splat(Math.cos(a) * r, Math.sin(a) * r, 0.45, b, P_RING, C_RING[(b * 3.99) | 0]);
+        splat(Math.cos(a) * r, Math.sin(a) * r, 0.45, b * (1 + 0.6 * flare), P_RING, C_RING[(Math.min(1, b * (1 + 0.6 * flare)) * 3.99) | 0]);
       }
     }
+    drawStars();
     if (rmax <= 0) return;
+
+    // Stars whose stream has reached the disk heat it along the stream.
+    let nh = 0;
+    for (const st of stars) {
+      const w = smooth((rmax + 0.4 - st.r) / 0.6) * smooth(1 - Math.abs(st.h) / 0.6);
+      if (w > 0.01) { HOT[nh++] = st.r; HOT[nh++] = st.phi; HOT[nh++] = st.L; HOT[nh++] = w; }
+    }
 
     for (let i = 0; i < ND; i++) {
       const r = DR[i];
@@ -345,7 +454,15 @@
       const dop = 1 + 0.22 * c;                      // approaching (right) side brighter
       let b = heatB * radial * (0.3 + 0.7 * bandA * bandA) * tex * dop;
       if (reveal < 1) b *= reveal;
-      const p = DP[i];
+      let p = DP[i];
+      for (let k = 0; k < nh; k += 4) {
+        let dp = (HOT[k + 1] - ph) % TAU; if (dp < 0) dp += TAU;   // how far behind the head
+        if (dp > TAU - 0.3) dp -= TAU;
+        if (dp > HOT[k + 2] + 0.5) continue;
+        const dr = (r - HOT[k] - 0.3 * Math.max(0, dp)) / 0.45;
+        const hot = HOT[k + 3] * Math.exp(-dr * dr) * (dp < 0 ? 1 + dp / 0.3 : smooth((HOT[k + 2] + 0.5 - dp) / 0.5));
+        if (hot > 0.02) { b *= 1 + 0.6 * hot; if (hot > 0.35 && p > P_DISK[0]) p--; }
+      }
       splat(x, Y, Z, b, p, -1);
 
       // Gravitational lensing: the far side's image wraps over the top of the horizon,
@@ -397,15 +514,15 @@
   function drawHalos(fade) {
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
-    const cg = fade * heat / 2.3;
+    const cg = fade * heat / 2.3 + 0.5 * flare;
     if (cg > 0.01) {
       ctx.save();
       ctx.globalAlpha = cg;
-      ctx.translate(ox, oy); ctx.rotate(-ROLL); ctx.scale(1, 0.32); // flattened along the disk
+      ctx.translate(ox, oy); ctx.rotate(-roll); ctx.scale(1, 0.32); // flattened along the disk
       ctx.drawImage(coreGlow, -coreGlow.width / 2, -coreGlow.height / 2);
       ctx.restore();
     }
-    ctx.globalAlpha = fade * ringAmt * (0.7 + 0.1 * Math.sin(skyT * 2.1));
+    ctx.globalAlpha = Math.min(1, fade * ringAmt * (0.7 + 0.1 * Math.sin(skyT * 2.1)) + 0.7 * flare);
     ctx.drawImage(ringGlow, ox - ringGlow.width / 2, oy - ringGlow.height / 2);
     ctx.restore();
     // Keep the event horizon pure black under the glow.
@@ -477,6 +594,14 @@
       if (reduced) { if (t > T.FADE) t = T.FADE; }   // reduced motion: hold the disk, no loop
       else if (t >= T.END) { t = 0; rt = 0; }        // stars keep twinkling across the loop
       soundCues(t1, t);
+      updateStars(dt);
+    }
+    // After a drag the view eases back to the scripted angle (also while paused).
+    if (!drag && (tiltInc || tiltRoll)) {
+      const k = Math.exp(-dt * (reduced ? 1.2 : 1.8));
+      tiltInc *= k; tiltRoll *= k;
+      if (Math.abs(tiltInc) + Math.abs(tiltRoll) < 1e-4) tiltInc = tiltRoll = 0;
+      dirty = true;
     }
     if (!paused || dirty) { render(); dirty = false; frames++; }
     if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
@@ -497,21 +622,62 @@
   }
 
   function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
-  function replay() { t = T_START; rt = T_START; paused = false; dirty = true; music('resume'); music('restart'); }
+  function replay() {
+    t = T_START; rt = T_START; stars.length = 0; flare = flareIn = 0; tiltInc = tiltRoll = 0;
+    paused = false; dirty = true; music('resume'); music('restart');
+  }
 
   addEventListener('resize', () => { needResize = true; });
   addEventListener('keydown', e => {
     if (e.metaKey || e.ctrlKey || e.altKey) return; // leave Cmd/Ctrl+R alone
     if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
     else if (e.key === 'r' || e.key === 'R') replay();
+    else if (e.key === 's' || e.key === 'S') {              // drop a star somewhere off the disk
+      const a = rng() * TAU;
+      dropStar(ox + Math.cos(a) * S * 3.2, oy + Math.sin(a) * S * 1.6);
+    }
+    else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      e.preventDefault(); tiltInc = clamp(tiltInc + (e.key === 'ArrowDown' ? 0.12 : -0.12), -1.2, 1.2); dirty = true;
+    }
   });
-  // Single tap = pause (decided after 280 ms), two quick taps = replay.
-  let tapTimer = 0;
-  canvas.addEventListener('pointerup', e => {
+  // Pointer: drag (past 8 px) tilts the view, a tap drops a star, a double tap pauses/resumes.
+  // The second tap of a double tap takes back the star the first one dropped.
+  let drag = null, lastTap = null;
+  const DRAG_PX = 8, DBL_MS = 320;
+  canvas.addEventListener('pointerdown', e => {
     if (e.button > 0) return;
-    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; replay(); }
-    else tapTimer = setTimeout(() => { tapTimer = 0; togglePause(); }, 280);
+    drag = { id: e.pointerId, x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, moved: false };
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
   });
+  canvas.addEventListener('pointermove', e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    if (!drag.moved && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < DRAG_PX) return;
+    if (!drag.moved) { drag.moved = true; canvas.classList.add('dragging'); music('event', 'tilt'); }
+    // Down tips the disk toward face-on, up toward edge-on; sideways rolls it a little.
+    tiltInc = clamp(tiltInc + (e.clientY - drag.ly) / Math.max(H, 1) * 2.2, -1.2, 1.2);
+    tiltRoll = clamp(tiltRoll - (e.clientX - drag.lx) / Math.max(W, 1) * 1.2, -0.7, 0.7);
+    drag.lx = e.clientX; drag.ly = e.clientY;
+    dirty = true;
+  });
+  const endPointer = e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const tap = !drag.moved && e.type === 'pointerup';
+    drag = null;
+    canvas.classList.remove('dragging');
+    if (!tap) return;
+    const b = canvas.getBoundingClientRect(), x = e.clientX - b.left, y = e.clientY - b.top;
+    const now = performance.now();
+    if (lastTap && now - lastTap.t < DBL_MS && Math.hypot(x - lastTap.x, y - lastTap.y) < 40) {
+      const i = stars.indexOf(lastTap.star);
+      if (i >= 0) stars.splice(i, 1);
+      lastTap = null;
+      togglePause();
+      return;
+    }
+    lastTap = { t: now, x, y, star: dropStar(x, y) };
+  };
+  canvas.addEventListener('pointerup', endPointer);
+  canvas.addEventListener('pointercancel', endPointer);
 
   // Hint language: ?lang= wins, then saved site preference, then browser.
   let pref = null;
@@ -522,9 +688,9 @@
   document.documentElement.lang = zh ? 'zh-Hant' : 'en';
   // Touch screens have no keyboard, and the full hint would not fit on a phone.
   const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
-  hintEl.textContent = touch ? (zh ? '點擊暫停 · 雙擊重播' : 'tap to pause · double-tap to replay')
-                             : (zh ? '空白鍵 暫停 · R 重播 · M 音樂 · 點擊暫停 · 雙擊重播'
-                                   : 'Space pause · R replay · M music · click to pause · double-click to replay');
+  hintEl.textContent = touch ? (zh ? '點一下丟入恆星 · 拖曳傾斜視角 · 雙擊暫停' : 'tap to drop a star · drag to tilt · double-tap to pause')
+                             : (zh ? '點擊丟入恆星 · 拖曳傾斜視角 · 雙擊/空白鍵 暫停 · R 重播 · M 音樂'
+                                   : 'click to drop a star · drag to tilt · double-click/Space pause · R replay · M music');
 
   // Score: original deep-space ambient in E minor at 60 bpm (one beat = one second of scene
   // time). A slowly beating sub drone, organ-like chords whose filter opens as the disk heats up,
@@ -616,6 +782,15 @@
         a.noise(t, { dur: 3, filter: 'lowpass', freq: 900, freqEnd: 60, attack: 0.04, vel: 0.22, wet: 0.7, bus: 'sfx' });
       });
       a.on('fade', (a, d, t) => { a.bell(t, 'E5', 7, { vel: 0.14, wet: 1, bus: 'sfx' }); a.bell(t + 0.7, 'B4', 7, { vel: 0.1, wet: 1, bus: 'sfx' }); });
+      // Interaction: a dropped star pings, its tidal stream rises as a filtered sweep, and the
+      // swallow is a low boom with a bright chime. Tilting the view is a soft breath of air.
+      a.on('drop', (a, d, t) => { a.bell(t, 'B5', 2.5, { vel: 0.16, wet: 0.7, pan: d.pan, bus: 'sfx' }); a.bell(t + 0.12, 'E6', 2, { vel: 0.08, wet: 0.8, pan: d.pan, bus: 'sfx' }); }, { gap: 0.08 });
+      a.on('stretch', (a, d, t) => a.sweep(t, 2.2, { from: 300, to: 3800, q: 4, vel: 0.12, wet: 0.6, pan: d.pan, bus: 'sfx' }), { gap: 0.3 });
+      a.on('swallow', (a, d, t) => {
+        a.boom(t, { vel: reduced ? 0.22 : 0.38 });
+        a.chime(t + 0.05, 'E6', 3, { vel: reduced ? 0.1 : 0.18 });
+      }, { gap: 0.25 });
+      a.on('tilt', (a, d, t) => a.whoosh(t, { dur: 0.7, vel: 0.12, freq: 200, freqEnd: 900, wet: 0.4 }), { gap: 0.6 });
     }
   });
 

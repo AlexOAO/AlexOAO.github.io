@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>ASCII Ocean Waves | Alex Li (李翔緯)</title>
-  <meta name="description" content="A moonlit open sea drawn entirely with ASCII characters: rolling swells in perspective, breaking crests with lingering foam and streaks of moonlight on the horizon. Vanilla JS on a single canvas.">
+  <meta name="description" content="A moonlit open sea drawn entirely with ASCII characters: rolling swells in perspective, breaking crests with lingering foam and streaks of moonlight on the horizon. Pointer height sets the sea state and a tap sends a big breaking wave. Vanilla JS on a single canvas.">
   <meta name="theme-color" content="#000000">
   <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,7 +35,7 @@
       height: 100vh;
       height: 100svh;
       display: block;
-      touch-action: manipulation; /* no double-tap zoom: double-tap means reset */
+      touch-action: none; /* vertical drags set the sea state, so no scrolling or zooming */
       user-select: none;
       -webkit-user-select: none;
       -webkit-tap-highlight-color: transparent;
@@ -119,6 +119,14 @@
   // Shading: lit faces only; FACE_DROP darkens rows below a crest's top edge.
   const BRT_BASE = 0.65, BRT_SLOPE = 1.6, BRT_H = 0.9, HZ_LIFT = -0.02, FACE_DROP = 0.035;
   const CRASH_RATE = 0.12;  // foam coverage growth per second of sea time that sounds a crash
+  // Interaction: pointer height blends the sea state over the swell cycle; a tap sends a big wave.
+  const SEA_MAX = reduced ? 0.5 : 1.3; // sea state at the bottom of the screen (cycle peak = 1)
+  const SEA_TAU = 0.8;      // seconds for the sea state to ease toward the pointer
+  const HOLD_MS = 2500;     // the sea keeps the pointer's state this long after it leaves
+  const BIG_DUR = reduced ? 1.4 : 2.8;   // sea time for a big wave to roll in from the horizon
+  const BIG_AMP = reduced ? 0.6 : 1.35;  // its height at the break (world units)
+  const BIG_LF = 2.2, BIG_LB = 4.2, BIG_WID = 7; // front / back slope length and half-width
+  const MAX_BIG = 3, MAX_SPRAY = reduced ? 120 : 1000;
   const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
   // Moonlight from high up beyond the horizon (upper back), as seen from the camera.
   const LX0 = 0.1, LY0 = 0.5, LZ0 = 0.86;
@@ -255,22 +263,36 @@
 
   // ---------- Sea: column-wise height-field ray march on the character grid ----------
   let t = T_START, swells = 0, foamCov = 0, intensity = 0, crest = 0; // crest: highest near swell (for the surf sound)
+  // Pointer sea state: seaSet eases toward seaTgt; ctlW blends it in over the cycle and back out.
+  let ctlOn = false, relT = -1e9, seaTgt = 0, seaSet = 0, ctlW = 0;
+  // Big waves: { x0, zT, z0, zb, p, tb, amp, foam, born, sounded, sx, sy }.
+  const BIG = [];
+  const spray = [];         // splash particles in screen space: { x, y, vx, vy, life, max, g }
+
+  function seaState(rdt) {
+    const held = ctlOn || performance.now() - relT < HOLD_MS;
+    ctlW += ((held ? 1 : 0) - ctlW) * Math.min(1, rdt / (held ? 0.5 : 1.6));
+    seaSet += (seaTgt - seaSet) * Math.min(1, rdt / SEA_TAU);
+  }
 
   function buildSea(dt) {
     const ph = ((t % CYCLE) + CYCLE) % CYCLE / CYCLE;
-    intensity = reduced ? 0.15 : 0.5 - 0.5 * Math.cos(2 * Math.PI * ph);
+    const cyc = reduced ? 0.15 : 0.5 - 0.5 * Math.cos(2 * Math.PI * ph);
+    if (ctlW < 0.01 && !ctlOn) seaSet = cyc; // the pointer takes over from wherever the cycle is
+    intensity = cyc + (seaSet - cyc) * ctlW;
     const I = intensity;
     for (let w = 0; w < NW; w++) {
       AMP[w] = A0[w] * (GROW[w] ? 0.4 + 0.85 * I : 0.85 + 0.25 * I);
       PT[w] = OM[w] * t + PH0[w];
     }
     // A wave group that sweeps in from far away and rears up in the foreground mid-cycle.
-    const gs = reduced ? 0 : Math.pow(Math.sin(Math.PI * Math.pow(ph, 1.5)), 2) * 0.8;
+    const gs = reduced ? 0 : Math.pow(Math.sin(Math.PI * Math.pow(ph, 1.5)), 2) * 0.8 * (1 - ctlW * (1 - clamp(I, 0, 1)));
     const zg = 72 - 75 * ph; // reaches the foreground late in the cycle
     const thr = FOAM_THR, decay = Math.exp(-dt / FOAM_TAU);
     const midC = cols >> 1;
     const hrFar = Math.min(rows, hr + Math.round((rows - hr) * 0.3));
     const half = W / 2;
+    const nB = BIG.length;
     nT = 0; swells = 0;
     let foamN = 0, seaN = 0, crestN = -1;
 
@@ -296,6 +318,22 @@
           h += g; hx += gp * KX[w]; hz += gp * KZ[w];
           if (GROW[w]) K -= gpp * KK[w]; // only swells break; chop curvature is noise
         }
+        // Big waves: a lone ridge, steeper in front, that sheds foam around the tap point as it breaks.
+        let bf = 0, bl = 0; // bf: whitewater to deposit, bl: moonlit sheen on the big swell
+        for (let b = 0; b < nB; b++) {
+          const bw = BIG[b], dz = z - bw.zb, dx = x - bw.x0;
+          if (dz < -9 || dz > 16) continue;
+          const L2 = dz < 0 ? BIG_LF * BIG_LF : BIG_LB * BIG_LB, W2 = BIG_WID * BIG_WID;
+          const g = bw.amp * Math.exp(-dz * dz / L2 - dx * dx / W2);
+          h += g; hz -= g * 2 * dz / L2; hx -= g * 2 * dx / W2;
+          if (g > bl * BIG_AMP) bl = g / BIG_AMP;
+          K += 0.6 * g * (2 / L2 - 4 * dz * dz / (L2 * L2));
+          if (bw.foam > 0.01 && dz > -3.5 && dz < 1.5) {
+            const wb = 3.2 + 2.5 * Math.max(0, bw.tb), ea = (dz + 0.8) / 1.4;
+            const nf = bw.foam * Math.exp(-ea * ea - dx * dx / (wb * wb));
+            if (nf > bf) bf = nf;
+          }
+        }
         if (c === midC && z < 14 && h > crestN) crestN = h;
 
         // Foam lives at fixed sea positions: steep crests deposit it, then it fades as waves pass.
@@ -303,6 +341,7 @@
         let f = FOAM[fi] * decay;
         const st = K - thr;
         if (st > 0 && h > 0) { const nf = st * FOAM_GAIN * FHASH[fi]; if (nf > f) f = nf > 1 ? 1 : nf; }
+        if (bf > 0) { const nf = bf * FHASH[fi]; if (nf > f) f = nf > 1 ? 1 : nf; }
         FOAM[fi] = f;
         if (z > 30) f *= clamp(1.5 - z / 60, 0, 1); // distant foam thins into streaks
 
@@ -327,7 +366,7 @@
         sp = sp > 0 ? sp : 0;
         sp *= sp; sp *= sp; sp *= sp; sp *= sp; sp *= sp; // ^32
         const near = z < 22 ? 0.12 * (1 - z / 22) : 0;
-        let b = BRT_BASE + near + BRT_SLOPE * (ndl - LY) + BRT_H * h / (1 + (h < 0 ? -h : h)) + 0.2 * sp + (K > 0 ? 1.1 * K : 0);
+        let b = 0.5 * bl + BRT_BASE + near + BRT_SLOPE * (ndl - LY) + BRT_H * h / (1 + (h < 0 ? -h : h)) + 0.2 * sp + (K > 0 ? 1.1 * K : 0);
         // Far rows: keep the contrast (crest lines vs black gaps) and lift them a little, so the
         // horizon reads as thin dense bright lines.
         const fog = clamp((z - 20) / 120, 0, 1);
@@ -344,7 +383,7 @@
           // Faces below the top edge face the camera and fall into the moon's shadow.
           const bb = r > r0 ? b - FACE_DROP * (r - r0) : b;
           const hsh = (gh + r * 37) & 255, cell = r * cols + c;
-          if (foamy && r - r0 < 2 && hsh < f * 150) {
+          if (foamy && r - r0 < 2 + bf * 4 && hsh < f * 150 + bf * 90) { // big-wave whitewater runs deeper
             // Spray: loose letters and + sparkles, a few twinkling bright.
             const tw = (hsh & 31) === 0 && Math.sin(t * 5 + gh) > 0.6;
             cchar[cell] = tw ? C_PLUS : T_SPRAY[hsh % T_SPRAY.length];
@@ -386,6 +425,78 @@
     }
     foamCov = seaN ? Math.min(1, foamN / seaN * 4) : 0;
     crest = crestN;
+  }
+
+  // ---------- Big waves and spray ----------
+  // A tap at screen (sx, sy): the crest stops at the depth of that sea row, centred on its column.
+  function bigWave(sx, sy) {
+    if (BIG.length >= MAX_BIG) BIG.shift();
+    const seaH = H - hyPx, yy = Math.max(sy, hyPx + seaH * 0.12);
+    const zT = Math.max(ZS[0] + 1, CAM_H * F / (yy - hyPx));
+    const bw = { x0: (sx - W / 2) * zT / F, zT, z0: zT + 55, zb: zT + 55, p: 0, tb: -1, amp: 0, foam: 0,
+                 born: performance.now(), sounded: false, sx, sy: yy };
+    BIG.push(bw);
+    dirty = true;
+    return bw;
+  }
+
+  function updateBig(sdt) {
+    const rdt = sdt / TIME_SCALE;
+    for (let b = BIG.length - 1; b >= 0; b--) {
+      const bw = BIG[b], span = bw.z0 - bw.zT;
+      if (bw.tb < 0) {
+        bw.p = Math.min(1, bw.p + sdt / BIG_DUR);
+        const q = 1 - bw.p;
+        bw.zb = bw.zT + span * q * (0.35 + 0.65 * q);              // eases in but still moving at the break
+        bw.amp = BIG_AMP * (0.2 + 0.8 * bw.p * bw.p);              // shoals up as it nears
+        bw.foam = clamp((bw.p - 0.86) / 0.14, 0, 1) * 0.45;        // the lip starts to feather
+        if (bw.p >= 1) { bw.tb = 0; breakBig(bw); }
+      } else {
+        bw.tb += sdt;
+        bw.zb = bw.zT - span * 0.35 / BIG_DUR * 0.6 * bw.tb;       // the whitewater runs on a little
+        bw.amp = BIG_AMP * Math.exp(-bw.tb / 0.45);
+        bw.foam = Math.exp(-bw.tb / 0.8);
+        if (bw.tb < 0.7 && !reduced) emitSpray(bw, Math.round(rdt * 160), 0.6);
+        if (bw.tb > 2.5) BIG.splice(b, 1);
+      }
+    }
+    // Spray: ballistic flecks with a little air drag.
+    const gy = reduced ? 160 : 420, drag = Math.exp(-rdt * 0.8);
+    for (let i = spray.length - 1; i >= 0; i--) {
+      const s = spray[i];
+      s.life -= rdt;
+      if (s.life <= 0) { spray[i] = spray[spray.length - 1]; spray.pop(); continue; }
+      s.vx *= drag; s.vy = s.vy * drag + gy * rdt;
+      s.x += s.vx * rdt; s.y += s.vy * rdt;
+    }
+  }
+
+  function breakBig(bw) {
+    emitSpray(bw, reduced ? 40 : 380, 1);
+    music('event', 'bigcrash', { v: reduced ? 0.4 : 1, pan: clamp(bw.sx / W * 2 - 1, -0.8, 0.8) });
+    quietT = performance.now();
+  }
+
+  const SR = mulberry32(7);
+  function emitSpray(bw, n, power) {
+    const crestY = hyPx + (CAM_H - BIG_AMP) * F / bw.zT;   // screen row of the crest top at the break
+    const spread = Math.min(W * 0.35, BIG_WID * F / bw.zT * 0.32);
+    const up = reduced ? 0.35 : 1;
+    for (let k = 0; k < n && spray.length < MAX_SPRAY; k++) {
+      const u = SR() * 2 - 1, d = u * u * Math.sign(u); // denser near the tap point
+      spray.push({ x: bw.sx + d * spread, y: crestY + SR() * ch * 4,
+        vx: (d * 160 + (SR() - 0.5) * 110) * up, vy: -(90 + SR() * 420 * power) * up * (1 - 0.5 * Math.abs(d)),
+        life: 0.9 + SR() * 1.3, max: 2.2, g: T_SPRAY[(SR() * T_SPRAY.length) | 0] });
+    }
+  }
+
+  function drawSpray() {
+    for (let i = 0; i < spray.length; i++) {
+      const s = spray[i], lv = 9 + Math.min(6, (s.life / s.max * 9) | 0);
+      ctx.fillStyle = COLSTR[P_FOAM * LEVELS + lv];
+      // Snap to the character grid so the splash stays ASCII.
+      ctx.fillText(CH[s.g], Math.round(s.x / cw) * cw, Math.round(s.y / ch) * ch);
+    }
   }
 
   // Bucket by colour so fillStyle changes once per colour, not once per cell.
@@ -442,6 +553,7 @@
     drawSky();
     buildSea(dt);
     drawCells();
+    if (spray.length) drawSpray();
     drawGlow();
   }
 
@@ -450,10 +562,10 @@
   let frames = 0, fpsT = last, fps = 0, hudT = 0;
 
   function updateHud(now) {
-    const tail = paused ? 'paused' : `${fps} fps`;
+    const tail = paused ? 'paused' : `${fps} fps`, sea = `sea ${intensity.toFixed(2)}`;
     // Narrow screens get a short line so nothing is clipped.
-    hudEl.textContent = W < 640 ? `swells ${swells}  foam ${foamCov.toFixed(2)}  ${tail}`
-      : `swells ${swells}  foam ${foamCov.toFixed(2)}  letters ${nT.toLocaleString('en-US')}  ${tail}`;
+    hudEl.textContent = W < 640 ? `swells ${swells}  ${sea}  foam ${foamCov.toFixed(2)}  ${tail}`
+      : `swells ${swells}  ${sea}  foam ${foamCov.toFixed(2)}  letters ${nT.toLocaleString('en-US')}  ${tail}`;
     hudT = now;
   }
 
@@ -462,7 +574,7 @@
     last = now;
     if (needResize) resize();
     const sdt = paused ? 0 : dt * TIME_SCALE;
-    if (!paused) t += sdt;
+    if (!paused) { t += sdt; seaState(dt); updateBig(sdt); }
     if (!paused || dirty) { render(sdt); dirty = false; frames++; }
     if (!paused) soundCues(sdt);
     if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
@@ -473,32 +585,71 @@
   // ---------- Sound (ascii-audio.js) ----------
   const music = (fn, ...a) => window.AsciiAudio && AsciiAudio[fn](...a);
   // A crash when foam spreads fast (a big crest breaking); `foamRate` is coverage per second.
-  let foamPrev = 0, foamRate = 0, armed = true;
+  // A big wave's own crash keeps the foam-spread crash quiet for a moment (quietT).
+  let foamPrev = 0, foamRate = 0, armed = true, quietT = -1e9;
   function soundCues(sdt) {
     if (!window.AsciiAudio || sdt <= 0) return;
     foamRate += ((foamCov - foamPrev) / sdt - foamRate) * Math.min(1, sdt * 6);
     foamPrev = foamCov;
-    if (armed && foamRate > CRASH_RATE) { armed = false; music('event', 'crash', { v: intensity }); }
+    // The rising swell starts once a tap is surely not the first half of a double tap.
+    const now = performance.now();
+    for (const bw of BIG) {
+      if (bw.sounded || bw.tb >= 0 || now - bw.born < 300) continue;
+      bw.sounded = true;
+      music('event', 'swell', { dur: (1 - bw.p) * BIG_DUR / TIME_SCALE, v: reduced ? 0.4 : 1,
+                                pan: clamp(bw.sx / W * 2 - 1, -0.8, 0.8) });
+    }
+    if (now - quietT < 2500) { armed = foamRate < CRASH_RATE * 0.3; return; }
+    if (armed && foamRate > CRASH_RATE) { armed = false; music('event', 'crash', { v: Math.min(1, intensity) }); }
     else if (!armed && foamRate < CRASH_RATE * 0.3) armed = true;
   }
 
   function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
   // Reset the sea state: back to the calm start of the cycle with no foam.
-  function replay() { t = T_START; if (FOAM) FOAM.fill(0); paused = false; dirty = true; music('resume'); music('restart'); }
+  function replay() { t = T_START; if (FOAM) FOAM.fill(0); BIG.length = 0; spray.length = 0; paused = false; dirty = true; music('resume'); music('restart'); }
 
   addEventListener('resize', () => { needResize = true; });
   addEventListener('keydown', e => {
     if (e.metaKey || e.ctrlKey || e.altKey) return; // leave Cmd/Ctrl+R alone
     if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
     else if (e.key === 'r' || e.key === 'R') replay();
+    else if (e.key === 'w' || e.key === 'W') bigWave(W * (0.25 + 0.5 * Math.random()), hyPx + (H - hyPx) * (0.3 + 0.4 * Math.random()));
   });
-  // Single tap = pause (decided after 280 ms), two quick taps = reset.
-  let tapTimer = 0;
-  canvas.addEventListener('pointerup', e => {
+  // Pointer height sets the sea state (higher = calmer). A tap sends a big wave at once; a second
+  // tap within 280 ms takes that wave back and toggles pause instead.
+  function setSea(y) { seaTgt = clamp((y / H - 0.3) / 0.6, 0, 1) * SEA_MAX; ctlOn = true; }
+  function releaseSea() { if (ctlOn) { ctlOn = false; relT = performance.now(); } }
+  let down = null, tapTimer = 0, lastBig = null;
+  canvas.addEventListener('pointermove', e => {
+    if (e.pointerType === 'mouse') { setSea(e.clientY); return; }
+    if (!down || down.id !== e.pointerId) return;
+    if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > 8) down.drag = true;
+    if (down.drag) setSea(e.clientY);
+  });
+  canvas.addEventListener('pointerdown', e => {
     if (e.button > 0) return;
-    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; replay(); }
-    else tapTimer = setTimeout(() => { tapTimer = 0; togglePause(); }, 280);
+    down = { id: e.pointerId, x: e.clientX, y: e.clientY, drag: false };
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
   });
+  canvas.addEventListener('pointerup', e => {
+    if (!down || down.id !== e.pointerId) return;
+    const tap = !down.drag;
+    down = null;
+    if (e.pointerType !== 'mouse') releaseSea();
+    if (!tap) return;
+    if (tapTimer) {
+      clearTimeout(tapTimer); tapTimer = 0;
+      const i = BIG.indexOf(lastBig);
+      if (i >= 0 && lastBig.tb < 0) BIG.splice(i, 1);
+      lastBig = null;
+      togglePause();
+    } else {
+      lastBig = bigWave(e.clientX, e.clientY);
+      tapTimer = setTimeout(() => { tapTimer = 0; }, 280);
+    }
+  });
+  canvas.addEventListener('pointercancel', () => { down = null; releaseSea(); });
+  canvas.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') releaseSea(); });
 
   // Hint language: ?lang= wins, then saved site preference, then browser.
   let pref = null;
@@ -509,9 +660,9 @@
   document.documentElement.lang = zh ? 'zh-Hant' : 'en';
   // Touch screens have no keyboard, and the full hint would not fit on a phone.
   const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
-  hintEl.textContent = touch ? (zh ? '點擊暫停 · 雙擊重設海況' : 'tap to pause · double-tap to reset the sea')
-                             : (zh ? '空白鍵 暫停 · R 重設 · M 音樂 · 點擊暫停 · 雙擊重設'
-                                   : 'Space pause · R reset · M music · click to pause · double-click to reset');
+  hintEl.textContent = touch ? (zh ? '上下拖曳調整海況 · 點擊送出大浪 · 雙擊暫停' : 'drag up/down: sea state · tap: big wave · double-tap: pause')
+                             : (zh ? '滑鼠越低浪越大 · 點擊送出大浪 · 雙擊/空白鍵 暫停 · R 重設 · M 音樂'
+                                   : 'lower mouse = rougher sea · click: big wave · double-click/Space pause · R reset · M music');
 
   // Sound: a soundscape more than a score. Endless surf from filtered noise that swells with
   // each near crest, a crash of foam when a big wave breaks, a distant wind, and on top a very
@@ -547,7 +698,7 @@
 
       // Follow the sea four times a beat: near crest height drives the whoosh, foam the hiss.
       a.every(0.25, (tt, k) => {
-        const sw = clamp((crest + 0.2) / 1.6, 0, 1), I = intensity;
+        const sw = clamp((crest + 0.2) / 1.6, 0, 1), I = Math.min(1.3, intensity); // follows the pointer's sea state
         const lvl = 0.05 + 0.11 * I + 0.22 * sw * sw, cut = 260 + 400 * I + 1500 * sw * sw;
         surfL.g.gain.setTargetAtTime(lvl, tt, 0.35); surfR.g.gain.setTargetAtTime(lvl * (0.85 + 0.15 * Math.sin(k * 0.21)), tt, 0.4);
         surfL.fl.frequency.setTargetAtTime(cut, tt, 0.35); surfR.fl.frequency.setTargetAtTime(cut * 1.1, tt, 0.4);
@@ -571,6 +722,23 @@
         a.noise(t, { dur: 3.2, filter: 'lowpass', freq: 5200, freqEnd: 500, q: 0.5, attack: 0.12,
           vel: 0.25 + 0.3 * d.v, wet: 0.45, pan: (Math.random() - 0.5) * 0.4, bus: 'sfx' });
       }, { gap: 3 });
+
+      // A big wave rolling in: a low swell of noise that rises in pitch and level until it breaks.
+      a.on('swell', (a, d, t) => {
+        const dur = Math.max(0.6, d.dur);
+        a.noise(t, { dur: dur + 0.5, filter: 'lowpass', freq: 160, freqEnd: 1600, q: 0.8, attack: dur * 0.92,
+          vel: 0.5 * d.v, wet: 0.4, pan: d.pan * 0.6, bus: 'sfx' });
+        a.noise(t, { dur: dur + 0.3, filter: 'lowpass', freq: 70, freqEnd: 260, q: 1.2, attack: dur * 0.85,
+          vel: 0.55 * d.v, wet: 0.2, pan: d.pan * 0.3, bus: 'sfx' });
+      }, { gap: 0.4 });
+      // It breaks: a thump, a wide roar of white water and a hiss of spray settling slowly.
+      a.on('bigcrash', (a, d, t) => {
+        a.boom(t, { vel: 0.35 * d.v, pan: d.pan * 0.4 });
+        a.noise(t, { dur: 4.2, filter: 'lowpass', freq: 6500, freqEnd: 420, q: 0.45, attack: 0.06,
+          vel: 0.6 * d.v, wet: 0.5, pan: d.pan * 0.6, bus: 'sfx' });
+        a.noise(t + 0.08, { dur: 1.8, filter: 'highpass', freq: 3800, attack: 0.1, vel: 0.22 * d.v, wet: 0.55,
+          pan: -d.pan * 0.3, bus: 'sfx' });
+      }, { gap: 0.4 });
     }
   });
 

@@ -34,7 +34,7 @@
       height: 100vh;
       height: 100svh;
       display: block;
-      touch-action: manipulation; /* no double-tap zoom: double-tap means replay */
+      touch-action: none; /* dragging blows the bills; double-tap means pause */
       user-select: none;
       -webkit-user-select: none;
       -webkit-tap-highlight-color: transparent;
@@ -121,7 +121,7 @@
   // ---------- World ----------
   const ASPECT = 2.35;          // banknote width : height
   const Z_NEAR = 2.9, Z_FAR = 9.0;
-  const POOL = 30;
+  const POOL = 54;              // room for the scripted shower plus a few thrown stacks
   const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
   // Light from upper-left-front, in view space (camera looks down +z, y up).
   const LX0 = -0.45, LY0 = 0.6, LZ0 = -0.66;
@@ -247,6 +247,9 @@
   const bwx = new Float32Array(POOL), bwy = new Float32Array(POOL), bwz = new Float32Array(POOL);
   const bhw = new Float32Array(POOL), bfl = new Float32Array(POOL), bflW = new Float32Array(POOL);
   const bSeen = new Uint8Array(POOL);
+  // Interaction: sideways speed, extra spin from wind or a throw, and thrown bills (not part of the shower count).
+  const bvx = new Float32Array(POOL), bBurst = new Uint8Array(POOL);
+  const bsx = new Float32Array(POOL), bsy = new Float32Array(POOL), bsz = new Float32Array(POOL);
   // Per-frame basis (view space): U, V unit axes, N normal.
   const ux = new Float32Array(POOL), uy = new Float32Array(POOL), uz = new Float32Array(POOL);
   const vx = new Float32Array(POOL), vy = new Float32Array(POOL), vz = new Float32Array(POOL);
@@ -327,30 +330,93 @@
     const sg = () => rng() < 0.5 ? -1 : 1;
     bwx[b] = sg() * (0.5 + 1.6 * rng()); bwy[b] = sg() * (0.3 + 1.1 * rng()); bwz[b] = sg() * (0.2 + 0.8 * rng());
     bfl[b] = rng() * 6.283; bflW[b] = 2 + 3 * rng();
+    bvx[b] = 0; bsx[b] = bsy[b] = bsz[b] = 0; bBurst[b] = 0;
     bAct[b] = 1;
     music('event', 'bill', { x: bx[b] / halfW(z) });
+  }
+
+  // ---------- Interaction: pointer wind and thrown stacks ----------
+  // The pointer is a gust: (px, py) in CSS px, (pvx, pvy) its smoothed speed in px/s, dying away when it stops.
+  let px = -1e4, py = -1e4, pvx = 0, pvy = 0, gustSum = 0;
+  const CALM = reduced ? 0.5 : 1;    // reduced motion: gentler pushes, spins and throws
+
+  // Bills near the pointer are dragged along with the air it moves and pushed out of its way,
+  // and pick up spin in the direction of the movement.
+  function blow(b, dt) {
+    const sp = Math.hypot(pvx, pvy);
+    if (sp < 30) return;
+    const Z = bz[b], k = Z / F;                        // px -> world units at this depth
+    const dx = ox + bx[b] / Z * F - px, dy = oy - by[b] / Z * F - py;
+    const R = Math.max(110, 0.2 * Math.min(W, H)) + bhw[b] * F / Z * 0.5;
+    const d = Math.hypot(dx, dy);
+    if (d >= R) return;
+    let w = 1 - d / R; w *= w * CALM * Math.min(1, sp / 600);
+    const id = 1 / (d + 1), push = sp * 0.55;
+    // bvy is the downward speed, so screen-down maps onto it directly.
+    bvx[b] += ((pvx + dx * id * push) * k - bvx[b]) * Math.min(1, w * dt * 8);
+    bvy[b] += ((pvy + dy * id * push) * k) * w * dt * 4;
+    const sx = pvx / 1000, sy = pvy / 1000;
+    bsx[b] = clamp(bsx[b] + sy * w * dt * 70, -10, 10);
+    bsy[b] = clamp(bsy[b] + sx * w * dt * 70, -10, 10);
+    bsz[b] = clamp(bsz[b] - sx * w * dt * 30, -6, 6);
+    gustSum += w;
+  }
+
+  // A click throws a stack of cash: bills fan out upward from that spot, spinning, then rain down.
+  function burst(x, y) {
+    const n = reduced ? 4 : 9, R = Math.random;
+    let k = 0;
+    for (let b = 0; b < POOL && k < n; b++) {
+      if (bAct[b]) continue;
+      const z = 3.8 + 2.4 * R(), s = 0.85 + 0.3 * R();
+      bz[b] = z; bhw[b] = s;
+      bx[b] = (x - ox) * z / F; by[b] = -(y - oy) * z / F;
+      const fall = 4.2 + 0.25 * z + 1.6 * R();
+      bvt[b] = (2 * halfH(z) + 2.2 * s) / fall;
+      const th = (n > 1 ? k / (n - 1) - 0.5 : 0) * 2.6 + (R() - 0.5) * 0.35;   // fan around straight up
+      const v = (3.0 + 2.5 * R()) * z / 4.5 * CALM;
+      bvx[b] = Math.sin(th) * v; bvy[b] = -Math.cos(th) * v * 0.9;
+      bsw[b] = (0.15 + 0.3 * R()) * z / 6; bswW[b] = 0.6 + 0.9 * R(); bswP[b] = R() * 6.283;
+      bax[b] = R() * 6.283; bay[b] = R() * 6.283; baz[b] = R() * 6.283;
+      const sg = () => R() < 0.5 ? -1 : 1;
+      bwx[b] = sg() * (0.5 + 1.6 * R()); bwy[b] = sg() * (0.3 + 1.1 * R()); bwz[b] = sg() * (0.2 + 0.8 * R());
+      bsx[b] = sg() * (2 + 4 * R()) * CALM; bsy[b] = sg() * (2 + 4 * R()) * CALM; bsz[b] = Math.sin(th) * 3 * CALM;
+      bfl[b] = R() * 6.283; bflW[b] = 2 + 3 * R();
+      bAct[b] = 1; bBurst[b] = 1; bFace[b] = 1;          // no till ring for the whole stack at once
+      k++;
+    }
+    if (k) music('event', 'burst', { x: clamp((x - ox) / ox, -1, 1), n: k });
+    dirty = true;
   }
 
   function step(dt) {
     t += dt; skyT += dt;
     if (reduced) { if (t > T_START) t = T_START; }
-    else if (t >= T.END) { t = 0; bAct.fill(0); spawnCd = 0; rng = mulberry32(100); }
+    else if (t >= T.END) { t = 0; bAct.fill(0); bBurst.fill(0); spawnCd = 0; rng = mulberry32(100); }
     intensity = intensityAt(t);
     const target = Math.round(intensity * NMAX);
     let active = 0;
-    for (let b = 0; b < POOL; b++) active += bAct[b];
+    for (let b = 0; b < POOL; b++) active += bAct[b] && !bBurst[b];
+    gustSum = 0;
+    const sDamp = Math.exp(-1.6 * dt), xDamp = Math.exp(-0.9 * dt);
 
     for (let b = 0; b < POOL; b++) {
       if (!bAct[b]) continue;
+      blow(b, dt);
       // Drag toward terminal speed, with a flutter that briefly slows the fall.
-      const fl = Math.sin(bfl[b] += bflW[b] * dt);
+      const spin = Math.abs(bsx[b]) + Math.abs(bsy[b]);
+      const fl = Math.sin(bfl[b] += (bflW[b] + spin * 0.8) * dt);   // spinning bills flutter faster
       const tv = bvt[b] * (1 - 0.22 * fl);
       bvy[b] += (tv - bvy[b]) * Math.min(1, dt * 1.4);
       by[b] -= bvy[b] * dt;
-      bx[b] += Math.cos(skyT * bswW[b] + bswP[b]) * bsw[b] * bswW[b] * dt;
-      bax[b] += bwx[b] * dt; bay[b] += bwy[b] * dt; baz[b] += bwz[b] * dt;
-      if (by[b] < -halfH(bz[b]) - bhw[b] * 1.1) {          // left the bottom
-        if (active > target || t >= T.TAPER) { bAct[b] = 0; active--; }
+      bx[b] += (Math.cos(skyT * bswW[b] + bswP[b]) * bsw[b] * bswW[b] + bvx[b]) * dt;
+      bvx[b] *= xDamp;
+      bax[b] += (bwx[b] + bsx[b]) * dt; bay[b] += (bwy[b] + bsy[b]) * dt; baz[b] += (bwz[b] + bsz[b]) * dt;
+      bsx[b] *= sDamp; bsy[b] *= sDamp; bsz[b] *= sDamp;
+      const out = Math.abs(bx[b]) > halfW(bz[b]) + bhw[b] * 2.5;   // blown off the side
+      if (by[b] < -halfH(bz[b]) - bhw[b] * 1.1 || out) {          // left the bottom
+        if (bBurst[b]) { bAct[b] = 0; bBurst[b] = 0; }    // thrown bills just land
+        else if (active > target || t >= T.TAPER) { bAct[b] = 0; active--; }
         else spawn(b, false);                            // recycle to the top
       }
     }
@@ -555,6 +621,7 @@
       if (first && T_START > 0) prewarm(T_START);
     }
     if (!paused) { step(dt * SPEED); soundCues(); }
+    const pd = Math.exp(-5 * dt); pvx *= pd; pvy *= pd;   // the gust dies away when the pointer rests
     if (!paused || dirty) { render(); dirty = false; frames++; }
     if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
     if (now - hudT >= 250) updateHud(now);
@@ -578,11 +645,13 @@
       }
       bFace[b] = on;
     }
+    // Paper flutter while the pointer is blowing bills around.
+    if (gustSum > 0.15) music('event', 'gust', { x: clamp((px - ox) / ox, -1, 1), v: Math.min(1, gustSum / 2.5) });
   }
 
   function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
   function replay() {
-    t = 0; bAct.fill(0); spawnCd = 0; rng = mulberry32(100);
+    t = 0; bAct.fill(0); bBurst.fill(0); spawnCd = 0; rng = mulberry32(100);
     if (reduced) prewarm(T_START);
     paused = false; dirty = true;
     music('resume'); music('restart');
@@ -594,13 +663,39 @@
     if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
     else if (e.key === 'r' || e.key === 'R') replay();
   });
-  // Single tap = pause (decided after 280 ms), two quick taps = replay.
+  // The pointer is wind: a mouse blows whenever it moves, a finger while it drags.
+  let downX = 0, downY = 0, dragging = false, lastMv = 0;
+  function track(e) {
+    const ts = e.timeStamp || performance.now(), gap = (ts - lastMv) / 1000;
+    if (lastMv && gap > 0.001 && gap < 0.2 && px > -1e3) {
+      const a = Math.min(1, gap * 18);                  // smooth the speed over ~50 ms
+      pvx += ((e.clientX - px) / gap - pvx) * a;
+      pvy += ((e.clientY - py) / gap - pvy) * a;
+      const sp = Math.hypot(pvx, pvy);
+      if (sp > 4000) { pvx *= 4000 / sp; pvy *= 4000 / sp; }
+    }
+    px = e.clientX; py = e.clientY; lastMv = ts;
+  }
+  canvas.addEventListener('pointermove', e => {
+    if (e.pointerType === 'mouse' || dragging) track(e);
+  });
+  canvas.addEventListener('pointerleave', () => { px = py = -1e4; lastMv = 0; });
+  canvas.addEventListener('pointerdown', e => {
+    downX = e.clientX; downY = e.clientY; dragging = true;
+    if (e.pointerType !== 'mouse') { px = e.clientX; py = e.clientY; lastMv = e.timeStamp || performance.now(); }
+  });
+  // Single tap = throw a stack of bills there (decided after 280 ms), two quick taps = pause.
   let tapTimer = 0;
   canvas.addEventListener('pointerup', e => {
+    dragging = false;
+    if (e.pointerType !== 'mouse') lastMv = 0;
     if (e.button > 0) return;
-    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; replay(); }
-    else tapTimer = setTimeout(() => { tapTimer = 0; togglePause(); }, 280);
+    if (Math.hypot(e.clientX - downX, e.clientY - downY) > 12) return; // that was a drag
+    const x = e.clientX, y = e.clientY;
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; togglePause(); }
+    else tapTimer = setTimeout(() => { tapTimer = 0; burst(x, y); }, 280);
   });
+  canvas.addEventListener('pointercancel', () => { dragging = false; lastMv = 0; });
 
   // Hint language: ?lang= wins, then saved site preference, then browser.
   let pref = null;
@@ -611,9 +706,9 @@
   document.documentElement.lang = zh ? 'zh-Hant' : 'en';
   // Touch screens have no keyboard, and the full hint would not fit on a phone.
   const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
-  hintEl.textContent = touch ? (zh ? '點擊暫停 · 雙擊重播' : 'tap to pause · double-tap to replay')
-                             : (zh ? '空白鍵 暫停 · R 重播 · M 音樂 · 點擊暫停 · 雙擊重播'
-                                   : 'Space pause · R replay · M music · click to pause · double-click to replay');
+  hintEl.textContent = touch ? (zh ? '拖曳吹動鈔票 · 點擊撒錢 · 雙擊暫停' : 'drag: wind · tap: throw cash · double-tap: pause')
+                             : (zh ? '移動滑鼠 吹動鈔票 · 點擊撒一疊鈔票 · 空白鍵 暫停 · R 重播 · M 音樂'
+                                   : 'move: wind · click: throw a stack · Space pause · R replay · M music');
 
   // Score (original): a lo-fi funk groove at 92 bpm in D minor. Dm9 | G13 | Fmaj9 | Em9 A9,
   // swung 16ths, round sine bass, plucked chord stabs and a short lead hook. One 16-beat loop.
@@ -702,6 +797,29 @@
         a.bell(t + 0.03, 'B6', 1.0, { vel: 0.26, pan, bus: 'sfx', wet: 0.3 });
         a.bell(t + 0.13, 'E7', 1.5, { vel: 0.28, pan, bus: 'sfx', wet: 0.35 });
       }, { gap: 1.8 });
+      // Interaction: a thrown stack rings up the register (drawer clunk, ka-ching, coins) over a
+      // riffle of paper; the pointer wind gives a soft flutter, louder the more bills it moves.
+      a.on('burst', (a, d, t) => {
+        const pan = clamp(d.x || 0, -1, 1) * 0.7;
+        a.noise(t, { dur: 0.07, filter: 'lowpass', freq: 520, vel: 0.32, pan, bus: 'sfx', wet: 0.05 });
+        a.noise(t + 0.01, { dur: 0.025, filter: 'highpass', freq: 3500, vel: 0.3, pan, bus: 'sfx', wet: 0.05 });
+        a.bell(t + 0.05, 'G6', 0.9, { vel: 0.3, pan, bus: 'sfx', wet: 0.3 });
+        a.bell(t + 0.14, 'D7', 1.4, { vel: 0.32, pan, bus: 'sfx', wet: 0.35 });
+        a.sparkle(t + 0.22, { count: 4, vel: 0.22, notes: ['D7', 'E7', 'G7', 'A7'] });
+        for (let i = 0; i < 6; i++) {
+          const f = 2400 + Math.random() * 2200;
+          a.noise(t + i * 0.045 + Math.random() * 0.015, { dur: 0.07, filter: 'bandpass', freq: f, freqEnd: f * 0.6, q: 1.8,
+            attack: 0.01, vel: 0.14 * (1 - i * 0.1), pan: pan + (Math.random() - 0.5) * 0.4, bus: 'sfx', wet: 0.12 });
+        }
+      }, { gap: 0.25 });
+      a.on('gust', (a, d, t) => {
+        const pan = clamp(d.x || 0, -1, 1) * 0.6, v = 0.05 + 0.1 * (d.v || 0);
+        for (let i = 0; i < 2; i++) {
+          const f = 1800 + Math.random() * 2400;
+          a.noise(t + i * 0.05, { dur: 0.09 + Math.random() * 0.05, filter: 'bandpass', freq: f, freqEnd: f * 0.7, q: 1.4,
+            attack: 0.02, vel: v * (1 - i * 0.3), pan, bus: 'sfx', wet: 0.12 });
+        }
+      }, { gap: 0.16 });
     }
   });
 
