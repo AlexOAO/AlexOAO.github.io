@@ -1,0 +1,1159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ASCII Miami at Night | Alex Li (李翔緯)</title>
+  <meta name="description" content="A synthwave Miami at night drawn entirely with coloured ASCII characters: a striped retro sun sinking into the bay, a causeway, Art Deco hotels, neon palms, OCEAN DRIVE and flamingo signs, speedboats and cars, typed out as MIAMI AT NIGHT. Tap hotels to flip their neon, the sun to pulse, the sea for a speedboat and the sky for fireworks. Vanilla JS on a single canvas.">
+  <meta name="theme-color" content="#07061a">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;600;800&display=swap">
+  <style>
+    :root {
+      --bg: #07061a;
+      --text: #fde7f6;
+      --muted: #c4b5e0;
+      --accent: #ff3fae;
+      --mono: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    canvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100svh;
+      display: block;
+      touch-action: none; /* taps and drags drive the scene; also no double-tap zoom */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: crosshair;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .back {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 63, 174, 0.5);
+      background: rgba(30, 10, 44, 0.5);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .back:hover, .back:focus-visible {
+      background: rgba(255, 63, 174, 0.28);
+      border-color: var(--accent);
+      outline: none;
+    }
+    .hud, .hint {
+      position: fixed;
+      z-index: 1;
+      bottom: 12px;
+      color: var(--muted);
+      opacity: 0.8;
+      font: 11px/1.4 var(--mono);
+      white-space: pre;
+      pointer-events: none;
+      max-width: calc(100% - 24px);
+      overflow: hidden;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    }
+    .hud { left: 12px; }
+    .hint {
+      right: 12px;
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    @media (max-width: 640px) {
+      .hud, .hint { font-size: 10px; }
+      .hint { bottom: 30px; } /* stack above the HUD on narrow screens */
+    }
+  </style>
+</head>
+<body>
+  <h1 class="sr-only">ASCII Miami at Night</h1>
+  <a class="back" href="./">← ASCII</a>
+  <canvas id="c" role="img" aria-label="Animated synthwave Miami at night drawn with coloured ASCII characters: a striped retro sun setting into the bay, a causeway, Art Deco hotels with neon trim, neon palm trees, an OCEAN DRIVE sign, a vertical HOTEL sign and a flamingo sign, boats, cars and a helicopter, with the title MIAMI AT NIGHT typed out at the bottom"></canvas>
+  <div class="hud" id="hud" aria-hidden="true"></div>
+  <div class="hint" id="hint"></div>
+
+<script src="ascii-audio.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  // ---------- Timeline (seconds of scene time) ----------
+  const T = {
+    SUN: 0.4, SUN_D: 2.6,          // striped sun resolves, bottom up
+    SEA: 2.4, SEA_D: 2.0,          // bay, top down
+    BRIDGE: 4.0, BRIDGE_D: 1.6,    // causeway and the coast road
+    HOTELS: 5.2, HOTELS_D: 3.6,    // Art Deco hotels, one after another
+    LAND: 8.6, LAND_D: 2.4,        // palms, signs, flamingo
+    NEON: 11.0,                    // neon flickers on, object by object
+    TRAFFIC: 12.6,                 // cars, boats, helicopter
+    REFLECT: 14.0, REFLECT_D: 1.6, // neon streaks on the water
+    TITLE: 15.6, TYPE: 0.17,       // MIAMI AT NIGHT, one letter every TYPE s
+    FADE: 21.2, FADE_D: 2.2, END: 24.0
+  };
+  const PHASES = [['sky', 0], ['sun', T.SUN], ['sea', T.SEA], ['bridge', T.BRIDGE], ['hotels', T.HOTELS], ['palms', T.LAND],
+                  ['neon', T.NEON], ['traffic', T.TRAFFIC], ['glow', T.REFLECT], ['title', T.TITLE], ['hold', T.TITLE + 3], ['fade', T.FADE]];
+  const TITLE = 'MIAMI AT NIGHT';
+
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T_START = reduced ? 19.0 : 0;   // reduced motion: open (and stay) on the finished scene
+  const RES = 0.4;                      // seconds a cell spends scrambling before it resolves
+  const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function hash2(a, b) {
+    let h = Math.imul(a ^ Math.imul(b, 0x9E3779B1), 0x85EBCA6B);
+    h ^= h >>> 13; h = Math.imul(h, 0xC2B2AE35); h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
+  }
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+
+  // ---------- Glyphs and sprites ----------
+  const CH = [' '];
+  const ci = s => { let i = CH.indexOf(s); if (i < 0) { CH.push(s); i = CH.length - 1; } return i; };
+  const set = s => Uint8Array.from([...s].map(ci));
+  const SCR = set('#%&@$*+=?/<>~01x');
+  const C_DOT = ci('.'), C_COLON = ci(':'), C_PLUS = ci('+'), C_STAR = ci('*'), C_PIPE = ci('|'), C_DASH = ci('-');
+  const C_US = ci('_'), C_EQ = ci('='), C_HASH = ci('#'), C_TILDE = ci('~'), C_O = ci('o'), C_LP = ci('('), C_RP = ci(')');
+  const C_FS = ci('/'), C_BS = ci('\\'), C_LB = ci('['), C_RB = ci(']'), C_CARET = ci('^'), C_AT = ci('@');
+  const MIR = { '/': '\\', '\\': '/', '<': '>', '>': '<', '(': ')', ')': '(', '[': ']', ']': '[' };
+  const mirror = L => L.map(s => [...s].reverse().map(c => MIR[c] || c).join(''));
+  function sprite(L) {
+    const w = Math.max(...L.map(s => s.length));
+    return { w, h: L.length, s: L.map(s => s.padEnd(w)), g: L.map(s => [...s.padEnd(w)].map(c => c === ' ' ? 0 : ci(c))) };
+  }
+  const PALM = sprite([
+    '     _.-~~-._.-~~-._     ',
+    "  .-'   _.-\\|/-._   '-.  ",
+    " /  .-'  .-(@)-.  '-.  \\ ",
+    "'  /   /   /|\\   \\   \\  '",
+    "  '   /   / | \\   \\   '  ",
+    "     '   '  |  '   '     "
+  ]);
+  const PALM_BIG = sprite([
+    '          _.--~~--._   _.--~~--._          ',
+    "     _.-~'    _.-~\\ | /~-._    '~-._     ",
+    "  .-'   _.-~'  .-' \\|/ '-.  '~-._   '-.  ",
+    " /   .-'    .-'  .-(@@)-.  '-.    '-.   \\ ",
+    "'  .'     /'   /   /||\\   \\   '\\     '.  '",
+    "  /     /'   /'   / || \\   '\\   '\\     \\  ",
+    " '    /'    /    /  ||  \\    \\    '\\    ' ",
+    "     '     '    '   ||   '    '     '     "
+  ]);
+  let palmSp = PALM;
+  const FLAMINGO = sprite([
+    '   ,--.    ',
+    '  <(o  )   ',
+    '     ) )   ',
+    '    ( (    ',
+    '    //     ',
+    ' .-~~~~-.  ',
+    "(( ~~~~ '> ",
+    " '-.__.-'  ",
+    '     ||    ',
+    '    _/|    '
+  ]);
+  const SPEED_R = ['  _|\\_   ', '\\______> '], YACHT_R = ['     |\\     ', '  ___|_\\___ ', '\\_o_o_o_o__>'];
+  const CAR_R = ['  _/~~\\_  ', '=(_o__o_)*'];
+  const HELI_R = [' ====+==== ', '    _|__   ', 'o==/___[]\\ ', "    '--'   "];
+  const SPR = {
+    speed: [sprite(mirror(SPEED_R)), sprite(SPEED_R)], yacht: [sprite(mirror(YACHT_R)), sprite(YACHT_R)],
+    car: [sprite(mirror(CAR_R)), sprite(CAR_R)], heli: [sprite(mirror(HELI_R)), sprite(HELI_R)]
+  };
+  const sdir = d => d > 0 ? 1 : 0;
+
+  // Neon tubes: pink, cyan, green, violet, yellow, orange.
+  const NEON = [[255, 64, 170], [40, 225, 255], [70, 255, 130], [186, 104, 255], [255, 214, 70], [255, 128, 60]];
+
+  // Colour keys: 5 bits per channel, so fillStyle changes once per quantised colour.
+  const NKEY = 32768;
+  const COLSTR = new Array(NKEY);
+  const colStr = k => COLSTR[k] || (COLSTR[k] = `rgb(${(k >> 10) * 8 + 4},${((k >> 5) & 31) * 8 + 4},${(k & 31) * 8 + 4})`);
+  const counts = new Uint32Array(NKEY);
+
+  // ---------- Canvas, grid, layout ----------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const hudEl = document.getElementById('hud');
+  const hintEl = document.getElementById('hint');
+  const back = document.createElement('canvas'), bctx = back.getContext('2d', { willReadFrequently: true });
+  const emis = document.createElement('canvas'), ectx = emis.getContext('2d', { willReadFrequently: true });
+  const glow = document.createElement('canvas'), gctx = glow.getContext('2d');
+  const halo = document.createElement('canvas'), hctx = halo.getContext('2d');
+  let bImg = null, eImg = null;
+
+  let W = 0, H = 0, fs = 9, cw = 5, ch = 10, cols = 0, rows = 0, n = 0, cellFont = '';
+  let hr = 0, yH = 0, roadRow = 0, rB = 0, M = 500, S = 300, sunR = 100, sunX = 0;
+  let CR, CG, CB, CK, EMI, BKR, BKG, BKB, HSH, keys, order, skyR, skyG, skyB, reflR, reflG, reflB, rowW, farTop;
+  let needResize = true, dirty = true;
+
+  // Hotels (back ones first), palms and signs. Every object with `c` is a neon that can be flipped.
+  const HOTELS = [
+    { x0: 0.085, x1: 0.2, hk: 0.72, style: 'port', crown: 'spire', c: 3, c2: 1 },
+    { x0: 0.80, x1: 0.915, hk: 0.6, style: 'grid', crown: 'step', c: 2, c2: 4 },
+    { x0: -0.01, x1: 0.14, hk: 0.3, style: 'grid', crown: 'sign', c: 0, c2: 1 },
+    { x0: 0.865, x1: 1.01, hk: 0.24, style: 'port', crown: 'step', c: 1, c2: 0 }
+  ];
+  const PALMS = [{ xf: 0.255, pk: 0.62, lean: -1, c: 2 }, { xf: 0.745, pk: 0.54, lean: 1, c: 2 }];
+  const OCEAN = { c: 1, c2: 0 }, HOTELSIGN = { c: 4, c2: 0 }, FLAM = { c: 0, c2: 4 };
+  const NEONS = [...HOTELS, ...PALMS, OCEAN, HOTELSIGN, FLAM];
+  NEONS.forEach((o, k) => { o.id = k + 1; o.flash = 0; o.d = [0.5, 0.9, 0.1, 1.2, 0.3, 0.7, 0, 0.6, 0.2][k] || 0; });
+
+  function resize() {
+    needResize = false;
+    W = canvas.clientWidth || innerWidth;
+    H = canvas.clientHeight || innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    fs = clamp(Math.round(Math.min(W, H * 1.2) / 118), 7, 11);
+    cellFont = `${fs}px ${MONO}`;
+    ctx.font = cellFont;
+    cw = ctx.measureText('M').width || fs * 0.6;
+    ch = Math.round(fs * 1.15);
+    cols = Math.ceil(W / cw);
+    rows = Math.ceil(H / ch);
+    n = cols * rows;
+    hr = Math.round(H * 0.55 / ch);
+    yH = hr * ch;
+    roadRow = Math.max(hr + 10, Math.min(rows - 9, Math.round(H * 0.79 / ch)));
+    rB = hr + Math.round((roadRow - hr) * 0.38);
+    M = Math.min(W, H * 0.95);
+    S = Math.min(H * 0.3, W * 0.45);
+    sunR = Math.min(W * 0.26, H * 0.17);
+    sunX = W / 2;
+
+    CR = new Float32Array(n); CG = new Float32Array(n); CB = new Float32Array(n);
+    BKR = new Float32Array(n); BKG = new Float32Array(n); BKB = new Float32Array(n);
+    CK = new Uint8Array(n); EMI = new Uint8ClampedArray(n); keys = new Uint16Array(n); order = new Int32Array(n);
+    HSH = new Uint8Array(n);
+    const r = mulberry32(305);
+    for (let i = 0; i < n; i++) HSH[i] = (r() * 256) | 0;
+    skyR = new Float32Array(rows); skyG = new Float32Array(rows); skyB = new Float32Array(rows); rowW = new Float32Array(rows);
+    reflR = new Float32Array(cols); reflG = new Float32Array(cols); reflB = new Float32Array(cols);
+    back.width = cols; back.height = rows; bImg = bctx.createImageData(cols, rows);
+    emis.width = cols; emis.height = rows; eImg = ectx.createImageData(cols, rows);
+    glow.width = cols; glow.height = rows; halo.width = cols; halo.height = rows;
+
+    // Sky gradient, deep indigo -> violet -> hot magenta at the horizon.
+    const STOP = [[0, 6, 5, 22], [0.5, 22, 10, 50], [0.82, 66, 18, 84], [1, 150, 38, 112]];
+    for (let y = 0; y < rows; y++) {
+      const f = clamp((y + 0.5) / hr, 0, 1);
+      let k = 0;
+      while (k < 2 && f > STOP[k + 1][0]) k++;
+      const a = STOP[k], b = STOP[k + 1], u = (f - a[0]) / (b[0] - a[0]);
+      skyR[y] = a[1] + (b[1] - a[1]) * u; skyG[y] = a[2] + (b[2] - a[2]) * u; skyB[y] = a[3] + (b[3] - a[3]) * u;
+      rowW[y] = 0.25 + 0.75 * f;
+    }
+
+    // Far skyline: hazy towers on both sides, never behind the sun.
+    const fr = mulberry32(77);
+    farTop = new Int16Array(cols).fill(hr);
+    for (let x = 0; x < cols;) {
+      const w = 2 + ((fr() * 5) | 0), h = Math.round((0.04 + 0.22 * fr() * fr()) * S / ch) + 1;
+      for (let k = 0; k < w && x < cols; k++, x++) {
+        const px = (x + 0.5) * cw;
+        if (Math.abs(px - sunX) > sunR * 1.2) farTop[x] = hr - h;
+      }
+      if (fr() < 0.3) x++;
+    }
+
+    const base = roadRow - 1;
+    for (const h of HOTELS) {
+      h.c0 = Math.round(h.x0 * W / cw); h.c1 = Math.round(h.x1 * W / cw);
+      h.top = Math.round((yH - h.hk * S) / ch);
+      h.base = base;
+    }
+    palmSp = cols > 170 ? PALM_BIG : PALM;
+    for (const p of PALMS) {
+      p.cx = Math.round(p.xf * W / cw);
+      p.top = Math.round((yH - p.pk * S) / ch);
+    }
+    initCars();
+    dirty = true;
+  }
+
+  // ---------- Moving things ----------
+  let cars = [], boats = [], fw = [], rockets = [], heli = null, splash = [];
+  function initCars() {
+    const r = mulberry32(9);
+    cars = [];
+    const per = Math.max(2, Math.round(cols / 44));
+    for (let lane = 0; lane < 2; lane++) {
+      const dir = lane ? 1 : -1;
+      for (let k = 0; k < per; k++) {
+        const gap = (W + 24 * cw) / per;
+        // Off-screen in a queue, so they drive in when traffic starts (reduced motion: already on screen).
+        const x = reduced ? (k + r()) * gap : dir > 0 ? -12 * cw - k * gap * (0.35 + 0.2 * r()) : W + 2 * cw + k * gap * (0.35 + 0.2 * r());
+        cars.push({ x, lane, dir, v: M * (0.1 + 0.06 * r()) * (reduced ? 0.35 : 1), c: (k * 2 + lane * 3 + ((r() * 6) | 0)) % 6, extra: false });
+      }
+    }
+  }
+  // `hull` is the row of the hull; keep it off the causeway rows.
+  function spawnBoat(kind, hull, dir, x, user) {
+    const sp = SPR[kind][sdir(dir)];
+    if (hull >= rB - 1 && hull <= rB + 2) hull = rB + 3;
+    hull = clamp(hull, hr + sp.h, roadRow - 2);
+    boats.push({ kind, row: hull - sp.h + 1, dir, x: x != null ? x : dir > 0 ? -sp.w * cw : W + 2 * cw,
+                 v: (kind === 'speed' ? M * 0.2 : M * 0.035) * (reduced ? 0.45 : 1), c: user ? (boats.length % 2 ? 1 : 0) : 4, age: 0, user });
+  }
+  function launch(x, y, calm) {
+    const y0 = (roadRow - 1) * ch;
+    rockets.push({ x: x + (Math.random() - 0.5) * cw * 6, y: y0, tx: x, ty: y, v: H * (calm ? 0.45 : 0.9), calm, c: (Math.random() * 6) | 0 });
+    music('event', 'launch', { x: x / W });
+  }
+  function burst(rk) {
+    const k = rk.calm ? 26 : 60, sp = M * (rk.calm ? 0.12 : 0.24), c2 = (rk.c + 1 + ((Math.random() * 5) | 0)) % 6;
+    for (let i = 0; i < k; i++) {
+      const a = Math.PI * 2 * i / k + Math.random() * 0.2, s = sp * (0.55 + 0.45 * Math.random());
+      fw.push({ x: rk.tx, y: rk.ty, vx: Math.cos(a) * s, vy: Math.sin(a) * s * 0.85, life: 0, max: (rk.calm ? 1.8 : 1.4) + Math.random() * 0.6, c: i % 3 ? rk.c : c2 });
+    }
+    music('event', 'burst', { x: rk.tx / W, calm: rk.calm });
+  }
+
+  // ---------- Scene state ----------
+  let t = T_START, skyT = 0, bandShift = 0, drop = 0, pulse = 0, lift = 0, liftTo = 0, par = 0, parTo = 0;
+  let total = 0, done = 0, letters = 0, typed = 0, nextBoat = 0, nextAuto = 0, heliDone = false;
+
+  function neonLvl(o) {
+    const s = T.NEON + o.d;
+    if (t < s) return 0;
+    if (t < s + 0.8) return reduced ? (t - s) / 0.8 : (hash2(o.id, (t * 15) | 0) < 0.25 + 0.6 * (t - s) / 0.8 ? 1 : 0.08);
+    if (!reduced && hash2(o.id * 13, (skyT * 8) | 0) < 0.004) return 0.3;   // the odd tube buzzing
+    return 1;
+  }
+  // Neon colour at level L (0 = unlit glass tube), whitened by a tap flash.
+  const NC = [0, 0, 0];
+  function neonCol(idx, L, flash, out) {
+    const p = NEON[idx], u = 0.35 + 0.65 * L;
+    out[0] = 58 + (p[0] - 58) * L * u + (255 - p[0]) * flash * 0.7;
+    out[1] = 50 + (p[1] - 50) * L * u + (255 - p[1]) * flash * 0.7;
+    out[2] = 70 + (p[2] - 70) * L * u + (255 - p[2]) * flash * 0.7;
+    return out;
+  }
+
+  // ---------- Render ----------
+  let acc = false;   // accumulate emissive sky cells into the water reflection
+  function put(i, r, g, b, k, e) {
+    CR[i] = r; CG[i] = g; CB[i] = b; CK[i] = k; EMI[i] = e;
+    if (acc && e > 0) {
+      const y = (i / cols) | 0, c = i - y * cols, w = rowW[y] * e / 255;
+      reflR[c] += r * w; reflG[c] += g * w; reflB[c] += b * w;
+    }
+  }
+  const bk = (i, r, g, b) => { BKR[i] = r; BKG[i] = g; BKB[i] = b; };
+
+  // Build state of a structure cell: 0 hidden, 1 scrambling, 2 resolved. `f` orders cells within the structure.
+  let bsA = 0, counting = true;
+  function bs(st, dur, f, h) {
+    if (counting) total++;
+    bsA = st + dur * (clamp(f, 0, 1) * 0.8 + h / 255 * 0.2);
+    if (t < bsA) return 0;
+    if (t < bsA + RES) return 1;
+    if (counting) done++;
+    return 2;
+  }
+  // Structure cell: resolves through random glyphs into its final character.
+  function sc(c, r, R, G, B, k, e, st, dur, f, bR, bG, bB) {
+    if (c < 0 || c >= cols || r < 0 || r >= rows) return 0;
+    const i = r * cols + c, h = HSH[i], s = bs(st, dur, f, h);
+    if (!s) return 0;
+    if (bR != null) bk(i, bR, bG, bB);
+    if (s === 1) {
+      const u = (t - bsA) / RES;
+      put(i, R * u + 200 * (1 - u), G * u + 170 * (1 - u), B * u + 255 * (1 - u), SCR[(h + ((t * 22) | 0)) & 15], 90);
+    } else put(i, R, G, B, k, e);
+    return s;
+  }
+  function stamp(sp, c0, r0, fn) {
+    for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) {
+      const k = sp.g[y][x];
+      if (!k) continue;
+      const c = c0 + x, r = r0 + y;
+      if (c >= 0 && c < cols && r >= 0 && r < rows) fn(r * cols + c, k, sp.s[y][x], x, y, c, r);
+    }
+  }
+
+  const SUNC = [[0, 255, 238, 110], [0.4, 255, 172, 70], [0.7, 255, 88, 112], [1, 238, 46, 162]];
+  const sunCol = (s, out) => {
+    let k = 0;
+    while (k < 2 && s > SUNC[k + 1][0]) k++;
+    const a = SUNC[k], b = SUNC[k + 1], u = clamp((s - a[0]) / (b[0] - a[0]), 0, 1);
+    out[0] = a[1] + (b[1] - a[1]) * u; out[1] = a[2] + (b[2] - a[2]) * u; out[2] = a[3] + (b[3] - a[3]) * u;
+    return out;
+  };
+  // Retro sun stripes: from 38% down, ever wider dark gaps that drift (and drop on a tap).
+  function sunGap(s) {
+    if (s < 0.38) return false;
+    const ph = ((s * 7 - bandShift) % 1 + 1) % 1;
+    return ph < 0.1 + 0.5 * (s - 0.38) / 0.62;
+  }
+  const tmpC = [0, 0, 0], colA = [0, 0, 0], colB = [0, 0, 0];
+
+  function buildScene() {
+    CK.fill(0); EMI.fill(0);
+    reflR.fill(0); reflG.fill(0); reflB.fill(0);
+    total = 0; done = 0;
+    const R = sunR * (1 + 0.08 * pulse), yS = yH - sunR * 0.35 - lift * sunR * 0.45;
+    const sunTop = yS - R;
+    const oF = -Math.round(par * 1.2), oP = -Math.round(par * 2.2), oH = -Math.round(par * 3), oFl = -Math.round(par * 4);
+
+    // ---- Sky: gradient backing, sun haze, stars ----
+    const starA = reduced ? 1 : smooth(t / 1.6);
+    for (let r = 0; r < hr; r++) {
+      const y = (r + 0.5) * ch;
+      for (let c = 0; c < cols; c++) {
+        const i = r * cols + c, h = HSH[i], dx = ((c + 0.5) * cw - sunX) / (R * 2.2), dy = (y - yS) / (R * 1.6);
+        const g = Math.exp(-dx * dx - dy * dy) * (0.45 + 0.3 * pulse);
+        bk(i, skyR[r] + 150 * g, skyG[r] + 30 * g, skyB[r] + 70 * g);
+        if (h < 4 && y < yH * 0.8) {
+          const tw = 0.55 + 0.45 * Math.sin(skyT * (reduced ? 0.6 : 2.2) + h * 7 + c);
+          const s = starA * tw * (1 - y / yH);
+          if (s > 0.12) put(i, 150 + 105 * s, 150 + 90 * s, 190 + 65 * s, h < 1 ? C_STAR : h < 2 ? C_PLUS : C_DOT, h < 1 ? 120 * s : 0);
+        } else if (r >= hr - 2 && (h & 7) === 0) put(i, 200, 70, 150, C_DASH, 0);   // horizon haze
+      }
+    }
+
+    // ---- Sun ----
+    for (let r = Math.max(0, Math.floor(sunTop / ch)); r < hr; r++) {
+      const y = (r + 0.5) * ch, dy = y - yS;
+      if (Math.abs(dy) >= R) continue;
+      const hw = Math.sqrt(R * R - dy * dy), s = (y - sunTop) / (2 * R), gap = sunGap(s);
+      sunCol(s, tmpC);
+      const wR = tmpC[0] + (255 - tmpC[0]) * pulse * 0.5, wG = tmpC[1] + (255 - tmpC[1]) * pulse * 0.4, wB = tmpC[2] + (255 - tmpC[2]) * pulse * 0.4;
+      const c0 = Math.ceil((sunX - hw) / cw - 0.5), c1 = Math.floor((sunX + hw) / cw - 0.5);
+      for (let c = c0; c <= c1; c++) {
+        if (c < 0 || c >= cols) continue;
+        const i = r * cols + c, edgeL = c === c0, edgeR = c === c1, top = y - sunTop < ch;
+        if (gap) { if (edgeL || edgeR) sc(c, r, wR * 0.5, wG * 0.4, wB * 0.5, edgeL ? C_LP : C_RP, 0, T.SUN, T.SUN_D, 1 - s); continue; }
+        const k = top ? C_US : edgeL ? (s < 0.25 ? C_FS : C_LP) : edgeR ? (s < 0.25 ? C_BS : C_RP) : s < 0.4 ? C_HASH : C_EQ;
+        if (sc(c, r, wR, wG, wB, k, 180 + 70 * pulse, T.SUN, T.SUN_D, 1 - s) === 2) bk(i, wR * 0.32, wG * 0.22, wB * 0.3);
+      }
+    }
+
+    // ---- Fireworks, helicopter, far skyline: reflected in the bay ----
+    acc = true;
+    for (const p of fw) {
+      const c = Math.round(p.x / cw), r = Math.round(p.y / ch);
+      if (c < 0 || c >= cols || r < 0 || r >= hr) continue;
+      const a = 1 - p.life / p.max, q = NEON[p.c], wv = a > 0.7 ? 1 : 0.4 + 0.6 * a;
+      put(r * cols + c, q[0] * wv + 80 * a, q[1] * wv + 80 * a, q[2] * wv + 80 * a, a > 0.65 ? C_STAR : a > 0.3 ? C_PLUS : C_DOT, reduced ? 90 * a : 230 * a);
+    }
+    for (const rk of rockets) {
+      const c = Math.round(rk.x / cw), r = Math.round(rk.y / ch);
+      if (c < 0 || c >= cols) continue;
+      if (r >= 0 && r < rows) put(r * cols + c, 255, 230, 190, C_PIPE, 180);
+      for (let k = 1; k < 4; k++) if (r + k >= 0 && r + k < hr) put((r + k) * cols + c, 200 - k * 40, 120 - k * 25, 90, C_DOT, 60 - k * 15);
+    }
+    if (heli) {
+      const sp = SPR.heli[sdir(heli.dir)], c0 = Math.round(heli.x / cw), r0 = Math.round(heli.y / ch), blink = reduced || (skyT * 1.6 % 1) < 0.5;
+      const frame = (skyT * 14 | 0) & 1;
+      stamp(sp, c0, r0, (i, k, s, x, y) => {
+        if (y === 0) put(i, 150, 150, 190, frame && s === '=' ? C_DASH : k, 0);
+        else if (s === 'o') put(i, 255, 50, 70, k, blink ? 220 : 40);
+        else if (s === '[' || s === ']') put(i, 120, 240, 255, k, 160);
+        else put(i, 140, 130, 175, k, 0);
+      });
+    }
+    for (let c = 0; c < cols; c++) {
+      const cc = c - oF;
+      if (cc < 0 || cc >= cols || farTop[cc] >= hr) continue;
+      for (let r = farTop[cc]; r < hr; r++) {
+        const i = r * cols + c, h = HSH[i], lit = (h & 15) === 3 && hash2(cc, r) < 0.3 + 0.5 * smooth((t - T.NEON) / 3);
+        const f = (hr - r) / Math.max(1, hr - farTop[cc]);
+        if (lit) sc(c, r, 255, 150 + (h & 64), 190, C_DOT, 90, T.HOTELS, T.HOTELS_D, f, 26, 14, 44);
+        else sc(c, r, 70, 44, 100, r === farTop[cc] ? C_US : (h & 3) ? C_COLON : C_PIPE, 0, T.HOTELS, T.HOTELS_D, f, 26, 14, 44);
+      }
+    }
+
+    // ---- Palms: crowns first (their neon shows on the water), whole palms again in front later ----
+    drawPalms(true, oP);
+    acc = false;
+
+    // ---- Bay: waves, the striped sun reflection, neon streaks ----
+    const seaRows = roadRow - hr, rA = reduced ? 1 : smooth((t - T.REFLECT) / T.REFLECT_D);
+    for (let r = hr; r < roadRow; r++) {
+      const p = (r - hr) / seaRows, wob = Math.sin(r * 1.7 + skyT * 2.1) * cw * (0.8 + 2.5 * p);
+      const ym = yH - (r - hr + 0.5) * ch * 1.5, dym = ym - yS, inM = ym > sunTop && Math.abs(dym) < R;
+      const hwM = inM ? Math.sqrt(R * R - dym * dym) * (0.95 + 0.15 * p) : R * 0.22 * (1 - p);
+      const sM = inM ? (ym - sunTop) / (2 * R) : 1, gapM = inM && sunGap(sM);
+      sunCol(Math.min(1, sM), tmpC);
+      const haze = (1 - p) ** 3;
+      for (let c = 0; c < cols; c++) {
+        const i = r * cols + c, h = HSH[i], x = (c + 0.5) * cw;
+        bk(i, 8 + 52 * haze, 7 + 10 * haze, 26 + 40 * haze);
+        const st = bs(T.SEA, T.SEA_D, p * 0.7 + (c / cols) * 0.3, h);
+        if (!st) continue;
+        if (st === 1) { put(i, 120, 140, 230, SCR[(h + ((t * 22) | 0)) & 15], 40); continue; }
+        const w1 = Math.sin(c * 0.37 + skyT * 1.3 + r * 2.1) * Math.sin(c * 0.11 - skyT * 0.7 + r * 0.7);
+        let k = w1 > 0.5 ? C_TILDE : w1 > 0.2 ? C_DASH : (h & 7) === 0 ? C_DOT : 0;
+        let cR = 50 + 40 * p + 40 * w1, cG = 50 + 30 * w1, cB = 130 + 60 * w1, e = 0;
+        if (r === hr) { k = C_DASH; cR = 210; cG = 70; cB = 160; }
+        // Sun: broken horizontal bars mirroring the stripes.
+        const dx = Math.abs(x + wob - sunX);
+        if (dx < hwM && !gapM && (inM ? hash2(c + r * 977, (skyT * 3) | 0) > 0.18 + 0.25 * p : (h & 3) === 0)) {
+          const v = inM ? 0.85 - 0.35 * p : 0.5;
+          cR = tmpC[0] * v; cG = tmpC[1] * v; cB = tmpC[2] * v; k = inM && dx < hwM - cw ? C_EQ : C_DASH; e = 120 * v;
+        } else if (rA > 0) {
+          // Sky neon: long broken streaks straight below their source.
+          const sc2 = clamp(c + Math.round(wob / cw), 0, cols - 1), sum = reflR[sc2] + reflG[sc2] + reflB[sc2];
+          if (sum > 40 && w1 > -0.2) {
+            const s = Math.min(1, 300 / sum) * rA * (1 - 0.6 * p) * (w1 > 0.3 ? 0.9 : 0.45);
+            cR += reflR[sc2] * s; cG += reflG[sc2] * s; cB += reflB[sc2] * s;
+            if (s > 0.25) { k = w1 > 0.5 ? C_EQ : C_DASH; e = 80 * s; }
+          }
+        }
+        if (k) put(i, cR, cG, cB, k, e);
+      }
+    }
+
+    // ---- Causeway ----
+    const trafficOn = t > T.TRAFFIC;
+    for (let c = 0; c < cols; c++) {
+      const f = Math.abs(c - cols / 2) / (cols / 2);
+      const lamp = c % 10 === 5;
+      sc(c, rB, lamp ? 255 : 150, lamp ? 200 : 110, lamp ? 140 : 200, lamp ? C_PLUS : C_EQ, lamp ? 150 : 0, T.BRIDGE, T.BRIDGE_D, f, 20, 12, 40);
+      if (c % 20 === 9 || c % 20 === 10) for (let k = 1; k <= 2; k++) sc(c, rB + k, 110, 80, 150, C_PIPE, 0, T.BRIDGE, T.BRIDGE_D, f + 0.1);
+      else if (rA > 0 && lamp && rB + 2 < roadRow) put((rB + 2) * cols + c, 200 * rA, 150 * rA, 110 * rA, C_DASH, 60 * rA);
+    }
+    if (trafficOn) {
+      for (let k = 0; k < 6; k++) {
+        const dir = k % 2 ? -1 : 1, v = M * (0.07 + 0.015 * k), x = ((k * 0.37 * W + dir * v * (t - T.TRAFFIC)) % W + W) % W;
+        const c = Math.floor(x / cw), i = rB * cols + c;
+        if (c < 0 || c >= cols || CK[i] === 0) continue;
+        put(i, 255, dir > 0 ? 245 : 60, dir > 0 ? 220 : 80, C_O, 200);
+      }
+    }
+
+    // ---- Boats and wakes ----
+    for (const b of boats) {
+      const sp = SPR[b.kind][sdir(b.dir)], c0 = Math.round(b.x / cw), r = b.row, hullR = r + sp.h - 1;
+      const back = b.dir > 0 ? c0 - 1 : c0 + sp.w, wl = b.kind === 'speed' ? 26 : 10, spread = b.kind === 'speed' ? 0.22 : 0.12;
+      for (let k = 0; k < wl; k++) {
+        const c = back - b.dir * k, a = 1 - k / wl, off = Math.floor(k * spread);
+        if (c < 0 || c >= cols) continue;
+        for (const rr of off ? [hullR - off, hullR + off] : [hullR]) {
+          if (rr <= hr || rr >= roadRow || rr === rB) continue;
+          const i = rr * cols + c;
+          put(i, 120 + 135 * a, 200 + 55 * a, 255, k % 3 ? C_TILDE : C_EQ, b.user ? 120 * a : 50 * a);
+        }
+      }
+      const q = NEON[b.c];
+      stamp(sp, c0, r, (i, k, s, x, y) => {
+        if (s === 'o') put(i, 255, 220, 120, k, 160);
+        else if (y === sp.h - 1) put(i, b.user ? q[0] : 220, b.user ? q[1] : 215, b.user ? q[2] : 235, k, b.user ? 150 : 40);
+        else put(i, 230, 225, 245, k, 30);
+      });
+    }
+    for (const sp of splash) {
+      const a = 1 - sp.age / 0.8, rad = sp.age * 10;
+      for (let k = 0; k < 12; k++) {
+        const ang = k / 12 * Math.PI * 2, c = Math.round(sp.c + Math.cos(ang) * rad), r = Math.round(sp.r + Math.sin(ang) * rad * 0.45);
+        if (c < 0 || c >= cols || r <= hr || r >= roadRow) continue;
+        put(r * cols + c, 200 * a + 55, 240, 255, k & 1 ? C_STAR : C_DOT, 160 * a);
+      }
+    }
+
+    // ---- Hotels ----
+    for (let hi = 0; hi < HOTELS.length; hi++) {
+      const h = HOTELS[hi], L = neonLvl(h);
+      neonCol(h.c, L, h.flash, colA); neonCol(h.c2, L, h.flash, colB);
+      const C0 = h.c0 + oH, C1 = h.c1 + oH, top = h.top, hgt = h.base - top + 6;
+      const st = T.HOTELS + hi * 0.45, du = T.HOTELS_D - 1.4, bay = h.style === 'grid' ? 5 : 4;
+      const litFrac = 0.25 + 0.55 * smooth((t - T.NEON) / 3);
+      const eA = 190 * L;
+      for (let r = top; r <= h.base; r++) {
+        const rr = r - top - 1, f = (h.base - r) / hgt;
+        for (let c = C0; c < C1; c++) {
+          const p = c - C0, i = r * cols + c;
+          if (c < 0 || c >= cols || r < 0) continue;
+          const hsh = HSH[i];
+          if (p === 0 || c === C1 - 1) { sc(c, r, colB[0], colB[1], colB[2], C_PIPE, eA, st, du, f, 22, 12, 36); continue; }
+          if (r === top) { sc(c, r, colA[0], colA[1], colA[2], C_EQ, eA, st, du, f, 22, 12, 36); continue; }
+          if (r === h.base - 2) { sc(c, r, colA[0], colA[1], colA[2], C_TILDE, eA, st, du, f, 22, 12, 36); continue; }
+          if (r >= h.base - 1) {
+            if (p % 4 === 0) sc(c, r, 110, 80, 140, C_PIPE, 0, st, du, f, 22, 12, 36);
+            else sc(c, r, 255, 200, 110, r === h.base ? C_COLON : C_HASH, 110, st, du, f, 40, 24, 30);
+            continue;
+          }
+          if (rr % 3 === 2) { sc(c, r, 90, 70, 125, p % bay === 0 ? C_PLUS : C_DASH, 0, st, du, f, 22, 12, 36); continue; }
+          const q = p % bay;
+          if (q === 0) { sc(c, r, colB[0] * 0.7, colB[1] * 0.7, colB[2] * 0.7, C_PIPE, eA * 0.35, st, du, f, 22, 12, 36); continue; }
+          if (h.style === 'grid' && (q === 1 || q === 3) && rr % 3 === 0) { sc(c, r, 130, 100, 160, q === 1 ? C_LB : C_RB, 0, st, du, f, 22, 12, 36); continue; }
+          if (q === 2 && rr % 3 === 0) {
+            let on = hash2(c * 7 + hi, r) < litFrac;
+            if (!reduced && hash2(c + r * 131, Math.floor(skyT * 0.2 + hsh)) < 0.04) on = !on;
+            const k = h.style === 'grid' ? C_HASH : C_O;
+            if (on) sc(c, r, 255, 214 - (hsh & 31), 120, k, 150, st, du, f, 50, 32, 30);
+            else sc(c, r, 80, 60, 100, h.style === 'grid' ? C_DOT : C_O, 0, st, du, f, 22, 12, 36);
+            continue;
+          }
+          sc(c, r, 50, 36, 70, (hsh & 7) === 0 ? C_DOT : 0, 0, st, du, f, 22, 12, 36);
+        }
+      }
+      // Crowns.
+      const mid = (C0 + C1) >> 1, w = C1 - C0;
+      if (h.crown === 'step' || h.crown === 'spire') {
+        const steps = h.crown === 'spire' ? 3 : 2;
+        for (let s = 1; s <= steps; s++) {
+          const hwid = Math.max(1, Math.round(w * (0.42 - s * 0.11))), r = top - s;
+          for (let c = mid - hwid; c <= mid + hwid; c++) {
+            const k = c === mid - hwid ? C_FS : c === mid + hwid ? C_BS : s === steps ? C_CARET : (c - mid) % 2 ? C_PIPE : C_EQ;
+            sc(c, r, colA[0], colA[1], colA[2], k, eA * 0.8, st, du, 1 - (steps - s) * 0.02, 22, 12, 36);
+          }
+        }
+        const sh = h.crown === 'spire' ? 4 : 2;
+        for (let k = 1; k <= sh; k++) sc(mid, top - steps - k, 150, 130, 190, C_PIPE, 0, st, du, 1);
+        const blink = reduced || ((skyT * 0.9 + hi * 0.3) % 1) < 0.5;
+        sc(mid, top - steps - sh - 1, 255, 60, 80, C_STAR, blink ? 220 : 30, st, du, 1);
+      } else if (h.crown === 'sign') {
+        const Ls = neonLvl(OCEAN), cA = neonCol(OCEAN.c, Ls, OCEAN.flash, [0, 0, 0]), cB2 = neonCol(OCEAN.c2, Ls, OCEAN.flash, [0, 0, 0]);
+        const txt = w >= 17 ? '< OCEAN DRIVE >' : w >= 13 ? 'OCEAN DRIVE' : 'OCEAN DR';
+        const c0 = mid - (txt.length >> 1);
+        OCEAN.r0 = top - 3; OCEAN.r1 = top; OCEAN.c0 = c0 - 1; OCEAN.c1 = c0 + txt.length + 1;
+        for (let x = -1; x <= txt.length; x++) {
+          sc(c0 + x, top - 3, cB2[0], cB2[1], cB2[2], C_US, 150 * Ls, T.LAND, T.LAND_D, 0.4 + x / txt.length * 0.4);
+          const s = txt[x];
+          if (x >= 0 && x < txt.length && s !== ' ') sc(c0 + x, top - 2, cA[0], cA[1], cA[2], ci(s), 230 * Ls, T.LAND, T.LAND_D, 0.4 + x / txt.length * 0.4, 30, 12, 40);
+          else if (x === -1 || x === txt.length) sc(c0 + x, top - 2, cB2[0], cB2[1], cB2[2], C_PIPE, 150 * Ls, T.LAND, T.LAND_D, 0.4);
+        }
+        sc(c0, top - 1, 140, 120, 170, C_PIPE, 0, T.LAND, T.LAND_D, 0.4);
+        sc(c0 + txt.length - 1, top - 1, 140, 120, 170, C_PIPE, 0, T.LAND, T.LAND_D, 0.4);
+      }
+    }
+
+    drawPalms(false, oP);
+    {
+      // Vertical HOTEL sign hung on the inner edge of the right tower.
+      const Ls = neonLvl(HOTELSIGN), cA = neonCol(HOTELSIGN.c, Ls, HOTELSIGN.flash, [0, 0, 0]), cB2 = neonCol(HOTELSIGN.c2, Ls, HOTELSIGN.flash, [0, 0, 0]);
+      const sc0 = HOTELS[1].c0 + oH - 2, r0 = HOTELS[1].top + 2;
+      HOTELSIGN.c0 = sc0; HOTELSIGN.c1 = sc0 + 3; HOTELSIGN.r0 = r0; HOTELSIGN.r1 = r0 + 7;
+      const FR = ['.^.', '|H|', '|O|', '|T|', '|E|', '|L|', "'-'"];
+      FR.forEach((s, y) => [...s].forEach((g, x) => {
+        const letter = x === 1 && y > 0 && y < 6;
+        const cc = letter ? cA : cB2;
+        sc(sc0 + x, r0 + y, cc[0], cc[1], cc[2], ci(g), (letter ? 230 : 150) * Ls, T.LAND, T.LAND_D, 0.2 + y / 7 * 0.5, 30, 10, 40);
+      }));
+    }
+
+    // ---- Coast road with traffic ----
+    for (let k = 0; k <= 6; k++) {
+      const r = roadRow + k;
+      if (r >= rows) break;
+      for (let c = 0; c < cols; c++) {
+        const i = r * cols + c, f = c / cols;
+        bk(i, 12, 9, 24);
+        if (k === 0 || k === 6) sc(c, r, 130, 100, 190, c % 9 === 0 ? C_HASH : C_EQ, 0, T.BRIDGE, T.BRIDGE_D, f, 12, 9, 24);
+        else if (k === 3 && (c >> 1) % 3 === 0) sc(c, r, 110, 100, 120, C_DASH, 0, T.BRIDGE, T.BRIDGE_D, f, 12, 9, 24);
+      }
+    }
+    for (const car of cars) {
+      if (!trafficOn && !reduced) break;
+      const sp = SPR.car[sdir(car.dir)], c0 = Math.round(car.x / cw), r0 = roadRow + 1 + car.lane * 3, q = NEON[car.c];
+      stamp(sp, c0, r0, (i, k, s) => {
+        if (s === '*') put(i, 255, 250, 220, k, 230);
+        else if (s === '=') put(i, 255, 40, 60, k, 200);
+        else if (s === 'o') put(i, 120, 110, 140, k, 0);
+        else put(i, q[0], q[1], q[2], k, 70);
+      });
+      // Headlight throw ahead of the car.
+      for (let k = 1; k <= 4; k++) {
+        const c = car.dir > 0 ? c0 + sp.w + k - 1 : c0 - k;
+        if (c < 0 || c >= cols) continue;
+        const i = (r0 + 1) * cols + c;
+        if (!CK[i]) put(i, 255 - k * 30, 240 - k * 35, 180 - k * 30, k < 3 ? C_DASH : C_DOT, 70 - k * 15);
+      }
+    }
+
+    // ---- Promenade sand and the flamingo sign ----
+    for (let r = roadRow + 7; r < rows; r++) for (let c = 0; c < cols; c++) {
+      const i = r * cols + c, h = HSH[i];
+      bk(i, 18, 11, 28);
+      if ((h & 15) < 2) sc(c, r, 90, 66, 100, h & 1 ? C_DOT : C_COLON, 0, T.BRIDGE, T.BRIDGE_D, c / cols);
+    }
+    {
+      const Lf = neonLvl(FLAM), cA = neonCol(FLAM.c, Lf, FLAM.flash, [0, 0, 0]), cB2 = neonCol(FLAM.c2, Lf, FLAM.flash, [0, 0, 0]);
+      const c0 = 2 + oFl, r0 = Math.max(roadRow + 6, Math.floor((H - (W < 640 ? 50 : 40)) / ch) - FLAMINGO.h);
+      FLAM.c0 = c0; FLAM.c1 = c0 + FLAMINGO.w; FLAM.r0 = r0; FLAM.r1 = r0 + FLAMINGO.h;
+      stamp(FLAMINGO, c0, r0, (i, k, s, x, y, c, r) => {
+        const f = 0.3 + 0.6 * (FLAMINGO.h - y) / FLAMINGO.h;
+        if (s === 'o' || s === '<') sc(c, r, cB2[0], cB2[1], cB2[2], k, 200 * Lf, T.LAND, T.LAND_D, f);
+        else sc(c, r, cA[0], cA[1], cA[2], k, 210 * Lf, T.LAND, T.LAND_D, f);
+      });
+    }
+  }
+
+  // Palms: sky pass (rows above the horizon only, reflected, not counted) or the full front pass.
+  function drawPalms(sky, oP) {
+    const base = roadRow - 1;
+    counting = !sky;
+    for (const p of PALMS) {
+      const L = neonLvl(p), col = neonCol(p.c, L, p.flash, colA), crownR = p.top + palmSp.h - 1, hgt = base - p.top;
+      const ax = palmSp.s[palmSp.h - 1].indexOf('|');
+      // Trunk: a gentle curve of () pairs down to the road.
+      for (let r = crownR + 1; r <= base; r++) {
+        const u = (base - r) / Math.max(1, base - crownR), x = p.cx + oP + Math.round(p.lean * u * u * 3);
+        const f = (base - r) / hgt * 0.7;
+        if (sky && r >= hr) continue;
+        acc = sky;
+        sc(x, r, 200, 110 + 30 * L, 70, C_LP, 30 * L, T.LAND, T.LAND_D, f);
+        sc(x + 1, r, 200, 110 + 30 * L, 70, C_RP, 30 * L, T.LAND, T.LAND_D, f);
+      }
+      const cx = p.cx + oP + Math.round(p.lean * 3) - ax;
+      stamp(palmSp, cx, p.top, (i, k, s, x, y, c, r) => {
+        if (sky && r >= hr) return;
+        acc = sky;
+        const f = 0.7 + 0.3 * (palmSp.h - y) / palmSp.h;
+        if (s === '@') sc(c, r, 255, 200, 70, k, 140 * L, T.LAND, T.LAND_D, f);
+        else sc(c, r, col[0], col[1], col[2], k, 190 * L, T.LAND, T.LAND_D, f);
+      });
+    }
+
+    acc = false; counting = true;
+  }
+
+  // Quantise, bucket by colour and draw; fill the backing and glow images.
+  function drawCells() {
+    const bd = bImg.data, ed = eImg.data;
+    counts.fill(0);
+    let nl = 0;
+    for (let i = 0; i < n; i++) {
+      const r = Math.min(255, CR[i]), g = Math.min(255, CG[i]), b = Math.min(255, CB[i]);
+      const key = ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3);
+      keys[i] = key; counts[key]++;
+      if (CK[i]) nl++;
+      const j = i * 4;
+      bd[j] = BKR[i]; bd[j + 1] = BKG[i]; bd[j + 2] = BKB[i]; bd[j + 3] = 255;
+      const e = CK[i] ? EMI[i] : 0;
+      if (e) { const s = e / 255; ed[j] = r * s; ed[j + 1] = g * s; ed[j + 2] = b * s; ed[j + 3] = 255; }
+      else { ed[j] = 0; ed[j + 1] = 0; ed[j + 2] = 0; ed[j + 3] = 0; }
+    }
+    letters = nl;
+    bctx.putImageData(bImg, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(back, 0, 0, cols * cw, rows * ch);
+
+    let a = 0;
+    for (let c = 0; c < NKEY; c++) { const v = counts[c]; counts[c] = a; a += v; }
+    for (let i = 0; i < n; i++) order[counts[keys[i]]++] = i;
+    ctx.textBaseline = 'top';
+    ctx.font = cellFont;
+    let cur = -1;
+    for (let k = 0; k < n; k++) {
+      const i = order[k];
+      if (CK[i] === 0) continue;
+      const ky = keys[i];
+      if (ky !== cur) { cur = ky; ctx.fillStyle = colStr(ky); }
+      const row = (i / cols) | 0;
+      ctx.fillText(CH[CK[i]], (i - row * cols) * cw, row * ch);
+    }
+
+    ectx.putImageData(eImg, 0, 0);
+    gctx.globalCompositeOperation = 'copy';
+    gctx.filter = 'blur(1.3px)';
+    gctx.drawImage(emis, 0, 0);
+    gctx.filter = 'none';
+    hctx.globalCompositeOperation = 'copy';
+    hctx.filter = 'blur(3.5px)';
+    hctx.drawImage(emis, 0, 0);
+    hctx.filter = 'none';
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 0.6;
+    ctx.drawImage(glow, 0, 0, cols * cw, rows * ch);
+    ctx.globalAlpha = 0.55;
+    ctx.drawImage(halo, 0, 0, cols * cw, rows * ch);
+    ctx.restore();
+  }
+
+  // Title: typed out letter by letter in a pink -> cyan neon, below the road.
+  function drawTitle() {
+    if (t < T.TITLE) return;
+    const nT = Math.min(TITLE.length, Math.floor((t - T.TITLE) / T.TYPE) + 1);
+    const size = clamp(Math.min(W * 0.07, H * 0.06), 18, 60);
+    ctx.save();
+    ctx.font = `800 ${size}px ${MONO}`;
+    ctx.textBaseline = 'middle';
+    const adv = ctx.measureText('M').width + size * 0.22, tw = adv * TITLE.length - size * 0.22;
+    const top = (roadRow + 7) * ch;
+    const y = Math.min(H - (W < 640 ? 50 : 32) - size * 0.5, Math.max(top + size * 0.6, (top + H) / 2));
+    const x0 = (W - tw) / 2;
+    const gr = ctx.createLinearGradient(x0, 0, x0 + tw, 0);
+    gr.addColorStop(0, '#ff3fae'); gr.addColorStop(0.5, '#ff8ad8'); gr.addColorStop(1, '#3ee8ff');
+    ctx.shadowColor = 'rgba(255, 70, 190, 0.9)';
+    ctx.shadowBlur = size * 0.45;
+    for (let k = 0; k < nT; k++) {
+      const age = t - T.TITLE - k * T.TYPE;
+      ctx.fillStyle = age < 0.12 && !reduced ? '#ffffff' : gr;
+      ctx.fillText(TITLE[k], x0 + k * adv, y);
+    }
+    if (nT < TITLE.length || ((skyT * 1.8) % 1 < 0.5 && t < T.TITLE + TITLE.length * T.TYPE + 1.5 && !reduced)) {
+      ctx.fillStyle = '#3ee8ff';
+      ctx.fillText('_', x0 + nT * adv, y);
+    }
+    ctx.restore();
+  }
+
+  function render() {
+    ctx.fillStyle = '#07061a';
+    ctx.fillRect(0, 0, W, H);
+    buildScene();
+    drawCells();
+    drawTitle();
+    // Fade in at the loop start and out before it ends.
+    const k = reduced ? 0 : Math.max(1 - smooth(t / 0.8), smooth((t - T.FADE) / T.FADE_D));
+    if (k > 0.001) { ctx.fillStyle = `rgba(7,6,26,${k.toFixed(3)})`; ctx.fillRect(0, 0, W, H); }
+  }
+
+  // ---------- Update ----------
+  function update(dt) {
+    const t1 = t;
+    skyT += dt * (reduced ? 0.5 : 1);
+    if (!reduced) {
+      t += dt;
+      if (t >= T.END) { t = 0; initCars(); heli = null; heliDone = false; boats = boats.filter(b => b.user); music('restart'); }
+    }
+    bandShift += dt * (reduced ? 0.03 : 0.22) + dt * drop * (reduced ? 0.6 : 3.2);
+    drop *= Math.exp(-dt * 1.6);
+    pulse *= Math.exp(-dt * 2.2);
+    for (const o of NEONS) o.flash *= Math.exp(-dt * 3);
+    lift += (liftTo - lift) * Math.min(1, dt * 2);
+    par += (parTo - par) * Math.min(1, dt * 1.8);
+
+    if (t > T.TRAFFIC || reduced) {
+      for (const c of cars) {
+        c.x += c.dir * c.v * dt;
+        if (c.dir > 0 && c.x > W + 2 * cw) { if (c.extra) c.dead = true; c.x = -12 * cw - Math.random() * W * 0.3; }
+        if (c.dir < 0 && c.x < -12 * cw) { if (c.extra) c.dead = true; c.x = W + 2 * cw + Math.random() * W * 0.3; }
+      }
+      cars = cars.filter(c => !c.dead);
+    }
+    if (!reduced && t > T.TRAFFIC + 0.4 && !heliDone) { heliDone = true; heli = { x: W + 12 * cw, y: H * 0.16, dir: -1, v: M * 0.07 }; }
+    if (heli) { heli.x += heli.dir * heli.v * dt; heli.y += Math.sin(skyT * 0.8) * 3 * dt; if (heli.x < -14 * cw) heli = null; }
+    if (!reduced && t > T.TRAFFIC && t < T.FADE && t1 <= T.TRAFFIC) nextBoat = t;
+    if (!reduced && t > nextBoat && t > T.TRAFFIC && t < T.FADE - 3) {
+      if (boats.filter(b => !b.user).length < 2) {
+        const above = hr + 3 + ((Math.random() * Math.max(1, rB - hr - 4)) | 0), below = rB + 4 + ((Math.random() * Math.max(1, roadRow - rB - 6)) | 0);
+        spawnBoat('yacht', Math.random() < 0.5 ? above : below, Math.random() < 0.5 ? 1 : -1);
+      }
+      nextBoat = t + 6 + Math.random() * 4;
+    }
+    for (const b of boats) { b.x += b.dir * b.v * dt; b.age += dt; if (b.kind === 'speed') b.v *= Math.exp(-dt * 0.15); }
+    boats = boats.filter(b => b.x > -40 * cw && b.x < W + 40 * cw);
+    for (const s of splash) s.age += dt;
+    splash = splash.filter(s => s.age < 0.8);
+    // A few scheduled fireworks while the title holds.
+    if (!reduced && t > T.TITLE + 2.6 && t < T.FADE - 0.5 && t > nextAuto) {
+      launch(W * (0.3 + 0.4 * Math.random()), H * (0.12 + 0.2 * Math.random()), false);
+      nextAuto = t + 1.1 + Math.random() * 0.8;
+    }
+    if (t1 > t) nextAuto = 0;
+    for (const rk of rockets) { rk.y -= rk.v * dt; rk.x += (rk.tx - rk.x) * Math.min(1, dt * 3); if (rk.y <= rk.ty) { rk.done = true; burst(rk); } }
+    rockets = rockets.filter(r => !r.done);
+    const grav = M * 0.12;
+    for (const p of fw) { p.life += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += grav * dt; p.vx *= Math.exp(-dt * 1.4); p.vy *= Math.exp(-dt * 1.0); }
+    fw = fw.filter(p => p.life < p.max);
+    soundCues(t1, t);
+  }
+
+  // ---------- Loop, HUD, controls ----------
+  let paused = false, last = performance.now();
+  let frames = 0, fpsT = last, fps = 0, hudT = 0;
+
+  function phaseName() { let p = PHASES[0][0]; for (const [nm, s] of PHASES) if (t >= s) p = nm; return p; }
+  function updateHud(now) {
+    const tail = paused ? 'paused' : `${fps} fps`, b = total ? (done / total * 100) : 0;
+    hudEl.textContent = W < 640 ? `${phaseName()}  built ${b.toFixed(0)}%  ${tail}`
+      : `phase ${phaseName()}  built ${b.toFixed(1)}%  letters ${letters.toLocaleString('en-US')}  ${tail}`;
+    hudT = now;
+  }
+
+  function frame(now) {
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); // no jumps after a hidden tab
+    last = now;
+    if (needResize) resize();
+    if (!paused) { update(dt); render(); frames++; dirty = false; }
+    else {
+      if (Math.abs(parTo - par) > 0.002 || Math.abs(liftTo - lift) > 0.002) {
+        par += (parTo - par) * Math.min(1, dt * 1.8); lift += (liftTo - lift) * Math.min(1, dt * 2); dirty = true;
+      }
+      if (dirty) { render(); dirty = false; frames++; }
+    }
+    if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
+    if (now - hudT >= 250) updateHud(now);
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- Sound cues ----------
+  const music = (fn, ...a) => window.AsciiAudio && AsciiAudio[fn](...a);
+  const crossed = (a, b, x) => a < x && x <= b;
+  function soundCues(a, b) {
+    if (!window.AsciiAudio) return;
+    for (const [nm, s] of PHASES) if (s > 0 && nm !== 'hold' && nm !== 'fade' && nm !== 'title' && crossed(a, b, s)) music('event', nm === 'neon' ? 'neon' : 'phase', { name: nm });
+    const nT = b < T.TITLE ? 0 : Math.min(TITLE.length, Math.floor((b - T.TITLE) / T.TYPE) + 1);
+    if (nT > typed && TITLE[nT - 1] !== ' ') music('event', 'type', { last: nT === TITLE.length });
+    typed = b < a ? 0 : nT;
+    if (crossed(a, b, T.FADE)) music('event', 'fade');
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
+  function replay() {
+    t = T_START; typed = 0; fw = []; rockets = []; boats = []; splash = []; heli = null; heliDone = false; nextAuto = 0;
+    initCars(); paused = false; dirty = true; music('resume'); music('restart');
+  }
+
+  // What is under a screen point? Neon objects first (signs, flamingo, hotels, palms), then the sun.
+  const inRect = (o, c, r) => o.c0 != null && c >= o.c0 && c < o.c1 && r >= o.r0 && r < o.r1;
+  function flip(o, x) {
+    o.c = (o.c + 1 + ((Math.random() * 2) | 0)) % NEON.length;
+    if (o.c2 != null) o.c2 = (o.c2 + 2) % NEON.length;
+    if (o.c2 === o.c) o.c2 = (o.c2 + 1) % NEON.length;
+    o.flash = 1;
+    music('event', 'flip', { x: x / W, c: o.c });
+  }
+  function tapAt(x, y) {
+    const c = Math.floor(x / cw), r = Math.floor(y / ch);
+    const oH = -Math.round(par * 3), oP = -Math.round(par * 2.2);
+    if (inRect(OCEAN, c, r)) return flip(OCEAN, x);
+    if (inRect(HOTELSIGN, c, r)) return flip(HOTELSIGN, x);
+    if (inRect(FLAM, c, r)) return flip(FLAM, x);
+    for (let k = HOTELS.length - 1; k >= 0; k--) {
+      const h = HOTELS[k], crown = h.crown === 'sign' ? 0 : h.crown === 'spire' ? 8 : 5;
+      if (c >= h.c0 + oH && c < h.c1 + oH && r >= h.top - crown && r <= h.base) return flip(h, x);
+    }
+    for (const p of PALMS) {
+      const cx = p.cx + oP + Math.round(p.lean * 3);
+      if (Math.abs(c - cx) <= palmSp.w / 2 && r >= p.top && r < p.top + palmSp.h + 1) return flip(p, x);
+    }
+    const yS = yH - sunR * 0.35 - lift * sunR * 0.45;
+    if (y < yH && Math.hypot(x - sunX, y - yS) < sunR * 1.05) {
+      pulse = 1; drop = 1;
+      music('event', 'sun');
+      return;
+    }
+    if (y < yH) return launch(x, Math.max(y, ch * 3), reduced);
+    if (r > hr && r < roadRow) {
+      const dir = x < W / 2 ? 1 : -1;
+      spawnBoat('speed', r, dir, x - (dir > 0 ? SPR.speed[1].w * cw : 0), true);
+      splash.push({ c, r: boats[boats.length - 1].row + 1, age: 0 });
+      music('event', 'boat', { x: x / W });
+      return;
+    }
+    if (r >= roadRow && r <= roadRow + 6) {
+      const lane = r - roadRow < 3.5 ? 0 : 1, dir = lane ? 1 : -1;
+      if (cars.filter(k => k.extra).length < 4) cars.push({ x: dir > 0 ? -12 * cw : W + 2 * cw, lane, dir, v: M * 0.2, c: (Math.random() * 6) | 0, extra: true });
+      music('event', 'horn', { x: x / W });
+      return;
+    }
+    launch(x, H * (0.12 + 0.2 * Math.random()), reduced);
+  }
+
+  addEventListener('resize', () => { needResize = true; });
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return; // leave Cmd/Ctrl+R alone
+    if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
+    else if (e.key === 'r' || e.key === 'R') replay();
+  });
+  // Pointer x = gentle parallax, pointer y = sun height. Tap acts on what is under it; two quick taps pause.
+  let downX = 0, downY = 0, pressed = false, dragged = false, tapTimer = 0, tapResumed = false;
+  const steer = e => {
+    if (!reduced) parTo = clamp(e.clientX / W * 2 - 1, -1, 1);
+    liftTo = clamp((0.42 - e.clientY / H) * 2.6, -1, 1);
+    if (paused) dirty = true;
+  };
+  canvas.addEventListener('pointerdown', e => {
+    pressed = true; dragged = false; downX = e.clientX; downY = e.clientY;
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (pressed && Math.hypot(e.clientX - downX, e.clientY - downY) >= 8) dragged = true;
+    if (e.pointerType === 'mouse' || dragged) steer(e);
+  });
+  const ptrOff = () => { pressed = false; parTo = 0; liftTo = 0; };
+  canvas.addEventListener('pointerleave', ptrOff);
+  canvas.addEventListener('pointercancel', ptrOff);
+  canvas.addEventListener('pointerup', e => {
+    const wasTap = pressed && !dragged;
+    pressed = false;
+    if (e.pointerType !== 'mouse') { parTo = 0; liftTo = 0; }
+    if (e.button > 0 || !wasTap) return;
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; if (!tapResumed) togglePause(); return; }
+    tapTimer = setTimeout(() => { tapTimer = 0; }, 280);
+    tapResumed = paused;
+    if (paused) { togglePause(); return; }   // a tap on the paused scene just resumes it
+    tapAt(e.clientX, e.clientY);
+  });
+
+  // Hint language: ?lang= wins, then saved site preference, then browser.
+  let pref = null;
+  try { pref = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (!pref) { try { pref = localStorage.getItem('lang'); } catch (e) {} }
+  if (!pref) pref = navigator.language || 'en';
+  const zh = String(pref).toLowerCase().startsWith('zh');
+  document.documentElement.lang = zh ? 'zh-Hant' : 'en';
+  // Touch screens have no keyboard, and the full hint would not fit on a phone.
+  const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  hintEl.textContent = touch ? (zh ? '點飯店換霓虹 · 太陽脈動 · 海面放快艇 · 天空放煙火 · 雙擊暫停' : 'tap hotel: neon · sun: pulse · sea: boat · sky: fireworks · double-tap pause')
+                             : (zh ? '點飯店或招牌換霓虹色 · 點太陽脈動 · 點海面放快艇 · 點天空放煙火 · 雙擊/空白鍵 暫停 · R 重播 · M 音樂'
+                                   : 'click a hotel or sign: flip neon · sun: pulse · sea: speedboat · sky: fireworks · double-click / Space pause · R replay · M music');
+
+  // Score: an original synthwave piece in A minor at 100 bpm, so the 10-bar form is exactly one 24 s
+  // scene loop (restarted with it). Gated saw pads (Am7 Fmaj7 Cadd9 G6), an octave-jumping 8th-note
+  // bass arp, kick and a big gated-reverb snare, 8th hats, a square/saw lead over the neon and title,
+  // and a tom fill into it. Bar 0 is the pad-only intro under the build; bars 8-9 fade with the picture.
+  if (window.AsciiAudio) AsciiAudio.init({
+    bpm: 10 * 4 * 60 / T.END, master: 0.72, reverb: 0.3, reverbTime: 2.8,
+    build(a) {
+      const c = a.ctx, N = AsciiAudio.notes, freq = AsciiAudio.freq, LOOP = 40;
+      const DYN = [0.55, 0.8, 1, 1, 1, 1, 1, 1, 0.6, 0.18];
+      const dyn = beat => DYN[Math.floor((beat % LOOP) / 4)];
+      const PROG = [
+        ['A1', ['A3', 'C4', 'E4', 'G4']], ['F1', ['F3', 'A3', 'C4', 'E4']], ['C2', ['G3', 'C4', 'D4', 'E4']], ['G1', ['G3', 'B3', 'D4', 'E4']],
+        ['A1', ['A3', 'C4', 'E4', 'G4']], ['F1', ['F3', 'A3', 'C4', 'E4']], ['C2', ['G3', 'C4', 'D4', 'E4']], ['E2', ['G#3', 'B3', 'E4', 'D4']],
+        ['A1', ['A3', 'C4', 'E4', 'G4']], ['A1', ['A3', 'C4', 'E4']]
+      ];
+      // Gated pad: one bar of detuned saws, chopped into 16ths by a gain gate.
+      const gatedPad = (t0, notes, vel) => {
+        const out = a._out({ pan: 0 }, 0.45), lp = c.createBiquadFilter(), g = c.createGain();
+        lp.type = 'lowpass'; lp.frequency.value = 1500; lp.Q.value = 0.7;
+        lp.connect(g); g.connect(out);
+        const s16 = a.beats(0.25), peak = vel * 0.05 / Math.sqrt(notes.length), end = t0 + s16 * 16;
+        g.gain.setValueAtTime(0, t0);
+        for (let k = 0; k < 16; k++) {
+          const u = t0 + k * s16, pk = peak * (k % 4 === 0 ? 1 : 0.75);
+          g.gain.linearRampToValueAtTime(pk, u + 0.006);
+          g.gain.setValueAtTime(pk, u + s16 * 0.62);
+          g.gain.linearRampToValueAtTime(peak * 0.08, u + s16 * 0.62 + 0.012);
+        }
+        g.gain.linearRampToValueAtTime(0, end + 0.05);
+        for (const nt of notes) for (const dt of [-9, 9]) {
+          const o = c.createOscillator(); o.type = 'sawtooth'; o.frequency.value = freq(nt); o.detune.value = dt;
+          o.connect(lp); o.start(t0); o.stop(end + 0.1);
+        }
+      };
+      a.every(4, (t, s) => {
+        const beat = (s * 4) % LOOP, v = dyn(beat);
+        if (v > 0.2) gatedPad(t, PROG[beat / 4][1], v);
+      });
+      // Bass arp (8ths, root / octave), from bar 1.
+      const T2 = AsciiAudio.transpose;
+      a.every(0.5, (t, s) => {
+        const beat = (s / 2) % LOOP, bar = Math.floor(beat / 4), v = dyn(beat);
+        if (bar === 0 || bar === 9) return;
+        const root = PROG[bar][0], nt = s % 2 ? T2(root, 12) : root;
+        a.bass(t, nt, a.beats(0.4), { vel: 0.5 * v });
+        a.pluck(t, T2(nt, 12), 0.2, { vel: 0.2 * v, pan: s % 2 ? 0.2 : -0.2, wet: 0.1 });
+      });
+      // Drums from bar 2: kick on 1 and 3, gated-reverb snare on 2 and 4, 8th hats; tom fill at the end of bar 3.
+      a.every(0.5, (t, s) => {
+        const beat = (s / 2) % LOOP, bar = Math.floor(beat / 4), inBar = beat % 4, v = dyn(beat);
+        if (bar < 2 || bar === 9) return;
+        if (inBar === 0 || inBar === 2 || (bar >= 4 && inBar === 2.5 && bar % 2)) a.kick(t, 0.6 * v);
+        if (inBar === 1 || inBar === 3) {
+          a.snare(t, 0.4 * v);
+          a.noise(t, { dur: 0.34, filter: 'bandpass', freq: 1500, q: 0.45, attack: 0.004, vel: 0.32 * v, wet: 0.75 });
+        }
+        a.hat(t, (s % 2 ? 0.26 : 0.14) * v, { pan: 0.25 });
+        if (bar === 3 && inBar >= 3) [0, 1].forEach(k => a.thud(t + a.beats(k * 0.25), { freq: 190 - (inBar - 3) * 120 - k * 30, vel: 0.35, bus: 'music' }));
+      });
+      // Lead over the neon, traffic and title (bars 4-8).
+      const lead = (t, note, dur, vel) => {
+        a.lead(t, freq(note), dur, { type: 'square', vel, cutoff: 2600, pan: -0.1, wet: 0.4 });
+        a.lead(t, freq(note) * 1.004, dur, { type: 'sawtooth', vel: vel * 0.3, cutoff: 2000, pan: 0.15, wet: 0.4 });
+      };
+      const tune = N('E5:1 A5:.5 G5 E5:1 D5 | C5:1.5 D5:.5 E5:1 A4 | G4:.5 C5 E5:1 G5:1.5 E5:.5 | D5:1 B4 D5:.5 E5:1.5 | A4:4');
+      a.part(tune, (t, e) => lead(t, e.note, e.sec * 0.92, 0.5 * dyn(16 + e.beat)), { length: LOOP, offset: 16 });
+
+      // Effects in sync with the picture.
+      const pan = x => (x * 2 - 1) * 0.8;
+      const SP = AsciiAudio.scale('A5', 'minorPentatonic', 10);
+      a.on('phase', (a, d, t) => a.sweep(t, 1.1, { from: 250, to: 2600, q: 2, vel: 0.1, bus: 'sfx', wet: 0.4 }), { gap: 0.8 });
+      a.on('neon', (a, d, t) => {
+        // Tube ignition: a flickering mains buzz, then a bright ping.
+        const out = a._out({ bus: 'sfx', pan: 0 }, 0.2), bp = c.createBiquadFilter(), g = c.createGain();
+        bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 0.8; bp.connect(g); g.connect(out);
+        g.gain.setValueAtTime(0, t);
+        for (let k = 0; k < 10; k++) g.gain.setValueAtTime(Math.random() < 0.6 ? 0.05 : 0, t + k * 0.06);
+        g.gain.linearRampToValueAtTime(0, t + 0.8);
+        [120, 240].forEach(f => { const o = c.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.connect(bp); o.start(t); o.stop(t + 0.9); });
+        a.ding(t + 0.65, 'E6', { vel: 0.15 });
+      });
+      a.on('type', (a, d, t) => a.tick(t, { vel: 0.22, bell: d.last, note: 'A6' }), { gap: 0.05 });
+      a.on('flip', (a, d, t) => {
+        const o = c.createOscillator(), g = c.createGain();
+        g.connect(a._out({ bus: 'sfx', pan: pan(d.x) }, 0.25));
+        o.type = 'square'; o.frequency.setValueAtTime(1400, t); o.frequency.exponentialRampToValueAtTime(180, t + 0.12);
+        g.gain.setValueAtTime(0.04, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
+        o.connect(g); o.start(t); o.stop(t + 0.16);
+        a.ding(t + 0.05, SP[(d.c * 3) % SP.length], { vel: 0.14, pan: pan(d.x) });
+      }, { gap: 0.08 });
+      a.on('sun', (a, d, t) => {
+        a.boom(t, { vel: 0.22 });
+        a.sweep(t, 1.2, { from: 3000, to: 200, q: 3, attack: 0.05, vel: 0.15, bus: 'sfx', wet: 0.5 });
+        a.chime(t + 0.05, 'A5', 2.4, { vel: 0.22 });
+      }, { gap: 0.3 });
+      a.on('boat', (a, d, t) => {
+        const out = a._out({ bus: 'sfx', pan: pan(d.x) }, 0.15), lp = c.createBiquadFilter(), g = c.createGain(), o = c.createOscillator();
+        lp.type = 'lowpass'; lp.frequency.value = 500; lp.connect(g); g.connect(out);
+        o.type = 'sawtooth'; o.frequency.setValueAtTime(55, t); o.frequency.linearRampToValueAtTime(95, t + 0.7); o.frequency.linearRampToValueAtTime(80, t + 1.6);
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.12, t + 0.15); g.gain.linearRampToValueAtTime(0, t + 1.8);
+        o.connect(lp); o.start(t); o.stop(t + 1.9);
+        a.noise(t, { dur: 0.9, filter: 'lowpass', freq: 1800, freqEnd: 400, vel: 0.3, pan: pan(d.x), bus: 'sfx', wet: 0.3 });
+      }, { gap: 0.25 });
+      a.on('horn', (a, d, t) => {
+        const out = a._out({ bus: 'sfx', pan: pan(d.x) }, 0.15), lp = c.createBiquadFilter(), g = c.createGain();
+        lp.type = 'lowpass'; lp.frequency.value = 1400; lp.connect(g); g.connect(out);
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.06, t + 0.02); g.gain.setValueAtTime(0.06, t + 0.3); g.gain.linearRampToValueAtTime(0, t + 0.36);
+        [370, 466].forEach(f => { const o = c.createOscillator(); o.type = 'square'; o.frequency.value = f; o.connect(lp); o.start(t); o.stop(t + 0.4); });
+      }, { gap: 0.3 });
+      a.on('launch', (a, d, t) => a.noise(t, { dur: 1.0, filter: 'bandpass', freq: 700, freqEnd: 2800, q: 14, attack: 0.85, vel: 0.4, pan: pan(d.x), bus: 'sfx', wet: 0.25 }), { gap: 0.2 });
+      a.on('burst', (a, d, t) => {
+        const p = pan(d.x);
+        a.boom(t, { vel: d.calm ? 0.16 : 0.3, pan: p });
+        for (let i = 0; i < (d.calm ? 4 : 9); i++) a.noise(t + 0.2 + Math.random() * 0.8, { dur: 0.03, filter: 'highpass', freq: 3500 + Math.random() * 2500, vel: 0.1, pan: p, bus: 'sfx', wet: 0.2 });
+      }, { gap: 0.2 });
+      a.on('fade', (a, d, t) => a.sweep(t, T.FADE_D, { from: 3000, to: 300, q: 1.2, attack: 0.6, vel: 0.1, bus: 'sfx', wet: 0.6 }));
+    }
+  });
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1356 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ASCII Seoul at Night | Alex Li (李翔緯)</title>
+  <meta name="description" content="Seoul at night drawn entirely with coloured ASCII characters: scrambled letters resolve into a moonlit skyline with N Seoul Tower, Lotte World Tower, a palace gate, neon signs and a rainbow fountain bridge over the Han River. Tap the landmarks for light shows, the sky for fireworks and the bridge for the fountain. Vanilla JS on a single canvas.">
+  <meta name="theme-color" content="#0a0a20">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;600;800&display=swap">
+  <style>
+    :root {
+      --bg: #0b1120;
+      --sky: #0a0a20;
+      --text: #ece9ff;
+      --muted: #b4b0dc;
+      --accent: #8b7cf6;
+      --mono: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--sky);
+      color: var(--text);
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    canvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100svh;
+      display: block;
+      touch-action: none; /* taps trigger light shows, a drag pans the parallax; also no double-tap zoom */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .back {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(139, 124, 246, 0.45);
+      background: rgba(40, 32, 90, 0.45);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .back:hover, .back:focus-visible {
+      background: rgba(139, 124, 246, 0.28);
+      border-color: var(--accent);
+      outline: none;
+    }
+    .hud, .hint {
+      position: fixed;
+      z-index: 1;
+      bottom: 12px;
+      color: var(--muted);
+      opacity: 0.78;
+      font: 11px/1.4 var(--mono);
+      white-space: pre;
+      pointer-events: none;
+      max-width: calc(100% - 24px);
+      overflow: hidden;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    }
+    .hud { left: 12px; }
+    .hint {
+      right: 12px;
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    @media (max-width: 640px) {
+      .hud, .hint { font-size: 10px; }
+      .hint { bottom: 30px; } /* stack above the HUD on narrow screens */
+    }
+  </style>
+</head>
+<body>
+  <h1 class="sr-only">ASCII Seoul at Night</h1>
+  <a class="back" href="./">← ASCII</a>
+  <canvas id="c" role="img" aria-label="Animated night view of Seoul drawn with coloured ASCII characters: scrambled letters settle into a full moon, mountain ridges and a skyline with N Seoul Tower, Lotte World Tower, a golden tower, a traditional palace gate and neon signs, above a bridge with traffic and a rainbow fountain reflected in the Han River; the title Seoul at Night types out at the bottom"></canvas>
+  <div class="hud" id="hud" aria-hidden="true"></div>
+  <div class="hint" id="hint"></div>
+
+<script src="ascii-audio.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  // ---------- Timeline (seconds of scene time; one loop is T.END) ----------
+  const T = {
+    MOON: 0.4, MOON_DUR: 1.6,          // stars and the full moon resolve
+    RIDGE: 1.5, RIDGE_DUR: 2.0,        // mountain ridgelines draw left -> right
+    CITY: 3.0, CITY_DUR: 4.0,          // far haze, then the skyline building by building
+    LIGHTS: 4.6, LIGHTS_DUR: 6.0,      // windows light up one by one
+    NAMSAN: 6.4, NAMSAN_DUR: 1.8,      // N Seoul Tower climbs its hill; deck lights at the end
+    LOTTE: 8.0, LOTTE_DUR: 2.2,        // Lotte World Tower rises; a light wave runs up it
+    GOLD: 9.0, GOLD_DUR: 1.4,          // the golden tower on the left
+    GATE: 10.4, GATE_DUR: 1.4,         // palace gate in the foreground
+    NEON: 11.6, NEON_STEP: 0.16,       // neon signs flicker on
+    BRIDGE: 13.0, BRIDGE_DUR: 1.4,     // riverside road and the bridge sweep in, traffic starts
+    FOUNTAIN: 14.6,                    // rainbow fountain on
+    RIVER: 14.6, RIVER_DUR: 2.2,       // reflections calm down
+    TITLE: 16.6, TITLE_CH: 0.15,       // "SEOUL AT NIGHT" types out
+    FADE: 21.6, FADE_DUR: 2.0, END: 24.0
+  };
+  const PHASES = [[0, 'sky'], [T.RIDGE, 'ridge'], [T.CITY, 'city'], [T.NAMSAN, 'namsan'], [T.LOTTE, 'lotte'],
+    [T.GATE, 'gate'], [T.NEON, 'neon'], [T.BRIDGE, 'bridge'], [T.FOUNTAIN, 'river'], [T.TITLE, 'title'],
+    [T.TITLE + 3, 'hold'], [T.FADE, 'fade']];
+  const TITLE = 'SEOUL AT NIGHT';
+
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T_START = reduced ? 20 : 0;   // reduced motion: open (and stay) on the finished picture
+  const SCR = 0.6;                      // seconds a cell scrambles before it settles
+  const SHOW = 4.5;                     // seconds of light show after a tap
+  const PANL = [0.25, 0.5, 0.9, 1.4, 2.1]; // parallax shift in cells per layer (stars .. bridge)
+  const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  // Stateless integer hash -> [0, 1), for per-cell flicker without storing state.
+  function hash2(a, b) {
+    let h = Math.imul(a ^ Math.imul(b, 0x9E3779B1), 0x85EBCA6B);
+    h ^= h >>> 13; h = Math.imul(h, 0xC2B2AE35); h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
+  }
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+  const music = (fn, ...a) => window.AsciiAudio && AsciiAudio[fn](...a);
+
+  // ---------- Characters ----------
+  const CH = [];
+  const ci = s => { let i = CH.indexOf(s); if (i < 0) { CH.push(s); i = CH.length - 1; } return i; };
+  const C_SP = ci(' '); // occluder: hides what is behind, never drawn
+  const C_SL = ci('/'), C_BS = ci('\\'), C_BAR = ci('|'), C_HASH = ci('#'), C_EQ = ci('='), C_US = ci('_'),
+        C_DASH = ci('-'), C_DOT = ci('.'), C_STAR = ci('*'), C_PLUS = ci('+'), C_o = ci('o'), C_O = ci('O'),
+        C_COLON = ci(':'), C_LB = ci('['), C_RB = ci(']'), C_CARET = ci('^'), C_X = ci('X'), C_TILDE = ci('~'),
+        C_BANG = ci('!'), C_APOS = ci("'"), C_i = ci('i'), C_LP = ci('('), C_RP = ci(')'), C_v = ci('v'), C_0 = ci('0'), C_AT = ci('@');
+  const SCRG = [...'#$%&@*+=?!<>/\\|0123456789ABCDEFGHJKMNPRSXZ'].map(ci);
+  const MIRROR = new Int16Array(128).fill(-1);
+  [['/', '\\'], ['\\', '/'], ['_', '-'], ['^', 'v'], ['v', '^'], ['\'', '.'], ['.', '\'']].forEach(([a, b]) => { MIRROR[ci(a)] = ci(b); });
+  for (const s of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ-') ci(s);
+
+  // ---------- Palette: entries x brightness levels ----------
+  const LEVELS = 16;
+  const PAL = [];
+  const pal = (r, g, b) => { PAL.push([r, g, b]); return PAL.length - 1; };
+  const P_STAR = pal(205, 210, 255), P_MOON = pal(255, 242, 205), P_SCR = pal(190, 200, 255), P_WHITE = pal(255, 255, 255);
+  const P_RIDGEF = pal(76, 84, 178), P_RIDGE = pal(104, 112, 222), P_FAR = pal(92, 88, 170);
+  const P_BLD = pal(128, 136, 238), P_BLD2 = pal(160, 140, 232), P_WDARK = pal(74, 72, 146);
+  const P_WARM = pal(255, 190, 110), P_WARM2 = pal(255, 222, 160), P_COOL = pal(214, 224, 255), P_BLUEWIN = pal(140, 176, 255);
+  const P_GOLD = pal(255, 196, 92), P_GOLDE = pal(224, 160, 84);
+  const P_LOTTE = pal(190, 202, 255), P_NT = pal(176, 186, 246), P_RED = pal(255, 58, 70);
+  const P_ROOF = pal(206, 186, 232), P_PILLAR = pal(232, 96, 86), P_LANTERN = pal(255, 150, 64), P_STONE = pal(150, 142, 182);
+  const P_STEEL = pal(146, 156, 226), P_LAMP = pal(255, 212, 144), P_HEAD = pal(255, 250, 226), P_TAIL = pal(255, 64, 64);
+  const P_CARS = [pal(255, 176, 64), pal(214, 216, 240), pal(110, 156, 255), pal(255, 110, 150)];
+  const P_WATER = pal(70, 78, 160), P_FOAM = pal(214, 232, 255);
+  const NEON = [pal(255, 92, 206), pal(80, 232, 255), pal(255, 162, 64), pal(96, 255, 170), pal(196, 124, 255), pal(255, 232, 96)];
+  const P_FW = [pal(255, 90, 180), pal(255, 206, 90), pal(80, 232, 255), pal(170, 120, 255), pal(255, 255, 255)];
+  const P_ROCKET = pal(255, 226, 176);
+  // Rainbow for the tower deck and the fountain.
+  const RB = [];
+  for (let k = 0; k < 12; k++) {
+    const h = k / 12, f = n => { const q = (n + h * 12) % 12; return 0.6 - 0.4 * Math.max(-1, Math.min(q - 3, 9 - q, 1)); };
+    RB.push(pal(f(0) * 255, f(8) * 255, f(4) * 255));
+  }
+  const HALO_P = [P_WHITE, P_LAMP, P_HEAD, P_TAIL, P_RED, P_LANTERN, P_ROCKET, ...P_FW, ...NEON, ...RB];
+
+  const NCOLOR = PAL.length * LEVELS;
+  const COLSTR = new Array(NCOLOR);
+  PAL.forEach(([r, g, b], p) => {
+    for (let l = 0; l < LEVELS; l++) {
+      // Top levels overshoot 1 and wash toward white, so lit characters read as glowing.
+      const m = 0.3 + 1.05 * l / (LEVELS - 1), w = Math.max(0, m - 1) * 160;
+      const lift = v => Math.min(255, v * m + w) | 0;
+      COLSTR[p * LEVELS + l] = `rgb(${lift(r)},${lift(g)},${lift(b)})`;
+    }
+  });
+
+  // ---------- Canvas, grid, layout ----------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const hudEl = document.getElementById('hud');
+  const hintEl = document.getElementById('hint');
+  const bgCan = document.createElement('canvas'), bgx = bgCan.getContext('2d');
+
+  let W = 0, H = 0, fs = 9, cw = 5, ch = 10, cols = 0, rows = 0, X0 = 0, S = 400, cellFont = '';
+  let baseRow = 0, roadRow = 0, railRow = 0, laneRow = 0, deckRow = 0, fH = 3;
+  let moonX = 0, moonY = 0, moonR = 30;
+  let stampA, cchar, ccol, ckind, clb, clay, touched, order, nT = 0, stamp = 0;
+  const counts = new Uint32Array(NCOLOR);
+  let needResize = true, dirty = true;
+  const layOff = new Float32Array(5);
+
+  // Static cells (everything that is built): grid index, glyph, palette, brightness, settle time, layer, group, aux.
+  const G_PLAIN = 0, G_WIN = 1, G_DECK = 2, G_LOTTE = 3, G_GOLD = 4, G_GATE = 5, G_NEON = 6, G_BEACON = 7,
+        G_LAMP = 8, G_STAR = 9, G_FARWIN = 10;
+  let sN = 0, sIdx, sCh, sP, sB, sT0, sL, sG, sA, sA2, sH, nStatic = 0, nWinTot = 0;
+  let SB = null;
+  function sc(col, row, chr, p, b, t0, l, g, a, a2) {
+    if (col < 0 || col >= cols || row < 0 || row >= rows) return;
+    SB.idx.push(row * cols + col); SB.ch.push(chr); SB.p.push(p); SB.b.push(b); SB.t0.push(t0);
+    SB.l.push(l); SB.g.push(g || 0); SB.a.push(a || 0); SB.a2.push(a2 || 0);
+  }
+
+  // Landmarks, buildings, signs (for hit tests and per-group effects).
+  let nt = null, lotte = null, gold = null, gate = null, signs = [], blds = [], bldAt = null, piers = null, lampCols = [];
+  let bFlash = new Float32Array(1);
+  const colOf = x => Math.round((x - X0) / cw - 0.5);
+
+  function resize() {
+    needResize = false;
+    W = canvas.clientWidth || innerWidth;
+    H = canvas.clientHeight || innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    fs = clamp(Math.round(Math.min(W * 0.9, H * 0.85) / 82), 7, 13);
+    cellFont = `${fs}px ${MONO}`;
+    ctx.font = cellFont;
+    cw = ctx.measureText('M').width || fs * 0.6;
+    ch = fs * 1.12;
+    X0 = -3 * cw;                         // a margin of cells left and right for the parallax
+    cols = Math.ceil(W / cw) + 6;
+    rows = Math.ceil(H / ch);
+    const n = cols * rows;
+    stampA = new Uint32Array(n);
+    cchar = new Uint8Array(n); ccol = new Uint16Array(n); ckind = new Uint8Array(n); clb = new Float32Array(n); clay = new Uint8Array(n);
+    touched = new Int32Array(n); order = new Int32Array(n); stamp = 0;
+
+    S = Math.min(W, H * 0.95);
+    baseRow = Math.round(H * 0.655 / ch);
+    roadRow = baseRow + 1; railRow = baseRow + 2; laneRow = baseRow + 3; deckRow = baseRow + 4;
+    fH = Math.max(3, Math.round(H * 0.04 / ch));
+    moonX = W / 2 + 0.02 * S; moonY = H * 0.165; moonR = Math.min(S * 0.085, H * 0.07);
+
+    // Background: violet night sky with a haze at the horizon, dark river below.
+    bgCan.width = Math.max(1, Math.round(W)); bgCan.height = Math.max(1, Math.round(H));
+    const g = bgx.createLinearGradient(0, 0, 0, H), hz = clamp(baseRow * ch / H, 0.3, 0.9), dk = clamp((deckRow + 1) * ch / H, hz, 0.95);
+    g.addColorStop(0, '#05061a');
+    g.addColorStop(hz * 0.45, '#0c0b2a');
+    g.addColorStop(hz * 0.85, '#1d1946');
+    g.addColorStop(hz, '#2c2358');
+    g.addColorStop(dk, '#15123a');
+    g.addColorStop(1, '#04040f');
+    bgx.fillStyle = g; bgx.fillRect(0, 0, W, H);
+
+    buildScene();
+    makeHalos();
+    initCars();
+    dirty = true;
+  }
+
+  // Edge glyph from how far an outline moves sideways per row going up (s: -1 left edge, +1 right).
+  function edgeChar(delta, s) {
+    const a = Math.abs(delta);
+    if (a > 1.9) return C_US;
+    if (a < 0.3) return C_BAR;
+    return s * delta > 0 ? C_SL : C_BS;
+  }
+
+  function buildScene() {
+    SB = { idx: [], ch: [], p: [], b: [], t0: [], l: [], g: [], a: [], a2: [] };
+    const r = mulberry32(1988);
+    const xOf = c => (c + 0.5) * cw + X0;
+    const ntX = W / 2 - 0.23 * S;
+    const nearY = x => H * (0.455 + 0.022 * Math.sin(x / S * 7.1 + 1.3) + 0.016 * Math.sin(x / S * 15.7 + 0.4) + 0.008 * Math.sin(x / S * 33 + 2))
+      - H * 0.085 * Math.exp(-(((x - ntX) / (S * 0.1)) ** 2)) - H * 0.035 * Math.exp(-(((x - (W / 2 + 0.16 * S)) / (S * 0.07)) ** 2));
+    const farY = x => H * (0.41 + 0.028 * Math.sin(x / S * 5.3 + 4) + 0.018 * Math.sin(x / S * 12.9 + 1))
+      - H * 0.03 * Math.exp(-(((x - (W / 2 - 0.02 * S)) / (S * 0.12)) ** 2));
+    const nearRow = new Int16Array(cols), farRow = new Int16Array(cols);
+    for (let c = 0; c < cols; c++) { nearRow[c] = Math.floor(nearY(xOf(c)) / ch); farRow[c] = Math.floor(farY(xOf(c)) / ch); }
+
+    // ---- Stars (layer 0), only in open sky ----
+    const nStars = Math.round(cols * rows * 0.006);
+    for (let i = 0; i < nStars; i++) {
+      const c = (r() * cols) | 0, rw = (r() * rows) | 0, q = r();
+      if (rw >= farRow[c] - 1) continue;
+      if (Math.hypot(xOf(c) - moonX, (rw + 0.5) * ch - moonY) < moonR * 1.5) continue;
+      sc(c, rw, q < 0.6 ? C_DOT : q < 0.85 ? C_PLUS : q < 0.95 ? C_APOS : C_STAR, P_STAR, 0.5, 0.15 + r() * 1.6, 0, G_STAR, r());
+    }
+
+    // ---- Moon (layer 1): dithered full disk with darker maria ----
+    const CR = [[-0.32, -0.22, 0.3], [0.26, 0.28, 0.24], [0.36, -0.36, 0.16], [-0.14, 0.46, 0.18], [0.04, -0.02, 0.12]];
+    const mc0 = colOf(moonX - moonR) - 1, mc1 = colOf(moonX + moonR) + 1;
+    for (let rw = Math.floor((moonY - moonR) / ch); rw <= Math.ceil((moonY + moonR) / ch); rw++) {
+      for (let c = mc0; c <= mc1; c++) {
+        const dx = (xOf(c) - moonX) / moonR, dy = ((rw + 0.5) * ch - moonY) / moonR, d2 = dx * dx + dy * dy;
+        if (d2 > 1) continue;
+        let cr = 0;
+        for (const [x, y, s] of CR) cr += Math.exp(-((dx - x) ** 2 + (dy - y) ** 2) / (s * s));
+        const v = clamp(0.62 + 0.3 * Math.sqrt(1 - d2) - 0.42 * cr + (hash2(c, rw) - 0.5) * 0.12, 0, 1);
+        const g = d2 > 0.82 ? C_0 : v > 0.82 ? C_AT : v > 0.66 ? C_0 : v > 0.5 ? C_o : v > 0.36 ? C_COLON : C_DOT;
+        sc(c, rw, g, P_MOON, 0.34 + 0.4 * v, T.MOON + Math.sqrt(d2) * T.MOON_DUR * 0.75 + r() * 0.15, 1);
+      }
+    }
+
+    // ---- Ridgelines: far (layer 1) and near (layer 2) ----
+    function ridge(rowArr, yFn, p, b, l, t0, texture) {
+      for (let c = 0; c < cols; c++) {
+        const y0 = yFn(xOf(c) - cw / 2) / ch, y1 = yFn(xOf(c) + cw / 2) / ch;
+        const lo = Math.min(y0, y1), hi = Math.max(y0, y1), r0 = Math.floor(lo), r1 = Math.max(r0, Math.floor(hi - 0.01));
+        const sl = y1 - y0;
+        const k = Math.abs(sl) < 0.4 ? (lo - r0 < 0.5 ? C_DASH : C_US) : sl > 0 ? C_BS : C_SL;
+        const tc = t0 + c / cols * T.RIDGE_DUR + r() * 0.1;
+        for (let rw = r0; rw <= r1; rw++) {
+          if (l === 1 && rw >= nearRow[c]) continue;   // far ridge hides behind the near one
+          sc(c, rw, k, p, b, tc, l);
+        }
+        if (texture) for (let q = 1; q <= 7; q++) {
+          const h = hash2(c * 5 + 3, r1 + q);
+          sc(c, r1 + q, h < 0.1 * (1 - q / 8) ? (h < 0.04 ? C_COLON : C_DOT) : C_SP, p, 0.3, tc + 0.1, l);
+        }
+      }
+    }
+    ridge(farRow, farY, P_RIDGEF, 0.58, 1, T.RIDGE - 0.2, false);
+    ridge(nearRow, nearY, P_RIDGE, 0.78, 2, T.RIDGE, true);
+
+    // ---- Far hazy skyline (layer 2) ----
+    for (let c = 0; c < cols;) {
+      const w = 3 + ((r() * 6) | 0), top = Math.round(H * (0.53 + 0.045 * r()) / ch), t0 = T.CITY - 0.5 + c / cols * 1.0;
+      for (let k = 0; k < w && c < cols; k++, c++) {
+        sc(c, top, C_US, P_FAR, 0.4, t0 + r() * 0.2, 2);
+        for (let rw = top + 1; rw < baseRow; rw++) {
+          const h = hash2(c * 11, rw);
+          if (h < 0.05) sc(c, rw, C_DOT, P_WARM, 0.5, t0 + 0.2 + r() * 0.3, 2, G_FARWIN, r());
+          else sc(c, rw, h < 0.2 ? C_COLON : C_SP, P_FAR, 0.28, t0 + 0.2 + r() * 0.3, 2);
+        }
+      }
+    }
+
+    // ---- N Seoul Tower on its hill (layer 2) ----
+    {
+      const c0 = colOf(ntX), hill = nearRow[clamp(c0, 0, cols - 1)];
+      const half = cols - 6 >= 150 ? 4 : 3;
+      const dTop = Math.max(4, Math.round(H * 0.19 / ch)), dBot = dTop + 5;
+      const aTop = Math.max(1, dTop - Math.max(4, Math.round(H * 0.08 / ch)));
+      const span = hill - aTop;
+      const tt = rw => T.NAMSAN + (hill - rw) / span * T.NAMSAN_DUR * 0.9 + r() * 0.08;
+      nt = { c: c0, half, r0: aTop, r1: hill, dTop, dBot };
+      sc(c0, aTop, C_STAR, P_RED, 1, tt(aTop), 2, G_BEACON, 0.3);
+      for (let rw = aTop + 1; rw < dTop; rw++) sc(c0, rw, C_BAR, (rw - aTop) % 3 === 1 ? P_RED : P_NT, 0.65, tt(rw), 2);
+      // Deck: cap, collar, flared rims and two rows of coloured glass.
+      sc(c0 - 1, dTop, C_LP, P_NT, 0.7, tt(dTop), 2); sc(c0, dTop, C_EQ, P_NT, 0.7, tt(dTop), 2); sc(c0 + 1, dTop, C_RP, P_NT, 0.7, tt(dTop), 2);
+      sc(c0 - 1, dTop + 1, C_BAR, P_NT, 0.7, tt(dTop + 1), 2); sc(c0, dTop + 1, C_HASH, P_NT, 0.7, tt(dTop + 1), 2); sc(c0 + 1, dTop + 1, C_BAR, P_NT, 0.7, tt(dTop + 1), 2);
+      for (let d = -half; d <= half; d++) {
+        const e = Math.abs(d) === half;
+        sc(c0 + d, dTop + 2, e ? (d < 0 ? C_SL : C_BS) : C_EQ, P_NT, 0.75, tt(dTop + 2), 2);
+        sc(c0 + d, dTop + 3, e ? (d < 0 ? C_LB : C_RB) : C_HASH, P_NT, 0.7, tt(dTop + 3), 2, e ? 0 : G_DECK, d / half);
+        sc(c0 + d, dTop + 4, e ? (d < 0 ? C_LB : C_RB) : C_HASH, P_NT, 0.7, tt(dTop + 4), 2, e ? 0 : G_DECK, d / half + 0.5);
+        sc(c0 + d, dBot, e ? (d < 0 ? C_BS : C_SL) : C_EQ, P_NT, 0.75, tt(dBot), 2);
+      }
+      // Shaft: |X| / |:| down to the hilltop, flaring at the foot.
+      for (let rw = dBot + 1; rw < hill; rw++) {
+        const foot = rw === hill - 1;
+        sc(c0 - 1, rw, C_BAR, P_NT, 0.62, tt(rw), 2); sc(c0 + 1, rw, C_BAR, P_NT, 0.62, tt(rw), 2);
+        sc(c0, rw, (rw - dBot) % 3 === 1 ? C_X : C_COLON, P_NT, 0.48, tt(rw), 2);
+        if (foot) { sc(c0 - 2, rw, C_SL, P_NT, 0.6, tt(rw), 2); sc(c0 + 2, rw, C_BS, P_NT, 0.6, tt(rw), 2); }
+      }
+    }
+
+    // ---- Skyline: outlined buildings with windows (layer 3) ----
+    blds = []; bldAt = new Int16Array(cols).fill(-1);
+    const wMin = Math.max(4, Math.round(S * 0.04 / cw)), wVar = Math.max(3, Math.round(S * 0.045 / cw));
+    for (let c = 0; c < cols;) {
+      const w = wMin + ((r() * wVar) | 0);
+      let hPx = H * (0.08 + 0.15 * r() * r() + 0.04 * r());
+      const mid = c + w / 2;
+      if (r() < 0.12) hPx = H * (0.22 + 0.06 * r());
+      let top = baseRow - Math.max(3, Math.round(hPx / ch));
+      if (Math.abs(mid - nt.c) < w / 2 + nt.half + 2) top = Math.max(top, nt.r1 + 3);  // keep the tower's foot visible
+      const b = { c0: c, c1: Math.min(cols, c + w), top, i: blds.length, start: T.CITY + r() * T.CITY_DUR * 0.75,
+                  style: (r() * 4) | 0, tone: r() };
+      blds.push(b);
+      for (let x = b.c0; x < b.c1; x++) bldAt[x] = b.i;
+      const hR = baseRow - top;
+      const tt = rw => b.start + (baseRow - rw) / hR * 0.9 + r() * 0.15;
+      const winP = () => { const q = r(); return b.tone < 0.55 ? (q < 0.7 ? P_WARM : q < 0.85 ? P_WARM2 : P_COOL) : (q < 0.6 ? P_COOL : q < 0.85 ? P_BLUEWIN : P_WARM); };
+      const edgeP = b.tone < 0.5 ? P_BLD : P_BLD2;
+      for (let x = b.c0; x < b.c1; x++) {
+        const L = x === b.c0, R = x === b.c1 - 1, u = x - b.c0;
+        sc(x, top, L || R ? C_DOT : C_DASH, edgeP, 0.62, tt(top), 3);
+        for (let rw = top + 1; rw < baseRow; rw++) {
+          if (L || R) { sc(x, rw, C_BAR, edgeP, 0.55, tt(rw), 3); continue; }
+          const v = rw - top, inner = u >= 1 && u <= w - 2 && rw < baseRow - 1;
+          let k = -1;
+          if (inner) {
+            if (b.style === 0 && v % 2 === 0 && u % 3) k = u % 3 === 1 ? C_LB : C_RB;
+            else if (b.style === 1 && v % 2 === 0) k = C_EQ;
+            else if (b.style === 2 && u % 2 === 1 && v > 1) k = C_COLON;
+            else if (b.style === 3 && v % 2 === 0 && u % 2 === 1) k = C_HASH;
+          }
+          if (k >= 0) { sc(x, rw, k, winP(), 0.7, tt(rw), 3, G_WIN, r(), b.i); nWinTot++; }
+          else sc(x, rw, C_SP, 0, 0, tt(rw), 3);
+        }
+      }
+      // A few rooftop masts with red aircraft lights.
+      if (hR > (baseRow - nt.r1) * 0.5 && w >= 5 && r() < 0.5) {
+        const m = b.c0 + (w >> 1);
+        sc(m, top - 1, C_BAR, edgeP, 0.5, tt(top) + 0.1, 3);
+        sc(m, top - 2, C_PLUS, P_RED, 1, tt(top) + 0.15, 3, G_BEACON, r());
+      }
+      c += w + (r() < 0.25 ? 1 : 0);
+    }
+    bFlash = new Float32Array(blds.length).fill(-99);
+
+    // ---- Lotte World Tower (layer 3): a slender tapering cone with a split crown ----
+    {
+      const lc = colOf(W / 2 + 0.25 * S), lb = baseRow - 1, top = Math.max(2, Math.round(H * 0.07 / ch));
+      const Hb = Math.max(4, Math.round(S * 0.05 / cw)), Lh = lb - top;
+      const hw = y => y < 0.9 ? Hb * (1 - 0.8 * Math.pow(y, 1.25)) : Hb * 0.272 * (1 - (y - 0.9) / 0.1 * 0.7);
+      const hwArr = new Float32Array(rows).fill(-1);
+      lotte = { c: lc, r0: top - 1, r1: lb, hw: hwArr };
+      for (let rw = lb; rw >= top; rw--) {
+        const yB = (lb + 1 - rw - 1) / (Lh + 1), yT = (lb + 1 - rw) / (Lh + 1), yM = (yB + yT) / 2;
+        const oT = hw(yT), oB = hw(yB), o = Math.max(1, Math.round(hw(yM)));
+        hwArr[rw] = o;
+        const t0 = T.LOTTE + yM * T.LOTTE_DUR * 0.95;
+        const crown = yM > 0.9;
+        for (let d = -o; d <= o; d++) {
+          const e = Math.abs(d) === o, tc = t0 + r() * 0.08;
+          let k, b = 0.42;
+          if (e) { k = edgeChar(oT - oB, Math.sign(d)); b = 0.75; }
+          else if (crown) k = d === 0 ? C_SP : C_COLON;
+          else if (d === 0) { k = C_BAR; b = 0.55; }
+          else if ((lb - rw) % 7 === 3) { k = C_EQ; b = 0.5; }
+          else k = (rw + d) % 2 ? C_COLON : C_DOT;
+          sc(lc + d, rw, k, P_LOTTE, b, tc, 3, G_LOTTE, yM);
+        }
+      }
+      sc(lc, top - 1, C_STAR, P_RED, 1, T.LOTTE + T.LOTTE_DUR, 3, G_BEACON, 0.6);
+    }
+
+    // ---- Golden tower on the left (layer 3), slanted roof, every window gold ----
+    {
+      const gw = Math.max(5, Math.round(S * 0.07 / cw)), c0 = colOf(W / 2 - 0.47 * S), top = Math.round(H * 0.32 / ch);
+      gold = { c0, c1: c0 + gw, r0: top, r1: baseRow - 1 };
+      const hR = baseRow - top;
+      for (let rw = top; rw < baseRow; rw++) {
+        const left = c0 + Math.max(0, gw - 1 - (rw - top)), y = (baseRow - rw) / hR;
+        const t0 = T.GOLD + (1 - y) * 0 + y * T.GOLD_DUR * 0.9;
+        for (let x = left; x < c0 + gw; x++) {
+          const tc = t0 + r() * 0.08;
+          if (x === left && rw - top < gw - 1) sc(x, rw, C_SL, P_GOLDE, 0.7, tc, 3);
+          else if (x === c0 + gw - 1 || x === c0) sc(x, rw, C_BAR, P_GOLDE, 0.62, tc, 3);
+          else sc(x, rw, (rw - top) % 2 ? C_EQ : C_HASH, P_GOLD, (rw - top) % 2 ? 0.5 : 0.7, tc, 3, G_GOLD, y);
+        }
+      }
+    }
+
+    // ---- Neon signs (layer 3): vertical strips and boxed horizontal signs on the facades ----
+    signs = [];
+    const used = new Uint8Array(cols * rows);
+    const blocked = x => (x >= lotte.c - Math.round(Hb2()) - 1 && x <= lotte.c + Math.round(Hb2()) + 1) || (x >= gold.c0 - 1 && x <= gold.c1);
+    function Hb2() { return lotte.hw[lotte.r1] || 4; }
+    const gateC = colOf(W / 2 - 0.03 * S), gateR = clamp(Math.round(S * 0.15 / cw), 9, 20);
+    const nearGate = x => Math.abs(x - gateC) <= gateR + 2;
+    const VW = ['K-POP', 'PC-BANG', 'NORAEBANG', 'CHIMAEK', 'TTEOKBOKKI', 'HOF', 'BBQ', '24H', 'CAFE', 'OPPA'];
+    const HW = ['[KIMBAP]', '[SOJU]', '[HANGANG]', '[BIBIMBAP]', '[MAKGEOLLI]'];
+    const maxV = cols > 150 ? 9 : 5, maxH = cols > 150 ? 5 : 3;
+    const order0 = blds.map((b, i) => i).sort((a, b) => hash2(a, 77) - hash2(b, 77));
+    let nv = 0, nh = 0;
+    const place = (cells, word, sx, sy, dx, dy) => {
+      for (let k = 0; k < word.length; k++) { const x = sx + dx * k, y = sy + dy * k; if (x < 0 || x >= cols || y < 0 || y >= rows || used[y * cols + x]) return false; }
+      const sIdx2 = signs.length, p = (sIdx2 * 5 + 1) % NEON.length;
+      for (let k = 0; k < word.length; k++) {
+        const x = sx + dx * k, y = sy + dy * k;
+        used[y * cols + x] = 1;
+        sc(x, y, ci(word[k]), NEON[p], 0.9, T.NEON + sIdx2 * T.NEON_STEP, 3, G_NEON, 0, sIdx2);
+      }
+      signs.push({ c0: Math.min(sx, sx + dx * (word.length - 1)), c1: Math.max(sx, sx + dx * (word.length - 1)),
+                   r0: Math.min(sy, sy + dy * (word.length - 1)), r1: Math.max(sy, sy + dy * (word.length - 1)), p, shift: 0, tap: -99 });
+      return true;
+    };
+    for (const bi of order0) {
+      const b = blds[bi], w = b.c1 - b.c0, hR = baseRow - b.top;
+      if (nv < maxV && w >= 4) {
+        const x = hash2(bi, 3) < 0.5 ? b.c0 + 1 : b.c1 - 2;
+        const word = VW[(nv + bi) % VW.length];
+        if (hR >= word.length + 4 && !blocked(x) && !nearGate(x) && x > 1 && x < cols - 2 &&
+            place(null, word, x, b.top + 2, 0, 1)) { nv++; continue; }
+      }
+      if (nh < maxH && w >= 4) {
+        const word = HW[nh % HW.length], x = b.c0 + ((w - word.length) >> 1), y = baseRow - 2 - ((hash2(bi, 9) * 3) | 0);
+        let ok = x > 1 && x + word.length < cols - 2 && b.top < y - 1;
+        for (let k = 0; ok && k < word.length; k++) if (blocked(x + k) || nearGate(x + k)) ok = false;
+        if (ok && place(null, word, x, y, 1, 0)) nh++;
+      }
+    }
+
+    // ---- Palace gate (layer 3): stone base with arches, pillars and lanterns, two tiers of curved roof ----
+    {
+      const gc = gateC, R = gateR, R2 = Math.max(6, Math.round(R * 0.66)), base = baseRow - 1;
+      gate = { c0: gc - R - 1, c1: gc + R + 1, r0: base - 10, r1: base, c: gc, R };
+      const tt = (rw, d) => T.GATE + (base - rw) / 11 * T.GATE_DUR * 0.85 + Math.abs(d) / R * 0.2 + r() * 0.06;
+      const put = (d, rw, k, p, b, a2) => sc(gc + d, rw, k, p, b, tt(rw, d), 3, G_GATE, Math.abs(d) / (R + 1), a2 || 0);
+      const roof = (rTop, Rr) => {
+        for (let d = -Rr - 1; d <= Rr + 1; d++) {
+          const a = Math.abs(d);
+          // Ridge: __/^^^^\__
+          if (a <= Rr - 1) put(d, rTop, a < Rr - 3 ? C_CARET : a === Rr - 3 ? (d < 0 ? C_SL : C_BS) : C_US, P_ROOF, 0.75);
+          // Tiled slope.
+          if (a <= Rr) put(d, rTop + 1, a === Rr ? (d < 0 ? C_SL : C_BS) : (d % 2 ? C_COLON : C_BAR), P_ROOF, a === Rr ? 0.75 : 0.45);
+          // Eave with upturned corners.
+          put(d, rTop + 2, a === Rr + 1 ? (d < 0 ? C_BS : C_SL) : C_US, P_ROOF, 0.8);
+        }
+      };
+      // Stone base: 3 rows, three arched gateways glowing warm inside.
+      const sb = Math.round(R * 0.86), arch = [0, -Math.round(sb * 0.55), Math.round(sb * 0.55)];
+      for (let rw = base; rw > base - 3; rw--) {
+        for (let d = -sb; d <= sb; d++) {
+          const ad = arch.find(a0 => Math.abs(d - a0) <= 1);
+          if (ad !== undefined && rw > base - 2) {
+            if (d === ad) put(d, rw, C_COLON, P_WARM, 0.55, 3); else put(d, rw, C_BAR, P_STONE, 0.6);
+          } else if (ad !== undefined && rw === base - 2) put(d, rw, d === ad ? C_CARET : d < ad ? C_SL : C_BS, P_STONE, 0.7);
+          else put(d, rw, Math.abs(d) === sb ? C_BAR : C_HASH, P_STONE, Math.abs(d) === sb ? 0.6 : 0.42);
+        }
+      }
+      // Lower hall: red pillars with lanterns between them.
+      const wh = Math.round(R * 0.7);
+      for (let d = -wh; d <= wh; d++) {
+        const m = ((d % 4) + 4) % 4;
+        put(d, base - 3, m === 0 ? C_BAR : m === 2 ? C_o : C_SP, m === 0 ? P_PILLAR : P_LANTERN, m === 0 ? 0.7 : 0.9, m === 2 ? 1 : 0);
+      }
+      roof(base - 6, R);
+      // Upper hall: lit lattice windows.
+      const wh2 = Math.round(R2 * 0.78);
+      for (let d = -wh2; d <= wh2; d++) {
+        const m = ((d % 3) + 3) % 3, e = Math.abs(d) === wh2;
+        put(d, base - 7, e ? C_BAR : m === 1 ? C_LB : m === 2 ? C_RB : C_BAR, e || m === 0 ? P_PILLAR : P_WARM, e || m === 0 ? 0.65 : 0.8, e || m === 0 ? 0 : 2);
+      }
+      roof(base - 10, R2);
+    }
+
+    // ---- Riverbank, riverside road and the bridge (layer 4) ----
+    const lampStep = cols > 150 ? 12 : 9;
+    piers = new Uint8Array(cols);
+    const pierStep = Math.max(16, Math.round(cols / 6));
+    lampCols = [];
+    for (let c = 0; c < cols; c++) {
+      const tb = T.BRIDGE + c / cols * T.BRIDGE_DUR;
+      sc(c, baseRow, C_US, P_STEEL, 0.45, T.CITY + c / cols * 1.2, 4);
+      if ((c + 3) % lampStep === 0) { sc(c, railRow, C_i, P_LAMP, 0.9, tb, 4, G_LAMP); lampCols.push(c); }
+      else sc(c, railRow, C_DASH, P_STEEL, 0.55, tb, 4);
+      sc(c, deckRow, C_EQ, P_STEEL, 0.72, tb + 0.1, 4);
+      if ((c + 5) % pierStep < 2) {
+        piers[c] = 1;
+        for (let k = 1; k <= fH + 1; k++) sc(c, deckRow + k, C_BAR, P_STEEL, 0.45, tb + 0.15, 4);
+      }
+    }
+
+    const A = SB;
+    sN = A.idx.length;
+    sIdx = Int32Array.from(A.idx); sCh = Uint8Array.from(A.ch); sP = Uint16Array.from(A.p); sB = Float32Array.from(A.b);
+    sT0 = Float32Array.from(A.t0); sL = Uint8Array.from(A.l); sG = Uint8Array.from(A.g); sA = Float32Array.from(A.a); sA2 = Int16Array.from(A.a2);
+    sH = new Float32Array(sN);
+    nStatic = 0; nWinTot = 0;
+    for (let i = 0; i < sN; i++) {
+      sH[i] = hash2(i, 41);
+      if (sG[i] !== G_STAR && sCh[i] !== C_SP) nStatic++;
+      if (sG[i] === G_WIN) nWinTot++;
+    }
+    nWinTot += signs.length;
+    SB = null;
+  }
+
+  // ---------- Cell buffer ----------
+  function put(c, chr, p, b, kind, layer) {
+    if (stampA[c] !== stamp) { stampA[c] = stamp; touched[nT++] = c; }
+    let l = (b * 15.99) | 0;
+    if (l < 0) l = 0; else if (l > 15) l = 15;
+    cchar[c] = chr; ccol[c] = p * LEVELS + l; ckind[c] = kind; clb[c] = b > 1 ? 1 : b; clay[c] = layer;
+  }
+  function putXY(x, y, chr, p, b, kind, layer) {
+    const col = Math.floor((x - X0) / cw), row = Math.floor(y / ch);
+    if (col < 0 || row < 0 || col >= cols || row >= rows) return;
+    put(row * cols + col, chr, p, b, kind, layer);
+  }
+
+  // ---------- Scene state ----------
+  let t = T_START, skyT = 0, built = 0, lit = 0, letters = 0, scrambling = 0, frameNo = 0;
+  let deckShowT = -99, lotteShowT = -99, goldShowT = -99, gateShowT = -99;
+  let fUser = -1, fAmt = reduced ? 1 : 0;   // fUser: -1 automatic, 0 off, 1 on (reset every loop)
+  const fountainOn = () => fUser >= 0 ? fUser === 1 : reduced || t >= T.FOUNTAIN;
+
+  // Static cells: hidden, scrambling into place (falling in from above), or settled with their group's lighting.
+  function drawStatic() {
+    built = 0; lit = 0; scrambling = 0;
+    const slot = Math.floor(skyT * 14);
+    const deckOn = t >= T.NAMSAN + T.NAMSAN_DUR, lotteLit = T.LOTTE + T.LOTTE_DUR;
+    const dShow = skyT - deckShowT < SHOW, lShow = skyT - lotteShowT < SHOW, gShow = skyT - goldShowT < SHOW, gtShow = skyT - gateShowT < SHOW;
+    const spd = reduced ? 0.35 : 1;
+    for (let i = 0; i < sN; i++) {
+      const t0 = sT0[i];
+      if (t < t0 - SCR) continue;
+      const idx = sIdx[i], chr = sCh[i], L = sL[i], g = sG[i];
+      if (t < t0) {
+        if (chr === C_SP) continue;
+        const q = (t0 - t) / SCR, h = sH[i];
+        const row = (idx / cols) | 0, col = idx - row * cols;
+        const rr = row - Math.round(q * q * h * 8), cc = col + Math.round(q * q * (hash2(i, 5) - 0.5) * 6);
+        if (rr < 0 || cc < 0 || cc >= cols) continue;
+        put(rr * cols + cc, SCRG[(hash2(i, slot) * SCRG.length) | 0], P_SCR, 0.35 + 0.45 * (1 - q), 0, L);
+        scrambling++;
+        continue;
+      }
+      if (g !== G_STAR && chr !== C_SP) built++;
+      const age = t - t0;
+      let b = sB[i];
+      if (age < 0.3 && !reduced) b += 0.45 * (1 - age / 0.3);    // a flash as each letter locks in
+      switch (g) {
+        case G_PLAIN: put(idx, chr, sP[i], b, 0, L); break;
+        case G_STAR: {
+          const tw = 0.5 + 0.5 * Math.sin(skyT * (0.6 + sA[i] * 1.8) * spd + sA[i] * 40);
+          put(idx, tw > 0.92 && chr === C_DOT ? C_PLUS : chr, P_STAR, 0.15 + 0.55 * tw, 0, L);
+          break;
+        }
+        case G_WIN: {
+          const a = sA[i];
+          let on = a < 0.8 && t >= T.LIGHTS + a * T.LIGHTS_DUR;
+          if (!reduced && t > T.LIGHTS && hash2(i, Math.floor(skyT * 0.25 + a * 97)) < 0.02) on = !on;
+          const f = skyT - bFlash[sA2[i]];
+          let boost = 0;
+          if (f >= 0 && f < 6 && f > a * 0.7) { on = true; boost = 0.3 * Math.max(0, 1 - (f - a * 0.7) / 1.2); }
+          if (on) { put(idx, chr, sP[i], 0.66 + 0.25 * sH[i] + boost, 0, L); lit++; }
+          else put(idx, chr, P_WDARK, 0.42, 0, L);
+          break;
+        }
+        case G_FARWIN:
+          if (t >= T.LIGHTS + sA[i] * T.LIGHTS_DUR) put(idx, C_DOT, P_WARM, 0.45 + 0.2 * sH[i], 0, L);
+          else put(idx, C_COLON, P_FAR, 0.28, 0, L);
+          break;
+        case G_DECK: {
+          if (!deckOn) { put(idx, chr, P_NT, 0.45, 0, L); break; }
+          let hue = skyT * 0.04 * spd, bb = 0.85, k = chr;
+          if (dShow) { hue = skyT * (reduced ? 0.3 : 1.4) + sA[i] * 0.3; bb = 1; if (!reduced && hash2(i, slot) < 0.2) k = C_STAR; }
+          put(idx, k, RB[(((hue % 1) + 1) % 1 * 12) | 0], bb, 1, L);
+          break;
+        }
+        case G_LOTTE: {
+          const y = sA[i];
+          let p = P_LOTTE, k = chr;
+          if (t >= lotteLit) {
+            const w = t - lotteLit - y * 1.1;
+            if (w > 0 && w < 0.5 && !reduced) { b += 0.6 * (1 - w / 0.5); p = P_WHITE; }
+            b += 0.1 + 0.18 * y;
+          }
+          if (lShow) {
+            const f = skyT - lotteShowT, band = 1 - (f * 0.45 % 1);
+            if (Math.abs(y - band) < 0.035) { p = P_WHITE; b = 1; }
+            if (hash2(i, Math.floor(skyT * (reduced ? 3 : 10))) < (reduced ? 0.03 : 0.08) && chr !== C_SP) { k = C_STAR; p = P_WHITE; b = 1; put(idx, k, p, b, reduced ? 0 : 1, L); break; }
+          }
+          put(idx, k, p, b, 0, L);
+          break;
+        }
+        case G_GOLD: {
+          const y = sA[i];
+          let p = sP[i];
+          b += 0.12 * Math.sin(skyT * 1.4 * spd - y * 9);
+          if (gShow) { const band = (skyT - goldShowT) * 0.5 % 1; if (Math.abs(y - band) < 0.06) { p = P_WHITE; b = 1; } else b += 0.15; }
+          put(idx, chr, p, b, 0, L);
+          break;
+        }
+        case G_GATE: {
+          const a2 = sA2[i], d = sA[i];
+          const on = t >= T.GATE + T.GATE_DUR;
+          let p = sP[i], k = chr, kind = 0;
+          if (a2 === 1) { b = on ? 0.8 + 0.12 * Math.sin(skyT * 2 * spd + d * 9) : 0.4; kind = on ? 1 : 0; }
+          else if (a2 >= 2 && !on) b *= 0.6;
+          if (gtShow) {
+            const f = skyT - gateShowT, ring = f * 0.9;
+            if (a2 === 1) { k = C_O; b = 1; }
+            if (Math.abs(d - ring % 1.4) < 0.08 && chr !== C_SP) { p = P_GOLD; b = 1; }
+          }
+          put(idx, k, p, b, kind, L);
+          break;
+        }
+        case G_NEON: {
+          const sg = signs[sA2[i]];
+          const tOn = t0, f = t - tOn, ft = skyT - sg.tap;
+          let on = true;
+          if (!reduced) {
+            if (f < 0.5) on = hash2(sA2[i], Math.floor(skyT * 20)) < 0.55;
+            else if (hash2(sA2[i] * 31 + 7, Math.floor(skyT * 8)) < 0.015) on = false;
+            if (ft >= 0 && ft < 0.7) on = hash2(sA2[i], Math.floor(skyT * 24)) < 0.5;
+          }
+          if (on) lit++;
+          put(idx, chr, NEON[(sg.p + sg.shift) % NEON.length], on ? 0.95 : 0.3, on ? 1 : 0, L);
+          break;
+        }
+        case G_BEACON: {
+          const on = reduced || (skyT * 0.9 + sA[i]) % 1 < 0.45;
+          put(idx, chr, P_RED, on ? 1 : 0.35, on ? 1 : 0, L);
+          break;
+        }
+        case G_LAMP: put(idx, chr, P_LAMP, 0.9, 1, L); break;
+      }
+    }
+  }
+
+  // ---------- Traffic ----------
+  const MAXCAR = 40;
+  const carX = new Float32Array(MAXCAR), carV = new Float32Array(MAXCAR), carP = new Uint16Array(MAXCAR), carLane = new Uint8Array(MAXCAR);
+  let nCar = 0;
+  function initCars() {
+    const r = mulberry32(77);
+    nCar = Math.min(MAXCAR, Math.max(6, Math.round(cols / 9)));
+    for (let i = 0; i < nCar; i++) {
+      carLane[i] = i % 3 === 0 ? 0 : 1;   // 0 riverside road, 1 bridge
+      carX[i] = r() * cols;
+      carV[i] = (i % 2 ? -1 : 1) * (4 + 7 * r()) * (reduced ? 0.35 : 1);
+      carP[i] = P_CARS[(r() * P_CARS.length) | 0];
+    }
+  }
+  function updateCars(dt) {
+    for (let i = 0; i < nCar; i++) {
+      carX[i] += carV[i] * dt;
+      if (carX[i] < -4) carX[i] += cols + 8; else if (carX[i] > cols + 4) carX[i] -= cols + 8;
+    }
+  }
+  function drawCars() {
+    if (t < T.BRIDGE + T.BRIDGE_DUR * 0.5) return;
+    for (let i = 0; i < nCar; i++) {
+      const x = carX[i] | 0, dir = carV[i] > 0 ? 1 : -1;
+      if (carLane[i] === 0) {
+        if (x >= 0 && x < cols) put(roadRow * cols + x, C_o, dir > 0 ? P_HEAD : P_TAIL, 1, 1, 4);
+        const tx = x - dir;
+        if (tx >= 0 && tx < cols) put(roadRow * cols + tx, C_DASH, carP[i], 0.5, 0, 4);
+      } else {
+        // o==o : tail light, body, headlight.
+        for (let k = 0; k < 4; k++) {
+          const c = x - dir * (3 - k);
+          if (c < 0 || c >= cols) continue;
+          if (k === 3) put(laneRow * cols + c, C_o, P_HEAD, 1, 1, 4);
+          else if (k === 0) put(laneRow * cols + c, C_o, P_TAIL, 0.85, 0, 4);
+          else put(laneRow * cols + c, C_EQ, carP[i], 0.75, 0, 4);
+        }
+      }
+    }
+  }
+
+  // ---------- Fireworks and shooting stars (fixed pools) ----------
+  const MAXP = 2400, MAXR = 10;
+  const fx = new Float32Array(MAXP), fy = new Float32Array(MAXP), fvx = new Float32Array(MAXP), fvy = new Float32Array(MAXP),
+        fage = new Float32Array(MAXP), flife = new Float32Array(MAXP), fp = new Uint16Array(MAXP);
+  const rx = new Float32Array(MAXR), ry = new Float32Array(MAXR), rvy = new Float32Array(MAXR), rty = new Float32Array(MAXR),
+        rg = new Float32Array(MAXR), rp = new Uint16Array(MAXR);
+  let np = 0, nr = 0;
+  let shoots = [], nextShoot = 6;
+  function clearFx() { np = 0; nr = 0; shoots = []; }
+
+  function launch(x, y) {
+    if (nr >= MAXR) return;
+    const i = nr++;
+    rx[i] = x; ry[i] = baseRow * ch;
+    rty[i] = Math.min(y, baseRow * ch - 8 * ch);
+    rg[i] = H * (reduced ? 0.8 : 1.2);
+    rvy[i] = -Math.sqrt(2 * rg[i] * (ry[i] - rty[i]));
+    rp[i] = P_FW[(Math.random() * P_FW.length) | 0];
+    music('event', 'launch', { x: x / W, dur: Math.sqrt(2 * (ry[i] - rty[i]) / rg[i]) });
+  }
+  function burst(x, y, p) {
+    const n = reduced ? 50 + ((Math.random() * 20) | 0) : 130 + ((Math.random() * 70) | 0);
+    let p2 = p;
+    while (p2 === p) p2 = P_FW[(Math.random() * P_FW.length) | 0];
+    const sp = H * (0.11 + 0.07 * Math.random()) * (reduced ? 0.55 : 1);
+    music('event', 'burst', { x: x / W, calm: reduced });
+    for (let j = 0; j < n && np < MAXP; j++) {
+      const z = 2 * Math.random() - 1, a = Math.random() * 6.2832, rr = j % 5 < 3 ? 1 : Math.sqrt(1 - z * z); // mostly a crisp ring
+      const v = sp * (0.85 + 0.15 * Math.random()), i = np++;
+      fx[i] = x; fy[i] = y; fvx[i] = rr * Math.cos(a) * v; fvy[i] = rr * Math.sin(a) * v;
+      fage[i] = 0; flife[i] = 1.3 + Math.random() * 0.9; fp[i] = j % 3 ? p : p2;
+    }
+  }
+  function updateFx(dt) {
+    for (let i = 0; i < nr; i++) {
+      rvy[i] += rg[i] * dt; ry[i] += rvy[i] * dt;
+      if (ry[i] <= rty[i] || rvy[i] > -H * 0.05) {
+        burst(rx[i], Math.max(ry[i], rty[i]), rp[i]);
+        nr--; rx[i] = rx[nr]; ry[i] = ry[nr]; rvy[i] = rvy[nr]; rty[i] = rty[nr]; rg[i] = rg[nr]; rp[i] = rp[nr]; i--;
+      }
+    }
+    const g = H * 0.075, drag = 1 - Math.min(0.5, 0.9 * dt);
+    for (let i = 0; i < np; i++) {
+      fage[i] += dt;
+      if (fage[i] >= flife[i]) {
+        np--; fx[i] = fx[np]; fy[i] = fy[np]; fvx[i] = fvx[np]; fvy[i] = fvy[np];
+        fage[i] = fage[np]; flife[i] = flife[np]; fp[i] = fp[np]; i--; continue;
+      }
+      fvx[i] *= drag; fvy[i] = fvy[i] * drag + g * dt;
+      fx[i] += fvx[i] * dt; fy[i] += fvy[i] * dt;
+    }
+    for (const s of shoots) { s.age += dt; s.x += s.vx * dt; s.y += s.vy * dt; }
+    shoots = shoots.filter(s => s.age < s.life);
+    if (!reduced && skyT > nextShoot && t > T.MOON + 1 && t < T.FADE) { shoot(); nextShoot = skyT + 7 + Math.random() * 8; }
+  }
+  function shoot(x, y) {
+    const dir = x === undefined ? (Math.random() < 0.5 ? -1 : 1) : (x < W / 2 ? 1 : -1);
+    const sx = x === undefined ? W * (dir > 0 ? 0.1 + 0.3 * Math.random() : 0.6 + 0.3 * Math.random()) : x;
+    const sy = y === undefined ? H * (0.04 + 0.12 * Math.random()) : y;
+    const v = S * (reduced ? 0.35 : 0.9);
+    shoots.push({ x: sx, y: sy, vx: dir * v, vy: v * 0.38, age: 0, life: reduced ? 1.6 : 0.9 });
+    music('event', 'shoot', { x: sx / W });
+  }
+  function drawFx() {
+    // Kind bit 2 marks cells that stay at full alpha through the loop's fade (taps can come any time).
+    for (let i = 0; i < nr; i++) {
+      putXY(rx[i], ry[i], C_CARET, P_ROCKET, 1, 3, 1);
+      for (let k = 1; k <= 4; k++) putXY(rx[i], ry[i] + k * ch, k < 3 ? C_COLON : C_DOT, P_ROCKET, 0.75 - 0.14 * k, 2, 1);
+    }
+    for (let i = 0; i < np; i++) {
+      const a = fage[i] / flife[i];
+      if (a > 0.55 && hash2(i, frameNo) < 0.25) continue;
+      const chr = a < 0.25 ? C_STAR : a < 0.4 ? C_o : a < 0.7 ? C_PLUS : C_DOT;
+      putXY(fx[i], fy[i], chr, fp[i], 0.3 + 0.8 * Math.pow(1 - a, 0.7), 2, 1);
+    }
+    for (const s of shoots) {
+      const f = 1 - s.age / s.life, len = 9, k = s.vx > 0 ? C_BS : C_SL;
+      const ux = s.vx / Math.hypot(s.vx, s.vy), uy = s.vy / Math.hypot(s.vx, s.vy), stp = Math.min(cw, ch) * 1.1;
+      putXY(s.x, s.y, C_STAR, P_WHITE, f, 3, 0);
+      for (let j = 1; j < len; j++) putXY(s.x - ux * stp * j, s.y - uy * stp * j, j < 4 ? k : C_DOT, P_STAR, f * (1 - j / len), 2, 0);
+    }
+  }
+
+  // ---------- River: reflections of everything above, moon glitter, the fountain ----------
+  function drawRiver() {
+    const top = deckRow + 1, depthN = Math.max(1, rows - top);
+    const amp = reduced ? 0.6 : 0.6 + 2.2 * (1 - smooth((t - T.RIVER) / T.RIVER_DUR));
+    const slow = reduced ? 0.4 : 1;
+    const mxs = moonX, mvis = smooth((t - T.MOON) / T.MOON_DUR);
+    for (let r = top; r < rows; r++) {
+      const dpt = (r - top) / depthN, src = deckRow - (r - deckRow);
+      const off = Math.round(amp * Math.sin(r * 0.9 + skyT * 1.6 * slow) * (0.5 + 0.6 * dpt));
+      const drop = 0.32 + 0.4 * dpt, fade = 0.5 - 0.3 * dpt;
+      const tslot = Math.floor(skyT * 2.5 * slow);
+      for (let c = 0; c < cols; c++) {
+        const i = r * cols + c, sc0 = c + off;
+        if (src >= 0 && sc0 >= 0 && sc0 < cols) {
+          const j = src * cols + sc0;
+          if (stampA[j] === stamp && cchar[j] !== C_SP && hash2(c * 13 + r, tslot + (c >> 3)) > drop) {
+            const m = MIRROR[cchar[j]];
+            const k = m >= 0 ? m : (hash2(c, r) < 0.18 ? C_TILDE : cchar[j]);
+            put(i, k, (ccol[j] / LEVELS) | 0, clb[j] * fade, 0, clay[j]);
+            continue;
+          }
+        }
+        // Moon glitter path, then the faint ripple texture.
+        const x = (c + 0.5) * cw + X0;
+        const h = hash2(c * 7 + r * 131, Math.floor(skyT * 0.8 * slow + hash2(r, c) * 6));
+        if (mvis > 0 && Math.abs(x - mxs) < moonR * (0.6 + 1.2 * dpt) && h < 0.35) put(i, h < 0.15 ? C_EQ : C_DASH, P_MOON, (0.3 + 0.25 * (1 - dpt)) * mvis, 0, 1);
+        else if (h < 0.06) put(i, C_TILDE, P_WATER, 0.32, 0, 4);
+        else if (h < 0.11) put(i, C_DASH, P_WATER, 0.24, 0, 4);
+      }
+    }
+  }
+
+  function drawFountain() {
+    if (fAmt < 0.01 || t < T.BRIDGE + T.BRIDGE_DUR * 0.5) return;
+    const mid = cols / 2, spd = reduced ? 1.4 : 6, hs = reduced ? 0.03 : 0.1;
+    const reach = fAmt * 1.15;
+    const fRef = Math.max(3, Math.round(fH * 1.6));
+    for (let c = 0; c < cols; c++) {
+      if (piers[c] || Math.abs(c - mid) / mid > reach) continue;
+      const len = fH + (hash2(c, 3) < 0.3 ? 1 : 0), ph = hash2(c, 7) * 3;
+      const hue = RB[((((c / cols) * 1.6 - skyT * hs) % 1 + 1) % 1 * 12) | 0];
+      const edge = clamp((reach - Math.abs(c - mid) / mid) * 6, 0.2, 1);
+      for (let k = 1; k <= len; k++) {
+        const p = k * 0.5 - skyT * spd * 0.25 + ph, v = p - Math.floor(p);
+        const chr = v < 0.35 ? C_BAR : v < 0.6 ? C_BANG : v < 0.8 ? C_COLON : C_APOS;
+        put((deckRow + k) * cols + c, chr, hue, (0.95 - 0.35 * k / len) * edge, 0, 4);
+      }
+      const r0 = deckRow + len + 1;
+      if (r0 < rows && hash2(c, Math.floor(skyT * 10 * (reduced ? 0.3 : 1))) < 0.6) put(r0 * cols + c, C_TILDE, P_FOAM, 0.55 * edge, 0, 4);
+      for (let k = 1; k <= fRef; k++) {
+        const r = r0 + k;
+        if (r >= rows) break;
+        if (hash2(c * 3 + k, Math.floor(skyT * 3 * (reduced ? 0.4 : 1)) + (k >> 1)) < 0.3 + 0.4 * k / fRef) continue;
+        put(r * cols + c, k % 2 ? C_BAR : C_COLON, hue, 0.5 * (1 - k / (fRef + 1)) * edge, 0, 4);
+      }
+    }
+  }
+
+  // ---------- Drawing ----------
+  function drawCells(alpha) {
+    counts.fill(0);
+    for (let i = 0; i < nT; i++) counts[ccol[touched[i]]]++;
+    let acc = 0;
+    for (let c = 0; c < NCOLOR; c++) { const n = counts[c]; counts[c] = acc; acc += n; }
+    for (let i = 0; i < nT; i++) { const c = touched[i]; order[counts[ccol[c]]++] = c; }
+    let cur = -1, n = 0, fw = -1;
+    for (let i = 0; i < nT; i++) {
+      const c = order[i];
+      if (cchar[c] === C_SP) continue;
+      const f = ckind[c] & 2;
+      if (f !== fw) { fw = f; ctx.globalAlpha = f ? 1 : alpha; }
+      const cc = ccol[c];
+      if (cc !== cur) { cur = cc; ctx.fillStyle = COLSTR[cc]; }
+      const row = (c / cols) | 0;
+      ctx.fillText(CH[cchar[c]], (c - row * cols) * cw + X0 + layOff[clay[c]], row * ch);
+      n++;
+    }
+    letters = n;
+  }
+
+  let halos = [];
+  function makeHalos() {
+    const R = Math.max(6, cw * 2.4);
+    halos = PAL.map(([r, g, b], p) => {
+      if (!HALO_P.includes(p)) return null;
+      const c = document.createElement('canvas');
+      c.width = c.height = Math.ceil(R * 2);
+      const x = c.getContext('2d'), gr = x.createRadialGradient(R, R, 0, R, R, R);
+      gr.addColorStop(0, 'rgba(255,255,255,0.8)');
+      gr.addColorStop(0.18, `rgba(${r},${g},${b},0.7)`);
+      gr.addColorStop(0.5, `rgba(${r},${g},${b},0.16)`);
+      gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
+      x.fillStyle = gr; x.fillRect(0, 0, c.width, c.height);
+      return c;
+    });
+  }
+  function drawHalos(alpha) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < nT; i++) {
+      const c = touched[i];
+      if (!(ckind[c] & 1)) continue;
+      const img = halos[(ccol[c] / LEVELS) | 0], row = (c / cols) | 0;
+      if (!img) continue;
+      ctx.globalAlpha = clb[c] * (ckind[c] & 2 ? 1 : alpha) * 0.6;
+      ctx.drawImage(img, (c - row * cols + 0.5) * cw + X0 + layOff[clay[c]] - img.width / 2, (row + 0.5) * ch - img.height / 2);
+    }
+    ctx.restore();
+  }
+
+  // Bloom: shrink the frame, remove the background with 'difference', blur, and add it back on top.
+  const glow = document.createElement('canvas'), gctx = glow.getContext('2d');
+  const GLOW_DIV = 5, GLOW_A = 0.8;
+  function drawGlow() {
+    const gw = Math.ceil(W / GLOW_DIV), gh = Math.ceil(H / GLOW_DIV);
+    if (glow.width !== gw || glow.height !== gh) { glow.width = gw; glow.height = gh; }
+    gctx.setTransform(1, 0, 0, 1, 0, 0);
+    gctx.globalCompositeOperation = 'copy';
+    gctx.filter = 'blur(2px)';
+    gctx.drawImage(canvas, 0, 0, gw, gh);
+    gctx.filter = 'none';
+    gctx.globalCompositeOperation = 'difference';
+    gctx.drawImage(bgCan, 0, 0, gw, gh);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = GLOW_A;
+    ctx.drawImage(glow, 0, 0, W, H);
+    ctx.restore();
+  }
+
+  function drawMoonGlow(alpha) {
+    const v = smooth((t - T.MOON) / T.MOON_DUR) * alpha;
+    if (v <= 0) return;
+    const x = moonX + layOff[1], R = moonR * 3.2;
+    const gr = ctx.createRadialGradient(x, moonY, moonR * 0.6, x, moonY, R);
+    gr.addColorStop(0, 'rgba(255,236,200,0.2)');
+    gr.addColorStop(0.4, 'rgba(200,180,255,0.07)');
+    gr.addColorStop(1, 'rgba(200,180,255,0)');
+    ctx.save();
+    ctx.globalAlpha = v;
+    ctx.fillStyle = gr;
+    ctx.fillRect(x - R, moonY - R, R * 2, R * 2);
+    ctx.restore();
+  }
+
+  // Title: big glowing letters typed one by one; the newest letter scrambles first.
+  let typed = 0;
+  function drawTitle(alpha) {
+    if (t < T.TITLE) return;
+    const k = Math.min(TITLE.length, Math.floor((t - T.TITLE) / T.TITLE_CH));
+    const tf = Math.max(14, Math.min(W * 0.88 / (TITLE.length * 0.78), H * 0.07, 66));
+    const adv = tf * 0.78, x0 = W / 2 - adv * (TITLE.length + 0.8) / 2;   // room for the cursor
+    const y = H - Math.max(58, H * 0.085) - tf * 0.5;
+    ctx.save();
+    // A soft dark band behind the letters keeps them readable over the busy reflections.
+    const band = ctx.createLinearGradient(0, y - tf * 1.6, 0, y + tf * 1.1);
+    band.addColorStop(0, 'rgba(4,4,16,0)'); band.addColorStop(0.45, 'rgba(4,4,16,0.55)'); band.addColorStop(1, 'rgba(4,4,16,0)');
+    ctx.globalAlpha = alpha * smooth((t - T.TITLE) / 0.6);
+    ctx.fillStyle = band;
+    ctx.fillRect(0, y - tf * 1.6, W, tf * 2.7);
+    ctx.globalAlpha = alpha;
+    ctx.font = `700 ${tf}px ${MONO}`;
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(90,220,255,0.9)';
+    ctx.shadowBlur = tf * 0.45;
+    ctx.fillStyle = '#d4f6ff';
+    for (let i = 0; i < k; i++) ctx.fillText(TITLE[i], x0 + adv * (i + 0.5), y);
+    if (k < TITLE.length) {
+      if (TITLE[k] !== ' ' && t - T.TITLE - k * T.TITLE_CH > T.TITLE_CH * 0.35) {
+        ctx.fillStyle = '#9fb4ff';
+        ctx.fillText(CH[SCRG[(hash2(k, Math.floor(skyT * 30)) * SCRG.length) | 0]], x0 + adv * (k + 0.5), y);
+      }
+    }
+    // Block cursor after the last typed letter; it blinks once the line is done.
+    if (k < TITLE.length || (skyT % 1) < 0.5) {
+      ctx.fillStyle = 'rgba(160,240,255,0.85)';
+      ctx.fillRect(x0 + adv * Math.min(k + (k < TITLE.length ? 1 : 0), TITLE.length) + adv * 0.18, y + tf * 0.36, adv * 0.64, tf * 0.09);
+    }
+    // A small Korean subtitle fades in after the title.
+    const sv = smooth((t - T.TITLE - TITLE.length * T.TITLE_CH - 0.3) / 0.8);
+    if (sv > 0) {
+      ctx.shadowBlur = tf * 0.3;
+      ctx.globalAlpha = alpha * sv * 0.85;
+      ctx.font = `500 ${Math.max(10, tf * 0.36)}px "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", "Noto Sans TC", sans-serif`;
+      ctx.fillStyle = '#ffc8ec';
+      ctx.shadowColor = 'rgba(255,90,200,0.8)';
+      ctx.fillText('서 울 의  밤', W / 2, y - tf * 0.95);
+    }
+    ctx.restore();
+    if (k > typed) { for (let i = typed; i < k; i++) if (TITLE[i] !== ' ') music('event', 'type', { last: i === TITLE.length - 1 }); typed = k; }
+  }
+
+  function render() {
+    ctx.drawImage(bgCan, 0, 0, W, H);
+    ctx.textBaseline = 'top';
+    ctx.textAlign = 'left';
+    ctx.font = cellFont;
+    const alpha = reduced ? 1 : 1 - smooth((t - T.FADE) / T.FADE_DUR);
+    for (let l = 0; l < 5; l++) layOff[l] = -par * PANL[l] * cw;
+    drawMoonGlow(alpha);
+    stamp++; nT = 0;
+    drawStatic();
+    drawCars();
+    drawFx();
+    drawRiver();
+    drawFountain();
+    drawCells(alpha);
+    ctx.globalAlpha = 1;
+    drawHalos(alpha);
+    drawGlow();
+    drawTitle(alpha);
+  }
+
+  // ---------- Loop, HUD, controls ----------
+  let paused = false, last = performance.now();
+  let par = 0, parTo = 0;   // pointer parallax, -1..1 (eased)
+  let frames = 0, fpsT = last, fps = 0, hudT = 0;
+
+  function phaseName() {
+    let p = PHASES[0][1];
+    for (const [s, nm] of PHASES) if (t >= s) p = nm;
+    return p;
+  }
+  function updateHud(now) {
+    const tail = paused ? 'paused' : `${fps} fps`;
+    const b = Math.round(built / Math.max(1, nStatic) * 100), l = Math.round(lit / Math.max(1, nWinTot) * 100);
+    hudEl.textContent = W < 640 ? `${phaseName()}  built ${b}%  lights ${l}%  ${tail}`
+      : `phase ${phaseName()}  built ${b}%  lights ${l}%  letters ${letters.toLocaleString('en-US')}  ${tail}`;
+    hudT = now;
+  }
+
+  function frame(now) {
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); // no jumps after a hidden tab
+    last = now;
+    if (needResize) resize();
+    if (!paused) {
+      const t1 = t;
+      skyT += dt;
+      if (!reduced) {
+        t += dt;
+        if (t >= T.END) { t = 0; typed = 0; fUser = -1; music('restart'); }
+      }
+      frameNo++;
+      fAmt += ((fountainOn() ? 1 : 0) - fAmt) * Math.min(1, dt * (reduced ? 0.8 : 1.2));
+      updateCars(dt);
+      updateFx(dt);
+      soundCues(t1, t);
+    }
+    if (Math.abs(parTo - par) > 0.002) { par += (parTo - par) * Math.min(1, dt * 1.8); dirty = true; }
+    if (!paused || dirty) { render(); dirty = false; frames++; }
+    if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
+    if (now - hudT >= 250) updateHud(now);
+    requestAnimationFrame(frame);
+  }
+
+  // Fire a sound cue on the frame where the scene clock crosses an animation event.
+  const crossed = (a, b, x) => a < x && x <= b;
+  let litPrev = 0;
+  function soundCues(a, b) {
+    if (!window.AsciiAudio) return;
+    if (crossed(a, b, T.FOUNTAIN) && fUser < 0) music('event', 'fountain', { on: true });
+    if (crossed(a, b, T.MOON + 0.4)) music('event', 'moon');
+    if (crossed(a, b, T.RIDGE)) music('event', 'ridge');
+    if (crossed(a, b, T.NAMSAN + T.NAMSAN_DUR)) music('event', 'namsan');
+    if (crossed(a, b, T.LOTTE)) music('event', 'lotte');
+    if (crossed(a, b, T.LOTTE + T.LOTTE_DUR)) music('event', 'lotteLit');
+    if (crossed(a, b, T.GATE + T.GATE_DUR)) music('event', 'gate');
+    for (let k = 0; k < signs.length; k++) if (crossed(a, b, T.NEON + k * T.NEON_STEP)) music('event', 'neon', { x: (signs[k].c0 * cw + X0) / W });
+    if (crossed(a, b, T.BRIDGE)) music('event', 'bridge');
+    if (crossed(a, b, T.FADE)) music('event', 'fade');
+    if (scrambling > 0 && b < T.FADE) music('event', 'resolve', { n: scrambling });
+    if (lit > litPrev + 2 && b < T.NEON) music('event', 'light');
+    litPrev = lit;
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
+  function replay() {
+    t = T_START; typed = 0; clearFx(); deckShowT = lotteShowT = goldShowT = gateShowT = -99;
+    bFlash.fill(-99); signs.forEach(s => { s.tap = -99; }); fUser = -1; fAmt = reduced ? 1 : 0;
+    paused = false; dirty = true; music('resume'); music('restart');
+  }
+  function toggleFountain() { fUser = fountainOn() ? 0 : 1; music('event', 'fountain', { on: fUser === 1 }); }
+
+  // Hit tests run in each layer's own (parallax-shifted) grid.
+  function tapAt(x, y) {
+    const colL = l => Math.floor((x - X0 - layOff[l]) / cw), row = Math.floor(y / ch);
+    const ready = s => reduced || t >= s;
+    let c = colL(3);
+    if (lotte && ready(T.LOTTE) && row >= lotte.r0 && row <= lotte.r1 && lotte.hw[Math.max(row, lotte.r0 + 1)] >= 0 &&
+        Math.abs(c - lotte.c) <= Math.max(1, lotte.hw[Math.max(row, lotte.r0 + 1)]) + 1) {
+      lotteShowT = skyT; music('event', 'lotteTap', { x: x / W }); return;
+    }
+    if (gate && ready(T.GATE) && row >= gate.r0 && row <= gate.r1 && c >= gate.c0 && c <= gate.c1) {
+      gateShowT = skyT; music('event', 'gateTap'); return;
+    }
+    if (gold && ready(T.GOLD) && row >= gold.r0 - 1 && row <= gold.r1 && c >= gold.c0 - 1 && c <= gold.c1) {
+      goldShowT = skyT; music('event', 'goldTap', { x: x / W }); return;
+    }
+    for (let k = 0; k < signs.length; k++) {
+      const s = signs[k];
+      if (ready(T.NEON + k * T.NEON_STEP) && row >= s.r0 - 1 && row <= s.r1 + 1 && c >= s.c0 - 1 && c <= s.c1 + 1) {
+        s.tap = skyT; s.shift++; music('event', 'neonTap', { x: x / W }); return;
+      }
+    }
+    const c2 = colL(2);
+    if (nt && ready(T.NAMSAN) && row >= nt.r0 - 1 && row <= nt.r1 && Math.abs(c2 - nt.c) <= (row >= nt.dTop + 2 && row <= nt.dBot ? nt.half + 1 : 2)) {
+      deckShowT = skyT; music('event', 'deck', { x: x / W }); return;
+    }
+    if (row > baseRow) { toggleFountain(); return; }
+    if (bldAt && c >= 0 && c < cols && bldAt[c] >= 0) {
+      const b = blds[bldAt[c]];
+      if (row >= b.top && ready(b.start + 1)) { bFlash[b.i] = skyT; music('event', 'bldTap', { x: x / W }); return; }
+    }
+    const mx = moonX + layOff[1];
+    if (ready(T.MOON) && Math.hypot(x - mx, y - moonY) < moonR * 1.4) { shoot(); return; }
+    launch(x - layOff[1], Math.min(y, baseRow * ch - 8 * ch));
+  }
+
+  addEventListener('resize', () => { needResize = true; });
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return; // leave Cmd/Ctrl+R alone
+    if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
+    else if (e.key === 'r' || e.key === 'R') replay();
+    else if (e.key === 'f' || e.key === 'F') toggleFountain();
+  });
+  // A press only counts as a tap if it moved less than 8 px; moving (or dragging a finger) pans the parallax.
+  let downX = 0, downY = 0, pressed = false, dragged = false, tapTimer = 0, tapResumed = false;
+  const setPar = e => { parTo = clamp(e.clientX / W * 2 - 1, -1, 1) * (reduced ? 0.4 : 1); };
+  canvas.addEventListener('pointerdown', e => {
+    pressed = true; dragged = false; downX = e.clientX; downY = e.clientY;
+    if (e.pointerType !== 'mouse') setPar(e);
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (e.pointerType === 'mouse' || pressed) setPar(e);
+    if (pressed && Math.hypot(e.clientX - downX, e.clientY - downY) >= 8) dragged = true;
+  });
+  const ptrOff = () => { pressed = false; parTo = 0; };
+  canvas.addEventListener('pointerleave', ptrOff);
+  canvas.addEventListener('pointercancel', ptrOff);
+  canvas.addEventListener('pointerup', e => {
+    const wasTap = pressed && !dragged;
+    pressed = false;
+    if (e.pointerType !== 'mouse') parTo = 0;
+    if (e.button > 0 || !wasTap) return;
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; if (!tapResumed) togglePause(); return; }
+    tapTimer = setTimeout(() => { tapTimer = 0; }, 280);
+    tapResumed = paused;
+    if (paused) { togglePause(); return; }   // a tap on the paused scene just resumes it
+    tapAt(e.clientX, e.clientY);
+    dirty = true;
+  });
+
+  // Hint language: ?lang= wins, then saved site preference, then browser.
+  let pref = null;
+  try { pref = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (!pref) { try { pref = localStorage.getItem('lang'); } catch (e) {} }
+  if (!pref) pref = navigator.language || 'en';
+  const zh = String(pref).toLowerCase().startsWith('zh');
+  document.documentElement.lang = zh ? 'zh-Hant' : 'en';
+  // Touch screens have no keyboard, and the full hint would not fit on a phone.
+  const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  hintEl.textContent = touch ? (zh ? '點天空放煙火 · 點地標亮燈 · 點橋開關噴泉 · 雙擊暫停' : 'tap sky: fireworks · landmarks: lights · bridge: fountain · double-tap pause')
+                             : (zh ? '點天空放煙火 · 點塔、宮門、霓虹燈看燈光秀 · 點橋或河開關噴泉 · 雙擊/空白鍵 暫停 · R 重播 · M 音樂'
+                                   : 'click sky: fireworks · towers, gate, neon: light shows · bridge or river: fountain · double-click / Space pause · R replay · M music');
+
+  // Score: an original late-night lo-fi piece in D major, 80 bpm, so 8 bars = one 24 s scene loop
+  // (restarted every loop). Soft e-piano sevenths and ninths, a round bass, a brushed swung kit
+  // that enters as the city appears, vinyl crackle and a low city hum. A gayageum-like plucked
+  // voice (bright attack, a little scoop into the note and a slow vibrato that grows on held notes)
+  // plays a pentatonic tune over bars 2-7; the last bar thins out with the fade.
+  if (window.AsciiAudio) AsciiAudio.init({
+    bpm: 32 * 60 / T.END, master: 0.85, reverb: 0.3, reverbTime: 3.2,
+    build(a) {
+      const c = a.ctx, N = AsciiAudio.notes, freq = AsciiAudio.freq, TR = AsciiAudio.transpose, LOOP = 32;
+      const DYN = [0.55, 0.8, 1, 1, 1, 1, 1, 0.45];
+      const dyn = beat => DYN[Math.floor((beat % LOOP) / 4)];
+      const sw = s => s % 2 ? a.beats(0.08) : 0;
+
+      // City hum: a low, slowly breathing noise bed.
+      const len = c.sampleRate * 4, buf = c.createBuffer(1, len, c.sampleRate), dd = buf.getChannelData(0);
+      let b0 = 0;
+      for (let i = 0; i < len; i++) { b0 = 0.97 * b0 + 0.03 * (Math.random() * 2 - 1); dd[i] = b0 * 3; }
+      const src = c.createBufferSource(), fl = c.createBiquadFilter(), hg = c.createGain();
+      src.buffer = buf; src.loop = true; fl.type = 'lowpass'; fl.frequency.value = 260; fl.Q.value = 0.5; hg.gain.value = 0;
+      src.connect(fl); fl.connect(hg); hg.connect(a._out({ bus: 'sfx', pan: 0.1 }, 0.2));
+      src.start(a.time(0));
+      a.every(1, (tt, k) => hg.gain.setTargetAtTime(0.035 + 0.02 * Math.sin(k * 0.37), tt, 0.8));
+
+      // Gayageum-like pluck.
+      const gaya = (tt, note, dur, vel, pan) => {
+        const f = freq(note), out = a._out({ bus: 'music', pan }, 0.4);
+        const lp = c.createBiquadFilter(), g = c.createGain();
+        lp.type = 'lowpass'; lp.Q.value = 2.5;
+        lp.frequency.setValueAtTime(Math.min(12000, f * 9), tt); lp.frequency.setTargetAtTime(f * 2.4, tt, 0.07);
+        g.gain.setValueAtTime(0, tt); g.gain.linearRampToValueAtTime(vel * 0.2, tt + 0.004); g.gain.setTargetAtTime(0, tt + 0.01, Math.max(0.25, dur * 0.4));
+        lp.connect(g); g.connect(out);
+        const end = tt + Math.max(0.6, dur * 1.8) + 0.2;
+        [['sawtooth', 1, 1], ['triangle', 2.003, 0.35]].forEach(([type, m, v]) => {
+          const o = c.createOscillator(), og = c.createGain(), lfo = c.createOscillator(), lg = c.createGain();
+          o.type = type;
+          o.frequency.setValueAtTime(f * m * 0.982, tt); o.frequency.linearRampToValueAtTime(f * m, tt + 0.07);
+          lfo.frequency.value = 5.3; lg.gain.setValueAtTime(0, tt); lg.gain.linearRampToValueAtTime(f * m * 0.011, tt + Math.min(0.7, dur));
+          lfo.connect(lg); lg.connect(o.frequency);
+          og.gain.value = v; o.connect(og); og.connect(lp);
+          o.start(tt); o.stop(end); lfo.start(tt); lfo.stop(end);
+        });
+      };
+      // E-piano: soft triangle pluck with a faint bell tine, strummed.
+      const ep = (tt, notes, dur, vel) => notes.forEach((nt, j) => {
+        const u = tt + j * 0.02;
+        a.pluck(u, nt, dur, { type: 'triangle', vel, pan: -0.3 + j * 0.16, wet: 0.35 });
+        a.bell(u, nt, dur * 0.6, { vel: vel * 0.1, wet: 0.45 });
+      });
+      const PROG = [
+        ['G2', ['B3', 'D4', 'F#4', 'A4']], ['F#2', ['A3', 'C#4', 'E4', 'A4']],
+        ['E2', ['G3', 'B3', 'D4', 'F#4']], ['A2', ['G3', 'B3', 'D4', 'E4']],
+        ['D2', ['F#3', 'A3', 'C#4', 'E4']], ['B1', ['A3', 'C#4', 'D4', 'F#4']],
+        ['E2', ['G3', 'B3', 'D4', 'F#4']], ['A2', ['G3', 'B3', 'D4', 'F#4']]
+      ];
+      a.every(0.5, (tt, s) => {
+        const beat = (s / 2) % LOOP, bar = Math.floor(beat / 4), inBar = beat % 4, v = DYN[bar];
+        const [root, chd] = PROG[bar];
+        tt += sw(s);
+        if (inBar === 0) { ep(tt, chd, 2.6, 0.4 * v); if (bar === 0) a.pad(tt, chd, a.beats(4), { vel: 0.12 }); }
+        if (inBar === 2.5 && bar > 0) ep(tt, chd.slice(1), 1.2, 0.22 * v);
+        if (bar > 0 && bar < 7) {
+          if (inBar === 0) a.bass(tt, root, a.beats(1.3), { vel: 0.5 * v });
+          if (inBar === 1.5) a.bass(tt, TR(root, 7), a.beats(0.8), { vel: 0.34 * v });
+          if (inBar === 3) a.bass(tt, TR(root, 12), a.beats(0.5), { vel: 0.3 * v });
+          if (inBar === 0 || inBar === 2.5) a.kick(tt, 0.4 * v);
+          if (inBar === 1 || inBar === 3) a.noise(tt + 0.012, { dur: 0.22, filter: 'bandpass', freq: 2200, q: 0.6, attack: 0.006, vel: 0.2 * v, wet: 0.2 });
+          if (bar > 1) a.noise(tt, { dur: 0.05, filter: 'bandpass', freq: 7200, q: 0.8, attack: 0.004, vel: (s % 2 ? 0.06 : 0.1) * v, pan: 0.3, wet: 0.05 });
+        } else if (bar === 7 && inBar === 0) a.bass(tt, root, a.beats(3), { vel: 0.3 });
+      });
+      // Vinyl crackle.
+      a.every(0.25, tt => {
+        if (Math.random() < 0.3) a.noise(tt + Math.random() * a.beats(0.25), { dur: 0.006, filter: 'highpass', freq: 3000, vel: 0.04 + Math.random() * 0.05, pan: (Math.random() - 0.5) * 0.6, wet: 0, bus: 'sfx' });
+      });
+      // Pentatonic tune (D E F# A B) on the gayageum voice, bars 2-7, with an octave-down echo now and then.
+      const tune = N('A4:1 B4:.5 D5:1.5 E5:1 | F#5:2 E5:1 D5 | B4:1.5 A4:.5 B4:1 D5 | E5:3 r:1 | A5:1 F#5:.5 E5 D5:1 B4 | D5:4');
+      a.part(tune, (tt, e) => {
+        gaya(tt, e.note, e.sec, 0.62, 0.15);
+        if (e.beats >= 2) gaya(tt + a.beats(1), TR(e.note, -12), e.sec * 0.6, 0.32, -0.25);
+      }, { length: LOOP, offset: 7 });
+
+      // Sound effects in sync with the picture.
+      const SP = AsciiAudio.scale('D6', 'pentatonic', 10);
+      const pan = x => clamp((x * 2 - 1) * 0.8, -0.8, 0.8);
+      const gong = (tt, vel) => {
+        a.bell(tt, 'D3', 5, { vel: vel, bus: 'sfx', wet: 0.6 });
+        a.bell(tt, 'A3', 4, { vel: vel * 0.4, bus: 'sfx', wet: 0.6 });
+        a.bass(tt, 'D2', 2.5, { vel: vel * 0.6, bus: 'sfx' });
+      };
+      const buzz = (tt, x, vel) => {
+        const out = a._out({ bus: 'sfx', pan: pan(x) }, 0.1), g = c.createGain(), bp = c.createBiquadFilter();
+        bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 2;
+        g.gain.setValueAtTime(0, tt); g.gain.linearRampToValueAtTime(vel, tt + 0.01); g.gain.setTargetAtTime(0, tt + 0.12, 0.05);
+        bp.connect(g); g.connect(out);
+        const o = c.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 120; o.connect(bp); o.start(tt); o.stop(tt + 0.5);
+      };
+      a.on('resolve', (a, d, t) => a.noise(t, { dur: 0.012, filter: 'bandpass', freq: 3500 + Math.random() * 3000, q: 4, vel: 0.05, pan: (Math.random() - 0.5) * 0.8, bus: 'sfx', wet: 0.1 }), { gap: 0.07 });
+      a.on('light', (a, d, t) => a.bell(t, SP[(Math.random() * SP.length) | 0], 1.2, { vel: 0.05, bus: 'sfx', wet: 0.6, pan: (Math.random() - 0.5) * 0.8 }), { gap: 0.4 });
+      a.on('moon', (a, d, t) => a.chime(t, 'A5', 3.5, { vel: 0.18 }));
+      a.on('ridge', (a, d, t) => a.whoosh(t, { dur: 2, freq: 180, freqEnd: 700, q: 0.8, vel: 0.12, wet: 0.5 }));
+      a.on('namsan', (a, d, t) => ['D6', 'F#6', 'A6', 'D7'].forEach((n, i) => a.ding(t + i * 0.09, n, { vel: 0.12 - i * 0.015, pan: -0.4 })));
+      a.on('lotte', (a, d, t) => a.sweep(t, T.LOTTE_DUR, { from: 90, to: 900, q: 2.5, attack: T.LOTTE_DUR * 0.9, vel: 0.3, bus: 'sfx', wet: 0.3 }));
+      a.on('lotteLit', (a, d, t) => { a.chime(t, 'D6', 3, { vel: 0.22 }); a.sparkle(t + 0.2, { count: 4, vel: 0.12, notes: SP }); });
+      a.on('gate', (a, d, t) => gong(t, 0.32));
+      a.on('neon', (a, d, t) => buzz(t, d.x || 0.5, 0.06), { gap: 0.08 });
+      a.on('bridge', (a, d, t) => a.whoosh(t, { dur: 1.4, freq: 300, freqEnd: 1600, q: 0.9, vel: 0.14, wet: 0.4 }));
+      a.on('fountain', (a, d, t) => {
+        if (d.on) { a.noise(t, { dur: 2.2, filter: 'bandpass', freq: 500, freqEnd: 2600, q: 0.7, attack: 0.9, vel: 0.22, bus: 'sfx', wet: 0.4 }); a.sparkle(t + 0.4, { count: 5, vel: 0.1, notes: SP }); }
+        else a.noise(t, { dur: 1.2, filter: 'bandpass', freq: 2200, freqEnd: 400, q: 0.7, attack: 0.05, vel: 0.14, bus: 'sfx', wet: 0.3 });
+      }, { gap: 0.3 });
+      a.on('type', (a, d, t) => a.tick(t, { vel: 0.14, bell: !!d.last, note: 'D6' }), { gap: 0.05 });
+      a.on('fade', (a, d, t) => a.sweep(t, T.FADE_DUR, { from: 3000, to: 400, q: 1.2, attack: 0.8, vel: 0.1, bus: 'sfx', wet: 0.6 }));
+      // Taps.
+      a.on('deck', (a, d, t) => {
+        a.whoosh(t, { dur: 0.7, freq: 1500, freqEnd: 5000, q: 1.2, vel: 0.08, pan: pan(d.x), wet: 0.5 });
+        ['D6', 'E6', 'F#6', 'A6', 'B6', 'D7'].forEach((n, i) => a.ding(t + i * 0.07, n, { vel: 0.12 - i * 0.012, pan: pan(d.x) }));
+      }, { gap: 0.3 });
+      a.on('lotteTap', (a, d, t) => { a.whoosh(t, { dur: 0.9, freq: 2000, freqEnd: 600, q: 1, vel: 0.1, pan: pan(d.x), wet: 0.5 }); a.sparkle(t, { count: 6, vel: 0.13, notes: SP, spread: 0.07 }); }, { gap: 0.3 });
+      a.on('goldTap', (a, d, t) => a.chime(t, 'A5', 2.5, { vel: 0.2, pan: pan(d.x) }), { gap: 0.3 });
+      a.on('gateTap', (a, d, t) => gong(t, 0.4), { gap: 0.5 });
+      a.on('neonTap', (a, d, t) => { buzz(t, d.x, 0.08); buzz(t + 0.18, d.x, 0.05); a.pop(t + 0.35, { vel: 0.25, pan: pan(d.x) }); }, { gap: 0.2 });
+      a.on('bldTap', (a, d, t) => { a.bell(t, SP[(Math.random() * 5) | 0], 1.4, { vel: 0.1, bus: 'sfx', pan: pan(d.x), wet: 0.5 }); a.bell(t + 0.12, SP[5 + ((Math.random() * 5) | 0)], 1.4, { vel: 0.08, bus: 'sfx', pan: pan(d.x), wet: 0.5 }); }, { gap: 0.2 });
+      a.on('shoot', (a, d, t) => { a.whoosh(t, { dur: 0.8, freq: 3000, freqEnd: 900, q: 1.5, vel: 0.1, pan: pan(d.x), wet: 0.5 }); a.ding(t + 0.1, 'A6', { vel: 0.08 }); }, { gap: 0.5 });
+      a.on('launch', (a, d, t) => {
+        const dur = Math.max(0.6, Math.min(2, d.dur || 1.4));
+        a.noise(t, { dur, filter: 'bandpass', freq: 700, freqEnd: 2600, q: 16, attack: dur * 0.85, vel: 0.45, pan: pan(d.x), bus: 'sfx', wet: 0.25 });
+      }, { gap: 0.25 });
+      a.on('burst', (a, d, t) => {
+        const p = pan(d.x);
+        a.boom(t, { vel: d.calm ? 0.18 : 0.32, pan: p });
+        for (let i = 0; i < (d.calm ? 4 : 10); i++) a.noise(t + 0.25 + Math.random() * 0.9, { dur: 0.02 + Math.random() * 0.03, filter: 'highpass',
+          freq: 3000 + Math.random() * 3000, vel: 0.08 + Math.random() * 0.1, pan: p + (Math.random() - 0.5) * 0.4, bus: 'sfx', wet: 0.2 });
+      }, { gap: 0.2 });
+    }
+  });
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

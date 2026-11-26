@@ -1,0 +1,1488 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ASCII New York at Night | Alex Li (李翔緯)</title>
+  <meta name="description" content="New York at night drawn entirely with ASCII characters: scrambled letters resolve into a Manhattan skyline with One World Trade Center, the Empire State and Chrysler buildings, flickering neon signs, sweeping searchlights, the Brooklyn Bridge, the Statue of Liberty and their reflections in the harbour. Tap a landmark for its light show, the sky for fireworks, the bridge for traffic. Vanilla JS on a single canvas.">
+  <meta name="theme-color" content="#06071a">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;600;800&display=swap">
+  <style>
+    :root {
+      --bg: #0b1120;
+      --sky: #06071a;
+      --text: #e8e9ff;
+      --muted: #aab0dc;
+      --accent: #818cf8;
+      --mono: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--sky);
+      color: var(--text);
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    canvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100svh;
+      display: block;
+      touch-action: none; /* taps trigger light shows, a drag steers the searchlights; also no double-tap zoom */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .back {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(129, 140, 248, 0.45);
+      background: rgba(30, 27, 75, 0.45);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .back:hover, .back:focus-visible {
+      background: rgba(129, 140, 248, 0.28);
+      border-color: var(--accent);
+      outline: none;
+    }
+    .hud, .hint {
+      position: fixed;
+      z-index: 1;
+      bottom: 12px;
+      color: var(--muted);
+      opacity: 0.78;
+      font: 11px/1.4 var(--mono);
+      white-space: pre;
+      pointer-events: none;
+      max-width: calc(100% - 24px);
+      overflow: hidden;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    }
+    .hud { left: 12px; }
+    .hint {
+      right: 12px;
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    @media (max-width: 640px) {
+      .hud, .hint { font-size: 10px; }
+      .hint { bottom: 30px; } /* stack above the HUD on narrow screens */
+    }
+  </style>
+</head>
+<body>
+  <h1 class="sr-only">ASCII New York at Night</h1>
+  <a class="back" href="./">← ASCII</a>
+  <canvas id="c" role="img" aria-label="Animated New York skyline at night drawn with ASCII characters: scrambled letters resolve into One World Trade Center, the Empire State Building with colour-changing spire lights, the Chrysler Building's gold crown, neon signs, sweeping searchlights, the Brooklyn Bridge with moving cars and the Statue of Liberty, all reflected in the harbour, before the title NEW YORK CITY types out"></canvas>
+  <div class="hud" id="hud" aria-hidden="true"></div>
+  <div class="hint" id="hint"></div>
+
+<script src="ascii-audio.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  // ---------- Timeline (seconds of scene time) ----------
+  const T = {
+    SKY: 0.2,                          // stars and moon resolve out of scrambled letters
+    FAR: 1.0,                          // hazy far skyline
+    CITY: 1.8, CITY_DUR: 3.2,          // Manhattan blocks, left to right
+    WTC: 4.4, WTC_DUR: 1.5,            // One World Trade Center
+    ESB: 5.8, ESB_DUR: 1.5,            // Empire State Building
+    CHR: 7.2, CHR_DUR: 1.5,            // Chrysler Building
+    FRONT: 8.0, FRONT_DUR: 1.4,        // low blocks along the water
+    NEON: 9.0, NEON_DUR: 2.0,          // signs flicker on one by one
+    BEAM: 9.6, BEAM_IN: 1.2,           // searchlights
+    BRIDGE: 10.4, BRIDGE_DUR: 2.0,     // Brooklyn Bridge
+    CARS: 11.8,
+    LIB: 12.2, LIB_DUR: 1.8,           // Statue of Liberty, last
+    REFL: 13.0, REFL_DUR: 2.0,         // reflections settle
+    TITLE: 14.6, HOLD: 17.6,           // title types out, then the city just glows
+    SHOW: 17.8, SHOW_END: 20.4,        // a few fireworks
+    FADE: 21.2, FADE_DUR: 2.2, END: 24.0
+  };
+  const PHASES = [[0, 'harbour'], [T.CITY, 'skyline'], [T.WTC, 'one wtc'], [T.ESB, 'empire state'], [T.CHR, 'chrysler'],
+                  [T.NEON, 'neon'], [T.BRIDGE, 'bridge'], [T.LIB, 'liberty'], [T.REFL + 0.6, 'reflections'],
+                  [T.TITLE, 'title'], [T.HOLD, 'night'], [T.FADE, 'fade']];
+  const PHASE_ZH = { harbour: '港灣', skyline: '天際線', 'one wtc': '世貿一號', 'empire state': '帝國大廈', chrysler: '克萊斯勒',
+                     neon: '霓虹', bridge: '布魯克林橋', liberty: '自由女神', reflections: '倒影', title: '標題', night: '夜色', fade: '淡出' };
+
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T_START = reduced ? 18.0 : 0;   // reduced motion: open (and stay) on the finished, lit city
+  const SCR = 0.55;                     // seconds of scrambled characters before a cell resolves
+  const TAP_SHOW = 5;                   // seconds of light show after a tap on a landmark
+  const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  // Stateless integer hash -> [0, 1), for per-cell flicker without storing state.
+  function hash2(a, b) {
+    let h = Math.imul(a ^ Math.imul(b, 0x9E3779B1), 0x85EBCA6B);
+    h ^= h >>> 13; h = Math.imul(h, 0xC2B2AE35); h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
+  }
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+
+  // ---------- Characters ----------
+  const CH = [];
+  const ci = s => { let i = CH.indexOf(s); if (i < 0) { CH.push(s); i = CH.length - 1; } return i; };
+  const C_SP = ci(' '); // occluder: hides what is behind, never drawn
+  const C_SL = ci('/'), C_BS = ci('\\'), C_BAR = ci('|'), C_HASH = ci('#'), C_EQ = ci('='), C_US = ci('_'),
+        C_DASH = ci('-'), C_DOT = ci('.'), C_STAR = ci('*'), C_PLUS = ci('+'), C_o = ci('o'), C_O = ci('O'),
+        C_COLON = ci(':'), C_LB = ci('['), C_RB = ci(']'), C_CARET = ci('^'), C_v = ci('v'), C_A = ci('A'),
+        C_LT = ci('<'), C_GT = ci('>'), C_TILDE = ci('~'), C_AT = ci('@'), C_0 = ci('0'), C_T = ci('T'),
+        C_LP = ci('('), C_RP = ci(')'), C_QUOTE = ci("'"), C_i = ci('i');
+  const SCRAM = [...'ABCDEFGHJKLMNPRSTUVXYZ0123456789#$%&@*+=?<>/\\'].map(ci);
+  const NSCR = SCRAM.length;
+  const TITLE = 'NEW  YORK  CITY';
+  const SUB = '- the city that never sleeps -';
+  const SUB_C = [...SUB].map(ci);
+  const LIB_ART = [
+    '        (               ',
+    '       ( )              ',
+    '       (@)              ',
+    '       \\@/              ',
+    '       |#|              ',
+    '        #       .       ',
+    '       (#)   \\  |  /    ',
+    '       |#\\    \\ | /     ',
+    '        \\#\\  -\\===/--   ',
+    '         \\#\\ (@@@)      ',
+    '          \\#\\(@@@)      ',
+    '          |#\\\\@@/       ',
+    '          \\##\\|/        ',
+    '           |\\::/|___    ',
+    '           |:\\::|===|   ',
+    '           |::\\:|=IV|   ',
+    '           |:::\\|===|   ',
+    '           |::::\\\\__/   ',
+    '           |:::|::|     ',      // robe (repeated on tall screens)
+    '          /::::|:::\\    ',
+    '         /:::::|::::\\   ',
+    '        /______|_____\\  ',
+    '        ##############  ',
+    '         ============   ',
+    '         #|--------|#   ',      // pedestal (pair repeated on tall screens)
+    '         =|========|=   ',
+    '         #|########|#   ',
+    '         =\\--------/=   ',
+    '        /############\\  ',
+    '       /==============\\ ',
+    '      ##################'
+  ];
+  LIB_ART.join('').split('').forEach(ci);
+  [...TITLE, '_'].forEach(ci);
+
+  // ---------- Palette (entry x brightness level) ----------
+  const LEVELS = 16;
+  const PAL = [];
+  const pal = (r, g, b) => { PAL.push([r, g, b]); return PAL.length - 1; };
+  const P_STAR = pal(200, 210, 255), P_MOON = pal(255, 216, 140), P_MOONDK = pal(110, 112, 170);
+  const P_SCR = pal(150, 170, 255);
+  const P_FAR = pal(84, 90, 168), P_FARLIT = pal(255, 170, 100);
+  const P_BLD = pal(118, 130, 232), P_BLD2 = pal(150, 154, 240), P_FILL = pal(92, 100, 190), P_WDARK = pal(66, 72, 132);
+  const P_WIN = [pal(255, 196, 100), pal(255, 230, 172), pal(170, 208, 255)];
+  const P_ROOF = pal(160, 140, 190);
+  const P_WTC = pal(170, 205, 255), P_ESB = pal(236, 216, 172), P_CHR = pal(214, 224, 246);
+  const P_GOLD = pal(255, 196, 84), P_GOLDHI = pal(255, 232, 150);
+  const P_LIB = pal(90, 226, 176), P_LIBHI = pal(150, 255, 214), P_PED = pal(222, 188, 128);
+  const P_FLAME = pal(255, 130, 40), P_TORCH = pal(255, 196, 70), P_WHITE = pal(255, 255, 255);
+  const CROWN = [pal(80, 255, 140), pal(255, 255, 255), pal(90, 150, 255), pal(255, 70, 90), pal(255, 200, 70), pal(200, 90, 255), pal(70, 230, 255)];
+  const P_BEACON = pal(255, 50, 50);
+  const NEON = { pink: pal(255, 80, 180), cyan: pal(70, 235, 255), yellow: pal(255, 228, 70), orange: pal(255, 150, 50),
+                 red: pal(255, 70, 70), green: pal(90, 255, 140) };
+  const P_BRIDGE = pal(222, 186, 132), P_CABLE = pal(150, 160, 222), P_DECK = pal(132, 138, 205), P_LAMP = pal(255, 212, 130);
+  const P_HEAD = pal(255, 248, 225), P_TAIL = pal(255, 50, 60), P_TAXI = pal(255, 205, 40);
+  const P_CARS = [pal(120, 160, 255), pal(230, 230, 240), pal(255, 100, 100), pal(120, 230, 160)];
+  const P_WATER = pal(72, 84, 170), P_SUB = pal(170, 182, 255);
+  const P_ROCKET = pal(255, 225, 170);
+  const P_FW = [pal(255, 70, 80), pal(255, 196, 70), pal(60, 232, 210), pal(255, 80, 220), pal(100, 150, 255), pal(240, 240, 255)];
+  const HALO_P = [P_WHITE, P_FLAME, P_TORCH, ...CROWN, P_BEACON, ...Object.values(NEON), P_LAMP, P_HEAD, P_TAIL, P_ROCKET, P_GOLDHI];
+
+  // Colour strings cached per (palette entry, brightness level).
+  const NCOLOR = PAL.length * LEVELS;
+  const COLSTR = new Array(NCOLOR);
+  PAL.forEach(([r, g, b], p) => {
+    for (let l = 0; l < LEVELS; l++) {
+      // Top levels overshoot 1 and wash toward white, so lit characters read as glowing.
+      const m = 0.26 + 1.06 * l / (LEVELS - 1), w = Math.max(0, m - 1) * 160;
+      const lift = v => Math.min(255, v * m + w) | 0;
+      COLSTR[p * LEVELS + l] = `rgb(${lift(r)},${lift(g)},${lift(b)})`;
+    }
+  });
+
+  // ---------- Canvas, grid, layout ----------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const hudEl = document.getElementById('hud');
+  const hintEl = document.getElementById('hint');
+
+  let W = 0, H = 0, fs = 8, cw = 5, ch = 9, cols = 0, rows = 0, U = 500;
+  let hr = 0, top0 = 0, skyH = 0, hwU = 4, rD = 0, rTT = 0, rTB = 0, tl1 = 0, tl2 = 0, bw = 4, beamOy = 0;
+  let cellFont = '', bgGrad = null, hazeGrad = null, moonGlow = null, moonX = 0, moonY = 0, moonR = 0;
+  let stampA, cchar, ccol, ckind, clb, touched, order, nT = 0, stamp = 0;
+  const counts = new Uint32Array(NCOLOR);
+  let needResize = true, dirty = true;
+
+  // Structure cells, in back-to-front draw order: sky [0, nSky), skyline [nSky, nA), bridge [nA, nS).
+  const K_SOLID = 0, K_WIN = 1, K_NEON = 2, K_CROWN = 3, K_TORCH = 4, K_BEACON = 5, K_LAMP = 6, K_STAR = 7, K_GLOW = 8;
+  const G_LIB = 1, G_WTC = 2, G_ESB = 3, G_CHR = 4;
+  let nS = 0, nSky = 0, nA = 0, sC, sCh, sP, sB, sT, sY, sG, sK, sOn, sAux, sLit;
+  let nWinTotal = 0, boxes = [], signs = [], signLv = new Float32Array(0), torchC = -1, torchR = -1, libMask = null;
+  let titleX0 = 0, titleStep = 10, titleSize = 30, titleY = 0;
+
+  let B = null;
+  function newBuilder() { return { c: [], ch: [], p: [], b: [], t: [], y: [], g: [], k: [], on: [], aux: [], lit: [] }; }
+  function st(col, row, chr, p, b, t0, g, y, k, on, aux, lit) {
+    if (col < 0 || col >= cols || row < 0 || row >= rows) return false;
+    B.c.push(row * cols + col); B.ch.push(chr); B.p.push(p); B.b.push(b); B.t.push(t0);
+    B.g.push(g || 0); B.y.push(y || 0); B.k.push(k || 0); B.on.push(on || 0); B.aux.push(aux || 0); B.lit.push(lit || 0);
+    return true;
+  }
+  // A window: dark until its light-on time; 15% never light up.
+  function win(c, row, dk, lit, t0, key, cool, g, y) {
+    const h1 = hash2(key, 101), h2 = hash2(key, 202), h3 = hash2(key, 303);
+    const never = h1 < 0.15;
+    const on = never ? 1e9 : t0 + 0.25 + h2 * Math.max(0.5, Math.min(4.5, T.REFL - t0 - 0.5));
+    const p = cool ? P_WIN[2] : P_WIN[h3 < 0.72 ? 0 : 1];
+    if (st(c, row, dk, P_WDARK, 0.42, t0, g, y, K_WIN, on, p, lit) && !never) nWinTotal++;
+  }
+
+  function resize() {
+    needResize = false;
+    W = canvas.clientWidth || innerWidth;
+    H = canvas.clientHeight || innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    fs = clamp(Math.round(Math.min(W, H * 0.9) / 100), 7, 12);
+    cellFont = `${fs}px ${MONO}`;
+    ctx.font = cellFont;
+    cw = ctx.measureText('M').width || fs * 0.6;
+    ch = fs * 1.12;
+    cols = Math.ceil(W / cw);
+    rows = Math.ceil(H / ch);
+    const n = cols * rows;
+    stampA = new Uint32Array(n);
+    cchar = new Uint8Array(n); ccol = new Uint16Array(n); ckind = new Uint8Array(n); clb = new Float32Array(n);
+    touched = new Int32Array(n); order = new Int32Array(n); stamp = 0;
+
+    U = Math.min(W * 0.92, H * 0.95);
+    hr = Math.round(rows * (W < H ? 0.7 : 0.68));            // waterline
+    top0 = Math.max(3, Math.round(rows * 0.06));
+    skyH = hr - top0;
+    hwU = Math.max(3, Math.round(U * 0.045 / cw));             // landmark half-width unit, in columns
+    const narrow = W < 640;
+    tl1 = rows - (narrow ? 12 : 8);                            // big title row
+    tl2 = tl1 + 3;                                             // subtitle row
+    rD = hr + Math.max(4, Math.round((tl1 - 4 - hr) * 0.5));   // bridge roadway
+    rTT = hr - Math.max(3, Math.round(skyH * (W < H ? 0.1 : 0.17)));           // bridge tower tops
+    rTB = rD + 4;
+    bw = Math.max(5, Math.round(U * 0.05 / cw));
+    beamOy = (hr - Math.round(skyH * 0.2)) * ch;
+
+    titleSize = Math.max(14, Math.min(W * 0.8 / (TITLE.length * 0.72), H * 0.045));
+    titleStep = titleSize * 0.62 * 1.15;
+    titleX0 = W / 2 - titleStep * TITLE.length / 2;
+    titleY = (tl1 + 0.5) * ch;
+
+    const yH = hr * ch, fH = clamp(yH / H, 0.3, 0.95);
+    bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, '#04050d');
+    bgGrad.addColorStop(fH * 0.55, '#0a0b22');
+    bgGrad.addColorStop(fH, '#1c1842');
+    bgGrad.addColorStop(Math.min(1, fH + 0.02), '#0c0b1f');
+    bgGrad.addColorStop(1, '#05050f');
+    hazeGrad = ctx.createRadialGradient(W * 0.45, yH, 0, W * 0.45, yH, Math.max(W, H) * 0.65);
+    hazeGrad.addColorStop(0, 'rgba(120,90,230,0.20)');
+    hazeGrad.addColorStop(0.45, 'rgba(90,70,200,0.08)');
+    hazeGrad.addColorStop(1, 'rgba(80,60,190,0)');
+
+    makeHalos();
+    buildScene();
+    seedCars();
+    dirty = true;
+  }
+
+  // ---------- Scene construction (per resize) ----------
+  function buildScene() {
+    const rnd = mulberry32(1931);
+    nWinTotal = 0; boxes = []; signs = [];
+    libMask = new Uint8Array(cols * rows);
+    const cW = Math.round(cols * 0.2), cE = Math.round(cols * 0.42), cC = Math.round(cols * 0.6);
+    const tx1 = Math.round(cols * 0.1), tx2 = Math.round(cols * 0.56);
+
+    // Skyline, back to front.
+    B = newBuilder();
+    for (let c = 0; c < cols; c++) {                                    // harbour edge with lamps
+      const t0 = T.SKY + 0.2 + c / cols * 0.9;
+      if (c % 12 === 6) st(c, hr, C_i, P_LAMP, 0.8, t0, 0, 0, K_LAMP);
+      else st(c, hr, c % 2 ? C_US : C_DOT, P_DECK, 0.36, t0);
+    }
+    for (let x = -2; x < cols + 2;) {                                   // hazy far layer
+      const w = 3 + ((rnd() * 6) | 0), h = Math.max(2, Math.round(skyH * (0.07 + 0.13 * rnd())));
+      farBlock(x, w, h, T.FAR + rnd() * 1.2);
+      x += w;
+    }
+    const wMin = Math.max(5, Math.round(hwU * 1.1)), wVar = Math.max(4, Math.round(hwU * 1.4));
+    for (let x = -1; x < cols + 1;) {                                   // Manhattan blocks
+      const w = wMin + ((rnd() * wVar) | 0);
+      const xf = (x + w / 2) / cols;
+      const prof = 0.16 + 0.24 * Math.exp(-(((xf - 0.2) / 0.1) ** 2)) + 0.3 * Math.exp(-(((xf - 0.52) / 0.15) ** 2))
+                   - 0.08 * smooth((xf - 0.72) / 0.1);
+      const h = Math.round(skyH * clamp(prof * (0.55 + 0.75 * rnd()), 0.05, 0.6));
+      const tb = T.CITY + clamp(xf, 0, 1) * T.CITY_DUR * 0.6 + rnd() * T.CITY_DUR * 0.3;
+      if (h >= 3) block(x, w, h, tb, rnd, 1);
+      x += w + (rnd() < 0.25 ? 1 : 0);
+    }
+    buildWTC(cW, T.WTC, T.WTC_DUR);
+    buildESB(cE, T.ESB, T.ESB_DUR);
+    buildCHR(cC, T.CHR, T.CHR_DUR);
+    for (let x = -1; x < cols + 1;) {                                   // low blocks along the water
+      const w = Math.max(5, Math.round(hwU * 0.9)) + ((rnd() * Math.max(4, hwU * 1.2)) | 0);
+      const h = Math.max(3, Math.round(skyH * (0.05 + 0.1 * rnd())));
+      box(x, w, hr - 1, h, T.FRONT + clamp(x / cols, 0, 1) * T.FRONT_DUR * 0.7 + rnd() * 0.3, rnd, 2);
+      if (w >= 6 && rnd() < 0.3) waterTower(x + 1 + ((rnd() * (w - 4)) | 0), hr - 1 - h, T.FRONT + T.FRONT_DUR);
+      x += w + (rnd() < 0.4 ? 1 + ((rnd() * 3) | 0) : 0);
+    }
+    const lib = buildLiberty(Math.round(cols * 0.85));
+    buildSigns(rnd, [[tx1 - bw, tx1 + bw], [tx2 - bw, tx2 + bw], lib]);
+    const skyline = B;
+
+    // Highest structure per column, so stars only fill open sky.
+    const skyTop = new Int16Array(cols).fill(hr);
+    for (let i = 0; i < skyline.c.length; i++) {
+      const c = skyline.c[i] % cols, r = (skyline.c[i] / cols) | 0;
+      if (r < skyTop[c]) skyTop[c] = r;
+    }
+
+    // Sky: moon, then stars.
+    B = newBuilder();
+    const mcx = Math.round(cols * 0.73), mcy = top0 + Math.round(skyH * 0.1);
+    const rx = Math.max(3, Math.round(U * 0.045 / cw)), ry = rx * cw / ch;
+    moonX = (mcx + 0.5) * cw; moonY = (mcy + 0.5) * ch; moonR = rx * cw;
+    moonGlow = ctx.createRadialGradient(moonX, moonY, 0, moonX, moonY, moonR * 3.2);
+    moonGlow.addColorStop(0, 'rgba(255,210,140,0.16)');
+    moonGlow.addColorStop(0.4, 'rgba(255,200,130,0.05)');
+    moonGlow.addColorStop(1, 'rgba(255,200,130,0)');
+    const inMoon = (c, r) => ((c - mcx) / (rx + 1)) ** 2 + ((r - mcy) / (ry + 1)) ** 2 <= 1;
+    for (let dy = -Math.ceil(ry); dy <= Math.ceil(ry); dy++) {
+      for (let dx = -rx; dx <= rx; dx++) {
+        const d1 = (dx / rx) ** 2 + (dy / ry) ** 2;
+        if (d1 > 1) continue;
+        const d2 = ((dx + 0.5 * rx) / rx) ** 2 + ((dy + 0.22 * ry) / ry) ** 2;   // shadow disc, up-left
+        const t0 = T.SKY + 0.3 + hash2(dx + 50, dy + 50) * 0.9;
+        if (d2 < 0.82) { if ((dx + dy) % 2 === 0) st(mcx + dx, mcy + dy, C_DOT, P_MOONDK, 0.35, t0); else st(mcx + dx, mcy + dy, C_SP, 0, 0, t0); continue; }
+        const q = d2 - 0.82;
+        st(mcx + dx, mcy + dy, d1 > 0.8 ? C_o : q > 0.45 ? C_AT : q > 0.2 ? C_0 : C_o, P_MOON, 0.7 + Math.min(0.3, q), t0);
+      }
+    }
+    for (let c = 0; c < cols; c++) {
+      for (let r = 0; r < skyTop[c] - 2; r++) {
+        const h = hash2(c * 7 + 3, r * 13 + 1);
+        if (h > 0.013 || inMoon(c, r)) continue;
+        const chr = h < 0.0015 ? C_STAR : h < 0.005 ? C_PLUS : h < 0.008 ? C_QUOTE : C_DOT;
+        st(c, r, chr, P_STAR, 0.5, T.SKY + 0.4 + hash2(c, r) * 1.4, 0, 0, K_STAR, 0, (hash2(r, c) * 4096) | 0);
+      }
+    }
+    const sky = B;
+
+    // Bridge: cables and stays, deck, then the stone towers in front.
+    B = newBuilder();
+    buildBridge(tx1, tx2);
+    const bridge = B;
+    B = null;
+
+    // Merge into typed arrays.
+    const parts = [sky, skyline, bridge];
+    nSky = sky.c.length; nA = nSky + skyline.c.length; nS = nA + bridge.c.length;
+    const cat = (k, Ctor) => { const a = new Ctor(nS); let o = 0; for (const p of parts) { a.set(p[k], o); o += p[k].length; } return a; };
+    sC = cat('c', Int32Array); sCh = cat('ch', Uint8Array); sP = cat('p', Uint16Array); sB = cat('b', Float32Array);
+    sT = cat('t', Float32Array); sY = cat('y', Float32Array); sG = cat('g', Uint8Array); sK = cat('k', Uint8Array);
+    sOn = cat('on', Float32Array); sAux = cat('aux', Uint16Array); sLit = cat('lit', Uint8Array);
+    signLv = new Float32Array(signs.length);
+  }
+
+  function farBlock(x0, w, h, tb) {
+    const bot = hr - 1, top = bot - h + 1;
+    for (let row = top; row <= bot; row++) {
+      for (let c = x0; c < x0 + w; c++) {
+        const t0 = tb + (bot - row) / h * 0.5 + hash2(c, row) * 0.3;
+        if (row === top) { st(c, row, C_US, P_FAR, 0.4, t0); continue; }
+        const hh = hash2(c * 3, row * 5);
+        if (hh < 0.07) win(c, row, C_DOT, C_DOT, t0, c * 977 + row, false);
+        else st(c, row, (c + row) % 3 ? C_SP : C_COLON, P_FAR, 0.3, t0);
+      }
+    }
+  }
+
+  // A rectangular block: roofline, walls and one of three window styles; layer 2 is the brighter front row.
+  function box(x0, w, bot, h, tb, rnd, layer) {
+    const top = bot - h + 1, style = (rnd() * 3) | 0, cool = rnd() < 0.22, P_O = layer === 2 ? P_BLD2 : P_BLD;
+    const litHash = rnd() < 0.5, seed = (rnd() * 1e6) | 0;
+    for (let row = top; row <= bot; row++) {
+      const y = (bot - row) / Math.max(1, h);
+      for (let c = x0; c < x0 + w; c++) {
+        const t0 = tb + y * 0.55 + hash2(c, row) * 0.2;
+        if (row === top) { st(c, row, (c === x0 || c === x0 + w - 1) ? C_DOT : C_US, P_O, 0.62, t0); continue; }
+        if (c === x0 || c === x0 + w - 1) { st(c, row, C_BAR, P_O, 0.55, t0); continue; }
+        const d = c - x0 - 1, rr = row - top - 1;
+        if (style === 0) {
+          const m = d % 3;
+          if (m === 0 && c + 1 <= x0 + w - 2) win(c, row, C_LB, C_LB, t0, seed + d * 31 + rr * 977, cool);
+          else if (m === 1) win(c, row, C_RB, C_RB, t0, seed + (d - 1) * 31 + rr * 977, cool);
+          else st(c, row, C_SP, 0, 0, t0);
+        } else if (style === 1) {
+          if (d % 2 === 0) st(c, row, C_BAR, P_FILL, 0.4, t0);
+          else win(c, row, C_COLON, litHash && hash2(c, row) < 0.4 ? C_HASH : C_COLON, t0, seed + d * 31 + rr * 977, cool);
+        } else {
+          if (rr % 2 === 0 && d % 2 === 1) win(c, row, C_EQ, C_EQ, t0, seed + d * 31 + rr * 977, cool);
+          else st(c, row, C_SP, 0, 0, t0);
+        }
+      }
+    }
+  }
+
+  function block(x0, w, h, tb, rnd, layer) {
+    const bot = hr - 1;
+    let h1 = h;
+    if (h > skyH * 0.3 && w >= 8 && rnd() < 0.55) h1 = Math.round(h * (0.6 + 0.2 * rnd()));
+    box(x0, w, bot, h1, tb, rnd, layer);
+    let topRow = bot - h1 + 1, tw = w, tx = x0;
+    if (h1 < h) {                                                       // setback tower on top
+      const s = 1 + ((rnd() * Math.max(1, (w - 5) / 2)) | 0);
+      tx = x0 + s; tw = w - 2 * s;
+      box(tx, tw, topRow - 1, h - h1, tb + 0.35, rnd, layer);
+      topRow = bot - h + 1;
+    }
+    const r = rnd();
+    if (tw >= 5 && r < 0.45) waterTower(tx + 1 + ((rnd() * (tw - 4)) | 0), topRow - 1, tb + 0.6);
+    else if (h > skyH * 0.25 && r < 0.85) antenna(tx + (tw >> 1), topRow - 1, 2 + ((rnd() * 3) | 0), tb + 0.6, rnd);
+  }
+
+  function waterTower(c, row, t0) {
+    const art = [[C_SL, C_CARET, C_BS], [C_LB, C_US, C_RB], [C_SL, -1, C_BS]];
+    for (let k = 0; k < 3; k++) for (let j = 0; j < 3; j++) {
+      const chr = art[k][j];
+      if (chr >= 0) st(c + j, row - 2 + k, chr, P_ROOF, 0.55, t0 + (2 - k) * 0.08);
+    }
+  }
+  function antenna(c, row, len, t0, rnd) {
+    for (let k = 0; k < len; k++) st(c, row - k, C_BAR, P_BLD, 0.5, t0 + k * 0.05);
+    st(c, row - len, C_STAR, P_BEACON, 1, t0 + len * 0.05, 0, 0, K_BEACON, 0, (rnd() * 40) | 0);
+  }
+
+  // One World Trade Center: square podium, tapering faceted shaft, antenna with a white beacon.
+  function buildWTC(cx, tb, dur) {
+    const bot = hr - 1, hb = hwU, ht = Math.max(2, Math.round(hwU * 0.5));
+    const roof = bot - Math.round(skyH * 0.72), ant = Math.max(1, bot - Math.round(skyH * 0.93));
+    const Ht = bot - ant, pod = bot - Math.max(2, Math.round((bot - roof) * 0.1));
+    const hwAt = row => row >= pod ? hb : hb - (hb - ht) * (pod - row) / Math.max(1, pod - roof);
+    const tt = (row, c) => tb + (bot - row) / Ht * dur * 0.85 + hash2(c, row * 3) * dur * 0.12;
+    for (let row = bot; row >= roof; row--) {
+      const hw = Math.round(hwAt(row)), hwUp = Math.round(hwAt(row - 1)), y = (bot - row) / Ht;
+      const fl = row > pod ? 0 : (pod - row) / Math.max(1, pod - roof), line = Math.round(hb * (1 - fl));
+      for (let d = -hw; d <= hw; d++) {
+        const c = cx + d, t0 = tt(row, c);
+        if (row === roof) st(c, row, d === -hw ? C_LB : d === hw ? C_RB : C_EQ, P_WTC, 0.85, t0, G_WTC, y);
+        else if (row === pod) st(c, row, d === -hw || d === hw ? C_BAR : C_EQ, P_WTC, 0.7, t0, G_WTC, y);
+        else if (d === -hw) st(c, row, hw > hwUp ? C_SL : C_BAR, P_WTC, 0.75, t0, G_WTC, y);
+        else if (d === hw) st(c, row, hw > hwUp ? C_BS : C_BAR, P_WTC, 0.75, t0, G_WTC, y);
+        else if (row > pod) st(c, row, d % 2 ? C_SP : C_BAR, P_FILL, 0.4, t0, G_WTC, y);
+        else if (d === -line && line > 0) st(c, row, C_SL, P_WTC, 0.85, t0, G_WTC, y);
+        else if (d === line && line > 0) st(c, row, C_BS, P_WTC, 0.85, t0, G_WTC, y);
+        else if (d & 1) win(c, row, C_COLON, hash2(c, row) < 0.3 ? C_HASH : C_COLON, t0, c * 131 + row * 7, true, G_WTC, y);
+        else st(c, row, C_BAR, P_WTC, 0.42, t0, G_WTC, y);
+      }
+    }
+    const ring = roof - Math.round((roof - ant) * 0.35);
+    for (let row = roof - 1; row > ant; row--) st(cx, row, row === ring ? C_PLUS : C_BAR, P_WTC, 0.65, tb + dur * 0.9, G_WTC, (bot - row) / Ht);
+    st(cx, ant, C_o, P_WHITE, 1, tb + dur, G_WTC, 1, K_BEACON, 0, 7);
+    boxes.push({ g: G_WTC, c0: cx - hb - 1, c1: cx + hb + 1, r0: ant, r1: bot, t: tb + dur * 0.5 });
+  }
+
+  // Empire State: wide base, setbacks, piered shaft, colour-lit crown and mast.
+  function buildESB(cx, tb, dur) {
+    const bot = hr - 1, tip = Math.max(1, bot - Math.round(skyH * 0.82)), Ht = bot - tip;
+    const S = [[0.1, 1], [0.14, 0.82], [0.6, 0.62], [0.64, 0.48], [0.68, 0.36]];
+    const hwAt = y => {
+      for (const [yt, f] of S) if (y < yt) return Math.max(1, Math.round(hwU * f));
+      if (y < 0.8) return Math.max(1, Math.round(hwU * (0.3 - 0.16 * (y - 0.68) / 0.12)));
+      if (y < 0.84) return 1;
+      return 0;
+    };
+    for (let row = bot; row >= tip; row--) {
+      const y = (bot - row) / Ht, yUp = (bot - row + 1) / Ht, hw = hwAt(y), hwUp = hwAt(yUp);
+      const t0b = tb + y * dur * 0.85;
+      for (let d = -hw; d <= hw; d++) {
+        const c = cx + d, t0 = t0b + hash2(c, row * 5) * dur * 0.12;
+        if (y >= 0.84) { st(c, row, row === tip ? C_o : C_BAR, row === tip ? P_BEACON : P_ESB, row === tip ? 1 : 0.62, t0, G_ESB, y, row === tip ? K_BEACON : 0, 0, 13); continue; }
+        if (y >= 0.68) {                                                // crown
+          const edge = d === -hw ? (hw > hwUp ? C_SL : C_BAR) : d === hw ? (hw > hwUp ? C_BS : C_BAR) : -1;
+          st(c, row, edge >= 0 ? edge : (row % 2 ? C_HASH : C_COLON), CROWN[0], 0.9, t0, G_ESB, y, K_CROWN);
+          continue;
+        }
+        if (hw > hwUp) { st(c, row, d === -hw ? C_SL : d === hw ? C_BS : C_EQ, P_ESB, 0.7, t0, G_ESB, y); continue; }
+        if (d === -hw || d === hw) { st(c, row, C_BAR, P_ESB, 0.62, t0, G_ESB, y); continue; }
+        if ((d + hw) % 2 === 0) st(c, row, C_BAR, P_ESB, 0.42, t0, G_ESB, y);
+        else win(c, row, C_COLON, hash2(c, row) < 0.3 ? C_HASH : C_COLON, t0, c * 173 + row * 11, false, G_ESB, y);
+      }
+    }
+    boxes.push({ g: G_ESB, c0: cx - hwU - 1, c1: cx + hwU + 1, r0: tip, r1: bot, t: tb + dur * 0.5 });
+  }
+
+  // Chrysler: piered shaft, eagle row, gold terraced crown of sunburst arches, needle spire.
+  function buildCHR(cx, tb, dur) {
+    const bot = hr - 1, hw = Math.max(3, Math.round(hwU * 0.75));
+    const eagle = bot - Math.round(skyH * 0.46);
+    const crownRows = 2 * (hw - 1) + 1, spire = Math.max(3, Math.round(skyH * 0.11));
+    const tip = Math.max(1, eagle - crownRows - spire), Ht = bot - tip;
+    const tt = (row, c) => tb + (bot - row) / Ht * dur * 0.85 + hash2(c, row * 9) * dur * 0.12;
+    const base = bot - Math.round((bot - eagle) * 0.15);
+    for (let row = bot; row > eagle; row--) {
+      const w = row >= base ? hw : hw - 1, y = (bot - row) / Ht;
+      for (let d = -w; d <= w; d++) {
+        const c = cx + d, t0 = tt(row, c);
+        if (row === base && hw > w) { st(c, row, C_EQ, P_CHR, 0.6, t0, G_CHR, y); continue; }
+        if (row === base - 1 && w < hw) { st(c, row, d === -w ? C_SL : d === w ? C_BS : C_EQ, P_CHR, 0.6, t0, G_CHR, y); continue; }
+        if (d === -w || d === w) st(c, row, C_BAR, P_CHR, 0.6, t0, G_CHR, y);
+        else if ((d + w) % 2 === 0) st(c, row, C_BAR, P_CHR, 0.4, t0, G_CHR, y);
+        else win(c, row, C_COLON, C_HASH, t0, c * 211 + row * 13, false, G_CHR, y);
+      }
+    }
+    for (let d = -hw; d <= hw; d++) {
+      st(cx + d, eagle, d === -hw ? C_LT : d === hw ? C_GT : C_EQ, P_GOLD, 0.85, tt(eagle, cx + d), G_CHR, (bot - eagle) / Ht);
+    }
+    let row = eagle - 1;
+    for (let k = hw - 1; k >= 0; k--) {
+      for (let rep = 0; rep < (k === 0 ? 1 : 2); rep++, row--) {
+        const y = (bot - row) / Ht;
+        for (let d = -k; d <= k; d++) {
+          const c = cx + d, t0 = tt(row, c);
+          if (k === 0) { st(c, row, C_A, P_GOLDHI, 0.9, t0, G_CHR, y, K_CROWN); continue; }
+          const chr = d === -k ? C_SL : d === k ? C_BS : ((d + k) % 2 ? C_CARET : C_v);
+          st(c, row, chr, chr === C_v ? P_GOLDHI : P_GOLD, chr === C_v ? 1 : 0.78, t0, G_CHR, y, K_CROWN);
+        }
+      }
+    }
+    for (; row > tip; row--) st(cx, row, C_BAR, P_CHR, 0.7, tb + dur * 0.92, G_CHR, (bot - row) / Ht);
+    st(cx, tip, C_QUOTE, P_WHITE, 0.9, tb + dur, G_CHR, 1);
+    boxes.push({ g: G_CHR, c0: cx - hw - 1, c1: cx + hw + 1, r0: tip, r1: bot, t: tb + dur * 0.5 });
+  }
+
+  // Statue of Liberty: right foreground on her stone pedestal, built last; tall screens stretch robe and pedestal.
+  function buildLiberty(cx) {
+    const extra = clamp(Math.round(skyH * 0.74 - LIB_ART.length), 0, 24);
+    const robe = Math.ceil(extra * 0.55), ped = Math.floor((extra - robe) / 2);
+    const lines = [];
+    LIB_ART.forEach((l, i) => {
+      lines.push([l, i]);
+      if (i === 18) for (let k = 0; k < robe; k++) lines.push([l, i]);
+      if (i === 25) for (let k = 0; k < ped; k++) { lines.push([LIB_ART[24], 24]); lines.push([l, i]); }
+    });
+    const Wd = LIB_ART[0].length, x0 = Math.min(cols - Wd, cx - (Wd >> 1)), bot = hr + 2, top = bot - lines.length + 1;
+    const Ht = lines.length;
+    lines.forEach(([l, src], k) => {
+      const row = top + k, y = (bot - row) / Ht, t0b = T.LIB + y * T.LIB_DUR * 0.85;
+      for (let j = 0; j < Wd; j++) {
+        const s = l[j];
+        if (s === ' ') continue;
+        const c = x0 + j, chr = ci(s), t0 = t0b + hash2(c, row * 7) * T.LIB_DUR * 0.12;
+        if (c >= 0 && c < cols && row >= 0 && row < rows) libMask[row * cols + c] = 1;
+        if (src <= 2) st(c, row, chr, P_FLAME, 1, t0, G_LIB, y, K_TORCH);
+        else if (src <= 4) st(c, row, chr, P_TORCH, 0.9, t0, G_LIB, y, K_GLOW);
+        else if (src >= 22) {
+          const lit = s === '#' && src === 26;
+          st(c, row, chr, lit ? P_GOLDHI : P_PED, lit ? 0.9 : 0.62, t0, G_LIB, y, lit ? K_GLOW : 0);
+        } else {
+          const hi = s === '@' || s === 'I' || s === 'V';
+          st(c, row, chr, hi ? P_LIBHI : P_LIB, hi ? 0.95 : 0.72, t0, G_LIB, y, hi ? K_GLOW : 0);
+        }
+      }
+      // Fill the statue's inside so the city behind does not show through.
+      const a = l.search(/\S/), b = l.length - 1 - [...l].reverse().join('').search(/\S/);
+      if (src >= 13) for (let j = a; j <= b; j++) if (l[j] === ' ') st(x0 + j, row, C_SP, 0, 0, t0b, G_LIB, y);
+    });
+    torchC = x0 + 8; torchR = top + 1;
+    boxes.unshift({ g: G_LIB, c0: x0 + 5, c1: x0 + Wd - 3, r0: top, r1: bot, t: T.LIB + T.LIB_DUR * 0.5 });
+    return [x0 + 5, x0 + Wd - 1];
+  }
+
+  // Neon signs on the low blocks: horizontal [WORD] and vertical stacked letters.
+  function buildSigns(rnd, avoid) {
+    const DEFS = [['BROADWAY', 0, 0.31, 'yellow'], ['I<3NY', 0, 0.69, 'pink'], ['PIZZA', 1, 0.27, 'red'], ['DINER', 1, 0.74, 'cyan'],
+                  ['HOTEL', 1, 0.48, 'pink'], ['JAZZ', 1, 0.35, 'cyan'], ['BAGELS', 0, 0.03, 'orange'], ['BAR', 1, 0.66, 'orange'],
+                  ['DELI', 1, 0.16, 'green'], ['HOT DOGS', 0, 0.5, 'red'], ['NYC', 0, 0.97, 'cyan'], ['TAXI', 0, 0.42, 'yellow']];
+    const used = new Uint8Array(cols);
+    for (const b of boxes) for (let c = Math.max(0, b.c0); c <= Math.min(cols - 1, b.c1); c++) used[c] = 1;
+    for (const [a, b] of avoid) for (let c = Math.max(0, a); c <= Math.min(cols - 1, b); c++) used[c] = 1;
+    let k = 0;
+    for (const [txt, vert, xf, col] of DEFS) {
+      const s = vert ? txt.replace(/ /g, '') : '[' + txt + ']';
+      const wdt = vert ? 1 : s.length;
+      let c0 = -1;
+      for (const off of [0, 2, -2, 4, -4, 6, -6]) {
+        const c = Math.round(xf * cols) - (wdt >> 1) + off;
+        if (c < 1 || c + wdt > cols - 1) continue;
+        let ok = true;
+        for (let x = c - 1; x <= c + wdt; x++) if (used[x]) { ok = false; break; }
+        if (ok) { c0 = c; break; }
+      }
+      if (c0 < 0) continue;
+      for (let x = c0 - 1; x <= c0 + wdt; x++) used[x] = 1;
+      const idx = signs.length, t0 = T.NEON + (k++ % 12) * T.NEON_DUR / 12 + rnd() * 0.1, p = NEON[col];
+      let r0, r1;
+      if (vert) {
+        r0 = hr - 3 - s.length - (idx % 3); r1 = r0 + s.length - 1;
+        [...s].forEach((L, j) => st(c0, r0 + j, ci(L), p, 1, t0, 0, 0, K_NEON, 0, idx));
+      } else {
+        r0 = r1 = hr - 2 - (idx % 3);
+        [...s].forEach((L, j) => st(c0 + j, r0, ci(L), p, 1, t0, 0, 0, K_NEON, 0, idx));
+      }
+      signs.push({ c0, c1: c0 + wdt - 1, r0, r1, t0, tap: -99, x: (c0 + wdt / 2) * cw });
+    }
+  }
+
+  // Brooklyn Bridge: draped main cables, a web of stays, suspenders, a two-lane deck and two gothic stone towers.
+  function buildBridge(tx1, tx2) {
+    const yT = rTT + 1;
+    const cableY = x => {
+      if (x <= tx1) { const s = (tx1 - x) / Math.max(1, tx1); return yT + (rD - 1 - yT) * Math.pow(s, 0.8); }
+      if (x >= tx2) { const s = (x - tx2) / Math.max(1, cols - tx2); return yT + (rD - 1 - yT) * Math.pow(s, 0.8); }
+      const m = (tx1 + tx2) / 2, hh = (tx2 - tx1) / 2, q = (x - m) / hh;
+      return yT + (rD - 2 - yT) * (1 - q * q);
+    };
+    const tAt = c => T.BRIDGE + T.BRIDGE_DUR * (0.45 + 0.5 * clamp(Math.min(Math.abs(c - tx1), Math.abs(c - tx2)) / (cols * 0.3), 0, 1));
+    const ok = (c, r) => !(c >= 0 && c < cols && r >= 0 && r < rows && libMask[r * cols + c]);
+    for (let c = 0; c < cols; c++) {
+      const y0 = cableY(c), y1 = cableY(c + 1), lo = Math.min(y0, y1), hi = Math.max(y0, y1);
+      const r0 = Math.floor(lo), r1 = Math.max(r0, Math.floor(hi - 0.01)), slope = y1 - y0;
+      const kk = Math.abs(slope) < 0.45 ? (lo - r0 < 0.5 ? C_DASH : C_US) : slope > 0 ? C_BS : C_SL;
+      for (let r = r0; r <= r1 && r < rD - 1; r++) if (ok(c, r)) st(c, r, kk, P_CABLE, 0.62, tAt(c));
+      if (c % 3 === 0) for (let r = r1 + 1; r < rD - 1; r++) if (ok(c, r)) st(c, r, C_BAR, P_CABLE, 0.26, tAt(c) + 0.15);
+    }
+    // Diagonal stays fanning down from each tower top.
+    for (const tx of [tx1, tx2]) {
+      for (const side of [-1, 1]) {
+        for (const f of [2.2, 3.6, 5.2]) {
+          const L = Math.round((rD - rTT) * f), cS = tx + side * bw;
+          for (let k = 1; k <= L; k++) {
+            const c = cS + side * k, r = Math.round(rTT + 2 + (rD - 2 - rTT - 2) * k / L);
+            if (r < rD - 1 && ok(c, r)) st(c, r, side > 0 ? C_BS : C_SL, P_CABLE, 0.3, tAt(c) + 0.1);
+          }
+        }
+      }
+    }
+    // Deck: railing with lamps, two lanes (occluded so cars read cleanly), edge and truss.
+    for (let c = 0; c < cols; c++) {
+      const t0 = T.BRIDGE + 0.3 + T.BRIDGE_DUR * 0.5 * c / cols;
+      if (c % 9 === 4) st(c, rD - 1, C_o, P_LAMP, 0.9, t0, 0, 0, K_LAMP);
+      else st(c, rD - 1, C_DASH, P_DECK, 0.6, t0);
+      st(c, rD, C_SP, 0, 0, t0); st(c, rD + 1, C_SP, 0, 0, t0);
+      st(c, rD + 2, C_EQ, P_DECK, 0.62, t0);
+      st(c, rD + 3, c % 2 ? C_BS : C_SL, P_DECK, 0.34, t0);
+    }
+    // Towers: cap, cornice, stone with two pointed arches the roadway passes through.
+    for (const tx of [tx1, tx2]) {
+      const ra = rTT + Math.max(3, Math.round((rD - rTT) * 0.3));
+      const a0 = 2, a1 = Math.max(2, bw - 2);
+      for (let row = rTT; row <= rTB; row++) {
+        for (let d = -bw; d <= bw; d++) {
+          const c = tx + d, ad = Math.abs(d), t0 = T.BRIDGE + (rTB - row) / (rTB - rTT) * 0.8 + hash2(c, row) * 0.15;
+          if (row === rTT) { st(c, row, ad === bw ? C_DOT : C_US, P_BRIDGE, 0.7, t0); continue; }
+          if (row === rTT + 1) { st(c, row, d === -bw ? C_LB : d === bw ? C_RB : C_EQ, P_BRIDGE, 0.75, t0); continue; }
+          if (ad === bw) { st(c, row, C_BAR, P_BRIDGE, 0.7, t0); continue; }
+          const inArch = ad >= a0 && ad <= a1, aw = a1 - a0 + 1, k = row - ra;
+          if (inArch && k >= 0) {
+            // Pointed top: the opening widens over its first rows.
+            const open = Math.min(aw, 2 * (k + 1)), m0 = a0 + Math.floor((aw - open) / 2), m1 = m0 + open - 1;
+            if (ad === m0 - 1 && k < Math.ceil(aw / 2)) { st(c, row, d < 0 ? C_BS : C_SL, P_BRIDGE, 0.8, t0); continue; }
+            if (ad === m1 + 1 && k < Math.ceil(aw / 2)) { st(c, row, d < 0 ? C_SL : C_BS, P_BRIDGE, 0.8, t0); continue; }
+            if (ad >= m0 && ad <= m1) { if (row < rD - 1 || row > rD + 3) st(c, row, C_SP, 0, 0, t0); continue; }   // dark opening; the roadway shows through
+          }
+          if (row === rD + 2 || row === rTT + 2) { st(c, row, C_EQ, P_BRIDGE, 0.6, t0); continue; }
+          st(c, row, hash2(c, row * 3) < 0.75 ? C_HASH : C_EQ, P_BRIDGE, 0.44, t0);
+        }
+      }
+      for (let d = -bw - 1; d <= bw + 1; d++) st(tx + d, rTB + 1, d === -bw - 1 ? C_SL : d === bw + 1 ? C_BS : C_EQ, P_BRIDGE, 0.4, T.BRIDGE);
+      st(tx, rTT - 1, C_STAR, P_BEACON, 1, T.BRIDGE + 0.9, 0, 0, K_BEACON, 0, tx & 31);
+      boxes.push({ g: 9, c0: tx - bw, c1: tx + bw, r0: rTT - 1, r1: rTB + 1, t: T.BRIDGE + 0.8 });
+    }
+  }
+
+  // ---------- Cell buffer ----------
+  // kind bits: 1 halo, 2 firework (ignores the loop fade), 4 emissive (reflects in the water)
+  function put(c, chr, p, b, kind) {
+    if (stampA[c] !== stamp) { stampA[c] = stamp; touched[nT++] = c; }
+    let l = (b * 15.99) | 0;
+    if (l < 0) l = 0; else if (l > 15) l = 15;
+    cchar[c] = chr; ccol[c] = p * LEVELS + l; ckind[c] = kind; clb[c] = b > 1 ? 1 : b;
+  }
+  function putXY(x, y, chr, p, b, kind) {
+    if (x < 0 || y < 0) return;
+    const col = (x / cw) | 0, row = (y / ch) | 0;
+    if (col >= cols || row >= rows) return;
+    put(row * cols + col, chr, p, b, kind);
+  }
+
+  // ---------- Scene state ----------
+  let t = T_START, skyT = 0, letters = 0, nScr = 0, nBuilt = 0, nLit = 0, nSpark = 0, typed = 0;
+  const showT = [-99, -99, -99, -99, -99];
+  const env = g => clamp(Math.min((skyT - showT[g]) / 0.4, (showT[g] + TAP_SHOW - skyT) / 0.6), 0, 1);
+
+  function drawStruct(a, z) {
+    for (let i = a; i < z; i++) {
+      const t0 = sT[i];
+      if (t < t0 - SCR) continue;
+      const c = sC[i], chr0 = sCh[i];
+      if (t < t0) {
+        // Scrambled characters that resolve into place.
+        if (chr0 === C_SP || hash2(i, 5) < 0.3) continue;
+        const f = 1 - (t0 - t) / SCR;
+        put(c, SCRAM[(hash2(i, (skyT * 15) | 0) * NSCR) | 0], P_SCR, 0.35 + 0.55 * f, 0);
+        nScr++;
+        continue;
+      }
+      nBuilt++;
+      if (chr0 === C_SP) { put(c, C_SP, 0, 0, 0); continue; }
+      let chr = chr0, p = sP[i], b = sB[i], kd = 0;
+      const age = t - t0;
+      if (age < 0.35) b += 0.45 * (1 - age / 0.35);
+      const k = sK[i], g = sG[i];
+      if (k === K_WIN) {
+        let on = t >= sOn[i];
+        if (on && !reduced && t > T.REFL && hash2(i, (skyT * 0.3 + (i & 7)) | 0) < 0.025) on = false;   // the odd light going off
+        if (on) { chr = sLit[i]; p = sAux[i]; b = 0.74 + 0.26 * hash2(i, 9); kd = 4; nLit++; }
+      } else if (k === K_NEON) {
+        if (signLv[sAux[i]] < 0.5) b = 0.14; else { b = 1; kd = 5; }
+      } else if (k === K_CROWN) {
+        if (g === G_ESB) {
+          const e = env(G_ESB), row = (c / cols) | 0;
+          const idx = e > 0 ? (reduced ? (skyT * 1.2) | 0 : (skyT * 7 + row * 0.5) | 0) : (skyT / (reduced ? 8 : 3)) | 0;
+          p = CROWN[idx % CROWN.length]; b = chr === C_COLON ? 0.55 : 0.78; kd = (c & 1) && chr !== C_COLON ? 5 : 4;
+          if (e > 0) b += 0.15 * e;
+        } else {
+          kd = chr === C_v || chr === C_A ? 5 : 4;
+          const e = env(G_CHR);
+          if (e > 0) {
+            const pS = (reduced ? 0.05 : 0.18) * e, h = hash2(i, (skyT * (reduced ? 2.5 : 9)) | 0);
+            if (h < pS) { chr = h < pS * 0.5 ? C_STAR : C_PLUS; p = P_WHITE; b = 1; kd = reduced ? 4 : 5; nSpark++; }
+            else b += 0.25 * e;
+          }
+        }
+      } else if (k === K_TORCH) {
+        b = reduced ? 0.9 : 0.8 + 0.2 * Math.sin(skyT * 11 + i * 1.7);
+        if (env(G_LIB) > 0) { b = 1; p = (i + ((skyT * 8) | 0)) % 3 ? P_FLAME : P_TORCH; }
+        kd = 5;
+      } else if (k === K_BEACON) {
+        const on = reduced || ((skyT + sAux[i] * 0.37) % 1.6) < 0.55;
+        if (on) { b = 1; kd = 5; } else { chr = C_o; b = 0.3; }
+      } else if (k === K_LAMP) kd = 5;
+      else if (k === K_GLOW) kd = 4;
+      else if (k === K_STAR) {
+        const ph = sAux[i];
+        b = 0.16 + 0.6 * (0.5 + 0.5 * Math.sin(skyT * (reduced ? 0.4 : 0.8 + (ph & 7) * 0.25) + ph));
+      }
+      if (g === G_WTC) {
+        const e = env(G_WTC);
+        if (e > 0) {                                                    // a band of light runs up the glass
+          const wy = ((skyT - showT[G_WTC]) * (reduced ? 0.25 : 0.8)) % 1.3 - 0.1;
+          if (Math.abs(sY[i] - wy) < 0.04) { p = P_WHITE; b = 1; kd |= 4; nSpark++; } else b += 0.15 * e;
+        }
+      }
+      put(c, chr, p, b, kd);
+    }
+  }
+
+  // Neon on/off levels: flicker on at first light and after a tap, the odd buzz-out later.
+  function updateSigns() {
+    for (let s = 0; s < signs.length; s++) {
+      const S = signs[s], a = t - S.t0, ta = skyT - S.tap;
+      let lv = 1;
+      if (a < 0) lv = 0;
+      else if (!reduced && a < 0.9) lv = hash2(s * 31, (a * 14) | 0) < 0.2 + a * 0.8 ? 1 : 0;
+      else if (ta >= 0 && ta < 0.9) lv = reduced ? (ta < 0.45 ? 0 : 1) : (hash2(s * 17 + 3, (ta * 16) | 0) < 0.25 + ta * 0.75 ? 1 : 0);
+      else if (!reduced && hash2(s, (skyT * 5) | 0) < 0.012) lv = 0;
+      signLv[s] = lv;
+    }
+  }
+
+  // Torch flare after a tap on the statue: rays out of the flame.
+  function drawFlare() {
+    const e = env(G_LIB);
+    if (e <= 0 || torchC < 0) return;
+    const L = Math.max(1, Math.round((reduced ? 2 : 5) * e));
+    const flick = reduced ? 0 : (skyT * 7) | 0;
+    const RAYS = [[2, 0, C_DASH], [-2, 0, C_DASH], [0, -1, C_BAR], [1, -1, C_SL], [-1, -1, C_BS], [1, 1, C_BS], [-1, 1, C_SL]];
+    RAYS.forEach(([dx, dy, chr], j) => {
+      for (let k = 1; k <= L; k++) {
+        if (!reduced && hash2(j * 9 + k, flick) < 0.2) continue;
+        const b = 1 - k / (L + 1.5);
+        for (let s = 0; s < Math.abs(dx || 1); s++) {
+          const c = torchC + (dx ? Math.sign(dx) * ((k - 1) * Math.abs(dx) + s + 1) : 0), r = torchR + dy * k;
+          if (c >= 0 && c < cols && r >= 0 && r < rows) put(r * cols + c, chr, k < 2 ? P_TORCH : P_FLAME, b, k < 2 && !reduced ? 1 : 0);
+        }
+      }
+    });
+  }
+
+  // Water: drifting ripples, then everything lit above the waterline mirrored with a wobble that settles.
+  function drawWater() {
+    const settle = reduced ? 1 : smooth((t - T.REFL) / T.REFL_DUR);
+    const vis = reduced ? 1 : 0.35 + 0.65 * settle;
+    const amp = reduced ? 0.7 : 0.7 + 4 * (1 - settle);
+    const sp = reduced ? 0.3 : 1;
+    for (let r = hr + 1; r < rows; r++) {
+      const k = r - hr, rm = hr - 1 - Math.floor((k - 1) * 0.8);
+      const fade = Math.exp(-k * 0.045) * vis;
+      const wobR = Math.sin(r * 0.9 + skyT * 1.6 * sp) * 0.6 + Math.sin(r * 0.37 - skyT * 0.7 * sp) * 0.4;
+      const drift = (skyT * sp * (0.6 + (r % 3) * 0.25)) | 0, jit = (skyT * 3 * sp) | 0;
+      for (let c = 0; c < cols; c++) {
+        const i = r * cols + c;
+        if (stampA[i] === stamp) continue;                              // the statue's island stays in front
+        const h = hash2(c + drift * (r & 1 ? 1 : -1), r * 13);
+        let done = false;
+        if (rm >= 0) {
+          const sc = c + Math.round(amp * (wobR + (hash2(c >> 2, r + jit) - 0.5) * 0.8));
+          if (sc >= 0 && sc < cols) {
+            const s = rm * cols + sc;
+            if (stampA[s] === stamp && cchar[s] !== C_SP) {
+              const em = ckind[s] & 4, p = (ccol[s] / LEVELS) | 0;
+              if (em && h > 0.22) {
+                const b = clb[s] * 0.8 * fade;
+                if (b > 0.05) { put(i, h > 0.6 ? C_EQ : C_DASH, p, b, 0); done = true; }
+              } else if (!em && h < 0.3 && fade > 0.12) { put(i, h < 0.15 ? C_COLON : C_DOT, p, clb[s] * 0.32 * fade, 0); done = true; }
+            }
+          }
+        }
+        if (!done && h < 0.06) put(i, h < 0.03 ? C_TILDE : C_DASH, P_WATER, 0.25 + h * 4, 0);
+      }
+    }
+  }
+
+  // ---------- Cars on the bridge ----------
+  const MAXCAR = 90;
+  const carX = new Float32Array(MAXCAR), carV = new Float32Array(MAXCAR), carK = new Uint8Array(MAXCAR), carW = new Uint8Array(MAXCAR);
+  let nCar = 0;
+  function addCar(x, v, kind, wrap) {
+    if (nCar >= MAXCAR) return;
+    carX[nCar] = x; carV[nCar] = v; carK[nCar] = kind; carW[nCar] = wrap ? 1 : 0; nCar++;
+  }
+  function seedCars() {
+    nCar = 0;
+    const r = mulberry32(77), n = Math.max(4, Math.round(cols / 20));
+    for (let i = 0; i < n; i++) {
+      const dir = i % 2 ? -1 : 1;
+      addCar(r() * cols, dir * (5 + 6 * r()) * (reduced ? 0.4 : 1), r() < 0.45 ? 0 : 1 + ((r() * 4) | 0), true);
+    }
+  }
+  function streamCars(dir) {
+    for (let k = 0; k < 10; k++) {
+      const x = dir > 0 ? -6 - k * 7 : cols + 6 + k * 7;
+      addCar(x, dir * (reduced ? 7 : 15 + Math.random() * 4), Math.random() < 0.6 ? 0 : 1 + ((Math.random() * 4) | 0), false);
+    }
+  }
+  function updateCars(dt) {
+    for (let i = 0; i < nCar; i++) {
+      carX[i] += carV[i] * dt;
+      const out = carX[i] < -8 - (carW[i] ? 0 : 80) || carX[i] > cols + 8 + (carW[i] ? 0 : 80);
+      if (carW[i]) { if (carX[i] < -8) carX[i] += cols + 16; else if (carX[i] > cols + 8) carX[i] -= cols + 16; }
+      else if ((carV[i] > 0 && carX[i] > cols + 8) || (carV[i] < 0 && carX[i] < -8) || out) {
+        nCar--; carX[i] = carX[nCar]; carV[i] = carV[nCar]; carK[i] = carK[nCar]; carW[i] = carW[nCar]; i--;
+      }
+    }
+  }
+  function drawCars() {
+    if (t < T.CARS) return;
+    for (let i = 0; i < nCar; i++) {
+      const dir = carV[i] > 0 ? 1 : -1, row = dir > 0 ? rD : rD + 1, hc = Math.floor(carX[i]);
+      const body = carK[i] === 0 ? P_TAXI : P_CARS[carK[i] - 1];
+      const cells = [[0, C_o, P_HEAD, 1, 5], [-1, dir > 0 ? C_RB : C_LB, body, 0.85, 0], [-2, carK[i] === 0 ? C_T : C_US, body, 0.85, 0],
+                     [-3, dir > 0 ? C_LB : C_RB, body, 0.85, 0], [-4, C_DASH, P_TAIL, 0.9, 1]];
+      for (const [o, chr, p, b, kd] of cells) {
+        const c = hc + o * dir;
+        if (c >= 0 && c < cols) put(row * cols + c, chr, p, b, kd);
+      }
+    }
+  }
+
+  // ---------- Title ----------
+  function drawSubtitle() {
+    const t2 = T.TITLE + TITLE.length * 0.09 + 0.3;
+    // Clear the water behind both lines once typing starts.
+    const c0 = Math.floor(titleX0 / cw) - 1, c1 = Math.ceil((titleX0 + titleStep * TITLE.length) / cw) + 1;
+    const r0 = Math.floor((titleY - titleSize * 0.6) / ch), r1 = Math.floor((titleY + titleSize * 0.5) / ch);
+    for (let r = Math.max(0, r0); r <= Math.min(rows - 1, r1); r++) for (let c = Math.max(0, c0); c <= Math.min(cols - 1, c1); c++) put(r * cols + c, C_SP, 0, 0, 0);
+    const n = t < t2 ? 0 : Math.min(SUB.length, Math.floor((t - t2) / 0.045) + 1);
+    const s0 = (cols - SUB.length) >> 1;
+    if (tl2 >= rows) return 0;
+    for (let c = s0 - 1; c <= s0 + SUB.length; c++) if (c >= 0 && c < cols) put(tl2 * cols + c, C_SP, 0, 0, 0);
+    for (let j = 0; j < n; j++) {
+      const fresh = t - (t2 + j * 0.045) < 0.08;
+      put(tl2 * cols + s0 + j, fresh ? SCRAM[(hash2(j, (skyT * 20) | 0) * NSCR) | 0] : SUB_C[j], P_SUB, fresh ? 1 : 0.7, 0);
+    }
+    return n;
+  }
+  function drawTitle(alpha) {
+    if (t < T.TITLE) { typed = 0; return; }
+    const n = Math.min(TITLE.length, Math.floor((t - T.TITLE) / 0.09) + 1);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.font = `bold ${titleSize.toFixed(1)}px ${MONO}`;
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(110,220,255,0.9)';
+    ctx.shadowBlur = titleSize * 0.45;
+    ctx.fillStyle = '#c8f4ff';
+    for (let j = 0; j < n; j++) {
+      const L = TITLE[j];
+      if (L === ' ') continue;
+      const fresh = t - (T.TITLE + j * 0.09) < 0.1;
+      ctx.fillText(fresh ? CH[SCRAM[(hash2(j, (skyT * 20) | 0) * NSCR) | 0]] : L, titleX0 + (j + 0.5) * titleStep, titleY);
+      letters++;
+    }
+    if (n < TITLE.length && !reduced) ctx.fillText('_', titleX0 + (n + 0.5) * titleStep, titleY);   // typing cursor
+    ctx.restore();
+    typed = n;
+  }
+
+  // ---------- Searchlights ----------
+  const BEAMS = [{ x: 0.15, a: -0.3, s: 0.32, w: 0.33, ph: 0 }, { x: 0.36, a: 0.18, s: 0.36, w: 0.27, ph: 1.7 },
+                 { x: 0.52, a: -0.12, s: 0.3, w: 0.3, ph: 3.1 }, { x: 0.7, a: 0.3, s: 0.34, w: 0.36, ph: 4.4 }];
+  const beamA = Float32Array.from(BEAMS.map(b => b.a));
+  let aimX = 0, aimY = 0, aimT = -99;
+  function updateBeams(dt) {
+    const aiming = skyT - aimT < 3;
+    BEAMS.forEach((b, k) => {
+      let target = reduced ? b.a + 0.15 * Math.sin(skyT * 0.1 + b.ph) : b.a + b.s * Math.sin(skyT * b.w + b.ph);
+      if (aiming) target = clamp(Math.atan2(aimX - b.x * W, beamOy - aimY), -1.25, 1.25) + (k - 1.5) * 0.05;
+      beamA[k] += (target - beamA[k]) * Math.min(1, dt * (reduced ? 1.2 : 3));
+    });
+  }
+  function drawBeams(alpha) {
+    if (t < T.BEAM) return;
+    const a = smooth((t - T.BEAM) / T.BEAM_IN) * alpha;
+    if (a <= 0.01) return;
+    const L = Math.max(W, H) * 1.3;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    BEAMS.forEach((b, k) => {
+      const ox = b.x * W, oy = beamOy, dx = Math.sin(beamA[k]), dy = -Math.cos(beamA[k]), nx = -dy, ny = dx;
+      const ex = ox + dx * L, ey = oy + dy * L;
+      const g = ctx.createLinearGradient(ox, oy, ex, ey);
+      g.addColorStop(0, `rgba(190,205,255,${(0.2 * a).toFixed(3)})`);
+      g.addColorStop(0.35, `rgba(170,185,255,${(0.07 * a).toFixed(3)})`);
+      g.addColorStop(1, 'rgba(160,175,255,0)');
+      ctx.fillStyle = g;
+      for (const sp of [L * 0.055, L * 0.018]) {
+        ctx.beginPath();
+        ctx.moveTo(ox + nx * 2, oy + ny * 2); ctx.lineTo(ex + nx * sp, ey + ny * sp);
+        ctx.lineTo(ex - nx * sp, ey - ny * sp); ctx.lineTo(ox - nx * 2, oy - ny * 2);
+        ctx.fill();
+      }
+    });
+    ctx.restore();
+  }
+
+  // ---------- Fireworks (fixed pools, no per-frame allocation) ----------
+  const MAXP = 2400, MAXR = 10;
+  const fx = new Float32Array(MAXP), fy = new Float32Array(MAXP), fvx = new Float32Array(MAXP), fvy = new Float32Array(MAXP),
+        fage = new Float32Array(MAXP), flife = new Float32Array(MAXP), fp = new Uint16Array(MAXP);
+  const rx = new Float32Array(MAXR), ry = new Float32Array(MAXR), rvy = new Float32Array(MAXR), rty = new Float32Array(MAXR),
+        rg = new Float32Array(MAXR), rp = new Uint16Array(MAXR), ru = new Uint8Array(MAXR);
+  let np = 0, nr = 0, nextLaunch = 0, frameNo = 0;
+  function clearFireworks() { np = 0; nr = 0; nextLaunch = 0; }
+
+  function launch(x, y) {
+    if (nr >= MAXR) return;
+    const i = nr++, user = x !== undefined;
+    rx[i] = user ? x : W * (0.08 + 0.84 * Math.random());
+    ry[i] = hr * ch;
+    rty[i] = user ? Math.min(y, (hr - 6) * ch) : H * (0.08 + 0.25 * Math.random());
+    rg[i] = H * (user ? (reduced ? 0.8 : 1.2) : 0.45);
+    rvy[i] = -Math.sqrt(2 * rg[i] * Math.max(1, ry[i] - rty[i]));
+    rp[i] = P_FW[(Math.random() * P_FW.length) | 0];
+    ru[i] = user ? 1 : 0;
+    music('event', 'launch', { x: rx[i] / W, dur: Math.sqrt(2 * Math.max(1, ry[i] - rty[i]) / rg[i]) });
+  }
+  function burst(x, y, p, user) {
+    const calm = reduced;   // reduced motion: a small, slow bloom
+    const n = calm ? 50 + ((Math.random() * 20) | 0) : 120 + ((Math.random() * 80) | 0);
+    let p2 = Math.random() < 0.35 ? P_FW[(Math.random() * P_FW.length) | 0] : p;
+    if (user) while (p2 === p) p2 = P_FW[(Math.random() * P_FW.length) | 0];
+    const sp = H * (0.11 + 0.07 * Math.random()) * (calm ? 0.55 : 1);
+    music('event', 'burst', { x: x / W, calm });
+    for (let j = 0; j < n && np < MAXP; j++) {
+      const z = 2 * Math.random() - 1, a = Math.random() * 6.2832, rr = Math.sqrt(1 - z * z);
+      const v = sp * (0.85 + 0.15 * Math.random());
+      const i = np++;
+      fx[i] = x; fy[i] = y; fvx[i] = rr * Math.cos(a) * v; fvy[i] = rr * Math.sin(a) * v;
+      fage[i] = 0; flife[i] = 1.3 + Math.random() * 0.9; fp[i] = j % 3 ? p : p2;
+    }
+    const ng = user ? (calm ? 14 : 36) : 0;
+    for (let j = 0; j < ng && np < MAXP; j++) {
+      const a = Math.random() * 6.2832, v = sp * 0.3 * Math.random();
+      const i = np++;
+      fx[i] = x; fy[i] = y; fvx[i] = Math.cos(a) * v; fvy[i] = Math.sin(a) * v - H * 0.02;
+      fage[i] = 0; flife[i] = 2.4 + Math.random() * 1.0; fp[i] = P_ROCKET;
+    }
+  }
+  function updateFireworks(dt) {
+    if (!reduced && t >= T.SHOW && t < T.SHOW_END) {
+      nextLaunch -= dt;
+      if (nextLaunch <= 0 && nr < MAXR) { launch(); nextLaunch = 0.55 + Math.random() * 0.6; }
+    }
+    for (let i = 0; i < nr; i++) {
+      rvy[i] += rg[i] * dt; ry[i] += rvy[i] * dt;
+      if (ry[i] <= rty[i] || rvy[i] > -H * 0.05) {
+        burst(rx[i], Math.max(ry[i], rty[i]), rp[i], ru[i]);
+        nr--; rx[i] = rx[nr]; ry[i] = ry[nr]; rvy[i] = rvy[nr]; rty[i] = rty[nr]; rg[i] = rg[nr]; rp[i] = rp[nr]; ru[i] = ru[nr]; i--;
+      }
+    }
+    const g = H * 0.075, drag = 1 - Math.min(0.5, 0.9 * dt);
+    for (let i = 0; i < np; i++) {
+      fage[i] += dt;
+      if (fage[i] >= flife[i]) {
+        np--; fx[i] = fx[np]; fy[i] = fy[np]; fvx[i] = fvx[np]; fvy[i] = fvy[np];
+        fage[i] = fage[np]; flife[i] = flife[np]; fp[i] = fp[np]; i--; continue;
+      }
+      fvx[i] *= drag; fvy[i] = fvy[i] * drag + g * dt;
+      fx[i] += fvx[i] * dt; fy[i] += fvy[i] * dt;
+    }
+  }
+  function drawFireworks() {
+    for (let i = 0; i < nr; i++) {
+      putXY(rx[i], ry[i], C_CARET, P_ROCKET, 1, 3);
+      for (let k = 1; k <= 4; k++) putXY(rx[i], ry[i] + k * ch, k < 3 ? C_COLON : C_DOT, P_ROCKET, 0.75 - 0.14 * k, 2);
+    }
+    for (let i = 0; i < np; i++) {
+      const a = fage[i] / flife[i];
+      if (a > 0.55 && hash2(i, frameNo) < 0.25) continue; // late sparks twinkle out
+      const chr = a < 0.25 ? C_STAR : a < 0.4 ? C_o : a < 0.7 ? C_PLUS : C_DOT;
+      putXY(fx[i], fy[i], chr, fp[i], 0.3 + 0.8 * Math.pow(1 - a, 0.7), 6);
+    }
+  }
+
+  // ---------- Drawing ----------
+  // Bucket by colour so fillStyle changes once per colour, not once per cell.
+  function drawCells(alpha) {
+    counts.fill(0);
+    for (let i = 0; i < nT; i++) counts[ccol[touched[i]]]++;
+    let acc = 0;
+    for (let c = 0; c < NCOLOR; c++) { const n = counts[c]; counts[c] = acc; acc += n; }
+    for (let i = 0; i < nT; i++) { const c = touched[i]; order[counts[ccol[c]]++] = c; }
+    let cur = -1, n = 0, fw = -1;
+    for (let i = 0; i < nT; i++) {
+      const c = order[i];
+      if (cchar[c] === C_SP) continue;
+      const f = ckind[c] & 2;
+      if (f !== fw) { fw = f; ctx.globalAlpha = f ? 1 : alpha; }
+      const cc = ccol[c];
+      if (cc !== cur) { cur = cc; ctx.fillStyle = COLSTR[cc]; }
+      const row = (c / cols) | 0;
+      ctx.fillText(CH[cchar[c]], (c - row * cols) * cw, row * ch);
+      n++;
+    }
+    ctx.globalAlpha = 1;
+    letters += n;
+  }
+
+  // Light halos: one pre-rendered radial sprite per emissive palette entry.
+  let halos = [];
+  function makeHalos() {
+    const R = Math.max(6, cw * 2.4);
+    halos = PAL.map(([r, g, b], p) => {
+      if (!HALO_P.includes(p)) return null;
+      const c = document.createElement('canvas');
+      c.width = c.height = Math.ceil(R * 2);
+      const x = c.getContext('2d'), gr = x.createRadialGradient(R, R, 0, R, R, R);
+      gr.addColorStop(0, 'rgba(255,255,255,0.8)');
+      gr.addColorStop(0.18, `rgba(${r},${g},${b},0.7)`);
+      gr.addColorStop(0.5, `rgba(${r},${g},${b},0.16)`);
+      gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
+      x.fillStyle = gr; x.fillRect(0, 0, c.width, c.height);
+      return c;
+    });
+  }
+  function drawHalos(alpha) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < nT; i++) {
+      const c = touched[i];
+      if (!(ckind[c] & 1)) continue;
+      const img = halos[(ccol[c] / LEVELS) | 0], row = (c / cols) | 0;
+      if (!img) continue;
+      ctx.globalAlpha = clb[c] * (ckind[c] & 2 ? 1 : alpha) * 0.6;
+      ctx.drawImage(img, (c - row * cols + 0.5) * cw - img.width / 2, (row + 0.5) * ch - img.height / 2);
+    }
+    ctx.restore();
+  }
+
+  // Bloom: shrink the frame, remove the background with 'difference', blur, and add it back on top.
+  const glow = document.createElement('canvas'), gctx = glow.getContext('2d');
+  const GLOW_DIV = 5, GLOW_A = 0.7;
+  function drawGlow() {
+    const gw = Math.ceil(W / GLOW_DIV), gh = Math.ceil(H / GLOW_DIV);
+    if (glow.width !== gw || glow.height !== gh) { glow.width = gw; glow.height = gh; }
+    gctx.setTransform(1, 0, 0, 1, 0, 0);
+    gctx.globalCompositeOperation = 'copy';
+    gctx.filter = 'blur(2px)';
+    gctx.drawImage(canvas, 0, 0, gw, gh);
+    gctx.filter = 'none';
+    gctx.globalCompositeOperation = 'difference';
+    gctx.setTransform(gw / W, 0, 0, gh / H, 0, 0);
+    gctx.fillStyle = bgGrad;
+    gctx.fillRect(0, 0, W, H);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = GLOW_A;
+    ctx.drawImage(glow, 0, 0, W, H);
+    ctx.restore();
+  }
+
+  function render() {
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+    const alpha = reduced ? 1 : 1 - smooth((t - T.FADE) / T.FADE_DUR);
+    letters = 0; nScr = 0; nBuilt = 0; nLit = 0; nSpark = 0;
+    if (alpha < 0.001 && !np && !nr) { nT = 0; typed = 0; return; }
+    ctx.save();
+    ctx.globalAlpha = alpha * smooth((t - T.FAR) / 3);
+    ctx.fillStyle = hazeGrad; ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = alpha * smooth((t - T.SKY - 0.6) / 1.2);
+    ctx.fillStyle = moonGlow; ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+    drawBeams(alpha);
+    updateSigns();
+    stamp++; nT = 0;
+    drawStruct(0, nSky);
+    drawFireworks();
+    drawStruct(nSky, nA);
+    drawFlare();
+    drawWater();
+    drawStruct(nA, nS);
+    drawCars();
+    if (t >= T.TITLE) drawSubtitle();
+    ctx.textBaseline = 'top';
+    ctx.textAlign = 'left';
+    ctx.font = cellFont;
+    drawCells(alpha);
+    drawHalos(alpha);
+    drawGlow();
+    drawTitle(alpha);
+  }
+
+  // ---------- Loop, HUD, controls ----------
+  let paused = false, last = performance.now();
+  let frames = 0, fpsT = last, fps = 0, hudT = 0;
+
+  // Hint and HUD language: ?lang= wins, then saved site preference, then browser.
+  let pref = null;
+  try { pref = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (!pref) { try { pref = localStorage.getItem('lang'); } catch (e) {} }
+  if (!pref) pref = navigator.language || 'en';
+  const zh = String(pref).toLowerCase().startsWith('zh');
+  document.documentElement.lang = zh ? 'zh-Hant' : 'en';
+  const HL = zh ? { phase: '階段', built: '完成', lights: '燈光', letters: '字元', paused: '已暫停' }
+                : { phase: 'phase', built: 'built', lights: 'lights', letters: 'letters', paused: 'paused' };
+
+  function phaseName() {
+    let p = PHASES[0][1];
+    for (const [tt, name] of PHASES) if (t >= tt) p = name;
+    return zh ? PHASE_ZH[p] : p;
+  }
+  function updateHud(now) {
+    const tail = paused ? HL.paused : `${fps} fps`;
+    const built = nS ? Math.round(nBuilt / nS * 100) : 0, lights = nWinTotal ? Math.min(100, Math.round(nLit / nWinTotal * 100)) : 0;
+    hudEl.textContent = W < 640 ? `${phaseName()}  ${HL.built} ${built}%  ${HL.lights} ${lights}%  ${tail}`
+      : `${HL.phase} ${phaseName()}  ${HL.built} ${built}%  ${HL.lights} ${lights}%  ${HL.letters} ${letters.toLocaleString('en-US')}  ${tail}`;
+    hudT = now;
+  }
+
+  let nextHorn = 14;
+  function frame(now) {
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); // no jumps after a hidden tab
+    last = now;
+    if (needResize) resize();
+    if (!paused) {
+      const t1 = t, typed1 = typed, scr1 = nScr;
+      skyT += dt;
+      if (!reduced) {
+        t += dt;
+        if (t >= T.END) { t = 0; nextLaunch = 0; musicLoop++; music('restart'); } // music re-syncs; tapped fireworks fly on
+      }
+      frameNo++;
+      updateCars(dt);
+      updateFireworks(dt);
+      updateBeams(dt);
+      render(); dirty = false; frames++;
+      soundCues(t1, t, typed1, scr1);
+    } else if (dirty) { render(); dirty = false; frames++; }
+    if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
+    if (now - hudT >= 250) updateHud(now);
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- Music (ascii-audio.js) ----------
+  // The score is one 24 s scene loop long (10 bars of 4/4 at 100 bpm), restarted on every loop.
+  const music = (fn, ...a) => window.AsciiAudio && AsciiAudio[fn](...a);
+  let musicLoop = 0;   // alternates the two sax tunes
+  const crossed = (a, b, x) => a < x && x <= b;
+  function soundCues(a, b, typed1, scr1) {
+    if (!window.AsciiAudio) return;
+    if (nScr > 0 && b < T.TITLE) music('event', 'scramble', { n: nScr });
+    if (crossed(a, b, T.WTC + T.WTC_DUR)) music('event', 'landmark', { note: 'G5', x: 0.2 });
+    if (crossed(a, b, T.ESB + T.ESB_DUR)) music('event', 'landmark', { note: 'A5', x: 0.42 });
+    if (crossed(a, b, T.CHR + T.CHR_DUR)) music('event', 'landmark', { note: 'E6', x: 0.6 });
+    if (crossed(a, b, T.LIB + T.LIB_DUR)) music('event', 'landmark', { note: 'C6', x: 0.85 });
+    for (const S of signs) if (crossed(a, b, S.t0)) music('event', 'neon', { x: S.x / W });
+    if (crossed(a, b, T.BEAM)) music('event', 'beam');
+    if (crossed(a, b, T.CARS)) music('event', 'horn', { x: 0.3, far: true });
+    if (typed > typed1 && TITLE[typed - 1] !== ' ') music('event', 'type', { last: typed === TITLE.length });
+    if (crossed(a, b, T.FADE)) music('event', 'fade');
+    if (!reduced && b > T.CARS && b < T.FADE && skyT > nextHorn) {
+      music('event', 'horn', { x: Math.random(), far: true });
+      nextHorn = skyT + 6 + Math.random() * 9;
+    }
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
+  function replay() {
+    t = T_START; clearFireworks(); showT.fill(-99); signs.forEach(s => { s.tap = -99; }); seedCars();
+    paused = false; dirty = true; music('resume'); music('restart');
+  }
+
+  function show(g, x) {
+    showT[g] = skyT - showT[g] < TAP_SHOW ? Math.max(showT[g], skyT - 0.4) : skyT;
+    music('event', ['', 'liberty', 'wtc', 'empire', 'chrysler'][g], { x: x / W });
+  }
+  function tapAt(x, y) {
+    const c = Math.floor(x / cw), r = Math.floor(y / ch), live = t < T.FADE + T.FADE_DUR * 0.6;
+    if (live) {
+      for (const b of boxes) {
+        if (c < b.c0 || c > b.c1 || r < b.r0 || r > b.r1 || t < b.t) continue;
+        if (b.g === 9) { streamCars(x < W / 2 ? 1 : -1); music('event', 'horn', { x: x / W }); }
+        else show(b.g, x);
+        return;
+      }
+      for (const S of signs) {
+        if (c >= S.c0 - 1 && c <= S.c1 + 1 && r >= S.r0 - 1 && r <= S.r1 + 1 && t >= S.t0 + 1) {
+          S.tap = skyT; music('event', 'neon', { x: S.x / W, tap: true }); return;
+        }
+      }
+      if (t >= T.BRIDGE + 0.8 && r >= rD - 2 && r <= rD + 3) { streamCars(x < W / 2 ? 1 : -1); music('event', 'horn', { x: x / W }); return; }
+    }
+    launch(x, y);
+  }
+
+  addEventListener('resize', () => { needResize = true; });
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return; // leave Cmd/Ctrl+R alone
+    if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
+    else if (e.key === 'r' || e.key === 'R') replay();
+  });
+  // Tap a landmark = its light show, the bridge = a stream of cars, a sign = it flickers, anywhere else = a firework;
+  // two quick taps = pause / resume. A press only counts as a tap if it moved less than 8 px; moving steers the searchlights.
+  let downX = 0, downY = 0, pressed = false, dragged = false, tapTimer = 0, tapResumed = false;
+  const setAim = e => { aimX = e.clientX; aimY = e.clientY; aimT = skyT; };
+  canvas.addEventListener('pointerdown', e => {
+    pressed = true; dragged = false; downX = e.clientX; downY = e.clientY;
+    if (e.pointerType !== 'mouse') setAim(e);
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (e.pointerType === 'mouse' || pressed) setAim(e);
+    if (pressed && Math.hypot(e.clientX - downX, e.clientY - downY) >= 8) dragged = true;
+  });
+  const ptrOff = () => { pressed = false; aimT = Math.min(aimT, skyT - 2.4); };
+  canvas.addEventListener('pointerleave', ptrOff);
+  canvas.addEventListener('pointercancel', ptrOff);
+  canvas.addEventListener('pointerup', e => {
+    const wasTap = pressed && !dragged;
+    pressed = false;
+    if (e.pointerType !== 'mouse') aimT = Math.min(aimT, skyT - 1.5);
+    if (e.button > 0 || !wasTap) return;
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; if (!tapResumed) togglePause(); return; }
+    tapTimer = setTimeout(() => { tapTimer = 0; }, 280);
+    tapResumed = paused;
+    if (paused) { togglePause(); return; }   // a tap on the paused scene just resumes it
+    tapAt(e.clientX, e.clientY);
+  });
+
+  // Touch screens have no keyboard, and the full hint would not fit on a phone.
+  const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  hintEl.textContent = touch ? (zh ? '點地標看燈光秀 · 點天空放煙火 · 點橋放車流 · 雙擊暫停' : 'tap landmarks · sky: fireworks · bridge: cars · double-tap pause')
+                             : (zh ? '點地標看燈光秀 · 點天空放煙火 · 點大橋放車流 · 移動游標操控探照燈 · 雙擊/空白鍵 暫停 · R 重播 · M 音樂'
+                                   : 'click landmarks for light shows · sky: fireworks · bridge: cars · move to steer searchlights · Space pause · R replay · M music');
+
+  // Score: an original late-night jazz tune in F, 4/4 swing at 100 bpm so 10 bars = the 24 s loop.
+  // Bar 0 intro, bars 1-8 a ii-V tune (two alternating sax melodies), bar 9 a fading tag.
+  // Walking bass, brushed kit with ride and hi-hat foot, muted piano comping in Charleston rhythm,
+  // a breathy sax-like lead, and a low city hum underneath.
+  if (window.AsciiAudio) AsciiAudio.init({
+    bpm: 40 * 60 / T.END, master: 0.9, reverb: 0.24, reverbTime: 2.6,
+    build(a) {
+      const c = a.ctx, N = AsciiAudio.notes, mtof = AsciiAudio.mtof, LOOP = 40;
+      const SW = a.beats(1 / 6);   // swing: the "and" lands on the last triplet
+      const DYN = [0.75, 1, 1, 1, 1, 1, 1, 1, 0.8, 0.4];
+      const dyn = b => DYN[Math.floor((((b % LOOP) + LOOP) % LOOP) / 4)];
+      const V = { F: [41, [57, 60, 64, 67], 4], Gm: [43, [58, 62, 65, 69], 3], C7: [36, [58, 62, 64, 69], 4],
+                  D7: [38, [60, 64, 66, 71], 4], Am: [45, [60, 64, 67, 71], 3] };
+      const BARS = [['F', 'F'], ['Gm', 'Gm'], ['C7', 'C7'], ['F', 'F'], ['D7', 'D7'], ['Gm', 'Gm'], ['C7', 'C7'], ['Am', 'D7'], ['Gm', 'C7'], ['F', 'F']];
+      const barOf = b => BARS[Math.floor((((b % LOOP) + LOOP) % LOOP) / 4)];
+      const chordAt = b => V[barOf(b)[(((b % 4) + 4) % 4) < 2 ? 0 : 1]];
+      const fold = m => { while (m < 38) m += 12; while (m > 55) m -= 12; return m; };
+
+      // City hum: a low, slowly breathing noise bed.
+      const len = c.sampleRate * 4, buf = c.createBuffer(1, len, c.sampleRate), dd = buf.getChannelData(0);
+      let b0 = 0;
+      for (let i = 0; i < len; i++) { b0 = 0.97 * b0 + 0.03 * (Math.random() * 2 - 1); dd[i] = b0 * 3; }
+      const src = c.createBufferSource(), fl = c.createBiquadFilter(), hg = c.createGain();
+      src.buffer = buf; src.loop = true; fl.type = 'lowpass'; fl.frequency.value = 260; hg.gain.value = 0;
+      src.connect(fl); fl.connect(hg); hg.connect(a._out({ bus: 'sfx', pan: 0.1 }, 0.2));
+      src.start(a.time(0));
+      a.every(1, (tt, k) => hg.gain.setTargetAtTime(0.05 + 0.025 * Math.sin(k * 0.21), tt, 0.8));
+
+      // Walking bass: root, third, fifth, then a half-step approach into the next chord.
+      a.every(1, (tt, s) => {
+        const b = s % LOOP, v = dyn(b), q = b % 4, bar = barOf(b), split = bar[0] !== bar[1];
+        const [r, , third] = chordAt(b), nx = chordAt(b + 1)[0];
+        let m;
+        if (q === 3 || (split && q === 1)) m = nx + ((s >> 2) % 2 ? 1 : -1);
+        else if (q === 0 || (split && q === 2)) m = r;
+        else m = r + (q === 1 ? third : 7);
+        m = fold(m);
+        a.bass(tt, mtof(m), a.beats(0.85), { vel: 0.55 * v });
+        a.pluck(tt, mtof(m + 12), 0.16, { type: 'triangle', vel: 0.1 * v, wet: 0.05 });
+      });
+
+      // Brushed kit: ride with the swung skip note, hi-hat foot and brush slap on 2 and 4, feathered kick.
+      const ride = (tt, vel) => {
+        a.noise(tt, { dur: 0.45, filter: 'bandpass', freq: 7000, q: 0.9, attack: 0.002, vel, pan: 0.35, wet: 0.15 });
+        a.bell(tt, 3150, 0.4, { vel: vel * 0.12, pan: 0.35, wet: 0.1 });
+      };
+      a.every(0.5, (tt, s) => {
+        const b = (s / 2) % LOOP, v = dyn(b), q = b % 4, off = s % 2 === 1;
+        if (off) tt += SW;
+        if (!off) ride(tt, (q === 1 || q === 3 ? 0.13 : 0.1) * v);
+        else if (q === 1.5 || q === 3.5) ride(tt, 0.07 * v);
+        if (!off && (q === 1 || q === 3)) {
+          a.noise(tt, { dur: 0.045, filter: 'bandpass', freq: 3800, q: 1.2, vel: 0.12 * v, pan: 0.25, wet: 0.05 });
+          a.noise(tt, { dur: 0.26, filter: 'bandpass', freq: 1900, q: 0.6, attack: 0.03, vel: 0.2 * v, pan: -0.1, wet: 0.15 });
+        }
+        if (!off && (q === 0 || q === 2)) a.kick(tt, 0.16 * v);
+        a.noise(tt, { dur: 0.22, filter: 'bandpass', freq: 2600, q: 0.5, attack: 0.08, vel: 0.05 * v, pan: -0.2, wet: 0.1 });
+      });
+
+      // Muted piano: rootless voicings, Charleston rhythm, then 2 and the "and" of 3 on odd bars.
+      a.every(0.5, (tt, s) => {
+        const b = (s / 2) % LOOP, v = dyn(b), q = b % 4, bar = Math.floor(b / 4);
+        if (s % 2) tt += SW;
+        const pat = bar % 2 ? [1, 2.5] : [0, 1.5];
+        if (!pat.includes(q)) return;
+        const vo = chordAt(b)[1], long = q === 1.5 || q === 2.5;
+        vo.forEach((m, j) => a.pluck(tt + j * 0.006, mtof(m), long ? 0.7 : 0.3, { type: 'triangle', vel: 0.26 * v, pan: -0.25 + j * 0.12, wet: 0.25 }));
+        a.bell(tt, mtof(vo[3] + 12), 0.6, { vel: 0.05 * v, wet: 0.3 });
+      });
+
+      // Sax-like lead: a filtered saw plus a triangle for body, vibrato from the lead voice.
+      const sax = (tt, note, dur, vel) => {
+        a.lead(tt, note, dur, { type: 'sawtooth', vel: vel * 0.75, cutoff: 1300, pan: 0.12, wet: 0.3 });
+        a.lead(tt, note, dur, { type: 'triangle', vel, cutoff: 2400, pan: 0.12, wet: 0.3 });
+      };
+      const TUNES = [
+        'r:.5 D4:.5 F4 A4 Bb4:1 A4:.5 G4 | E4:1.5 G4:.5 Bb4:1 A4:.5 G4 | A4:3 r:1 | r:.5 F#4:.5 A4 C5 Eb5:1 D5:.5 C5 | ' +
+        'Bb4:1.5 A4:.5 G4:1 D5 | C5:.5 Bb4 G4 E4 F4:1 G4 | A4:1 C5 r:.5 F#4 A4:1 | G4:2 r:1 E4:.5 G4 | F4:3 r:1',
+        'D5:1 C5:.5 Bb4 A4:1 G4 | r:.5 E4 G4 Bb4 D5:1.5 C5:.5 | A4:.5 G4 F4:1 r C5:.5 D5 | Eb5:1.5 D5:.5 C5:1 A4 | ' +
+        'Bb4:.5 C5 D5 F5:1.5 D5:1 | E5:.5 D5 C5 Bb4 G4:2 | C5:1 A4 F#4:.5 A4 C5:1 | Bb4:1 G4 E4 C4 | F4:4'
+      ];
+      TUNES.forEach((src, k) => a.part(N(src), (tt, e) => {
+        if (musicLoop % 2 !== k) return;
+        if (e.beat % 1) tt += SW;
+        sax(tt, e.note, Math.max(0.12, e.sec * 0.92), 0.5 * dyn(e.beat + 4));
+      }, { length: LOOP, offset: 4 }));
+
+      // Sound effects in sync with the picture.
+      const pan = x => ((x == null ? 0.5 : x) * 2 - 1) * 0.8;
+      const SP = AsciiAudio.scale('F6', 'pentatonic', 10);
+      const honk = (t0, p, vel, wet) => {
+        [0, 0.26].forEach((o, i) => {
+          const out = a._out({ bus: 'sfx', pan: p, wet }, wet), lp = c.createBiquadFilter(), g = c.createGain();
+          lp.type = 'lowpass'; lp.frequency.value = 1500; lp.connect(g); g.connect(out);
+          const tt = t0 + o, dur = i ? 0.34 : 0.14;
+          g.gain.setValueAtTime(0, tt); g.gain.linearRampToValueAtTime(vel, tt + 0.015);
+          g.gain.setValueAtTime(vel, tt + dur); g.gain.linearRampToValueAtTime(0, tt + dur + 0.05);
+          [370, 466].forEach(f => { const os = c.createOscillator(); os.type = 'square'; os.frequency.value = f; os.connect(lp); os.start(tt); os.stop(tt + dur + 0.1); });
+        });
+      };
+      a.on('scramble', (a, d, t) => a.noise(t, { dur: 0.015, filter: 'bandpass', freq: 2500 + Math.random() * 3500, q: 3, vel: 0.07, pan: (Math.random() - 0.5) * 0.8, bus: 'sfx', wet: 0.05 }), { gap: 0.07 });
+      a.on('landmark', (a, d, t) => a.chime(t, d.note, 3, { vel: 0.22, pan: pan(d.x) }), { gap: 0.5 });
+      a.on('neon', (a, d, t) => {
+        // Transformer buzz that stutters on, plus the click of the switch.
+        const out = a._out({ bus: 'sfx', pan: pan(d.x) }, 0.15), bp = c.createBiquadFilter(), g = c.createGain();
+        bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 2; bp.connect(g); g.connect(out);
+        const v = d.tap ? 0.05 : 0.035;
+        g.gain.setValueAtTime(0, t);
+        for (let k = 0; k < 6; k++) g.gain.setValueAtTime(k % 2 ? 0 : v, t + k * 0.06);
+        g.gain.setValueAtTime(v * 0.6, t + 0.36); g.gain.linearRampToValueAtTime(0, t + 0.75);
+        const os = c.createOscillator(); os.type = 'sawtooth'; os.frequency.value = 120; os.connect(bp); os.start(t); os.stop(t + 0.8);
+        a.noise(t, { dur: 0.02, filter: 'highpass', freq: 3000, vel: 0.12, pan: pan(d.x), bus: 'sfx', wet: 0.05 });
+      }, { gap: 0.12 });
+      a.on('beam', (a, d, t) => a.whoosh(t, { dur: 1.8, freq: 200, freqEnd: 1200, q: 0.9, vel: 0.18, wet: 0.5 }));
+      a.on('type', (a, d, t) => a.tick(t, { vel: 0.22, bell: d.last, note: 'C7' }), { gap: 0.03 });
+      a.on('horn', (a, d, t) => honk(t, pan(d.x), d.far ? 0.012 : 0.035, d.far ? 0.6 : 0.2), { gap: 0.5 });
+      a.on('empire', (a, d, t) => ['F5', 'A5', 'C6', 'E6', 'G6', 'C7'].forEach((n, i) => a.ding(t + i * 0.09, n, { vel: 0.13 - i * 0.012, pan: pan(d.x) })), { gap: 0.3 });
+      a.on('chrysler', (a, d, t) => { a.whoosh(t, { dur: 0.6, freq: 2000, freqEnd: 6000, q: 1.2, vel: 0.08, pan: pan(d.x), wet: 0.5 }); a.sparkle(t + 0.15, { count: 6, vel: 0.13, notes: SP }); }, { gap: 0.3 });
+      a.on('liberty', (a, d, t) => { a.whoosh(t, { dur: 1.2, freq: 150, freqEnd: 900, q: 0.8, vel: 0.22, pan: pan(d.x), wet: 0.4 }); a.chime(t + 0.2, 'C6', 3.5, { vel: 0.22, pan: pan(d.x) }); }, { gap: 0.4 });
+      a.on('wtc', (a, d, t) => { a.sweep(t, 0.9, { from: 300, to: 4000, q: 3, attack: 0.7, vel: 0.2, bus: 'sfx', wet: 0.4, pan: pan(d.x) }); a.ding(t + 0.8, 'G6', { vel: 0.12, pan: pan(d.x) }); }, { gap: 0.3 });
+      a.on('launch', (a, d, t) => {
+        const dur = Math.max(0.5, Math.min(2, d.dur || 1.2));
+        a.noise(t, { dur, filter: 'bandpass', freq: 700, freqEnd: 2600, q: 16, attack: dur * 0.85, vel: 0.45, pan: pan(d.x), bus: 'sfx', wet: 0.25 });
+      }, { gap: 0.25 });
+      a.on('burst', (a, d, t) => {
+        const p = pan(d.x);
+        a.boom(t, { vel: d.calm ? 0.16 : 0.3, pan: p });
+        for (let i = 0; i < (d.calm ? 4 : 10); i++) a.noise(t + 0.25 + Math.random() * 0.9, { dur: 0.02 + Math.random() * 0.03, filter: 'highpass',
+          freq: 3000 + Math.random() * 3000, vel: 0.1 + Math.random() * 0.1, pan: p + (Math.random() - 0.5) * 0.4, bus: 'sfx', wet: 0.2 });
+      }, { gap: 0.2 });
+      a.on('fade', (a, d, t) => a.sweep(t, T.FADE_DUR, { from: 3000, to: 400, q: 1.2, attack: 0.8, vel: 0.1, bus: 'sfx', wet: 0.6 }));
+    }
+  });
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

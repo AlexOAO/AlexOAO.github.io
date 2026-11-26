@@ -1,0 +1,1086 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ASCII Dubai Skyline | Alex Li (李翔緯)</title>
+  <meta name="description" content="Dubai at night drawn entirely with coloured ASCII characters: the Milky Way over the desert, Burj Lake, a skyline that resolves character by character, the Burj Khalifa rising and lighting up section by section, the Emirates Towers, a sail-shaped tower, palms and reflections. Tap the tower for an LED show, the lake for a dancing fountain, the sky for fireworks. Vanilla JS on a single canvas.">
+  <meta name="theme-color" content="#04060e">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;600;800&display=swap">
+  <style>
+    :root {
+      --bg: #04060e;
+      --text: #f6efe0;
+      --muted: #c8bca4;
+      --accent: #f5c45a;
+      --mono: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    canvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100svh;
+      display: block;
+      touch-action: none; /* taps and drags drive the scene, so no scrolling or zooming */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: crosshair;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .back {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(245, 196, 90, 0.45);
+      background: rgba(30, 22, 8, 0.45);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .back:hover, .back:focus-visible {
+      background: rgba(245, 196, 90, 0.25);
+      border-color: var(--accent);
+      outline: none;
+    }
+    .hud, .hint {
+      position: fixed;
+      z-index: 1;
+      bottom: 12px;
+      color: var(--muted);
+      opacity: 0.8;
+      font: 11px/1.4 var(--mono);
+      white-space: pre;
+      pointer-events: none;
+      max-width: calc(100% - 24px);
+      overflow: hidden;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    }
+    .hud { left: 12px; }
+    .hint {
+      right: 12px;
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    @media (max-width: 640px) {
+      .hud, .hint { font-size: 10px; }
+      .hint { bottom: 30px; } /* stack above the HUD on narrow screens */
+    }
+  </style>
+</head>
+<body>
+  <h1 class="sr-only">ASCII Dubai Skyline</h1>
+  <a class="back" href="./">← ASCII</a>
+  <canvas id="c" role="img" aria-label="Animated night view of Dubai drawn with coloured ASCII characters: the Milky Way over the desert, Burj Lake, a skyline with the Burj Khalifa rising and lighting up, the Emirates Towers, a sail-shaped tower, a lattice tower, palm trees and reflections on the water"></canvas>
+  <div class="hud" id="hud" aria-hidden="true"></div>
+  <div class="hint" id="hint"></div>
+
+<script src="ascii-audio.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  // ---------- Timeline (seconds of scene time, one 24 s loop) ----------
+  const T = {
+    SKY: 0.0,                         // night sky and Milky Way resolve
+    LAKE: 1.2,                        // Burj Lake and the promenade
+    CITY: 2.4,                        // the low skyline, left to right, bottom up
+    BURJ: 4.8, BURJ_DUR: 4.6,         // Burj Khalifa rises; red beacon at 9.4
+    MARKS: 8.0,                       // Emirates Towers, sail, lattice tower, palms
+    LIGHTS: 11.8, LIGHTS_DUR: 3.0,    // windows and the Burj light up section by section
+    REFL: 13.8, REFL_DUR: 2.2,        // reflections spread over the lake
+    TITLE: 16.0, TITLE_CPS: 8,        // "DUBAI SKYLINE" types out at the bottom
+    HOLD: 18.0,
+    FADE: 21.6, FADE_DUR: 2.0, END: 24.0
+  };
+  const RES = 0.5;                    // seconds a cell flickers through random glyphs before it settles
+
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T_START = reduced ? 18.6 : 0; // reduced motion: open (and stay) on the finished, lit skyline
+  const LED_DUR = 7.5;                // tap on the Burj: facade show
+  const FOUNT_DUR = 10.5;             // tap on the lake: fountain show
+  const BEAT = 60 / 90;               // the fountain dances to the score's tempo
+  const HORIZON = 0.64;               // promenade at 64% of the screen height
+  const TITLE = 'DUBAI SKYLINE';
+  const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  // Stateless integer hash -> [0, 1).
+  function hash2(a, b) {
+    let h = Math.imul(a ^ Math.imul(b, 0x9E3779B1), 0x85EBCA6B);
+    h ^= h >>> 13; h = Math.imul(h, 0xC2B2AE35); h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
+  }
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+
+  // ---------- Tileable value-noise fbm (Milky Way dust, lake ripples) ----------
+  const CNX = 256, CNY = 64;
+  const NZ = new Float32Array(CNX * CNY);
+  (function buildNoise() {
+    const r = mulberry32(4242);
+    let amp = 1, tot = 0;
+    for (let o = 0; o < 5; o++) {
+      const gx = 6 << o, gy = Math.min(3 << o, 32);
+      const lat = new Float32Array(gx * gy);
+      for (let i = 0; i < lat.length; i++) lat[i] = r();
+      for (let y = 0; y < CNY; y++) {
+        const fy = y / CNY * gy, y0 = fy | 0, ty = smooth(fy - y0), y1 = (y0 + 1) % gy;
+        for (let x = 0; x < CNX; x++) {
+          const fx = x / CNX * gx, x0 = fx | 0, tx = smooth(fx - x0), x1 = (x0 + 1) % gx;
+          const a = lat[y0 * gx + x0], b = lat[y0 * gx + x1], c = lat[y1 * gx + x0], d = lat[y1 * gx + x1];
+          NZ[y * CNX + x] += amp * (a + (b - a) * tx + (c - a + (a - b - c + d) * tx) * ty);
+        }
+      }
+      tot += amp; amp *= 0.5;
+    }
+    let lo = 1e9, hi = -1e9;
+    for (let i = 0; i < NZ.length; i++) { const v = NZ[i] / tot; NZ[i] = v; if (v < lo) lo = v; if (v > hi) hi = v; }
+    for (let i = 0; i < NZ.length; i++) NZ[i] = (NZ[i] - lo) / (hi - lo);
+  })();
+  function noise(u, v) {
+    u = (u - Math.floor(u)) * CNX; v = (v - Math.floor(v)) * CNY;
+    const x0 = u | 0, y0 = v | 0, fx = u - x0, fy = v - y0;
+    const x1 = (x0 + 1) & (CNX - 1), y1 = (y0 + 1) & (CNY - 1), r0 = y0 * CNX, r1 = y1 * CNX;
+    const a = NZ[r0 + x0], b = NZ[r0 + x1], c = NZ[r1 + x0], d = NZ[r1 + x1];
+    return a + (b - a) * fx + (c - a + (a - b - c + d) * fx) * fy;
+  }
+
+  // ---------- Glyphs ----------
+  const CH = [' '];
+  const ci = s => { let i = CH.indexOf(s); if (i < 0) { CH.push(s); i = CH.length - 1; } return i; };
+  const set = s => Uint8Array.from([...s].map(ci));
+  const G_SCR = set('#%&@$*+=?/\\<>{}[]01xX');      // characters flickering before they resolve
+  const G_RIP = set('-~=-~-');
+  const C_DOT = ci('.'), C_COLON = ci(':'), C_APOS = ci("'"), C_STAR = ci('*'), C_PLUS = ci('+'), C_PIPE = ci('|');
+  const C_US = ci('_'), C_FS = ci('/'), C_BS = ci('\\'), C_EQ = ci('='), C_HASH = ci('#'), C_DASH = ci('-');
+  const C_TILDE = ci('~'), C_O = ci('o'), C_AT = ci('@'), C_CARET = ci('^'), C_LP = ci('('), C_RP = ci(')');
+  const C_X = ci('X'), C_EXCL = ci('!'), C_COMMA = ci(','), C_SMO = ci('o');
+
+  // Materials of the skyline cells.
+  const M_FAR = 1, M_GE = 2, M_GB = 3, M_GWIN = 4, M_BE = 5, M_BB = 6, M_BWIN = 7, M_ANT = 8, M_RED = 9;
+  const M_KE = 10, M_KI = 11, M_KC = 12, M_KN = 13, M_BEACON = 14;
+  const M_TW = 15, M_TWIN = 16, M_TB = 17;
+  const M_SE = 18, M_SL = 19, M_SC = 20, M_SB = 21;
+  const M_LE = 22, M_LX = 23, M_LB = 24;
+  const M_PF = 25, M_PT = 26, M_RAIL = 27, M_LAMP = 28;
+  const S_BURJ = 5;                   // structure id of the Burj Khalifa (taps and the LED show)
+
+  // Colour keys: 5 bits per channel, so fillStyle changes once per quantised colour.
+  const NKEY = 32768;
+  const COLSTR = new Array(NKEY);
+  const colStr = k => COLSTR[k] || (COLSTR[k] = `rgb(${(k >> 10) * 8 + 4},${((k >> 5) & 31) * 8 + 4},${(k & 31) * 8 + 4})`);
+  const counts = new Uint32Array(NKEY);
+
+  // ---------- Canvas, grid, layout ----------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const hudEl = document.getElementById('hud');
+  const hintEl = document.getElementById('hint');
+  const back = document.createElement('canvas'), bctx = back.getContext('2d', { willReadFrequently: true });
+  const emis = document.createElement('canvas'), ectx = emis.getContext('2d', { willReadFrequently: true });
+  const glow = document.createElement('canvas'), gctx = glow.getContext('2d');
+  const halo = document.createElement('canvas'), hctx = halo.getContext('2d');
+  let bImg = null, eImg = null;
+
+  let W = 0, H = 0, fs = 9, cw = 5, ch = 10, cols = 0, rows = 0, n = 0, hr = 0, yH = 0, M = 500, cellFont = '';
+  let CR, CG, CB, CK, EMI, OCC, HSH, keys, order;
+  let SG, SM, ST, SY, SS, sIdx, nS = 0;           // skyline cells: glyph, material, appear time, height, structure
+  let cB = 0, bHalf = 4, bTop = 0, bHc = 1, burjL, burjR;  // Burj Khalifa geometry
+  let needResize = true, dirty = true;
+
+  function resize() {
+    needResize = false;
+    W = canvas.clientWidth || innerWidth;
+    H = canvas.clientHeight || innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    fs = clamp(Math.round(Math.min(W, H * 1.2) / 118), 7, 11);
+    cellFont = `${fs}px ${MONO}`;
+    ctx.font = cellFont;
+    cw = ctx.measureText('M').width || fs * 0.6;
+    ch = Math.round(fs * 1.15);
+    cols = Math.ceil(W / cw);
+    rows = Math.ceil(H / ch);
+    n = cols * rows;
+    hr = Math.round(H * HORIZON / ch);
+    yH = hr * ch;
+    M = Math.min(W, H * 0.95);
+
+    CR = new Float32Array(n); CG = new Float32Array(n); CB = new Float32Array(n);
+    CK = new Uint8Array(n); EMI = new Uint8Array(n); OCC = new Uint8Array(n);
+    keys = new Uint16Array(n); order = new Int32Array(n);
+    HSH = new Uint8Array(n);
+    const r = mulberry32(77);
+    for (let i = 0; i < n; i++) HSH[i] = (r() * 256) | 0;
+    back.width = cols; back.height = rows; bImg = bctx.createImageData(cols, rows);
+    emis.width = cols; emis.height = rows; eImg = ectx.createImageData(cols, rows);
+    glow.width = cols; glow.height = rows; halo.width = cols; halo.height = rows;
+    buildSkyline();
+    gX = gXTo = W * 0.5; gY = gYTo = H * 0.3;
+    dirty = true;
+  }
+
+  // ---------- Skyline geometry (cells with an appear time each) ----------
+  function cell(c, r, g, m, ta, y, sid) {
+    if (c < 0 || c >= cols || r < 0 || r >= rows) return;
+    const i = r * cols + c;
+    SG[i] = g; SM[i] = m; ST[i] = ta; SY[i] = y; SS[i] = sid;
+  }
+
+  function buildSkyline() {
+    SG = new Uint8Array(n); SM = new Uint8Array(n); ST = new Float32Array(n); SY = new Float32Array(n); SS = new Uint8Array(n);
+    const wu = Math.min(hr, cols * 0.55) / 60;       // width unit in columns
+    const rnd = mulberry32(2010);
+    cB = Math.round(cols * 0.5);
+    const span = Math.min(cols * 0.5, hr * 1.5);    // half-width of the landmark cluster
+    const jit = (c, r) => hash2(c * 13 + 7, r) * 0.25;
+
+    // Hazy far city.
+    for (let c = 0; c < cols;) {
+      const w = 2 + ((rnd() * 6) | 0), h = Math.max(2, Math.round((0.05 + 0.14 * rnd()) * hr));
+      for (let k = 0; k < w && c < cols; k++, c++) {
+        for (let q = 0; q < h; q++) {
+          const r = hr - 1 - q;
+          cell(c, r, rnd() < 0.5 ? C_COLON : C_DOT, M_FAR, T.CITY + c / cols * 1.2 + q / hr * 1.5 + jit(c, r), q / h, 1);
+        }
+      }
+    }
+
+    // Generic low (warm) and mid-rise (blue-white) buildings along the whole waterfront.
+    for (let c = 0; c < cols;) {
+      const w = Math.max(3, Math.round((3 + 6 * rnd()) * wu));
+      const warm = rnd() < 0.55;
+      const h = Math.max(3, Math.round((warm ? 0.05 + 0.11 * rnd() : 0.12 + 0.15 * rnd()) * hr));
+      const top = hr - h, E = warm ? M_GE : M_BE;
+      for (let x = c; x < c + w && x < cols; x++) {
+        for (let r = top; r < hr; r++) {
+          const k = hr - 1 - r, ta = T.CITY + x / cols * 1.6 + k / (hr * 0.3) * 0.9 + jit(x, r);
+          const edge = x === c || x === c + w - 1, dx = x - c;
+          let g = 0, m = warm ? M_GB : M_BB;
+          if (r === top) { g = C_US; m = E; }
+          else if (edge) { g = C_PIPE; m = E; }
+          else if (warm) { if (dx % 2 === 1 && k % 2 === 1) { g = C_HASH; m = M_GWIN; } }
+          else if (dx % 3 === 1) { g = k % 2 ? C_COLON : C_EQ; m = M_BWIN; }
+          cell(x, r, g, m, ta, k / h, 2);
+        }
+      }
+      if (!warm && rnd() < 0.4) {
+        const x = c + (w >> 1), ta = T.CITY + x / cols * 1.6 + 1.2;
+        for (let q = 1; q <= 3; q++) cell(x, top - q, q === 3 ? C_DOT : C_PIPE, q === 3 ? M_RED : M_ANT, ta, 1, 2);
+      }
+      c += w + (rnd() < 0.25 ? 1 : 0);
+    }
+
+    // Emirates Towers: two slim towers with slanted wedge roofs.
+    const twin = (cx, h, sid, t0) => {
+      const hw = Math.max(2, Math.round(3 * wu)), cL = cx - hw, cR = cx + hw, tp = cR - cL;
+      for (let k = 0; k < h; k++) {
+        const r = hr - 1 - k, y = k / h, ta = t0 + y * 1.5 + jit(cx, r) * 0.6;
+        const kt = k - (h - tp);
+        const left = kt >= 0 ? cL + kt + 1 : cL;
+        for (let x = left; x <= cR; x++) {
+          let g = 0, m = M_TB;
+          if (x === cR) { g = C_PIPE; m = M_TW; }
+          else if (x === left) { g = kt >= 0 ? C_FS : C_PIPE; m = M_TW; }
+          else if ((x - cL) % 2 === 1) { g = k % 3 === 0 ? C_EQ : C_COLON; m = M_TWIN; }
+          cell(x, r, g, m, ta, y, sid);
+        }
+      }
+      for (let q = 0; q < 3; q++) cell(cR, hr - 1 - h - q, q === 2 ? C_DOT : C_PIPE, q === 2 ? M_RED : M_TW, t0 + 1.6, 1, sid);
+    };
+    twin(Math.round(cB - span * 0.62), Math.round(hr * 0.46), 3, T.MARKS);
+    twin(Math.round(cB - span * 0.45), Math.round(hr * 0.38), 4, T.MARKS + 0.3);
+
+    // Burj Khalifa: stepped setbacks that spiral (left and right sides step at different heights),
+    // a core that narrows to a needle and a red beacon on top.
+    bHalf = Math.max(4, Math.round(6.5 * wu));
+    const Hb = Math.min(hr - 3, Math.round(hr * 0.84));
+    bHc = Math.round(Hb * 0.7);
+    bTop = hr - 1 - Hb;
+    burjL = new Int16Array(Hb + 1); burjR = new Int16Array(Hb + 1);
+    const SL = [0.10, 0.24, 0.38, 0.52, 0.66, 0.80], SR = [0.17, 0.31, 0.45, 0.59, 0.73, 0.87];
+    const side = (y, steps) => { let k = 0; for (const s of steps) if (y >= s) k++; return Math.max(1, Math.round(bHalf - (bHalf - 1) * k / steps.length)); };
+    for (let k = 0; k <= Hb; k++) {
+      const r = hr - 1 - k, ta = T.BURJ + k / Hb * T.BURJ_DUR + hash2(k, 99) * 0.12;
+      if (k >= bHc) {
+        // Needle: a single column with service rings, then the beacon.
+        burjL[k] = 0; burjR[k] = 0;
+        const g = k === Hb ? C_O : (k - bHc) % 5 === 2 ? C_PLUS : k > Hb - 3 ? C_COLON : C_PIPE;
+        cell(cB, r, g, k === Hb ? M_BEACON : M_KN, ta, k / bHc, S_BURJ);
+        continue;
+      }
+      const y = k / bHc, hl = side(y, SL), hrr = side(y, SR);
+      burjL[k] = hl; burjR[k] = hrr;
+      for (let x = cB - hl; x <= cB + hrr; x++) {
+        let g, m;
+        if (x === cB - hl || x === cB + hrr) { g = C_PIPE; m = M_KE; }
+        else if (x === cB) { g = k % 4 === 0 ? C_EQ : C_COLON; m = M_KC; }
+        else if ((x - cB + k) & 1) { g = C_HASH; m = M_KI; }
+        else { g = C_COLON; m = M_KC; }
+        cell(x, r, g, m, ta, y, S_BURJ);
+      }
+      // Setback ledges beside the narrower section.
+      if (k > 0) {
+        for (let x = cB - burjL[k - 1]; x < cB - hl; x++) cell(x, r, C_US, M_KE, ta, y, S_BURJ);
+        for (let x = cB + hrr + 1; x <= cB + burjR[k - 1]; x++) cell(x, r, C_US, M_KE, ta, y, S_BURJ);
+      }
+    }
+
+    // Sail-shaped tower: a mast on the right, a curved sail front, horizontal seams and a helipad.
+    const cM = Math.round(cB + span * 0.56), Ws = Math.max(5, Math.round(9 * wu)), Hs = Math.round(hr * 0.52);
+    const sw = k => Math.max(1, Math.round(Ws * (0.2 + 0.8 * Math.pow(Math.max(0, Math.sin(Math.PI * clamp(0.1 + 0.85 * k / Hs, 0, 1))), 0.7))));
+    const kPad = Math.round(Hs * 0.8);
+    for (let k = 0; k < Hs; k++) {
+      const r = hr - 1 - k, y = k / Hs, ta = T.MARKS + 1.0 + y * 1.6 + jit(cM, r) * 0.6;
+      const w = sw(k), wn = sw(k + 1), left = cM - w;
+      for (let x = left; x <= cM; x++) {
+        let g = 0, m = M_SB;
+        if (x === cM) { g = C_PIPE; m = M_SE; }
+        else if (x === left) { g = wn > w ? C_BS : wn < w ? C_FS : C_LP; m = M_SE; }
+        else if (k % 3 === 0) { g = C_DASH; m = M_SL; }
+        else { g = (x + k) % 4 === 0 ? C_COLON : C_DOT; m = M_SL; }
+        cell(x, r, g, m, ta, y, 6);
+      }
+      if (k === kPad) for (let x = left - 2; x < left; x++) cell(x, r, C_EQ, M_SC, ta, y, 6);
+      if (k === kPad) cell(left - 3, r, C_LP, M_SC, ta, y, 6);
+    }
+    for (let q = 0; q < 4; q++) cell(cM, hr - 1 - Hs - q, q === 3 ? C_STAR : C_PIPE, q === 3 ? M_SC : M_SE, T.MARKS + 2.7, 1, 6);
+
+    // Lattice tower: cross-braced shaft with an antenna.
+    const cX = Math.round(cB + span * 0.82), hwX = Math.max(2, Math.round(2.2 * wu)), HL = Math.round(hr * 0.42);
+    for (let k = 0; k < HL; k++) {
+      const r = hr - 1 - k, y = k / HL, ta = T.MARKS + 1.6 + y * 1.4 + jit(cX, r) * 0.6;
+      const hw = k > HL * 0.78 ? Math.max(1, hwX - 1) : hwX, c0 = cX - hw, per = 2 * hw;
+      for (let x = c0; x <= cX + hw; x++) {
+        let g = 0, m = M_LB;
+        const p = x - c0;
+        if (k === HL - 1) { g = C_EQ; m = M_LE; }
+        else if (p === 0 || p === per) { g = C_PIPE; m = M_LE; }
+        else {
+          const a = ((p - k) % per + per) % per === 0, b = ((p + k) % per) === 0;
+          if (a && b) { g = C_X; m = M_LX; } else if (a) { g = C_FS; m = M_LX; } else if (b) { g = C_BS; m = M_LX; }
+        }
+        cell(x, r, g, m, ta, y, 7);
+      }
+    }
+    for (let q = 0; q < 5; q++) cell(cX, hr - 1 - HL - q, q === 4 ? C_DOT : C_PIPE, q === 4 ? M_RED : M_LE, T.MARKS + 3.0, 1, 7);
+
+    // Palms along the promenade (none in front of the Burj's base).
+    const step = Math.max(9, Math.round(cols / 9));
+    let pi = 0;
+    for (let x = 4; x < cols - 2; x += step, pi++) {
+      if (Math.abs(x - cB) <= bHalf + 3) continue;
+      const t0 = T.MARKS + 2.2 + pi * 0.08;
+      const P = [
+        [[-2, C_DASH], [-1, C_BS], [0, C_PIPE], [1, C_FS], [2, C_DASH]],
+        [[-2, C_FS], [0, C_RP], [2, C_BS]],
+        [[0, C_LP]], [[0, C_RP]], [[0, C_LP]]
+      ];
+      for (let q = 0; q < 5; q++) {
+        const r = hr - 5 + q;
+        for (const [dx, g] of P[q]) cell(x + dx, r, g, g === C_LP || g === C_RP ? M_PT : M_PF, t0 + (4 - q) * 0.12, (4 - q) / 4, 8);
+      }
+    }
+
+    // Promenade rail with lamps.
+    for (let x = 0; x < cols; x++) cell(x, hr, x % 9 === 4 ? C_O : C_EQ, x % 9 === 4 ? M_LAMP : M_RAIL, T.LAKE + x / cols * 0.8, 0, 9);
+
+    nS = 0;
+    for (let i = 0; i < n; i++) if (SM[i]) nS++;
+    sIdx = new Int32Array(nS);
+    for (let i = 0, q = 0; i < n; i++) if (SM[i]) sIdx[q++] = i;
+  }
+
+  // ---------- User effects: LED show, fountain, fireworks, shooting stars ----------
+  let ledT0 = -99, fount = null;
+  let rockets = [], sparks = [], shoots = [], nextShoot = 6;
+  const FW = [[255, 205, 90], [255, 92, 92], [245, 245, 255], [110, 240, 150], [120, 215, 255], [240, 120, 230]];
+
+  function launch(x, y) {
+    const pal = (Math.random() * FW.length) | 0, pal2 = Math.random() < 0.5 ? pal : (Math.random() * FW.length) | 0;
+    rockets.push({ x, y: yH - ch, ty: clamp(y, H * 0.08, yH - ch * 6), v: H * 0.85, a: pal, b: pal2 });
+    music('event', 'launch', { pan: clamp(x / W * 2 - 1, -0.8, 0.8) });
+  }
+  function burst(rk) {
+    const k = 48 + ((Math.random() * 20) | 0), sp = M * (0.15 + 0.06 * Math.random());
+    for (let q = 0; q < k && sparks.length < 1600; q++) {
+      const ang = q / k * Math.PI * 2 + Math.random() * 0.12, v = sp * (0.75 + 0.35 * Math.random());
+      sparks.push({ x: rk.x, y: rk.y, vx: Math.cos(ang) * v, vy: Math.sin(ang) * v * 0.85, age: 0,
+                    life: 1.3 + 0.8 * Math.random(), c: FW[q % 2 ? rk.a : rk.b] });
+    }
+    music('event', 'burst', { pan: clamp(rk.x / W * 2 - 1, -0.8, 0.8) });
+  }
+  function shootingStar(x, y) {
+    const dir = x == null ? (Math.random() < 0.5 ? -1 : 1) : (x < W / 2 ? 1 : -1), slow = reduced ? 0.4 : 1;
+    shoots.push({ x: x != null ? x : W * (0.2 + 0.6 * Math.random()), y: y != null ? y : H * (0.05 + 0.2 * Math.random()),
+                  vx: dir * M * 0.75 * slow, vy: M * 0.28 * slow, age: 0, life: reduced ? 2.6 : 1.2 });
+    music('event', 'shoot');
+  }
+  function startFountain(x, y) {
+    // Jets always leave the water in the near half of the lake, in front of the skyline.
+    const r = clamp(Math.round(y / ch), hr + 3, hr + Math.max(3, Math.round((rows - hr) * 0.32)));
+    fount = { c: Math.round(x / cw), r, t0: skyT, beat: -1 };
+    music('event', 'fountain', { pan: clamp(x / W * 2 - 1, -0.8, 0.8) });
+  }
+  function clearEffects() { rockets = []; sparks = []; shoots = []; fount = null; ledT0 = -99; }
+
+  function updateEffects(dt) {
+    for (let i = rockets.length - 1; i >= 0; i--) {
+      const rk = rockets[i];
+      rk.y -= rk.v * dt; rk.v *= Math.exp(-0.9 * dt);
+      if (rk.y <= rk.ty) { burst(rk); rockets.splice(i, 1); }
+    }
+    const g = M * 0.11, dr = Math.exp(-1.7 * dt);
+    for (const s of sparks) { s.age += dt; s.vx *= dr; s.vy = s.vy * dr + g * dt; s.x += s.vx * dt; s.y += s.vy * dt; }
+    sparks = sparks.filter(s => s.age < s.life);
+    for (const s of shoots) { s.age += dt; s.x += s.vx * dt; s.y += s.vy * dt; }
+    shoots = shoots.filter(s => s.age < s.life);
+    if (!reduced && t > T.SKY + 3 && skyT > nextShoot) { shootingStar(); nextShoot = skyT + 7 + Math.random() * 7; }
+    if (fount && skyT - fount.t0 > FOUNT_DUR) fount = null;
+  }
+
+  // ---------- Scene state ----------
+  let t = T_START, skyT = 0, fa = 1, built = 0, letters = 0, burjSec = 0;
+  let par = 0, parTo = 0, gX = 0, gY = 0, gXTo = 0, gYTo = 0, gK = 0.4, gKTo = 0.4, lastMove = -1e9;
+
+  // Write one cell; `e` > 0 makes it glow. Timeline cells are scaled by the loop fade `fa`.
+  function put(i, r, g, b, k, e) {
+    CR[i] = r * fa; CG[i] = g * fa; CB[i] = b * fa; CK[i] = k; EMI[i] = e ? Math.min(255, e * fa) : 0;
+  }
+
+  const hsv = (h, s, v, out) => {
+    h = ((h % 1) + 1) % 1 * 6;
+    const i = h | 0, f = h - i, p = v * (1 - s), q = v * (1 - s * f), u = v * (1 - s * (1 - f));
+    const m = [[v, u, p], [q, v, p], [p, v, u], [p, q, v], [u, p, v], [v, p, q]][i];
+    out[0] = m[0] * 255; out[1] = m[1] * 255; out[2] = m[2] * 255;
+  };
+  const tmp = [0, 0, 0];
+
+  function buildScene() {
+    fa = reduced ? 1 : 1 - smooth((t - T.FADE) / T.FADE_DUR);
+    const lit = smooth((t - T.LIGHTS) / T.LIGHTS_DUR);
+    OCC.fill(0);
+
+    // ---- Sky: gradient, Milky Way band, stars (rows 0..hr) ----
+    const ox = par * M * 0.035;                         // parallax: the sky drifts against the city
+    const P0x = -W * 0.05, P0y = H * 0.66, P1x = W * 1.05, P1y = H * 0.02;
+    const Lb = Math.hypot(P1x - P0x, P1y - P0y), ux = (P1x - P0x) / Lb, uy = (P1y - P0y) / Lb;
+    const bw = M * 0.1, gR2 = (M * 0.2) ** 2;
+    const skyIn = smooth((t - T.SKY) / 1.2);
+    for (let r = 0; r <= hr; r++) {
+      const f = r / hr, f6 = f ** 6;
+      const bgR = (3 + 10 * f + 34 * f6 * (0.3 + lit)) * skyIn, bgG = (5 + 9 * f + 20 * f6 * (0.3 + lit)) * skyIn, bgB = (12 + 20 * f + 10 * f6) * skyIn;
+      const y = (r + 0.5) * ch;
+      for (let c = 0; c < cols; c++) {
+        const i = r * cols + c, h = HSH[i];
+        const ta = T.SKY + h / 256 * 1.3 + f * 0.5;
+        if (r === hr || t < ta - RES) { put(i, bgR, bgG, bgB, 0, 0); continue; }
+        if (t < ta) { put(i, bgR + 40, bgG + 50, bgB + 80, G_SCR[(hash2(i, (skyT * 18) | 0) * G_SCR.length) | 0], 0); continue; }
+        const x = (c + 0.5) * cw + ox;
+        const dx = x - P0x, dy = y - P0y;
+        const a = (dx * ux + dy * uy) / Lb, d = (dx * -uy + dy * ux) / bw;
+        let R = bgR, G = bgG, B = bgB, k = 0, e = 0;
+        if (d > -2.8 && d < 2.8) {
+          let den = Math.exp(-d * d * 1.2) * (0.3 + 0.95 * noise(a * 2.2 + 0.13, 0.5 + d * 0.16));
+          const dust = noise(a * 4.3 + 0.7, 0.2 + d * 0.3);
+          den *= 1 - 0.75 * smooth((dust - 0.5) / 0.18) * Math.exp(-(d + 0.2) * (d + 0.2) * 3);
+          const gp = Math.exp(-((x - ox - gX) ** 2 + (y - gY) ** 2) / gR2) * gK;
+          den += gp * 0.45 * Math.exp(-d * d * 0.8);
+          // Dithered threshold, so the band thins out into scattered dots at its edges.
+          if (den > 0.24 + (h / 256) * 0.26) {
+            const v = clamp(den, 0, 1.2), s = Math.pow(v, 1.5);
+            k = v > 0.95 ? C_STAR : v > 0.75 ? C_PLUS : v > 0.55 ? C_COLON : v > 0.4 ? C_APOS : C_DOT;
+            R += 26 + 130 * s + 80 * gp; G += 24 + 118 * s + 50 * gp; B += 58 + 140 * s + 24 * gp;
+            if (v > 0.9) e = 30 + 70 * gp;
+          }
+        }
+        if (!k && h < 3 && f < 0.9) {
+          const tw = 0.5 + 0.5 * Math.sin(skyT * (reduced ? 0.6 : 2) + h * 7 + c);
+          if (tw > 0.2) { k = h === 0 ? C_PLUS : C_DOT; R += 170 * tw; G += 175 * tw; B += 200 * tw; e = h === 0 ? 70 * tw : 0; }
+        }
+        put(i, R, G, B, k, e);
+      }
+    }
+
+    // ---- Sky effects (behind the skyline; not faded by the loop) ----
+    const fa0 = fa; fa = 1;
+    for (const s of shoots) {
+      const p = s.age / s.life, a = Math.sin(Math.PI * Math.min(1, p * 1.4)) * (1 - p * 0.4);
+      const sp = Math.hypot(s.vx, s.vy), ux2 = s.vx / sp, uy2 = s.vy / sp;
+      const g = (ux2 > 0) === (uy2 > 0) ? C_BS : C_FS;
+      for (let q = 0; q < 10; q++) {
+        const c = Math.floor((s.x - ux2 * q * cw * 1.1) / cw), r = Math.floor((s.y - uy2 * q * cw * 1.1) / ch);
+        if (c < 0 || c >= cols || r < 0 || r >= hr) continue;
+        const b = a * (1 - q / 10);
+        put(r * cols + c, 200 + 55 * b, 210 + 45 * b, 255, q === 0 ? C_STAR : q < 4 ? g : C_DOT, (reduced ? 90 : 200) * b);
+      }
+    }
+    for (const rk of rockets) {
+      for (let q = 0; q < 4; q++) {
+        const c = Math.floor(rk.x / cw), r = Math.floor((rk.y + q * ch) / ch);
+        if (c < 0 || c >= cols || r < 0 || r >= hr) continue;
+        put(r * cols + c, 255, 220 - q * 30, 160 - q * 30, q === 0 ? C_CARET : q < 3 ? C_COLON : C_DOT, 160 - q * 35);
+      }
+    }
+    for (let q = 0; q < sparks.length; q++) {
+      const s = sparks[q], c = Math.floor(s.x / cw), r = Math.floor(s.y / ch);
+      if (c < 0 || c >= cols || r < 0 || r >= hr) continue;
+      const a = s.age / s.life;
+      if (a > 0.55 && hash2(q, (skyT * 30) | 0) < 0.3) continue;   // late sparks twinkle out
+      const b = 0.3 + 0.8 * Math.pow(1 - a, 0.7);
+      put(r * cols + c, s.c[0] * b, s.c[1] * b, s.c[2] * b, a < 0.2 ? C_STAR : a < 0.4 ? C_SMO : a < 0.7 ? C_PLUS : C_DOT, 230 * b);
+    }
+    fa = fa0;
+
+    // ---- Skyline: each cell flickers through random glyphs, then resolves ----
+    let vis = 0;
+    const secs = 12, bs = reduced ? 1 : clamp((t - T.LIGHTS) / 2.6, 0, 1.05);
+    burjSec = Math.min(secs, Math.floor(bs * secs));
+    const ledT = skyT - ledT0, led = ledT >= 0 && ledT < LED_DUR;
+    const sparkle = !reduced && t > T.TITLE && t < T.FADE;
+    const beaconOn = reduced || (skyT * 0.9 % 1) < 0.5;
+    const sailHue = 0.55 + 0.12 * Math.sin(skyT * (reduced ? 0.08 : 0.25));
+    hsv(sailHue, 0.35, 1, tmp);
+    const sR = tmp[0], sG = tmp[1], sBl = tmp[2];
+    for (let q = 0; q < nS; q++) {
+      const i = sIdx[q], ta = ST[i];
+      if (t < ta - RES) continue;
+      OCC[i] = 1;
+      if (t < ta) {
+        const p = 1 - (ta - t) / RES;
+        put(i, 60 + 110 * p, 120 + 100 * p, 170 + 70 * p, G_SCR[(hash2(i, (skyT * 20) | 0) * G_SCR.length) | 0], 50 * p);
+        continue;
+      }
+      vis++;
+      const m = SM[i], hv = hash2(i, 3);
+      let g = SG[i], R = 0, G = 0, B = 0, e = 0;
+      switch (m) {
+        case M_FAR:
+          R = 30; G = 34; B = 60;
+          if (hv < 0.07 * lit) { R = 230; G = 170; B = 100; e = 70; }
+          break;
+        case M_GE: R = 170; G = 124; B = 62; break;
+        case M_GB: R = 34; G = 24; B = 14; break;
+        case M_BE: R = 106; G = 138; B = 190; break;
+        case M_BB: R = 14; G = 20; B = 36; break;
+        case M_GWIN: case M_BWIN: {
+          let on = hv < 0.1 + 0.68 * lit;
+          if (hash2(i + 77, Math.floor(skyT * 0.2 + hv * 40)) < 0.03) on = !on;   // the odd light going on or off
+          if (m === M_GWIN) { if (on) { R = 255; G = 184 + 40 * hv; B = 86 + 40 * hv; e = 140; } else { R = 82; G = 60; B = 36; } }
+          else if (on) { R = 180 + 40 * hv; G = 214 + 30 * hv; B = 255; e = 110; } else { R = 56; G = 74; B = 108; }
+          break;
+        }
+        case M_ANT: R = 110; G = 120; B = 140; break;
+        case M_RED: {
+          const on = reduced || ((skyT * 0.7 + hv) % 1) < 0.5;
+          R = on ? 255 : 120; G = on ? 60 : 30; B = on ? 60 : 30; e = on ? 200 : 0;
+          break;
+        }
+        case M_KE: case M_KI: case M_KC: case M_KN: {
+          const on = Math.floor(Math.min(SY[i], 1) * secs) < burjSec || (SY[i] > 1 && bs >= 1);
+          if (!on) {
+            if (m === M_KE) { R = 150; G = 168; B = 196; } else if (m === M_KI) { R = 128; G = 130; B = 144; }
+            else if (m === M_KC) { R = 92; G = 98; B = 122; } else { R = 172; G = 182; B = 204; }
+          } else if (m === M_KE) { R = 232; G = 238; B = 255; e = 90; }
+          else if (m === M_KI) { R = 255; G = 222; B = 140; e = 170; }
+          else if (m === M_KC) { R = 255; G = 244; B = 214; e = 120; }
+          else { R = 242; G = 246; B = 255; e = 110; }
+          if (led) {
+            const o = ledColour(i, m, ledT);
+            if (o) { R = o[0]; G = o[1]; B = o[2]; e = o[3]; if (o[4]) g = o[4]; }
+          } else if (sparkle && hash2(i, (skyT * 7) | 0) < 0.02) { g = C_STAR; R = 255; G = 255; B = 255; e = 255; }
+          break;
+        }
+        case M_BEACON: R = beaconOn ? 255 : 110; G = beaconOn ? 40 : 20; B = beaconOn ? 40 : 20; e = beaconOn ? 255 : 0; break;
+        case M_TW: R = 170 + 45 * lit; G = 198 + 34 * lit; B = 236 + 19 * lit; e = 40 * lit; break;
+        case M_TWIN: {
+          const on = hv < 0.2 + 0.75 * lit;
+          if (on) { R = 150 + 60 * lit; G = 190 + 40 * lit; B = 245; e = 90 * lit; } else { R = 72; G = 94; B = 140; }
+          break;
+        }
+        case M_TB: R = 16; G = 22; B = 40; break;
+        case M_SE: R = 205 + (sR - 205) * lit; G = 215 + (sG - 215) * lit; B = 235 + (sBl - 235) * lit; e = 80 * lit; break;
+        case M_SL: R = 120 + (sR * 0.7 - 120) * lit; G = 140 + (sG * 0.7 - 140) * lit; B = 180 + (sBl * 0.75 - 180) * lit; e = 40 * lit; break;
+        case M_SC: R = 255; G = 220; B = 160; e = 40 + 120 * lit; break;
+        case M_SB: R = 26 + 30 * lit; G = 32 + 30 * lit; B = 52 + 40 * lit; break;
+        case M_LE: R = 140 + 40 * lit; G = 162 + 50 * lit; B = 200 + 55 * lit; e = 40 * lit; break;
+        case M_LX: R = 110 + 145 * lit; G = 128 + 72 * lit; B = 168 - 50 * lit; e = 80 * lit; break;
+        case M_LB: R = 14; G = 18; B = 32; break;
+        case M_PF: R = 56 + 30 * lit; G = 168 + 40 * lit; B = 92 + 20 * lit; e = 20 * lit; break;
+        case M_PT:
+          if (hv < 0.5 * lit) { R = 255; G = 200; B = 110; e = 110; } else { R = 150; G = 100; B = 56; }
+          break;
+        case M_RAIL: R = 150 + 50 * lit; G = 112 + 40 * lit; B = 52 + 20 * lit; break;
+        case M_LAMP: R = 140 + 115 * lit; G = 104 + 110 * lit; B = 60 + 80 * lit; e = 210 * lit; break;
+      }
+      put(i, R, G, B, g, e);
+    }
+    built = nS ? vis / nS : 0;
+
+    // ---- Lake: ripples and reflections ----
+    const reflK = reduced ? 1 : smooth((t - T.REFL) / T.REFL_DUR);
+    const wD = rows - hr;
+    for (let r = hr + 1; r < rows; r++) {
+      const p = (r - hr) / wD, dark = 1 - 0.45 * p;
+      const fu = M * (0.08 + 0.5 * p), vv = r * 0.13 + skyT * 0.025;
+      const bgR = 4 * dark, bgG = 8 * dark, bgB = 22 * dark, fade = Math.exp(-p * 1.8);
+      const rs = hr - (r - hr);                       // mirrored source row
+      for (let c = 0; c < cols; c++) {
+        const i = r * cols + c, h = HSH[i];
+        const ta = T.LAKE + p * 1.4 + h / 256 * 0.4;
+        if (t < ta - RES) { put(i, bgR * 0.5, bgG * 0.5, bgB * 0.5, 0, 0); continue; }
+        if (t < ta) { put(i, bgR + 30, bgG + 50, bgB + 70, G_SCR[(hash2(i, (skyT * 18) | 0) * G_SCR.length) | 0], 0); continue; }
+        const x = (c + 0.5) * cw;
+        const rn = noise(x / fu + skyT * 0.012 * (r & 1 ? 1 : -1), vv);
+        let R = bgR + 16 * rn, G = bgG + 22 * rn, B = bgB + 40 * rn, k = 0, e = 0;
+        if (rn > 0.56) { k = G_RIP[(rn * 37 + h) % G_RIP.length | 0]; R += 14; G += 20; B += 40; }
+        if (rs >= 0 && reflK > 0) {
+          const sc = clamp(c + Math.round((rn - 0.5) * (2 + 6 * p)), 0, cols - 1), j = rs * cols + sc;
+          let s = EMI[j] / 255 + (OCC[j] ? 0.16 : 0);
+          s *= reflK * fade * (rn > 0.42 ? 1 : 0.3);
+          if (s > 0.03) {
+            R += CR[j] * s * 0.85; G += CG[j] * s * 0.85; B += CB[j] * s * 0.9;
+            if (s > 0.12) { k = s > 0.3 ? C_EQ : C_DASH; e = Math.min(130, EMI[j] * s * 0.9); }
+          }
+        }
+        put(i, R, G, B, k, e);
+      }
+    }
+
+    // ---- Fountain (in front of everything; not faded by the loop) ----
+    if (fount) drawFountain();
+  }
+
+  // LED facade show on the Burj: a rainbow sweeping up, a pulsing heart, then rising chevrons.
+  const LEDO = [0, 0, 0, 0, 0];
+  function ledColour(i, m, lt) {
+    const r = (i / cols) | 0, c = i - r * cols, k = hr - 1 - r, y = SY[i];
+    const fin = smooth((LED_DUR - lt) / 0.6);
+    LEDO[4] = 0;
+    if (lt < 2.6) {
+      const front = lt / 2.0;
+      if (y > front) return null;
+      hsv(y * 1.4 - lt * (reduced ? 0.15 : 0.6), 0.75, 1, LEDO);
+      LEDO[3] = 190;
+    } else if (lt < 5.2) {
+      // Heart in square pixels, as wide as the tower near its base, beating with the music's tempo.
+      const kc = bHc * 0.2, hw = Math.min(burjL[Math.round(kc)], burjR[Math.round(kc)]) + 0.5;
+      const pulse = reduced ? 0.8 : 0.55 + 0.45 * Math.exp(-5 * (((lt - 2.6) / BEAT) % 1));
+      const unit = hw * cw / 1.12 * (reduced ? 1 : 0.92 + 0.1 * pulse);
+      const hx = (c - cB) * cw / unit, hy = (k - kc) * ch / unit;
+      const q = hx * hx + hy * hy - 1, inside = q * q * q - hx * hx * hy * hy * hy <= 0;
+      if (inside) { LEDO[0] = 255 * pulse; LEDO[1] = 40 + 70 * pulse; LEDO[2] = 90 + 60 * pulse; LEDO[3] = 240 * pulse; LEDO[4] = m === M_KE ? 0 : C_AT; }
+      else { LEDO[0] = 90; LEDO[1] = 30; LEDO[2] = 60; LEDO[3] = 20; }
+    } else {
+      const v = ((k - Math.abs(c - cB) * 1.2 - (lt - 5.2) * (reduced ? 4 : 14)) % 6 + 6) % 6;
+      if (v < 1.5) { LEDO[0] = 170; LEDO[1] = 240; LEDO[2] = 255; LEDO[3] = 220; LEDO[4] = m === M_KE ? 0 : C_CARET; }
+      else { LEDO[0] = 40; LEDO[1] = 90; LEDO[2] = 150; LEDO[3] = 40; }
+    }
+    return hash2(i, 5) > fin ? null : LEDO;   // cells drop back to normal one by one at the end
+  }
+
+  // Dubai-Fountain-style show: a row of jets that rise and sway to the beat, lit from below.
+  function fountEnv(tau) { return smooth(tau / 1.0) * (1 - smooth((tau - (FOUNT_DUR - 1.4)) / 1.4)); }
+  function jetAmp(j, J, tau) {
+    const b = tau / BEAT, mid = (J - 1) / 2, pat = Math.floor(b / 4) % 4, fr = b % 1;
+    if (tau > FOUNT_DUR - 3.2) return 1;                                    // finale: all jets high
+    if (pat === 0) return 0.5 + 0.5 * Math.sin(Math.PI * b - j * 0.6);       // travelling wave
+    if (pat === 1) return (j + Math.floor(b)) % 2 ? 0.3 + 0.7 * Math.exp(-3 * fr) : 0.25;  // alternating
+    if (pat === 2) return (0.35 + 0.65 * Math.abs(j - mid) / mid) * (0.7 + 0.3 * Math.sin(Math.PI * b));  // V shape
+    return 0.35 + 0.65 * Math.exp(-3 * fr);                                 // all together on the beat
+  }
+  function drawFountain() {
+    const tau = skyT - fount.t0, env = fountEnv(tau);
+    if (env <= 0.001) return;
+    const sp = Math.max(2, Math.round(cols / 70)), J = clamp(Math.round(cols * 0.32 / sp) | 1, 7, 17);
+    const base = fount.r, Hmax = Math.max(6, base - Math.round(hr * 0.36)), calm = reduced ? 0.55 : 1;
+    const fa0 = fa; fa = 1;
+    // Glowing water where the jets leave the lake.
+    for (let c = fount.c - (J >> 1) * sp - 2; c <= fount.c + (J >> 1) * sp + 2; c++) {
+      if (c < 0 || c >= cols) continue;
+      for (let q = 0; q < 2; q++) {
+        const r = base + q;
+        if (r >= rows) continue;
+        const b = env * (1 - q * 0.45);
+        put(r * cols + c, 255 * b, 200 * b, 120 * b, (c + q + Math.floor(skyT * 6)) % 3 ? C_TILDE : C_DASH, 150 * b);
+      }
+    }
+    for (let j = 0; j < J; j++) {
+      const amp = (0.25 + 0.75 * jetAmp(j, J, tau)) * env * calm;
+      const h = Math.max(1, Math.round(Hmax * amp)), cj = fount.c + (j - (J - 1) / 2) * sp;
+      const sw = Math.sin(skyT * (reduced ? 0.6 : 1.6) + j * 0.4) * (reduced ? 0.3 : 1);
+      let pc = Math.round(cj);
+      for (let q = 0; q <= h; q++) {
+        const r = base - q, lift = q / h;
+        const c = Math.round(cj + sw * Math.pow(lift, 1.5) * h * 0.16), dc = c - pc;
+        pc = c;
+        if (r < 0 || c < 0 || c >= cols) continue;
+        const br = 0.55 + 0.45 * (1 - lift);
+        // Where the swaying jet shifts a column, a slanted glyph keeps the stream continuous.
+        const g = q >= h - 1 ? (hash2(j, (skyT * 12) | 0) < 0.5 ? C_STAR : C_SMO) : dc > 0 ? C_FS : dc < 0 ? C_BS
+          : lift > 0.7 ? (q & 1 ? C_COLON : C_EXCL) : C_PIPE;
+        put(r * cols + c, (255 - 50 * lift) * br + 40, (214 + 20 * lift) * br + 30, (140 + 115 * lift) * br + 30, g, 200 * br);
+      }
+      // Spray falling from the top of each jet.
+      for (let s = 0; s < 3; s++) {
+        const ph = (skyT * 0.9 + hash2(j, s)) % 1, r = base - h + Math.round(ph * h * 0.35), c = Math.round(cj + (s - 1) * (1 + ph * 2) + sw * h * 0.16);
+        if (r < 0 || r >= rows || c < 0 || c >= cols) continue;
+        put(r * cols + c, 200, 225, 255, ph < 0.5 ? C_DOT : C_COMMA, 90 * (1 - ph));
+      }
+      // Reflection under the jet.
+      for (let q = 2; q < h * 0.4; q++) {
+        const r = base + q, c = Math.round(cj + Math.sin(skyT * 3 + q) * 0.6);
+        if (r >= rows || c < 0 || c >= cols) continue;
+        if (hash2(r * 7 + j, (skyT * 8) | 0) < 0.35) continue;
+        const b = 0.45 * (1 - q / (h * 0.4)) * env;
+        put(r * cols + c, 255 * b, 210 * b, 150 * b, q & 1 ? C_COLON : C_PIPE, 80 * b);
+      }
+    }
+    fa = fa0;
+  }
+
+  // Quantise, bucket by colour and draw; fill the backing and glow images.
+  function drawCells() {
+    const bd = bImg.data, ed = eImg.data;
+    counts.fill(0);
+    let nl = 0;
+    for (let i = 0; i < n; i++) {
+      const R = CR[i], G = CG[i], B = CB[i];
+      const r = Math.min(255, R * 1.15 + 6), g = Math.min(255, G * 1.15 + 6), b = Math.min(255, B * 1.15 + 6);
+      const key = ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3);
+      keys[i] = key; counts[key]++;
+      if (CK[i]) nl++;
+      const j = i * 4;
+      bd[j] = R * 0.32; bd[j + 1] = G * 0.32; bd[j + 2] = B * 0.32; bd[j + 3] = 255;
+      const e = EMI[i];
+      if (e) { const s = e / 255; ed[j] = Math.min(255, R) * s; ed[j + 1] = Math.min(255, G) * s; ed[j + 2] = Math.min(255, B) * s; ed[j + 3] = 255; }
+      else { ed[j] = 0; ed[j + 1] = 0; ed[j + 2] = 0; ed[j + 3] = 0; }
+    }
+    letters = nl;
+    bctx.putImageData(bImg, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(back, 0, 0, cols * cw, rows * ch);
+
+    let acc = 0;
+    for (let c = 0; c < NKEY; c++) { const v = counts[c]; counts[c] = acc; acc += v; }
+    for (let i = 0; i < n; i++) order[counts[keys[i]]++] = i;
+    ctx.textBaseline = 'top';
+    ctx.font = cellFont;
+    let cur = -1;
+    for (let k = 0; k < n; k++) {
+      const i = order[k], ky = keys[i];
+      if (CK[i] === 0) continue;
+      if (ky !== cur) { cur = ky; ctx.fillStyle = colStr(ky); }
+      const row = (i / cols) | 0;
+      ctx.fillText(CH[CK[i]], (i - row * cols) * cw, row * ch);
+    }
+
+    // Bloom from emissive cells, blurred at grid resolution.
+    ectx.putImageData(eImg, 0, 0);
+    gctx.globalCompositeOperation = 'copy';
+    gctx.filter = 'blur(1.4px)';
+    gctx.drawImage(emis, 0, 0);
+    gctx.filter = 'none';
+    hctx.globalCompositeOperation = 'copy';
+    hctx.filter = 'blur(3.5px)';
+    hctx.drawImage(emis, 0, 0);
+    hctx.filter = 'none';
+    ctx.save();
+    ctx.imageSmoothingEnabled = true;
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 0.55;
+    ctx.drawImage(glow, 0, 0, cols * cw, rows * ch);
+    ctx.globalAlpha = 0.5;
+    ctx.drawImage(halo, 0, 0, cols * cw, rows * ch);
+    ctx.restore();
+  }
+
+  // "DUBAI SKYLINE" typed in gold under the skyline, with a blinking cursor while it types.
+  let typed = 0;
+  function drawTitle() {
+    typed = t < T.TITLE ? 0 : Math.min(TITLE.length, Math.floor((t - T.TITLE) * T.TITLE_CPS) + 1);
+    if (!typed || fa <= 0.01) return;
+    const tfs = clamp(Math.round(Math.min(W * 0.055, H * 0.05)), 18, 40), step = tfs * 0.8;
+    const x0 = (W - TITLE.length * step) / 2, y = yH + (H - yH) * 0.5;
+    ctx.save();
+    ctx.globalAlpha = fa;
+    ctx.font = `700 ${tfs}px ${MONO}`;
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(255, 186, 72, 0.9)';
+    ctx.shadowBlur = tfs * 0.6;
+    ctx.fillStyle = '#ffd877';
+    for (let k = 0; k < typed; k++) ctx.fillText(TITLE[k], x0 + k * step, y);
+    const typing = t < T.TITLE + TITLE.length / T.TITLE_CPS + 1.2;
+    if (typing && !reduced && (skyT * 2.4) % 1 < 0.6) ctx.fillRect(x0 + typed * step + step * 0.1, y - tfs * 0.45, step * 0.6, tfs * 0.9);
+    ctx.restore();
+  }
+
+  function render() {
+    ctx.fillStyle = '#04060e';
+    ctx.fillRect(0, 0, W, H);
+    buildScene();
+    drawCells();
+    drawTitle();
+  }
+
+  // ---------- Loop, HUD, controls ----------
+  let paused = false, last = performance.now();
+  let frames = 0, fpsT = last, fps = 0, hudT = 0;
+
+  function phaseName() {
+    if (fount) return 'fountain';
+    if (skyT - ledT0 < LED_DUR) return 'led show';
+    return t < T.LAKE ? 'sky' : t < T.CITY ? 'lake' : t < T.BURJ ? 'city' : t < T.MARKS ? 'burj' : t < T.LIGHTS ? 'landmarks'
+      : t < T.REFL ? 'lights' : t < T.TITLE ? 'reflect' : t < T.HOLD ? 'title' : t < T.FADE ? 'hold' : 'fade';
+  }
+  function updateHud(now) {
+    const tail = paused ? 'paused' : `${fps} fps`, pct = (built * 100).toFixed(1);
+    hudEl.textContent = W < 640 ? `${phaseName()}  ${pct}%  ${letters.toLocaleString('en-US')}  ${tail}`
+      : `phase ${phaseName()}  built ${pct}%  letters ${letters.toLocaleString('en-US')}  ${tail}`;
+    hudT = now;
+  }
+
+  function frame(now) {
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); // no jumps after a hidden tab
+    last = now;
+    if (needResize) resize();
+    if (!paused) {
+      const t1 = t, s1 = skyT, sec1 = burjSec, typed1 = typed;
+      skyT += dt;
+      if (!reduced) {
+        t += dt;
+        if (t >= T.END) { t = 0; music('restart'); }
+      }
+      updateEffects(dt);
+      if (now - lastMove > 2500) {
+        // Idle: the Milky Way's glow drifts slowly along the band.
+        const a = 0.5 + 0.3 * Math.sin(skyT * 0.07);
+        gXTo = -W * 0.05 + a * W * 1.1; gYTo = H * 0.66 - a * H * 0.64; gKTo = 0.35; parTo = 0;
+      }
+      render(); dirty = false; frames++;
+      soundCues(t1, t, s1, skyT, sec1, typed1);
+    } else if (dirty) { render(); dirty = false; frames++; }
+    const k = Math.min(1, dt * 2);
+    gX += (gXTo - gX) * k; gY += (gYTo - gY) * k; gK += (gKTo - gK) * k;
+    if (Math.abs(parTo - par) > 0.002) { par += (parTo - par) * Math.min(1, dt * 1.8); dirty = true; }
+    if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
+    if (now - hudT >= 250) updateHud(now);
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- Sound cues ----------
+  const music = (fn, ...a) => window.AsciiAudio && AsciiAudio[fn](...a);
+  const crossed = (a, b, x) => a < x && x <= b;
+  function soundCues(a, b, sa, sb, sec1, typed1) {
+    if (!window.AsciiAudio) return;
+    if (crossed(a, b, T.BURJ)) music('event', 'build');
+    if (crossed(a, b, T.BURJ + T.BURJ_DUR)) music('event', 'beacon');
+    if (crossed(a, b, T.LIGHTS)) music('event', 'lights');
+    if (burjSec > sec1 && b > a) music('event', 'section', { k: burjSec });
+    if (typed > typed1 && b > a) music('event', 'type', { last: typed === TITLE.length });
+    if (crossed(a, b, T.FADE)) music('event', 'fade');
+    // LED show stages.
+    const l0 = sa - ledT0, l1 = sb - ledT0;
+    if (crossed(l0, l1, 2.6)) music('event', 'heart');
+    if (l1 > 2.6 && l1 < 5.2 && Math.floor((l0 - 2.6) / BEAT) !== Math.floor((l1 - 2.6) / BEAT)) music('event', 'pulse');
+    if (crossed(l0, l1, 5.2)) music('event', 'chevrons');
+    // Fountain: a hiss on every beat, louder for higher jets.
+    if (fount) {
+      const tau = sb - fount.t0, bt = Math.floor(tau / BEAT);
+      if (bt !== fount.beat) { fount.beat = bt; music('event', 'jet', { amp: fountEnv(tau), pan: clamp(fount.c / cols * 2 - 1, -0.8, 0.8) }); }
+    }
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
+  function replay() { t = T_START; clearEffects(); paused = false; dirty = true; music('resume'); music('restart'); }
+
+  // Is the screen point on the (built part of the) Burj Khalifa?
+  function onBurj(x, y) {
+    if (!reduced && t < T.BURJ + T.BURJ_DUR * 0.5) return false;
+    const c = Math.round(x / cw - 0.5), k = hr - 1 - Math.floor(y / ch);
+    if (k < 0 || k >= burjL.length) return false;
+    const l = burjL[k] || 1, r = burjR[k] || 1;
+    return c >= cB - l - 2 && c <= cB + r + 2;
+  }
+  function tapAt(x, y) {
+    if (onBurj(x, y)) {
+      ledT0 = skyT;
+      music('event', 'led');
+    } else if (y > yH + ch * 0.5) startFountain(x, y);
+    else if (reduced) shootingStar(x, y);
+    else launch(x, y);
+    dirty = true;
+  }
+
+  addEventListener('resize', () => { needResize = true; });
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return; // leave Cmd/Ctrl+R alone
+    if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
+    else if (e.key === 'r' || e.key === 'R') replay();
+  });
+  // Tap the Burj = LED show, the lake = fountain, the sky = fireworks; two quick taps = pause / resume.
+  // A press only counts as a tap if it moved less than 8 px; moving (or dragging a finger) steers the
+  // parallax and the Milky Way's glow.
+  let downX = 0, downY = 0, pressed = false, dragged = false, tapTimer = 0, tapResumed = false;
+  const steer = e => {
+    if (!reduced) parTo = clamp(e.clientX / W * 2 - 1, -1, 1);
+    gXTo = e.clientX; gYTo = e.clientY; gKTo = 1; lastMove = performance.now();
+  };
+  canvas.addEventListener('pointerdown', e => {
+    pressed = true; dragged = false; downX = e.clientX; downY = e.clientY;
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (e.pointerType === 'mouse' || pressed) steer(e);
+    if (pressed && Math.hypot(e.clientX - downX, e.clientY - downY) >= 8) dragged = true;
+  });
+  const ptrOff = () => { pressed = false; };
+  canvas.addEventListener('pointercancel', ptrOff);
+  canvas.addEventListener('pointerup', e => {
+    const wasTap = pressed && !dragged;
+    pressed = false;
+    if (e.button > 0 || !wasTap) return;
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; if (!tapResumed) togglePause(); return; }
+    tapTimer = setTimeout(() => { tapTimer = 0; }, 280);
+    tapResumed = paused;
+    if (paused) { togglePause(); return; }   // a tap on the paused scene just resumes it
+    tapAt(e.clientX, e.clientY);
+  });
+
+  // Hint language: ?lang= wins, then saved site preference, then browser.
+  let pref = null;
+  try { pref = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (!pref) { try { pref = localStorage.getItem('lang'); } catch (e) {} }
+  if (!pref) pref = navigator.language || 'en';
+  const zh = String(pref).toLowerCase().startsWith('zh');
+  document.documentElement.lang = zh ? 'zh-Hant' : 'en';
+  // Touch screens have no keyboard, and the full hint would not fit on a phone.
+  const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  hintEl.textContent = touch ? (zh ? '點塔看燈光秀 · 點湖看噴泉 · 點天空放煙火 · 雙擊暫停' : 'tap tower: LED show · lake: fountain · sky: fireworks · double-tap pause')
+                             : (zh ? '點哈里發塔看燈光秀 · 點湖面看噴泉 · 點天空放煙火 · 移動游標照亮銀河 · 雙擊/空白鍵 暫停 · R 重播 · M 音樂'
+                                   : 'click the tower: LED show · the lake: fountain · the sky: fireworks · move to light the Milky Way · double-click / Space pause · R replay · M music');
+
+  // Score: an original cinematic piece in D Hijaz (D Eb F# G A Bb C) at 90 bpm, 36 beats = one 24 s
+  // scene loop, restarted with every loop. A warm pad over a D-A drone, a frame-drum maqsum pulse
+  // (low "dum", dry "tek", a soft riq shimmer) that enters once the city is up, a round bass, and an
+  // oud-like doubled pluck carrying the melody with tremolo on long notes. Effects follow the
+  // picture: a riser as the Burj climbs, a bell for its beacon, chimes as each section lights,
+  // typewriter-bell ticks for the title, water hiss for each fountain beat, fireworks, LED shimmer.
+  if (window.AsciiAudio) AsciiAudio.init({
+    bpm: 90, master: 0.8, reverb: 0.3, reverbTime: 3.2,
+    build(a) {
+      const N = AsciiAudio.notes, F = AsciiAudio.freq, LOOP = 36;
+      const CHORD = [['D3', 'F#3', 'A3'], ['D3', 'F#3', 'A3'], ['D3', 'F#3', 'A3'], ['G2', 'Bb3', 'D4'], ['Eb3', 'G3', 'Bb3'],
+                     ['D3', 'F#3', 'A3'], ['C3', 'Eb3', 'G3'], ['D3', 'F#3', 'A3'], ['D3', 'A3', 'D4']];
+      const ROOT = ['D2', 'D2', 'D2', 'G2', 'Eb2', 'D2', 'C2', 'D2', 'D2'];
+      const barOf = beat => Math.floor((beat % LOOP) / 4);
+
+      // Pad and drone, one swell per bar.
+      a.every(4, (tt, s) => {
+        const bar = s % 9;
+        a.pad(tt, CHORD[bar], a.beats(4), { vel: bar === 0 ? 0.3 : 0.42, attack: bar === 0 ? 2.2 : 0.9, release: 1.6, cutoff: 950 });
+        a.pad(tt, ['D2', 'A2'], a.beats(4), { vel: 0.28, attack: 1.2, release: 1.6, cutoff: 480 });
+      });
+
+      // Frame drum (maqsum: DUM tek . tek DUM . tek .) from bar 1, full from bar 2, out for the last bar.
+      a.every(0.5, (tt, s) => {
+        const beat = (s * 0.5) % LOOP, bar = barOf(beat), e8 = s % 8;
+        if (bar === 0 || bar === 8) return;
+        const full = bar >= 2;
+        if (e8 === 0 || e8 === 4) {
+          a.kick(tt, e8 === 0 ? 0.42 : 0.34);
+          a.noise(tt, { dur: 0.3, filter: 'lowpass', freq: 260, vel: 0.22, wet: 0.15 });
+          if (full) a.bass(tt, ROOT[bar], a.beats(e8 === 0 ? 1.4 : 0.9), { vel: 0.42 });
+        }
+        if (full && (e8 === 1 || e8 === 3 || e8 === 6)) a.noise(tt, { dur: 0.06, filter: 'bandpass', freq: 3200, q: 1.4, attack: 0.002, vel: 0.2, pan: 0.2, wet: 0.12 });
+        if (full && e8 === 7) a.noise(tt, { dur: 0.05, filter: 'bandpass', freq: 2400, q: 1.2, attack: 0.002, vel: 0.08, pan: -0.2, wet: 0.1 });
+        if (full && s % 2 === 1) a.shaker(tt, 0.12, { pan: 0.35 });
+      });
+
+      // Oud: a doubled, slightly detuned pluck with an octave ghost; long notes get a tremolo (risha).
+      const oud = (tt, note, dur, vel) => {
+        const f = F(note), reps = dur > a.beats(1.4) ? Math.floor(dur / a.beats(0.25)) : 1;
+        for (let k = 0; k < reps; k++) {
+          const u = tt + k * a.beats(0.25), v = vel * (k ? 0.55 * (1 - k / (reps + 2)) : 1);
+          a.pluck(u, f, Math.min(dur, 0.9), { vel: v, pan: -0.15, wet: 0.35 });
+          a.pluck(u + 0.012, f * 1.004, Math.min(dur, 0.8), { vel: v * 0.6, pan: 0.15, wet: 0.35 });
+          if (!k) a.pluck(u, f / 2, 0.5, { type: 'triangle', vel: v * 0.35, wet: 0.3 });
+        }
+      };
+      const tune = N('r:2 A3:.5 Bb3 A3:1 | ' +
+                     'D4:1 Eb4:.5 F#4 G4:1 F#4:.5 Eb4 | D4:1.5 Eb4:.5 F#4:2 | ' +
+                     'G4:1 A4:.5 Bb4 A4:1 G4:.5 F#4 | G4:1 F#4:.5 Eb4 D4:2 | ' +
+                     'A4:.5 Bb4 C5:1 Bb4:.5 A4 G4:1 | F#4:.5 G4 F#4 Eb4 D4:2 | D4:4');
+      a.part(tune, (tt, e) => oud(tt, e.note, e.sec, 0.6), { length: LOOP, offset: 4 });
+
+      // Effects in sync with the picture.
+      const HJ = ['D', 'Eb', 'F#', 'G', 'A', 'Bb', 'C'];
+      const hij = k => HJ[k % 7] + (5 + Math.floor(k / 7));
+      a.on('build', (a, d, t) => a.sweep(t, 4.2, { from: 180, to: 2600, q: 2.5, attack: 3.4, vel: 0.1, bus: 'sfx', wet: 0.5 }));
+      a.on('beacon', (a, d, t) => a.ding(t, 'D7', { vel: 0.2, dur: 2.4 }));
+      a.on('lights', (a, d, t) => a.chime(t, 'D5', 3.5, { vel: 0.22 }));
+      a.on('section', (a, d, t) => a.bell(t, hij(d.k || 0), 1.4, { vel: 0.09, bus: 'sfx', wet: 0.55, pan: 0.1 }), { gap: 0.1 });
+      a.on('type', (a, d, t) => d.last ? a.chime(t, 'D6', 4, { vel: 0.22 }) : a.tick(t, { vel: 0.12 }), { gap: 0.05 });
+      a.on('fade', (a, d, t) => a.sweep(t, 2, { from: 2600, to: 350, q: 1.2, attack: 0.7, vel: 0.1, bus: 'sfx', wet: 0.6 }));
+      a.on('led', (a, d, t) => { for (let k = 0; k < 8; k++) a.bell(t + k * 0.22, hij(k), 1.6, { vel: 0.12, bus: 'sfx', wet: 0.5, pan: -0.5 + k * 0.14 }); }, { gap: 0.6 });
+      a.on('heart', (a, d, t) => a.heart(t, { note: 'D6', vel: 0.25 }), { gap: 1 });
+      a.on('pulse', (a, d, t) => a.thud(t, { freq: 110, vel: 0.35 }), { gap: 0.3 });
+      a.on('chevrons', (a, d, t) => a.sparkle(t, { count: 5, vel: 0.25, notes: ['D6', 'F#6', 'A6', 'D7', 'Eb7'] }), { gap: 1 });
+      a.on('fountain', (a, d, t) => {
+        a.whoosh(t, { dur: 1.6, vel: 0.35, pan: d.pan || 0 });
+        a.noise(t, { dur: 2.2, filter: 'lowpass', freq: 400, freqEnd: 1600, attack: 0.8, vel: 0.12, bus: 'sfx', wet: 0.4 });
+      }, { gap: 0.8 });
+      a.on('jet', (a, d, t) => {
+        const v = 0.05 + 0.15 * (d.amp || 0);
+        if (v > 0.06) a.noise(t, { dur: 0.55, filter: 'bandpass', freq: 700, freqEnd: 4200, q: 0.9, attack: 0.05, vel: v, pan: d.pan || 0, bus: 'sfx', wet: 0.3 });
+      }, { gap: 0.2 });
+      a.on('launch', (a, d, t) => a.sweep(t, 0.8, { from: 500, to: 3800, q: 1.5, attack: 0.3, vel: 0.08, pan: d.pan || 0, bus: 'sfx', wet: 0.2 }), { gap: 0.15 });
+      a.on('burst', (a, d, t) => {
+        a.boom(t, { vel: 0.32, pan: d.pan || 0 });
+        a.sparkle(t + 0.12, { count: 4, vel: 0.18 });
+        for (let k = 0; k < 6; k++) a.noise(t + 0.25 + Math.random() * 0.6, { dur: 0.02, filter: 'highpass', freq: 3500, vel: 0.12, pan: (d.pan || 0) + (Math.random() - 0.5) * 0.4, bus: 'sfx', wet: 0.3 });
+      }, { gap: 0.12 });
+      a.on('shoot', (a, d, t) => { a.sweep(t, 0.9, { from: 5200, to: 1400, q: 3, attack: 0.1, vel: 0.05, bus: 'sfx', wet: 0.5 }); a.ding(t + 0.1, 'A6', { vel: 0.07 }); }, { gap: 1 });
+    }
+  });
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

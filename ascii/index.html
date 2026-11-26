@@ -59,6 +59,19 @@
     @keyframes blink { 50% { opacity: 0; } }
     .lead { color: var(--muted); font-size: 1.1rem; margin-top: 1rem; text-wrap: pretty; }
 
+    /* Sections: the main pieces, then series such as World Cities. Jump links sit under the intro. */
+    .jump { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.4rem; }
+    .jump a {
+      font-family: var(--display); font-size: 0.82rem; font-weight: 600; color: var(--muted); text-decoration: none;
+      border: 1px solid var(--line); border-radius: 20px; padding: 0.3rem 0.85rem; transition: color 0.3s, border-color 0.3s, background 0.3s;
+    }
+    .jump a:hover { color: var(--text); border-color: rgba(96,165,250,0.4); background: rgba(59,130,246,0.08); }
+    .jump .n { color: var(--dim); font-weight: 500; margin-left: 0.3rem; }
+    .sec { scroll-margin-top: 1.5rem; }
+    .sec + .sec { margin-top: 4rem; }
+    .sec-head { display: flex; align-items: baseline; gap: 0.75rem; margin-bottom: 1.4rem; }
+    .sec-head h2 { font-family: var(--mono); font-size: 1.3rem; font-weight: 700; letter-spacing: 0.03em; color: #e2e8f0; }
+    .sec-head p { color: var(--dim); font-size: 0.9rem; }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 1.5rem; }
     .card {
       display: flex; flex-direction: column; text-decoration: none; color: inherit; overflow: hidden;
@@ -77,8 +90,8 @@
     }
     .card:hover .preview pre { transform: scale(1.06); }
     .body { padding: 1.4rem 1.5rem 1.6rem; display: flex; flex-direction: column; flex: 1; }
-    .card h2 { font-size: 1.15rem; font-weight: 700; color: #e2e8f0; line-height: 1.4; transition: color 0.3s; }
-    .card:hover h2 { color: #60a5fa; }
+    .card h3 { font-size: 1.15rem; font-weight: 700; color: #e2e8f0; line-height: 1.4; transition: color 0.3s; }
+    .card:hover h3 { color: #60a5fa; }
     .card p { color: var(--muted); font-size: 0.92rem; margin-top: 0.5rem; flex: 1; }
     .more { display: inline-flex; align-items: center; gap: 0.45rem; margin-top: 1.1rem; font-family: var(--display); font-size: 0.85rem; font-weight: 600; color: #60a5fa; transition: gap 0.3s var(--ease); }
     .card:hover .more { gap: 0.7rem; }
@@ -335,6 +348,253 @@
     @keyframes hcGlint { 0%, 5%, 100% { color: var(--c); text-shadow: var(--s, none); } 2.5% { color: #fff1f2; text-shadow: 0 0 6px rgba(255,255,255,0.85); } }
     .hc-star { color: #e2e8f0; animation: twinkle 2.2s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.7s); }
 
+    /* Tokyo preview: Iki-blue Skytree, orange Tokyo Tower, Fuji, flickering neon, lanterns, colour-cycling Rainbow Bridge cable */
+    .ct-moon { color: #fde68a; text-shadow: 0 0 6px rgba(253,230,138,0.8); }
+    .ct-star { color: #cbd5e1; animation: twinkle 2.6s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.7s); }
+    .ct-beacon { color: #ef4444; text-shadow: 0 0 6px rgba(239,68,68,0.9); animation: twinkle 1.6s steps(2) infinite; }
+    .ct-sky { color: #7dd3fc; text-shadow: 0 0 5px rgba(125,211,252,0.6); }
+    .ct-tower { color: #fb6a3a; text-shadow: 0 0 5px rgba(251,106,58,0.6); }
+    .ct-deck { color: #fff1e0; }
+    .ct-fuji { color: #a5b4fc; }
+    .ct-bld { color: #5b6fae; }
+    .ct-win { color: #fcd34d; animation: twinkle 3.4s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.71s); }
+    .ct-neon { color: #f472b6; text-shadow: 0 0 6px rgba(244,114,182,0.9); animation: nbFlicker 3.2s steps(1) infinite; animation-delay: calc(var(--k, 0) * -0.6s); }
+    .ct-lamp { color: #fdba74; text-shadow: 0 0 5px rgba(253,186,116,0.9); animation: twinkle 2.2s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.4s); }
+    .ct-shore { color: #64748b; }
+    .ct-br { color: #e2e8f0; }
+    .ct-cable { color: #f87171; text-shadow: 0 0 5px currentColor; animation: crBulb 2.4s linear infinite; animation-delay: calc(var(--x, 0) * -0.15s); }
+    .ct-road { color: #94a3b8; }
+    .ct-water { color: #3b4f8a; }
+    .ct-refl-t { color: #fb923c; opacity: 0.75; animation: twinkle 2.2s ease-in-out infinite; }
+    .ct-refl-s { color: #7dd3fc; opacity: 0.75; animation: twinkle 2.6s ease-in-out infinite; animation-delay: -1.1s; }
+
+    /* Kyoto preview: golden moon, pagoda with glowing windows, red maples shedding leaves, torii, lanterns, red and gold reflections */
+    .ck-star { color: #e2e8f0; animation: twinkle 2.6s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.7s); }
+    .ck-moon { color: #fde68a; text-shadow: 0 0 8px rgba(251,191,36,0.85); }
+    .ck-gold { color: #fcd34d; text-shadow: 0 0 6px rgba(252,211,77,0.8); animation: twinkle 3s ease-in-out infinite; }
+    .ck-roof { color: #a5a3d6; }
+    .ck-verm { color: #e0483a; }
+    .ck-win { color: #fbbf24; text-shadow: 0 0 6px rgba(251,191,36,0.75); animation: twinkle 3.4s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.53s); }
+    .ck-maple { color: #ef4444; }
+    .ck-maple2 { color: #fb923c; }
+    .ck-leaf { display: inline-block; color: #f97316; animation: petal 5s ease-in infinite; animation-delay: calc(var(--k, 0) * -1.3s); }
+    .ck-torii { color: #dc2626; }
+    .ck-house { color: #8b5a3c; }
+    .ck-lamp { color: #fdba74; text-shadow: 0 0 8px rgba(251,146,60,0.95); animation: twinkle 1.8s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.4s); }
+    .ck-bank { color: #4b4a6e; }
+    .ck-water { color: #334155; }
+    .ck-refl-r { color: #dc2626; opacity: 0.8; animation: auRefl 2.2s ease-in-out infinite; animation-delay: calc(var(--x, 0) * -0.31s); }
+    .ck-refl-y { color: #f59e0b; opacity: 0.85; animation: auRefl 2.6s ease-in-out infinite; animation-delay: calc(var(--x, 0) * -0.37s); }
+
+    /* Seoul preview: colour-cycling tower deck, sparkling Lotte tower, palace gate lanterns, neon, rainbow fountain */
+    .cs-star { color: #e0e7ff; animation: twinkle 2.8s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.9s); }
+    .cs-beacon { color: #f87171; animation: twinkle 1.6s steps(2) infinite; }
+    .cs-deck { display: inline-block; color: #f472b6; text-shadow: 0 0 6px currentColor; animation: csHue 6s linear infinite; animation-delay: calc(var(--x, 0) * -0.3s); }
+    @keyframes csHue { to { filter: hue-rotate(360deg); } }
+    .cs-tower { color: #a5b4fc; }
+    .cs-moon { color: #fef3c7; text-shadow: 0 0 8px rgba(254,243,199,0.7); }
+    .cs-lotte { color: #c7d2fe; }
+    .cs-spark { color: #fff; text-shadow: 0 0 6px rgba(255,255,255,0.9); animation: twinkle 1.4s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.37s); }
+    .cs-gold { color: #fbbf24; animation: twinkle 4s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.5s); }
+    .cs-neon { color: #f472b6; text-shadow: 0 0 6px rgba(244,114,182,0.9); animation: nbFlicker 3.2s steps(1) infinite; }
+    .cs-ridge { color: #6366f1; }
+    .cs-roof { color: #ddd6fe; }
+    .cs-lantern { color: #fb923c; text-shadow: 0 0 6px rgba(251,146,60,0.9); }
+    .cs-stone { color: #8b85b0; }
+    .cs-bridge { color: #a5b4fc; }
+    .cs-lamp { color: #fcd34d; text-shadow: 0 0 5px rgba(252,211,77,0.8); }
+    .cs-car { color: #fff7ed; animation: twinkle 1.2s ease-in-out infinite; animation-delay: calc(var(--x, 0) * -0.15s); }
+    .cs-fount { display: inline-block; color: #f472b6; animation: csHue 2.4s linear infinite; animation-delay: calc(var(--x, 0) * -0.18s); }
+    .cs-refl { color: #818cf8; opacity: 0.7; animation: twinkle 2.2s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.5s); }
+
+    /* Shanghai preview: colour-shifting Pearl Tower, golden Jin Mao, teal Shanghai Tower, rainbow LED facade, reflections */
+    .sh-star { color: #e0e7ff; animation: twinkle 2.8s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.9s); }
+    .sh-beacon { color: #ef4444; animation: twinkle 1.6s steps(2) infinite; }
+    .sh-pearl { color: #f472b6; text-shadow: 0 0 6px rgba(244,114,182,0.7); animation: shPearl 9s ease-in-out infinite; }
+    @keyframes shPearl { 33% { color: #a78bfa; text-shadow: 0 0 6px rgba(167,139,250,0.7); } 66% { color: #38bdf8; text-shadow: 0 0 6px rgba(56,189,248,0.7); } }
+    .sh-light { color: #fff1f2; text-shadow: 0 0 6px rgba(255,255,255,0.9); animation: twinkle 2s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.6s); }
+    .sh-steel { color: #a8a2c8; }
+    .sh-gold { color: #d6a24a; }
+    .sh-goldlit { color: #fbbf24; text-shadow: 0 0 6px rgba(251,191,36,0.7); animation: shimmer 3s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.4s); }
+    .sh-tower { color: #67e8f9; }
+    .sh-swfc { color: #bfdbfe; }
+    .sh-win { color: #e0f2fe; animation: twinkle 3.2s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.7s); }
+    .sh-city { color: #6b7fc4; }
+    .sh-led { animation: crBulb 2.4s steps(1) infinite; animation-delay: calc(var(--k, 0) * -0.6s); }
+    .sh-ledr { opacity: 0.6; animation: crBulb 2.4s steps(1) infinite; animation-delay: calc(var(--k, 0) * -0.6s); }
+    .sh-reflp, .sh-reflg, .sh-reflc { opacity: 0.7; animation: twinkle 2.2s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.5s); }
+    .sh-reflp { color: #f472b6; }
+    .sh-reflg { color: #fbbf24; }
+    .sh-reflc { color: #67e8f9; }
+    .sh-water { color: #3b4a7a; }
+    .sh-ferry { color: #e2e8f0; }
+
+    /* Hong Kong at night preview: laser beams from the rooftops, white Two IFC and Bank of China Tower, The Center's
+       cycling neon bars, Central Plaza's gold body and colour-changing top, promenade lamps, reflections, junk and ferry */
+    .hk-star { color: #e2e8f0; animation: twinkle 2.6s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.9s); }
+    .hk-lg, .hk-lc, .hk-lp { text-shadow: 0 0 6px currentColor; animation: twinkle 1.8s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.3s); }
+    .hk-lg { color: #4ade80; }
+    .hk-lc { color: #67e8f9; }
+    .hk-lp { color: #f472b6; }
+    .hk-ifc { color: #e0ecff; text-shadow: 0 0 4px rgba(191,219,254,0.7); }
+    .hk-boc { color: #c7d7ff; text-shadow: 0 0 4px rgba(147,197,253,0.6); }
+    .hk-win { color: #bae6fd; animation: twinkle 3.4s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.71s); }
+    .hk-mast { color: #64748b; }
+    .hk-beacon { color: #ef4444; animation: twinkle 1.6s steps(2) infinite; }
+    .hk-ctr { color: #94a3b8; }
+    .hk-neon { text-shadow: 0 0 6px currentColor; animation: hkNeon 3s linear infinite; animation-delay: calc(var(--k, 0) * -0.5s); }
+    @keyframes hkNeon { 0%, 100% { color: #f87171; } 20% { color: #facc15; } 40% { color: #4ade80; } 60% { color: #38bdf8; } 80% { color: #c084fc; } }
+    .hk-ptop { color: #facc15; text-shadow: 0 0 6px currentColor; animation: crBulb 4.8s steps(1) infinite; }
+    .hk-gold { color: #fbbf24; text-shadow: 0 0 5px rgba(251,191,36,0.7); }
+    .hk-bld { color: #475a86; }
+    .hk-prom { color: #56608a; }
+    .hk-lamp { color: #fdba74; text-shadow: 0 0 4px rgba(253,186,116,0.8); }
+    .hk-water { color: #2c4170; }
+    .hk-ref-n { opacity: 0.75; animation: hkNeon 3s linear infinite; animation-delay: calc(var(--k, 0) * -0.5s); }
+    .hk-ref-w { color: #bfdbfe; opacity: 0.7; animation: twinkle 2.2s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.5s); }
+    .hk-ref-g { color: #f59e0b; opacity: 0.75; animation: twinkle 2.2s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.5s); }
+    .hk-sail { color: #ef4444; }
+    .hk-hull { color: #34d399; }
+    .hk-ferry { color: #fde68a; }
+
+    /* Singapore preview: colour-cycling lasers over Marina Bay Sands, the lotus, glowing Supertrees, helix bridge lights */
+    .sg2-star { color: #e2e8f0; animation: twinkle 2.8s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.7s); }
+    .sg2-laser { color: #4ade80; text-shadow: 0 0 6px currentColor; animation: sg2Laser 3s steps(1) infinite; animation-delay: calc(var(--x, 0) * -0.25s); }
+    @keyframes sg2Laser { 0% { color: #4ade80; } 33% { color: #22d3ee; } 66% { color: #e879f9; } }
+    .sg2-deck { color: #f1f5f9; text-shadow: 0 0 6px rgba(226,232,240,0.7); }
+    .sg2-edge { color: #d6d3d1; }
+    .sg2-win { color: #fcd34d; text-shadow: 0 0 5px rgba(252,211,77,0.7); animation: twinkle 3.6s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.53s); }
+    .sg2-lotus { color: #f5d0fe; text-shadow: 0 0 6px rgba(240,171,252,0.7); }
+    .sg2-ground { color: #64748b; }
+    .sg2-tree { color: #e879f9; text-shadow: 0 0 6px currentColor; animation: sg2Tree 4.8s ease-in-out infinite; animation-delay: calc(var(--x, 0) * -0.6s); }
+    @keyframes sg2Tree { 33% { color: #a78bfa; } 66% { color: #2dd4bf; } }
+    .sg2-trunk { color: #34d399; }
+    .sg2-helix { color: #cbd5e1; }
+    .sg2-led { color: #ef4444; text-shadow: 0 0 6px currentColor; animation: crBulb 2.4s steps(1) infinite; animation-delay: calc(var(--k, 0) * -0.61s); }
+    .sg2-bridge { color: #94a3b8; }
+    .sg2-lamp { color: #fde68a; text-shadow: 0 0 5px rgba(253,230,138,0.8); }
+    .sg2-water { color: #3b5b94; }
+    .sg2-refl { color: #fbbf24; opacity: 0.75; animation: twinkle 2.2s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.5s); }
+
+    /* Dubai preview: Milky Way, the Burj Khalifa's shimmering gold core with a red beacon, Emirates Towers, sail, lake reflection */
+    .du-mw { color: #a79bd8; animation: twinkle 3.2s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.37s); }
+    .du-star { color: #e2e8f0; animation: twinkle 2.4s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.8s); }
+    .du-beacon { color: #ef4444; animation: twinkle 1.4s steps(2) infinite; }
+    .du-burj { color: #e8eefc; }
+    .du-lit { color: #fde68a; text-shadow: 0 0 6px rgba(251,191,36,0.75); animation: shimmer 2.6s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.21s); }
+    .du-twin { color: #a5c4ee; }
+    .du-sail { color: #c7d7f2; }
+    .du-lattice { color: #f5c45a; }
+    .du-gold { color: #f59e0b; }
+    .du-rail { color: #b9893c; }
+    .du-lamp { color: #fde68a; text-shadow: 0 0 6px rgba(253,224,71,0.85); animation: twinkle 2.8s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.6s); }
+    .du-water { color: #2f3f6e; }
+    .du-refl { color: #fcd34d; opacity: 0.7; animation: twinkle 2s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.5s); }
+    .du-title { color: #ffd877; font-weight: 700; text-shadow: 0 0 8px rgba(255,186,72,0.85); }
+
+    /* Paris preview: golden tower with sparkles, Notre-Dame's rose window, a CAFÉ neon, stone bridge and gold reflections */
+    .cp-moon { color: #fde9b0; text-shadow: 0 0 6px rgba(253,224,150,0.8); }
+    .cp-star { color: #e9e3ff; animation: twinkle 2.8s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.7s); }
+    .cp-gold { color: #f5b942; text-shadow: 0 0 4px rgba(245,185,66,0.55); }
+    .cp-spark { color: #fff7d6; text-shadow: 0 0 6px rgba(255,236,170,0.9); animation: twinkle 1.4s steps(2) infinite; animation-delay: calc(var(--k, 0) * -0.45s); }
+    .cp-nd { color: #c9b8ec; }
+    .cp-rose { color: #e879f9; text-shadow: 0 0 6px rgba(232,121,249,0.8); }
+    .cp-win { color: #fcd34d; }
+    .cp-neon { color: #fbbf24; text-shadow: 0 0 6px rgba(251,191,36,0.9); animation: nbFlicker 4.5s linear infinite; }
+    .cp-roof { color: #8a7cc0; }
+    .cp-bridge { color: #a08cae; }
+    .cp-lamp { color: #ffe1a1; text-shadow: 0 0 6px rgba(255,214,140,0.9); }
+    .cp-water { color: #5a4b8f; }
+    .cp-refl { color: #f5b942; opacity: 0.7; animation: twinkle 2.2s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.37s); }
+    .cp-lrefl { color: #ffe1a1; opacity: 0.65; animation: twinkle 1.9s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.3s); }
+
+    /* London preview: gold Westminster and Big Ben with a glowing clock face, blue-lit Tower Bridge, gold and blue reflections */
+    .cl-star { color: #cbd5e1; animation: twinkle 2.6s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.7s); }
+    .cl-moon { color: #f1f5f9; text-shadow: 0 0 8px rgba(226,232,240,0.8); }
+    .cl-gold { color: #e0a84e; }
+    .cl-win { color: #fde68a; animation: twinkle 3.4s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.61s); }
+    .cl-face { color: #fff3c4; text-shadow: 0 0 6px rgba(253,224,71,0.85); animation: sbSun 4s ease-in-out infinite; }
+    .cl-hand { color: #5b3a12; text-shadow: 0 0 4px rgba(255,236,170,0.9); }
+    .cl-stone { color: #e7c88f; }
+    .cl-blue { color: #60a5fa; text-shadow: 0 0 6px rgba(96,165,250,0.8); }
+    .cl-wall { color: #475569; }
+    .cl-lamp { color: #fb923c; text-shadow: 0 0 5px rgba(251,146,60,0.85); }
+    .cl-water { color: #334a6e; }
+    .cl-refl { color: #f5b942; opacity: 0.75; animation: auRefl 2.2s ease-in-out infinite; animation-delay: calc(var(--x, 0) * -0.31s); }
+    .cl-brefl { color: #60a5fa; opacity: 0.7; animation: auRefl 2.6s ease-in-out infinite; animation-delay: calc(var(--x, 0) * -0.37s); }
+
+    /* Barcelona preview: gold Sagrada spires with colour-cycling tips, glowing portals, LED tower, gold reflections and a fountain */
+    .bc-star { color: #e2e8f0; animation: twinkle 2.6s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.9s); }
+    .bc-cross { color: #fff7e0; text-shadow: 0 0 6px rgba(255,236,170,0.9); }
+    .bc-tip { color: #f87171; text-shadow: 0 0 6px currentColor; animation: crBulb 2.4s steps(1) infinite; animation-delay: calc(var(--k, 0) * -0.6s); }
+    .bc-gold { color: #f5c25b; text-shadow: 0 0 4px rgba(245,194,91,0.5); }
+    .bc-body { color: #a8782f; }
+    .bc-win { color: #ffcf7a; text-shadow: 0 0 6px rgba(255,180,80,0.9); animation: shimmer 3s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.4s); }
+    .bc-led { color: #60a5fa; text-shadow: 0 0 6px rgba(96,165,250,0.8); animation: crChannel 6s steps(1) infinite; animation-delay: calc(var(--x, 0) * -0.4s); }
+    .bc-hill { color: #3b4a72; }
+    .bc-prom { color: #8a7666; }
+    .bc-lamp { color: #fde68a; text-shadow: 0 0 6px rgba(253,230,138,0.9); }
+    .bc-water { color: #1e3a5f; }
+    .bc-refl { color: #f59e0b; opacity: 0.75; animation: twinkle 2.2s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.5s); }
+    .bc-fount { color: #f472b6; text-shadow: 0 0 5px currentColor; animation: crBulb 1.8s steps(1) infinite; animation-delay: calc(var(--k, 0) * -0.3s); }
+
+    /* New York preview: One WTC, Empire State with a colour-cycling crown, Chrysler's gold crown, Liberty's flickering torch, NYC neon */
+    .cn-star { color: #c7d2fe; animation: twinkle 2.6s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.9s); }
+    .cn-wtc { color: #bfdbfe; }
+    .cn-esb { color: #e7d6b0; }
+    .cn-crown { color: #4ade80; text-shadow: 0 0 6px currentColor; animation: crChannel 6s steps(1) infinite; }
+    .cn-gold { color: #fbbf24; }
+    .cn-goldhi { color: #fde68a; text-shadow: 0 0 6px rgba(251,191,36,0.85); animation: twinkle 2.2s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.6s); }
+    .cn-chr { color: #cbd5e1; }
+    .cn-lib { color: #5eead4; }
+    .cn-flame { display: inline-block; color: #fb923c; text-shadow: 0 0 8px rgba(251,146,60,0.9); animation: flicker 0.6s ease-in-out infinite alternate; }
+    .cn-torch { color: #fbbf24; }
+    .cn-ped { color: #d6b98a; }
+    .cn-win { color: #fcd34d; animation: twinkle 3.4s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.71s); }
+    .cn-neon { color: #22d3ee; text-shadow: 0 0 6px rgba(34,211,238,0.9); animation: nbFlicker 3.2s linear infinite; animation-delay: calc(var(--k, 0) * -0.4s); }
+    .cn-deck { color: #818cf8; }
+    .cn-lamp { color: #fde68a; text-shadow: 0 0 6px rgba(253,230,138,0.85); }
+    .cn-taxi { color: #facc15; }
+    .cn-car { color: #93c5fd; }
+    .cn-refl { color: #fbbf24; opacity: 0.7; animation: auRefl 2.2s ease-in-out infinite; animation-delay: calc(var(--x, 0) * -0.31s); }
+    .cn-water { color: #6366f1; opacity: 0.7; }
+
+    /* Miami preview: striped synthwave sun, neon hotels and palms, causeway, boat and car */
+    .mi-star { color: #e9d5ff; animation: twinkle 2.6s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.7s); }
+    .mi-sun { color: #fde047; text-shadow: 0 0 8px rgba(251,146,60,0.9); animation: sbSun 4s ease-in-out infinite; }
+    .mi-sun2 { color: #fb923c; text-shadow: 0 0 6px rgba(251,146,60,0.8); }
+    .mi-stripe { color: #ff4fa8; text-shadow: 0 0 6px rgba(255,79,168,0.8); animation: twinkle 2.4s ease-in-out infinite; animation-delay: calc(var(--x, 0) * -0.2s); }
+    .mi-hotel { color: #22d3ee; text-shadow: 0 0 5px rgba(34,211,238,0.85); animation: nbFlicker 7s steps(1) infinite; }
+    .mi-win { color: #fcd34d; animation: twinkle 3.4s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.71s); }
+    .mi-crown { color: #c084fc; text-shadow: 0 0 5px rgba(192,132,252,0.85); animation: nbFlicker 5s steps(1) infinite; animation-delay: -2s; }
+    .mi-palm { color: #4ade80; text-shadow: 0 0 5px rgba(74,222,128,0.8); }
+    .mi-sea { color: #5b4fa8; }
+    .mi-refl { color: #fb7185; opacity: 0.85; animation: twinkle 2s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.43s); }
+    .mi-bridge { color: #8b7bb8; }
+    .mi-lamp { color: #fff1c1; text-shadow: 0 0 6px rgba(253,230,138,0.9); }
+    .mi-boat { color: #a5f3fc; }
+    .mi-tail { color: #ef4444; text-shadow: 0 0 6px rgba(239,68,68,0.9); }
+    .mi-car { color: #f472b6; }
+    .mi-road { color: #6d5a8f; }
+
+    /* Sydney preview: fireworks, the golden Tower Eye turret, a lit bridge arch, Opera House sails washed by projections */
+    .sy-star { color: #e2e8f0; animation: twinkle 2.6s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.7s); }
+    .sy-fw { color: #f472b6; text-shadow: 0 0 6px rgba(244,114,182,0.85); animation: twinkle 1.4s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.21s); }
+    .sy-fw2 { color: #fcd34d; text-shadow: 0 0 6px rgba(251,191,36,0.85); animation: twinkle 1.7s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.27s); }
+    .sy-mast { color: #cbd5e1; }
+    .sy-turret { color: #fbbf24; text-shadow: 0 0 6px rgba(251,191,36,0.7); animation: shimmer 3s ease-in-out infinite; }
+    .sy-arch { color: #fef3c7; text-shadow: 0 0 5px rgba(254,243,199,0.7); animation: twinkle 2.4s ease-in-out infinite; animation-delay: calc(var(--x, 0) * -0.15s); }
+    .sy-steel { color: #7c8db5; }
+    .sy-pylon { color: #c8b88f; }
+    .sy-deck { color: #94a3b8; }
+    .sy-lamp { color: #fdba74; text-shadow: 0 0 6px rgba(253,186,116,0.9); animation: twinkle 2s ease-in-out infinite; }
+    .sy-sail { color: #f5f0e1; animation: syVivid 9s linear infinite; animation-delay: calc(var(--x, 0) * -0.35s); }
+    @keyframes syVivid { 0%, 55%, 100% { color: #f5f0e1; } 65% { color: #f0abfc; } 75% { color: #67e8f9; } 85% { color: #fde047; } }
+    .sy-glass { color: #f59e0b; }
+    .sy-pod { color: #d6b98a; }
+    .sy-water { color: #3b5b9a; }
+    .sy-refl { color: #fcd34d; opacity: 0.7; animation: auRefl 2.2s ease-in-out infinite; animation-delay: calc(var(--x, 0) * -0.31s); }
+
     footer { color: var(--dim); font-size: 0.82rem; margin-top: 4rem; }
 
     @media (max-width: 600px) {
@@ -342,7 +602,7 @@
       .grid { grid-template-columns: 1fr; }
     }
     @media (prefers-reduced-motion: reduce) {
-      body::before, header.intro, .card, .t-light, .t-star, .r-bloom, .r-petal, .m-g, .e-sky, .e-spark, .b-disk, .g-bill, .g-fall, .d-glint, .s-star, .c-flame, .c-conf, .o-crest, .o-foam, .k-tail, .k-heart, .k-blade, .k-fly, .k-z, .k-breathe, .sg-win, .sg-light, .sg-flake, .sg-smoke, .ss-bob, .ss-nose, .ss-trail, .ss-star, .nb-lamp, .nb-ref, .nb-flake, .nb-spark, .cr-bulb, .cr-star, .cr-snow, .cr-screen, .cr-clock, .cr-candle, .cr-fire, .cr-cat, .sb-cloud, .sb-lit, .sb-star, .sb-bird, .sb-win, .sb-beacon, .sb-sun, .sb-glint, .sb-refl, .au-star, .au-top, .au-ray, .au-edge, .au-refl, .cj-flame, .cj-core, .hc-hi, .hc-red, .hc-dk, .hc-star, h1 .cur { animation: none; }
+      body::before, header.intro, .card, .t-light, .t-star, .r-bloom, .r-petal, .m-g, .e-sky, .e-spark, .b-disk, .g-bill, .g-fall, .d-glint, .s-star, .c-flame, .c-conf, .o-crest, .o-foam, .k-tail, .k-heart, .k-blade, .k-fly, .k-z, .k-breathe, .sg-win, .sg-light, .sg-flake, .sg-smoke, .ss-bob, .ss-nose, .ss-trail, .ss-star, .nb-lamp, .nb-ref, .nb-flake, .nb-spark, .cr-bulb, .cr-star, .cr-snow, .cr-screen, .cr-clock, .cr-candle, .cr-fire, .cr-cat, .sb-cloud, .sb-lit, .sb-star, .sb-bird, .sb-win, .sb-beacon, .sb-sun, .sb-glint, .sb-refl, .au-star, .au-top, .au-ray, .au-edge, .au-refl, .cj-flame, .cj-core, .hc-hi, .hc-red, .hc-dk, .hc-star, .ct-star, .ct-beacon, .ct-win, .ct-neon, .ct-lamp, .ct-cable, .ct-refl-t, .ct-refl-s, .ck-star, .ck-gold, .ck-win, .ck-leaf, .ck-lamp, .ck-refl-r, .ck-refl-y, .cs-star, .cs-beacon, .cs-deck, .cs-spark, .cs-gold, .cs-neon, .cs-car, .cs-fount, .cs-refl, .sh-star, .sh-beacon, .sh-pearl, .sh-light, .sh-goldlit, .sh-win, .sh-led, .sh-ledr, .sh-reflp, .sh-reflg, .sh-reflc, .hk-star, .hk-lg, .hk-lc, .hk-lp, .hk-win, .hk-beacon, .hk-neon, .hk-ptop, .hk-ref-n, .hk-ref-w, .hk-ref-g, .sg2-star, .sg2-laser, .sg2-win, .sg2-tree, .sg2-led, .sg2-refl, .du-mw, .du-star, .du-beacon, .du-lit, .du-lamp, .du-refl, .cp-star, .cp-spark, .cp-neon, .cp-refl, .cp-lrefl, .cl-star, .cl-win, .cl-face, .cl-refl, .cl-brefl, .bc-star, .bc-tip, .bc-win, .bc-led, .bc-refl, .bc-fount, .cn-star, .cn-crown, .cn-goldhi, .cn-flame, .cn-win, .cn-neon, .cn-refl, .mi-star, .mi-sun, .mi-stripe, .mi-hotel, .mi-win, .mi-crown, .mi-refl, .sy-star, .sy-fw, .sy-fw2, .sy-turret, .sy-arch, .sy-lamp, .sy-sail, .sy-refl, h1 .cur { animation: none; }
       .r-petal { opacity: 0; }
       .card, .preview pre { transition: none; }
       .card:hover { transform: none; }
@@ -359,8 +619,9 @@
     <header class="intro">
       <h1>ASCII<span class="cur" aria-hidden="true">_</span></h1>
       <p class="lead" id="lead">Small things drawn with characters.</p>
+      <nav class="jump" id="jump"></nav>
     </header>
-    <main class="grid" id="grid"></main>
+    <main id="sections"></main>
     <footer>&copy; 2026 Alex Li (李翔緯)</footer>
   </div>
 
@@ -560,9 +821,132 @@
       }
     ];
 
+    // World Cities series: the same entry shape as PIECES, shown in its own section.
+    const CITIES = [
+      {
+        href: 'city-tokyo.html',
+        title: { zh: 'ASCII 東京夜景', en: 'ASCII Tokyo at Night' },
+        desc: {
+          zh: '字元一格格拼出東京夜景：新月、富士山、亮燈的天際線，晴空塔與東京鐵塔逐一成形，霓虹招牌閃爍亮起，彩虹大橋的燈串連成一線，倒影在灣面上拉長搖曳。點塔切換燈光、點大橋跑彩虹、點天空放煙火。',
+          en: 'Tokyo at night resolving character by character: a crescent moon, Mount Fuji, a lit skyline, Tokyo Skytree and Tokyo Tower building up, neon signs flickering on and the Rainbow Bridge lighting up above long reflections in the bay. Tap the towers to change their lights, the bridge for a rainbow, the sky for fireworks.'
+        },
+        preview: cityTokyoPreview()
+      },
+      {
+        href: 'city-kyoto.html',
+        title: { zh: 'ASCII 京都秋夜', en: 'ASCII Autumn Night in Kyoto' },
+        desc: {
+          zh: '字元拼出的京都秋夜：金色彎月下，町家、紅葉、鳥居與五重塔一一浮現，燈籠沿街亮起，紅金倒影在水面閃爍，楓葉緩緩飄落。移動游標吹起秋風，點楓樹落葉、點塔敲鐘、點水面泛起漣漪、點天空放流星或天燈。',
+          en: 'An autumn night in Kyoto resolving out of characters: machiya, red maples, a torii and a five-storey pagoda under a golden crescent moon, lanterns lighting along the street and red and gold reflections shimmering as maple leaves drift down. Move for a breeze; tap a maple, the pagoda for its bell, the water or the sky.'
+        },
+        preview: cityKyotoPreview()
+      },
+      {
+        href: 'city-seoul.html',
+        title: { zh: 'ASCII 首爾夜景', en: 'ASCII Seoul at Night' },
+        desc: {
+          zh: '字元畫成的首爾夜景：亂碼字元一個個歸位，拼出月亮、山稜、南山首爾塔、樂天世界塔、宮門與霓虹招牌，大橋上車流不息，彩虹噴泉倒映在漢江上。點地標看燈光秀，點天空放煙火，點橋開關噴泉。',
+          en: 'Seoul at night in characters: scrambled letters settle into a full moon, mountain ridges, N Seoul Tower, Lotte World Tower, a palace gate and neon signs, above a busy bridge whose rainbow fountain shimmers on the Han River. Tap landmarks for light shows, the sky for fireworks, the bridge for the fountain.'
+        },
+        preview: citySeoulPreview()
+      },
+      {
+        href: 'city-shanghai.html',
+        title: { zh: 'ASCII 上海夜景', en: 'ASCII Shanghai at Night' },
+        desc: {
+          zh: '字元一格格拼出外灘對岸的浦東夜景：東方明珠、金茂、上海中心與環球金融中心，LED 外牆亮起彩虹光帶，遊船駛過黃浦江，倒影粼粼。點明珠換色、點大樓播 LED、點江面開船、點天空放煙火。',
+          en: 'The Pudong skyline across the Huangpu resolves character by character: the Oriental Pearl, Jin Mao, Shanghai Tower and the World Financial Center, LED facades blazing in rainbow bands, a lit ferry and shimmering reflections. Tap the Pearl to change its colours, a tower for an LED show, the river for a ferry, the sky for fireworks.'
+        },
+        preview: cityShanghaiPreview()
+      },
+      {
+        href: 'city-hong-kong.html',
+        title: { zh: 'ASCII 香港夜景', en: 'ASCII Hong Kong at Night' },
+        desc: {
+          zh: '字元畫成的維港夜景：太平山脊下，國金二期、中銀大廈、中環廣場與中環中心的霓虹燈條逐一建起亮燈，紅帆船與天星小輪駛過波光倒影。點天空放雷射燈光秀，點霓虹大廈換色，點海面開船。',
+          en: 'Victoria Harbour at night drawn in characters: under the Peak, Two IFC, the Bank of China Tower, Central Plaza and the neon bars of The Center build and light up one by one while a junk and a Star Ferry cross the shimmering reflections. Tap the sky for a laser show, the neon towers to change colours, the water for a boat.'
+        },
+        preview: cityHongKongPreview()
+      },
+      {
+        href: 'city-singapore.html',
+        title: { zh: 'ASCII 新加坡夜景', en: 'ASCII Singapore at Night' },
+        desc: {
+          zh: '字元一格格拼出濱海灣夜景：天際線、金沙酒店三座塔樓與空中花園、蓮花造型的藝術科學博物館、發光的擎天樹和雙螺旋橋，倒影在水面閃動。點金沙酒店看燈光水舞，點擎天樹變色，點海灣放船、點天空放煙火。',
+          en: 'Marina Bay builds itself character by character: a lit skyline, the three Marina Bay Sands towers and their SkyPark, the lotus museum, glowing Supertrees and the helix bridge over shimmering reflections. Tap the towers for a laser and fountain show, the trees to change their colours, the bay for a boat, the sky for fireworks.'
+        },
+        preview: citySingaporePreview()
+      },
+      {
+        href: 'city-dubai.html',
+        title: { zh: 'ASCII 杜拜天際線', en: 'ASCII Dubai Skyline' },
+        desc: {
+          zh: '字元一格格解析成形的杜拜夜景：銀河斜過沙漠夜空，哈里發塔拔地而起、一段段亮起金白燈光，阿聯酋雙塔、帆船酒店與棕櫚樹倒映在湖面；點高塔看燈光秀，點湖面看噴泉，點天空放煙火。',
+          en: 'Dubai at night resolving character by character: the Milky Way over the desert, the Burj Khalifa rising and lighting up section by section, the Emirates Towers, a sail-shaped tower and palms mirrored in the lake; tap the tower for an LED show, the lake for the fountain, the sky for fireworks.'
+        },
+        preview: cityDubaiPreview()
+      },
+      {
+        href: 'city-paris.html',
+        title: { zh: 'ASCII 巴黎夜景', en: 'ASCII Paris at Night' },
+        desc: {
+          zh: '亂碼字元逐一歸位，拼出塞納河畔的巴黎夜景：奧斯曼屋頂、聖母院、圓頂教堂與金色鐵塔，探照燈掃過夜空，咖啡館霓虹閃爍，遊船駛過石橋下的倒影。移動游標轉探照燈，點鐵塔閃爍、點聖母院敲鐘、點河面放遊船、點天空放流星。',
+          en: 'Scrambled letters settle into Paris at night on the Seine: Haussmann rooftops, Notre-Dame, a domed basilica and a golden Eiffel Tower whose searchlight sweeps the sky, café neon flickering on, boats gliding past a stone bridge. Move to steer the searchlight; tap the tower to sparkle, Notre-Dame for bells, the river for a boat, the sky for a shooting star.'
+        },
+        preview: cityParisPreview()
+      },
+      {
+        href: 'city-london.html',
+        title: { zh: 'ASCII 倫敦泰晤士河', en: 'ASCII London on the Thames' },
+        desc: {
+          zh: '霧氣瀰漫的倫敦夜晚，滿月高掛：藍色天際線、金色的國會大廈、指著你當地時間的大笨鐘，還有亮著藍燈的塔橋，一一由字元拼成，倒映在泰晤士河的粼粼波光裡。點大笨鐘聽整點鐘聲，點塔橋開橋讓帆船通過。',
+          en: 'A misty London night under a full moon: a blue skyline, the golden Palace of Westminster, Big Ben showing your local time and blue-lit Tower Bridge resolve from characters and shimmer in the Thames. Tap Big Ben to hear the hour, or Tower Bridge to open it for a tall ship.'
+        },
+        preview: cityLondonPreview()
+      },
+      {
+        href: 'city-barcelona.html',
+        title: { zh: 'ASCII 巴塞隆納之夜', en: 'ASCII Barcelona Nights' },
+        desc: {
+          zh: '字元拼出的巴塞隆納海濱夜景：山丘、溫暖的城市街廓，聖家堂的尖塔一座座升起並點亮彩色塔尖，現代主義建築與藍色榮耀塔發光，棕櫚樹與海面倒影。點教堂敲鐘點燈、點塔換燈光、點海面看水舞、點天空放煙火。',
+          en: 'Barcelona by night in characters: hills, a warm city grid, the Sagrada Família rising spire by spire with coloured tips, glowing modernist houses and the blue Torre Glòries over a reflecting sea. Tap the church for bells, the tower for new lights, the sea for a fountain show, the sky for fireworks.'
+        },
+        preview: cityBarcelonaPreview()
+      },
+      {
+        href: 'city-new-york.html',
+        title: { zh: 'ASCII 紐約夜景', en: 'ASCII New York at Night' },
+        desc: {
+          zh: '亂碼字元一個個歸位，拼出紐約夜景：世貿一號、會變色的帝國大廈、金色冠頂的克萊斯勒大樓、閃爍的霓虹招牌與探照燈，布魯克林大橋上車流不息，自由女神高舉火炬，燈火倒映在港灣裡。點地標看燈光秀，點天空放煙火，點大橋放車流。',
+          en: 'Scrambled characters resolve into New York at night: One World Trade Center, the colour-changing Empire State, the Chrysler’s gold crown, flickering neon and sweeping searchlights, traffic on the Brooklyn Bridge and Lady Liberty’s torch, all reflected in the harbour. Tap a landmark for its light show, the sky for fireworks, the bridge for cars.'
+        },
+        preview: cityNewYorkPreview()
+      },
+      {
+        href: 'city-miami.html',
+        title: { zh: 'ASCII 邁阿密夜景', en: 'ASCII Miami at Night' },
+        desc: {
+          zh: '合成波風格的邁阿密夜色：條紋復古夕陽沉入海灣，裝飾藝術飯店、霓虹棕櫚樹與 OCEAN DRIVE、紅鶴招牌逐一亮起，快艇、車流與直升機穿梭，最後打出 MIAMI AT NIGHT；點飯店換霓虹色，點太陽讓它脈動，點海面放快艇，點天空放煙火。',
+          en: 'A synthwave Miami night: a striped retro sun sinks into the bay as Art Deco hotels, neon palms and the OCEAN DRIVE and flamingo signs light up, speedboats, cars and a helicopter glide by and MIAMI AT NIGHT types itself out; tap a hotel to flip its neon, the sun to make it pulse, the sea for a speedboat or the sky for fireworks.'
+        },
+        preview: cityMiamiPreview()
+      },
+      {
+        href: 'city-sydney.html',
+        title: { zh: 'ASCII 雪梨港', en: 'ASCII Sydney Harbour' },
+        desc: {
+          zh: '字元拼出的雪梨港夜景：天際線、雪梨塔、海港大橋的拱與歌劇院的白色船帆逐一成形，燈火亮起、煙火在橋上綻放並倒映在水面。點天空放煙火、點大橋灑下煙火瀑布、點歌劇院投影、點水面開渡輪。',
+          en: 'Sydney Harbour at night assembled from characters: the skyline, Tower Eye, the Harbour Bridge arch and the Opera House sails resolve into place, the lights come on and fireworks burst over the bridge and shimmer in the water. Tap the sky for fireworks, the bridge for a waterfall of sparks, the Opera House for light projections, the water for a ferry.'
+        },
+        preview: citySydneyPreview()
+      }
+    ];
+
     const I18N = {
-      en: { lead: 'Small things drawn with characters.', open: 'Open', toggle: '中文' },
-      zh: { lead: '用字元畫出來的小作品。', open: '打開看看', toggle: 'EN' }
+      en: { lead: 'Small things drawn with characters.', open: 'Open', toggle: '中文',
+            pieces: 'Pieces', piecesSub: 'Little scenes and objects', cities: 'World Cities', citiesSub: 'Cities around the world by night' },
+      zh: { lead: '用字元畫出來的小作品。', open: '打開看看', toggle: 'EN',
+            pieces: '作品', piecesSub: '小場景與小物件', cities: '世界城市', citiesSub: '世界各地的城市夜景' }
     };
 
     // Small coloured tree: * star, o baubles, + twinkling lights, # gifts.
@@ -1171,16 +1555,462 @@
       ], { h: 'hc-hi', r: 'hc-red', d: 'hc-dk', e: 'hc-edge', a: 'hc-ax', s: 'hc-star' });
     }
 
+    // Tokyo at night: crescent moon (m), stars (s), Skytree in Iki blue (k) and Tokyo Tower in orange (t)
+    // with white decks (w), red beacons (x), Mount Fuji (f), a dark block with lit windows (b, y),
+    // a vertical neon sign (n), the shoreline (e) with lanterns (l), the Rainbow Bridge (h) with its rainbow cable (o),
+    // the deck (d), and the bay (a) with tower reflections (r, c).
+    function cityTokyoPreview() {
+      return paint([
+        ' o@   +      *  .',
+        'o@     .    [#]  ',
+        ' o@     *  (===) ',
+        '  *    [#]  |X|  ',
+        '       /X\\  |:| S',
+        ' /\\   [===] |X| A',
+        '/::\\ /\\/\\/\\/|:| K',
+        '|#|= /\\/ \\/\\/X\\#E',
+        'Ho_i_-_i_-_i_-_oH',
+        'H oo         oo H',
+        'H===ooooooooo===H',
+        '~-=~-~=~|~-~=|~-~'
+      ], [
+        ' mm   s      x  s',
+        'mm     s    kkk  ',
+        ' mm     x  kkkkk ',
+        '  s    www  kkk  ',
+        '       ttt  kkk n',
+        ' ff   wwwww kkk n',
+        'ffff tttttttkkk n',
+        'byby ttt tttkkkbn',
+        'hoeleeeleeeleeeoh',
+        'h oo         oo h',
+        'hdddooooooooodddh',
+        'aaaaaaaaraaaacaaa'
+      ], { m: 'ct-moon', s: 'ct-star', x: 'ct-beacon', k: 'ct-sky', t: 'ct-tower', w: 'ct-deck', f: 'ct-fuji',
+           b: 'ct-bld', y: 'ct-win', n: 'ct-neon', l: 'ct-lamp', e: 'ct-shore', a: 'ct-water', h: 'ct-br', o: 'ct-cable',
+           d: 'ct-road', r: 'ct-refl-t', c: 'ct-refl-s' });
+    }
+
+    // Kyoto: crescent moon (m), stars (s), pagoda roofs (p), red walls (v), lit windows (w), gold spire (g),
+    // maples (f, e) shedding leaves (d), torii (t), machiya (h), lanterns (l), bank (k), water (a) with red (r) and gold (y) reflections.
+    function cityKyotoPreview() {
+      return paint([
+        '  .     *     o@ ',
+        ' *      |    @   ',
+        '  ,    /=\\   @o  ',
+        '     ~-[#]-~   . ',
+        ' %@%   /=\\  ,    ',
+        '%@#@% ~[#]~  @%@ ',
+        '^===^/=====\\%#@%%',
+        ' | |~-[###]-~@%# ',
+        '#|=|#=|[H]|=#|=#|',
+        '_=o=_=_=_=_=_=o=_',
+        '-=-~=#=~=#=~-%=~-',
+        ' ~ =-  ,=#=  =%~ '
+      ], [
+        '  s     g     mm ',
+        ' s      g    m   ',
+        '  d    ppp   mm  ',
+        '     ppvwvpp   s ',
+        ' fef   ppp  d    ',
+        'efeff pvwvp  fef ',
+        'tttttpppppppefeff',
+        ' t tppvwwwvppfef ',
+        'htwthwhvwvhwhtwth',
+        'kklkkkkkkkkkkklkk',
+        'aaaaraayayaaarraa',
+        ' a aa  eyyy  ara '
+      ], { s: 'ck-star', m: 'ck-moon', g: 'ck-gold', p: 'ck-roof', v: 'ck-verm', w: 'ck-win', f: 'ck-maple', e: 'ck-maple2',
+           d: 'ck-leaf', t: 'ck-torii', h: 'ck-house', l: 'ck-lamp', k: 'ck-bank', a: 'ck-water', r: 'ck-refl-r', y: 'ck-refl-y' });
+    }
+
+    // Seoul at night: N Seoul Tower with a colour-cycling deck, the moon, Lotte World Tower with sparkles,
+    // a golden tower, a palace gate with lanterns, a neon strip, and a bridge over a rainbow fountain.
+    function citySeoulPreview() {
+      return paint([
+        '    |  .o@o.  |  ',
+        '   [#] @@@@@ /|\\ ',
+        ' * [#] \'@@@\' |:| ',
+        '    X   .   /|:|\\',
+        '/#  X  /\\   |:|:|',
+        '##_/:\\/  \\_ |=|=|',
+        '##H _/^^^\\_ |:|:|',
+        '##O/[o]o[o]\\|:|:|',
+        '##F |#|n|#| |:|:|',
+        '=i==o==i==o==i===',
+        '|!:|!:|!:|!:|!:|!',
+        '~:~ ~:~ ~:~ ~:~ ~'
+      ], [
+        '    a  mmmmm  a  ',
+        '   ddd mmmmm lll ',
+        ' s ttt mmmmm lll ',
+        '    t   s   lllll',
+        'gg  t  rr   lLlll',
+        'ggrrtrr  rr llLll',
+        'ggn kkkkkkk lllLl',
+        'ggnkkokokokklLlll',
+        'ggn ppppppp lllll',
+        'bibbcbbibbcbbibbb',
+        'fffffffffffffffff',
+        'www www www www w'
+      ], { s: 'cs-star', a: 'cs-beacon', d: 'cs-deck', t: 'cs-tower', m: 'cs-moon', l: 'cs-lotte', L: 'cs-spark', g: 'cs-gold',
+           n: 'cs-neon', r: 'cs-ridge', k: 'cs-roof', o: 'cs-lantern', p: 'cs-stone', b: 'cs-bridge', i: 'cs-lamp', c: 'cs-car',
+           f: 'cs-fount', w: 'cs-refl' });
+    }
+
+    // Shanghai at night: Pearl Tower spheres (p) with ring lights (l) and steel (m), Jin Mao gold (g) with lit
+    // windows (j), Shanghai Tower (t), World Financial Center (w) with windows (y), an LED facade (e), city (b),
+    // beacons (r), stars (s), Bund lamps, reflections (k, q, x, c) on the water (a) and a lit ferry (f).
+    function cityShanghaiPreview() {
+      return paint([
+        '   o        .  * ',
+        ' + |    |  /|    ',
+        '  (@)  /=\\ |/|  .',
+        '  o|o  |#| |:/._.',
+        './###\\/=#=\\:/|\\ /',
+        '#(#@#)|#:#|/:/|=|',
+        '#\\#+#/|:#:||/:|=|',
+        '#/ | \\|#:#|:/||=|',
+        'i-i-i-i-i-i-i-i-i',
+        '=-~=~-~-=~-~=~-=-',
+        '~[=#=>-~=-~-=~-=~'
+      ], [
+        '   r        r  s ',
+        ' s m    g  tt    ',
+        '  plp  ggg ttt  s',
+        '  lml  gjg tttwww',
+        'bpppppggjggtttw w',
+        'epplppgjgjgtttwyw',
+        'epppppggjggtttwyw',
+        'em m mgjgjgtttwyw',
+        'lalalalalalalalal',
+        'kaaqaaaaxaaacaaca',
+        'afejefaaxaaacaaca'
+      ], { s: 'sh-star', r: 'sh-beacon', p: 'sh-pearl', l: 'sh-light', m: 'sh-steel', g: 'sh-gold', j: 'sh-goldlit',
+           t: 'sh-tower', w: 'sh-swfc', y: 'sh-win', b: 'sh-city', e: 'sh-led', k: 'sh-ledr', q: 'sh-reflp',
+           x: 'sh-reflg', c: 'sh-reflc', a: 'sh-water', f: 'sh-ferry' });
+    }
+
+    // Hong Kong at night: lasers (g, c, p) from the rooftops, Two IFC (i) with lit windows (w), the Bank of China
+    // Tower's X bracing (b), The Center's neon bars (n), Central Plaza's colour-changing top (y) and gold body (a),
+    // the promenade (l, d) and the harbour with reflections (x, z, q), a red junk sail (j) and a Star Ferry (h, f).
+    function cityHongKongPreview() {
+      return paint([
+        ' +  \\   .  /\\    ',
+        '     \\   o/  \\  *',
+        '  .  \\|/ |    \\  ',
+        '  .  |:| |/    | ',
+        ' /^\\ |=|.|X/   A ',
+        '.|=|.|:|:|/\\|./=\\',
+        ':|=|#|:|#|\\/|##=#',
+        '||=|||=|||/\\||#=#',
+        '-o--o--o--o--o--o',
+        '~===~=-=~=-==~=#=',
+        '-|)\\~--~ [o_o]-=~'
+      ], [
+        ' s  g   s  cp    ',
+        '     g   rc  p  s',
+        '  s  iii m    p  ',
+        '  r  iwi bb    m ',
+        ' ooo iiikbbb   y ',
+        'konokiwikbbbbkyyy',
+        'wonowiwiwbbbbwaaa',
+        'konokiiikbbbbkaaa',
+        'ldlldlldlldlldlld',
+        'exxxezzzezzzzeqqq',
+        'ejjjeeze hfffhqqe'
+      ], { s: 'hk-star', g: 'hk-lg', c: 'hk-lc', p: 'hk-lp', i: 'hk-ifc', w: 'hk-win', m: 'hk-mast', r: 'hk-beacon',
+           b: 'hk-boc', o: 'hk-ctr', n: 'hk-neon', y: 'hk-ptop', a: 'hk-gold', k: 'hk-bld', l: 'hk-prom', d: 'hk-lamp',
+           e: 'hk-water', x: 'hk-ref-n', z: 'hk-ref-w', q: 'hk-ref-g', j: 'hk-sail', h: 'hk-hull', f: 'hk-ferry' });
+    }
+
+    // Singapore at night: lasers (l) from the SkyPark deck (d) over three towers (edges e, windows w),
+    // the lotus museum (o), Supertrees (canopy c, trunk t), the helix bridge (h, lights x) on its deck (b, lamps p),
+    // promenade (g), stars (s), water (a) and warm reflections (r).
+    function citySingaporePreview() {
+      return paint([
+        ' +   \\   |   / . ',
+        '   .  \\  |  /   +',
+        '   <===========] ',
+        '    |=| |=| |=| Y',
+        ' .  |=| |=| |=| |',
+        '    |=| |=| |=|Y|',
+        '\\V/ |=| |=| |=|||',
+        '\\_/_|=|_|=|_|=|#|',
+        '/\\x/\\/\\x/\\/\\x/\\/\\',
+        '=o===o===o===o===',
+        '~ =~ ~=| = ~|~ ~ ',
+        ' ~ - = ~ -=~ ~ - '
+      ], [
+        ' s   l   l   l s ',
+        '   s  l  l  l   s',
+        '   ddddddddddddd ',
+        '    ewe ewe ewe c',
+        ' s  ewe ewe ewe t',
+        '    ewe ewe ewect',
+        'ooo ewe ewe ewett',
+        'ooogewegewegewett',
+        'hhxhhhhxhhhhxhhhh',
+        'bpbbbpbbbpbbbpbbb',
+        'a aa rra r arr a ',
+        ' a a r a rra r a '
+      ], { s: 'sg2-star', l: 'sg2-laser', d: 'sg2-deck', e: 'sg2-edge', w: 'sg2-win', o: 'sg2-lotus', g: 'sg2-ground',
+           c: 'sg2-tree', t: 'sg2-trunk', h: 'sg2-helix', x: 'sg2-led', b: 'sg2-bridge', p: 'sg2-lamp', a: 'sg2-water', r: 'sg2-refl' });
+    }
+
+    // Dubai: Milky Way (m), stars (s), red beacons (b), Burj edges (n) and lit core (g), Emirates Towers (t),
+    // sail (v), lattice tower (x), gold block (y), promenade rail (p) with lamps (o), lake (a), reflection (r), title (T).
+    function cityDubaiPreview() {
+      return paint([
+        '  .     o   .:*+:',
+        '        |  .:*+:\'',
+        ' +      +  :*+:\' ',
+        '  |    |#|*+:\'  .',
+        ' /|   _|#|_   | |',
+        '/=|/|_|#:#|_ (| X',
+        '|=|:||:#:#:|(:| X',
+        '|=|:||#:#:#|\\:|#X',
+        '=o==o==o==o==o==o',
+        '~-=~-~|#:#|~-=~-~',
+        '-~ =-~ :#: ~-= ~-',
+        '  ~   DUBAI  ~   '
+      ], [
+        '  s     b   mmmmm',
+        '        n  mmmmmm',
+        ' s      n  mmmmm ',
+        '  t    ngnmmmm  b',
+        ' tt   nngnn   v x',
+        'tttttnngggnn vv x',
+        'tttttngggggnvvv x',
+        'tttttngggggnvvvyx',
+        'poppoppoppoppoppo',
+        'aaaaaarrrrraaaaaa',
+        'aa aaa rrr aaa aa',
+        '  a   TTTTT  a   '
+      ], { m: 'du-mw', s: 'du-star', b: 'du-beacon', n: 'du-burj', g: 'du-lit', t: 'du-twin', v: 'du-sail',
+           x: 'du-lattice', y: 'du-gold', p: 'du-rail', o: 'du-lamp', a: 'du-water', r: 'du-refl', T: 'du-title' });
+    }
+
+    // Paris at night: crescent moon (m), stars (s), a golden tower (g) with sparkles (k), Notre-Dame's
+    // twin towers (d) with a rose window (r) and lit doors (w), a neon CAFÉ sign (n) between the legs,
+    // a stone bridge (q) with lamps (l), and the Seine below with gold (x) and lamp (y) reflections (a = water).
+    function cityParisPreview() {
+      return paint([
+        '  (    .   |   + ',
+        ' ((        |  .  ',
+        '  (   +   /#\\    ',
+        '         /X:X\\  .',
+        ' _  _   /XX:XX\\  ',
+        '|^||^| [=======] ',
+        '|(@)|| /X/   \\X\\ ',
+        '|_##_|/X[CAFÉ]X\\_',
+        '=Y====Y=====Y====',
+        '_/^\\_/^\\_/^\\_/^\\_',
+        '~-=~ ~=- ~=~ -=~ ',
+        ' ~ -=~  ~ =- ~ ~ '
+      ], [
+        '  m    s   g   s ',
+        ' mm        g  s  ',
+        '  m   s   ggg    ',
+        '         ggkgg  s',
+        ' d  d   gggkggg  ',
+        'dddddd ggggggggg ',
+        'drrrdd ggg   ggg ',
+        'ddwwddggnnnnnnggb',
+        'qlqqqqlqqqqqlqqqq',
+        'qqqqqqqqqqqqqqqqq',
+        'ayaaaayxxxxxyxxxa',
+        'ayaaaayxxxxxyxxxa'
+      ], { m: 'cp-moon', s: 'cp-star', g: 'cp-gold', k: 'cp-spark', d: 'cp-nd', r: 'cp-rose', w: 'cp-win', n: 'cp-neon',
+           b: 'cp-roof', q: 'cp-bridge', l: 'cp-lamp', a: 'cp-water', x: 'cp-refl', y: 'cp-lrefl' });
+    }
+
+    // London: moon (m), stars (s), Westminster in gold (g) with lit windows (w), Big Ben's glowing face (f)
+    // with dark hands (h), Tower Bridge stone (t) and blue walkway/chain (b), wall (k), lamps (l),
+    // water (a) with gold (r) and blue (u) reflections.
+    function cityLondonPreview() {
+      return paint([
+        '       +    .(@) ',
+        '  .    A    +    ',
+        '      /H\\      . ',
+        ' A   |/\\/|  A   A',
+        ' H   [.|.]  H===H',
+        ' H^  [.o-]  H\\/\\H',
+        ' HH^^|#H#| /H   H',
+        '_HHHH|#H#|/ H/ \\H',
+        '=i==i=i=i=i[#]~[#',
+        '~=H~=~-#-~=~=~-~=',
+        '-~H~-~=H=~-~=~=~-'
+      ], [
+        '       g    smmm ',
+        '  s    g    s    ',
+        '      ggg      s ',
+        ' g   ggggg  t   t',
+        ' g   gfhfg  tbbbt',
+        ' gg  gfhhg  tbbbt',
+        ' wwggggwgg bt   t',
+        'kwwwwggwggb tg gt',
+        'klkklklklkltttatt',
+        'aaraaarrraaauaaua',
+        'aaraaarrraaaauaua'
+      ], { s: 'cl-star', m: 'cl-moon', g: 'cl-gold', w: 'cl-win', f: 'cl-face', h: 'cl-hand', t: 'cl-stone',
+           b: 'cl-blue', k: 'cl-wall', l: 'cl-lamp', a: 'cl-water', r: 'cl-refl', u: 'cl-brefl' });
+    }
+
+    // Barcelona: Sagrada spires (g) with coloured tips (t) and a cross (x), dark body (d), glowing portals (w),
+    // Torre Glòries LEDs (l), hill (h), promenade (p) with lamps (i), sea (a) with gold reflections (r/b) and a fountain jet (f).
+    function cityBarcelonaPreview() {
+      return paint([
+        ' .     |    +  . ',
+        '      -+-     _  ',
+        '  o o  ^  o o(:) ',
+        '  ^ ^ /#\\ ^ ^|#| ',
+        '  |:|:|#|:|:||:| ',
+        ' _|:|:|#|:|:||#| ',
+        '/\\/\\/\\/\\/\\/\\/|:|\\',
+        '|:|##|:##:|##|#|:',
+        '=i====i====i====i',
+        '~-=#~-:#:-~#=-~#~',
+        '-~ :~ !~|~  ~:-~ '
+      ], [
+        ' s     x    s  s ',
+        '      xxx     l  ',
+        '  t t  g  t tlll ',
+        '  g g gwg g glll ',
+        '  gdgdgwgdgdglll ',
+        ' hgdgdgwgdgdglll ',
+        'ggggggggggggglllh',
+        'gdgwwgdwwdgwwllld',
+        'pippppippppippppi',
+        'aaarbaarbaaraaala',
+        'aa aa fbrb  aaaa '
+      ], { s: 'bc-star', x: 'bc-cross', t: 'bc-tip', g: 'bc-gold', d: 'bc-body', w: 'bc-win', l: 'bc-led',
+           h: 'bc-hill', p: 'bc-prom', i: 'bc-lamp', a: 'bc-water', r: 'bc-refl', b: 'bc-win', f: 'bc-fount' });
+    }
+
+    // New York: One WTC (w), Empire State body (e) with a colour-cycling crown (c), Chrysler gold crown (g) with
+    // lit arches (v) over a silver shaft (h), Liberty (l) with flame (f) and torch (t) on her pedestal (p), lit windows (y),
+    // NYC neon (n), star (s), bridge deck (d) with lamps (o), a taxi (a) and a car (k), gold reflections (x) on the water (q).
+    function cityNewYorkPreview() {
+      return paint([
+        '  |   |    .   ( ',
+        '  |  /#\\   A   # ',
+        ' [=] |#|  /^\\ \\|/',
+        ' /:\\ |:| /v^v\\(@)',
+        ' |:|/=:=\\<===>|#|',
+        'N|:||:#:||:#:|/#\\',
+        'Y|#||#:#||#:#|[=]',
+        'C|:||#:#||:#:||#|',
+        '-o-[T]-o--o-[_]o-',
+        '~=~-:~=-~:=~-~=~-',
+        ' ~ -=~  - =~ - ~ '
+      ], [
+        '  w   e    s   f ',
+        '  w  ccc   v   t ',
+        ' www ccc  ggg lll',
+        ' www eee gvgvglll',
+        ' wwweeeeeggggglll',
+        'nwwweeyeehhyhhlll',
+        'nwyweyeyehyhyhppp',
+        'nwwweyeyehhyhhpyp',
+        'dodaaadoddodkkkod',
+        'qxqqxqxqqxxqqqxqq',
+        ' q qxq  q xq q q '
+      ], { w: 'cn-wtc', e: 'cn-esb', c: 'cn-crown', g: 'cn-gold', v: 'cn-goldhi', h: 'cn-chr', l: 'cn-lib', f: 'cn-flame',
+           t: 'cn-torch', p: 'cn-ped', y: 'cn-win', n: 'cn-neon', s: 'cn-star', d: 'cn-deck', o: 'cn-lamp', a: 'cn-taxi',
+           k: 'cn-car', x: 'cn-refl', q: 'cn-water' });
+    }
+
+    // Miami at night: striped retro sun (s/o/k) between neon hotels (h, lit windows n, crown g),
+    // neon palms (p), bay (w) with the sun's reflection (r), causeway (b) with lamps (l), speedboat (t), road (q), car (c, tail e).
+    function cityMiamiPreview() {
+      return paint([
+        ' .  +  _____  * .',
+        '/^\\   /#####\\  /^',
+        '|o|~ (#######) ~|',
+        '|o|~\\(#######)/~|',
+        '|#| |(=======)| |',
+        '|o| |( ----- )| |',
+        '|#|~~~~=====~~~~|',
+        '|o|~-~ =-=-= ~-~|',
+        '|#|=+===+===+==+|',
+        '|#|~ _|\\_ ~=~ - ~',
+        '==#=====#=====#==',
+        ' =(_o_o_)*  - - -'
+      ], [
+        ' x  x  sssss  x x',
+        'hhh   sssssss  gg',
+        'hnhp ooooooooo ph',
+        'hnhppooooooooopph',
+        'hnh pkkkkkkkkkp h',
+        'hnh pk kkkkk kp h',
+        'hnhwwwwrrrrrwwwwh',
+        'hnhwww rrrrr wwwh',
+        'hnhblbbblbbblbblh',
+        'hnhw tttt wew w w',
+        'qqqqqqqqqqqqqqqqq',
+        ' ecccccccl  q q q'
+      ], { x: 'mi-star', s: 'mi-sun', o: 'mi-sun2', k: 'mi-stripe', h: 'mi-hotel', n: 'mi-win', g: 'mi-crown', p: 'mi-palm',
+           w: 'mi-sea', r: 'mi-refl', b: 'mi-bridge', l: 'mi-lamp', t: 'mi-boat', e: 'mi-tail', c: 'mi-car', q: 'mi-road' });
+    }
+
+    // Sydney Harbour: fireworks (f, g) and stars (s), Tower Eye mast (m) and golden turret (t), the bridge's
+    // lit arch (a), steel (k, b), pylons (p), deck (d) and lamp (l), Opera House sails (w) with glass (h)
+    // on their podium (o), and the harbour (q) with shimmering reflections (r).
+    function citySydneyPreview() {
+      return paint([
+        " .  '*'  +  \\|/ .",
+        ' |  -*-     -o- *',
+        "[#]  '  ._===_.  ",
+        ' |  .  /|/\\|/\\|\\ ',
+        ' |    #|      |# ',
+        '_|_/\\_#|==o===|#=',
+        ' /\\/#\\/\\#~|:|~|#~',
+        '/##/##\\#\\~~~~~~~~',
+        '=========~-=~-~=-',
+        '~-=~:~-~-=~--~=~-',
+        '-~=~-~:~=~-~-=~~-'
+      ], [
+        ' s  fff  s  ggg s',
+        ' m  fff     ggg s',
+        'ttt  f  .baaaab  ',
+        ' m  .  akkkkkkk  ',
+        ' m    pk      kp ',
+        'cmcwwwpkdlddddkpd',
+        ' wwwwwwwwrrrrrrrr',
+        'wwhwwwwhwrrrrrrrr',
+        'oooooooooqrqrqrqr',
+        'qrqrrqrqrqrqrrqrq',
+        'rqrqrqrqrqrqrqrrq'
+      ], { s: 'sy-star', f: 'sy-fw', g: 'sy-fw2', m: 'sy-mast', c: 'sy-mast', t: 'sy-turret', a: 'sy-arch',
+           b: 'sy-steel', k: 'sy-steel', p: 'sy-pylon', d: 'sy-deck', l: 'sy-lamp', w: 'sy-sail', h: 'sy-glass',
+           o: 'sy-pod', q: 'sy-water', r: 'sy-refl' });
+    }
+
     function render() {
       const lang = Site.getLang(), T = I18N[lang];
       document.documentElement.lang = lang === 'en' ? 'en' : 'zh-Hant';
       document.getElementById('lead').textContent = T.lead;
       document.getElementById('langToggle').textContent = T.toggle;
-      document.getElementById('grid').innerHTML = PIECES.map((p, i) => `
+      const groups = [
+        { id: 'pieces', list: PIECES, title: T.pieces, sub: T.piecesSub },
+        { id: 'cities', list: CITIES, title: T.cities, sub: T.citiesSub }
+      ].filter(g => g.list.length);
+      document.getElementById('jump').innerHTML = groups.map(g =>
+        `<a href="#${g.id}">${Site.esc(g.title)}<span class="n">${g.list.length}</span></a>`).join('');
+      document.getElementById('sections').innerHTML = groups.map(g => `
+        <section class="sec" id="${g.id}">
+          <div class="sec-head"><h2>${Site.esc(g.title)}</h2><p>${Site.esc(g.sub)}</p></div>
+          <div class="grid">${cards(g.list, lang, T)}</div>
+        </section>`).join('');
+    }
+
+    function cards(list, lang, T) {
+      return list.map((p, i) => `
         <a class="card" href="${Site.esc(p.href)}" style="--i:${i}">
           <div class="preview" aria-hidden="true"><pre>${p.preview}</pre></div>
           <div class="body">
-            <h2>${Site.esc(p.title[lang])}</h2>
+            <h3>${Site.esc(p.title[lang])}</h3>
             <p>${Site.esc(p.desc[lang])}</p>
             <span class="more">${Site.esc(T.open)} ${Site.arrowSvg}</span>
           </div>

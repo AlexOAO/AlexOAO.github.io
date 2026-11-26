@@ -1,0 +1,1187 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ASCII Hong Kong at Night | Alex Li (李翔緯)</title>
+  <meta name="description" content="Victoria Harbour at night drawn entirely with coloured ASCII characters: the Peak ridgeline, a skyline of lit towers, Two IFC, the Bank of China Tower, Central Plaza and the neon bars of The Center, a red-sailed junk and a Star Ferry over shimmering reflections. Tap the sky for a laser light show, the neon towers to change their colours, the water to send a boat. Vanilla JS on a single canvas.">
+  <meta name="theme-color" content="#04060f">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;600;800&display=swap">
+  <style>
+    :root {
+      --bg: #0b1120;
+      --sky: #04060f;
+      --text: #eef2fb;
+      --muted: #aab6d3;
+      --accent: #ff4f6d;
+      --mono: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--sky);
+      color: var(--text);
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    canvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100svh;
+      display: block;
+      touch-action: none; /* drags aim the lasers, so no scrolling or zooming */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: crosshair;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .back {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 79, 109, 0.45);
+      background: rgba(30, 10, 24, 0.5);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .back:hover, .back:focus-visible {
+      background: rgba(255, 79, 109, 0.28);
+      border-color: var(--accent);
+      outline: none;
+    }
+    .hud, .hint {
+      position: fixed;
+      z-index: 1;
+      bottom: 12px;
+      color: var(--muted);
+      opacity: 0.8;
+      font: 11px/1.4 var(--mono);
+      white-space: pre;
+      pointer-events: none;
+      max-width: calc(100% - 24px);
+      overflow: hidden;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    }
+    .hud { left: 12px; }
+    .hint {
+      right: 12px;
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    @media (max-width: 640px) {
+      .hud, .hint { font-size: 10px; }
+      .hint { bottom: 30px; } /* stack above the HUD on narrow screens */
+    }
+  </style>
+</head>
+<body>
+  <h1 class="sr-only">ASCII Hong Kong at Night</h1>
+  <a class="back" href="./">← ASCII</a>
+  <canvas id="c" role="img" aria-label="Animated night view of Victoria Harbour in Hong Kong drawn with coloured ASCII characters: the Peak ridgeline under the stars, a skyline of lit towers with Two IFC, the Bank of China Tower, Central Plaza and The Center's neon bars, a red-sailed junk and a Star Ferry crossing shimmering reflections, laser beams and the title Hong Kong at Night"></canvas>
+  <div class="hud" id="hud" aria-hidden="true"></div>
+  <div class="hint" id="hint"></div>
+
+<script src="ascii-audio.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  // ---------- Timeline (seconds of scene time, one loop) ----------
+  const T = {
+    HARBOUR: 0.6,                       // the water resolves, top row first
+    PEAK: 1.6, PEAK_DUR: 1.6,           // the Peak ridgeline draws left to right
+    SKYLINE: 2.8, SKYLINE_DUR: 3.4,     // ordinary towers resolve, back row first
+    CENTER: 5.8, IFC: 7.0, BOC: 8.6, PLAZA: 10.2,   // landmarks, one by one
+    LIGHTS: 11.8, LIGHTS_DUR: 2.0,      // windows, neon bars and gold come on
+    BOATS: 12.6,                        // a junk and a Star Ferry sail in
+    REFL: 13.4, REFL_DUR: 1.6,          // reflections stretch across the harbour
+    SHOW: 14.8, SHOW_END: 18.2,         // the scheduled laser show
+    TITLE: 17.6, TITLE_CPS: 11,         // the title types out
+    HOLD: 19.8, FADE: 21.8, FADE_DUR: 1.9, END: 24.0
+  };
+  const LM_DUR = { center: 1.4, ifc: 1.8, boc: 1.8, plaza: 1.5 };
+
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T_START = reduced ? T.HOLD + 0.4 : 0;   // reduced motion: open (and stay) on the finished scene
+  const SCR = reduced ? 0 : 0.45;               // seconds a cell scrambles before it resolves
+  const SHOW_LEN = 6;                           // seconds of light show after a tap
+  const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
+  const TITLE = 'HONG KONG AT NIGHT';
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  // Stateless integer hash -> [0, 1).
+  function hash2(a, b) {
+    let h = Math.imul(a ^ Math.imul(b, 0x9E3779B1), 0x85EBCA6B);
+    h ^= h >>> 13; h = Math.imul(h, 0xC2B2AE35); h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
+  }
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+  function hsv(h, s, v, out) {
+    h = ((h % 1) + 1) % 1 * 6;
+    const i = h | 0, f = h - i, p = v * (1 - s), q = v * (1 - s * f), u = v * (1 - s * (1 - f));
+    const r = [v, q, p, p, u, v][i], g = [u, v, v, q, p, p][i], b = [p, p, u, v, v, q][i];
+    out[0] = r * 255; out[1] = g * 255; out[2] = b * 255;
+    return out;
+  }
+
+  // ---------- Ripple texture: tileable value-noise fbm ----------
+  const CNX = 256, CNY = 64;
+  const NZ = new Float32Array(CNX * CNY);
+  (function buildNoise() {
+    const r = mulberry32(852);
+    let amp = 1, tot = 0;
+    for (let o = 0; o < 4; o++) {
+      const gx = 8 << o, gy = Math.min(4 << o, 32);
+      const lat = new Float32Array(gx * gy);
+      for (let i = 0; i < lat.length; i++) lat[i] = r();
+      for (let y = 0; y < CNY; y++) {
+        const fy = y / CNY * gy, y0 = fy | 0, ty = smooth(fy - y0), y1 = (y0 + 1) % gy;
+        for (let x = 0; x < CNX; x++) {
+          const fx = x / CNX * gx, x0 = fx | 0, tx = smooth(fx - x0), x1 = (x0 + 1) % gx;
+          const a = lat[y0 * gx + x0], b = lat[y0 * gx + x1], c = lat[y1 * gx + x0], d = lat[y1 * gx + x1];
+          NZ[y * CNX + x] += amp * (a + (b - a) * tx + (c - a + (a - b - c + d) * tx) * ty);
+        }
+      }
+      tot += amp; amp *= 0.5;
+    }
+    let lo = 1e9, hi = -1e9;
+    for (let i = 0; i < NZ.length; i++) { const v = NZ[i] / tot; NZ[i] = v; if (v < lo) lo = v; if (v > hi) hi = v; }
+    for (let i = 0; i < NZ.length; i++) NZ[i] = (NZ[i] - lo) / (hi - lo);
+  })();
+  function noise(u, v) {
+    u = (u - Math.floor(u)) * CNX; v = (v - Math.floor(v)) * CNY;
+    const x0 = u | 0, y0 = v | 0, fx = u - x0, fy = v - y0;
+    const x1 = (x0 + 1) & (CNX - 1), y1 = (y0 + 1) & (CNY - 1), r0 = y0 * CNX, r1 = y1 * CNX;
+    const a = NZ[r0 + x0], b = NZ[r0 + x1], c = NZ[r1 + x0], d = NZ[r1 + x1];
+    return a + (b - a) * fx + (c - a + (a - b - c + d) * fx) * fy;
+  }
+
+  // ---------- Glyphs ----------
+  const CH = [' '];
+  const ci = s => { let i = CH.indexOf(s); if (i < 0) { CH.push(s); i = CH.length - 1; } return i; };
+  const set = s => Uint8Array.from([...s].map(ci));
+  const G_SCR = set('#%&@$*+=?<>/\\|01');
+  const G_WATER = set(' -~-_~-.');
+  const C_DOT = ci('.'), C_PLUS = ci('+'), C_STAR = ci('*'), C_DASH = ci('-'), C_US = ci('_'), C_EQ = ci('=');
+  const C_FS = ci('/'), C_BS = ci('\\'), C_PIPE = ci('|'), C_TILDE = ci('~'), C_O = ci('o');
+
+  // Roles of the structure cells (each frame colours them by role and time).
+  const R_OUT = 1, R_BODY = 2, R_WIN = 3, R_BACK = 4, R_BWIN = 5, R_IFC = 6, R_IWIN = 7, R_BOC = 8, R_BFILL = 9,
+        R_CPB = 10, R_CPT = 11, R_CTR = 12, R_COUT = 13, R_MAST = 14, R_BEACON = 15, R_CPOUT = 16;
+
+  // Colour keys: 5 bits per channel, so fillStyle changes once per quantised colour.
+  const NKEY = 32768;
+  const COLSTR = new Array(NKEY);
+  const colStr = k => COLSTR[k] || (COLSTR[k] = `rgb(${(k >> 10) * 8 + 4},${((k >> 5) & 31) * 8 + 4},${(k & 31) * 8 + 4})`);
+  const counts = new Uint32Array(NKEY);
+
+  // ---------- Canvas, grid, layout ----------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const hudEl = document.getElementById('hud');
+  const hintEl = document.getElementById('hint');
+  const back = document.createElement('canvas'), bctx = back.getContext('2d', { willReadFrequently: true });
+  const emis = document.createElement('canvas'), ectx = emis.getContext('2d', { willReadFrequently: true });
+  const glow = document.createElement('canvas'), gctx = glow.getContext('2d');
+  const halo = document.createElement('canvas'), hctx = halo.getContext('2d');
+  let bImg = null, eImg = null;
+
+  let W = 0, H = 0, fs = 9, cw = 5, ch = 10, cols = 0, rows = 0, n = 0, hr = 0, yH = 0, M = 500, SHt = 500, cellFont = '';
+  let CR, CG, CB, CK, EMI, BR, BGc, BB, NF, HSH, keys, order, skyR, skyG, skyB;
+  let SG, SR, SA, SI, SRES, SLIST, ridge;
+  let structs = [], beams = [], nStruct = 0, peakC = 0;
+  let needResize = true, dirty = true;
+
+  function resize() {
+    needResize = false;
+    W = canvas.clientWidth || innerWidth;
+    H = canvas.clientHeight || innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    fs = clamp(Math.round(Math.min(W, H * 1.2) / 118), 7, 11);
+    cellFont = `${fs}px ${MONO}`;
+    ctx.font = cellFont;
+    cw = ctx.measureText('M').width || fs * 0.6;
+    ch = Math.round(fs * 1.15);
+    cols = Math.ceil(W / cw);
+    rows = Math.ceil(H / ch);
+    n = cols * rows;
+    hr = Math.round(H * (W < H ? 0.6 : 0.64) / ch);   // first water row
+    yH = hr * ch;
+    M = Math.min(W, H * 0.95);
+    SHt = Math.min(H, W * 1.5);                     // vertical scale of the skyline
+
+    CR = new Float32Array(n); CG = new Float32Array(n); CB = new Float32Array(n);
+    BR = new Float32Array(n); BGc = new Float32Array(n); BB = new Float32Array(n);
+    CK = new Uint8Array(n); EMI = new Uint8Array(n); NF = new Uint8Array(n);
+    keys = new Uint16Array(n); order = new Int32Array(n);
+    HSH = new Uint8Array(n);
+    const r = mulberry32(852);
+    for (let i = 0; i < n; i++) HSH[i] = (r() * 256) | 0;
+    skyR = new Float32Array(rows); skyG = new Float32Array(rows); skyB = new Float32Array(rows);
+    for (let y = 0; y < rows; y++) {
+      const f = clamp((y + 0.5) / hr, 0, 1), g = f * f;
+      skyR[y] = 4 + 26 * g; skyG[y] = 6 + 14 * g; skyB[y] = 18 + 40 * g;   // navy top, violet city haze low
+    }
+    back.width = cols; back.height = rows; bImg = bctx.createImageData(cols, rows);
+    emis.width = cols; emis.height = rows; eImg = ectx.createImageData(cols, rows);
+    glow.width = cols; glow.height = rows; halo.width = cols; halo.height = rows;
+
+    buildStructures();
+    // The Peak: a ridgeline behind the city, two humps with a small wobble (a few spare columns for parallax).
+    ridge = new Float32Array(cols + 9);
+    for (let c = 0; c < ridge.length; c++) {
+      const x = (c - 4 + 0.5) * cw / W;
+      const hump = Math.max(Math.exp(-(((x - 0.44) / 0.15) ** 2)), 0.72 * Math.exp(-(((x - 0.78) / 0.18) ** 2)), 0.45 * Math.exp(-(((x - 0.1) / 0.12) ** 2)));
+      const wob = 0.012 * Math.sin(x * 37) + 0.008 * Math.sin(x * 83 + 1);
+      ridge[c] = (yH - SHt * (0.13 + 0.17 * hump + wob)) / ch;
+    }
+    let best = 1e9;
+    for (let c = 4; c < cols + 4; c++) if (ridge[c] < best && (c - 4) * cw < W * 0.6) { best = ridge[c]; peakC = c; }
+    dirty = true;
+  }
+
+  // ---------- Structures: written once per resize into cell arrays ----------
+  let curSid = 0, curT0 = 0, curDur = 1, curH = 1;
+  function begin(kind, t0, dur, top, extra) {
+    structs.push(Object.assign({ kind, t0, dur, top }, extra || {}));
+    curSid = structs.length; curT0 = t0; curDur = dur; curH = Math.max(1, hr - 1 - top);
+  }
+  // One structure cell: glyph, role, aux value; it resolves bottom-up with a little jitter.
+  function S(c, r, g, role, aux) {
+    if (c < 0 || c >= cols || r < 0 || r >= hr) return;
+    const i = r * cols + c;
+    SG[i] = typeof g === 'number' ? g : ci(g); SR[i] = role; SA[i] = aux || 0; SI[i] = curSid;
+    const yf = clamp((hr - 1 - r) / curH, 0, 1);
+    SRES[i] = curT0 + curDur * clamp(0.8 * yf + 0.2 * hash2(i, 77), 0, 1);
+  }
+
+  const WGL = ['#', '=', ':', '"'];
+  function building(c0, w, h, isBack, br) {
+    const top = hr - h, style = (br() * 4) | 0;
+    const t0 = isBack ? T.SKYLINE + br() * 1.6 : T.SKYLINE + 0.9 + br() * (T.SKYLINE_DUR - 1.7);
+    begin('bld', t0, 0.8, top, { c: c0 + (w >> 1), r: top });
+    for (let r = top; r < hr; r++) for (let c = c0; c < c0 + w; c++) {
+      const dx = c - c0, edge = dx === 0 || dx === w - 1;
+      if (isBack) {
+        if (r === top) S(c, r, edge ? '.' : '-', R_BACK);
+        else if (edge) S(c, r, ':', R_BACK);
+        else if ((r - top) % 2 === 0 && dx % 2 === 1) S(c, r, '.', R_BWIN);
+        else S(c, r, ' ', R_BACK);
+        continue;
+      }
+      if (r === top) S(c, r, edge ? '.' : '-', R_OUT);
+      else if (edge) S(c, r, '|', R_OUT);
+      else {
+        const wy = (r - top) % 2 === 0, wx = style === 2 ? dx % 3 !== 0 : dx % 2 === 1;
+        if (wy && wx && r < hr - 1) S(c, r, WGL[style], R_WIN);
+        else S(c, r, style === 3 && wy ? '-' : ' ', R_BODY);
+      }
+    }
+    // A few taller ones carry an antenna with a red light.
+    if (!isBack && h > SHt * 0.17 / ch && br() < 0.6) {
+      const mc = c0 + (w >> 1), mh = 2 + ((br() * 3) | 0);
+      for (let k = 1; k <= mh; k++) S(mc, top - k, '|', R_MAST);
+      S(mc, top - mh - 1, '.', R_BEACON, (br() * 8) | 0);
+    }
+  }
+
+  // Two IFC: tall shaft with setbacks and a crown of fins.
+  function ifc(cx, w, h) {
+    const top = hr - h, c0 = cx - (w >> 1), c1 = c0 + w - 1;
+    const crownH = Math.max(3, Math.round(h * 0.1));
+    const s1 = top + crownH, s2 = top + Math.round(h * 0.22), s3 = top + Math.round(h * 0.38);
+    begin('ifc', T.IFC, LM_DUR.ifc, top, { c: cx, r: top });
+    for (let r = s1; r < hr; r++) {
+      const ins = r >= s3 ? 0 : r >= s2 ? 1 : 2;
+      const a = c0 + ins, b = c1 - ins;
+      const ledge = r === s1 || r === s2 || r === s3 || (r - s3) % 9 === 8;
+      for (let c = a; c <= b; c++) {
+        if (ledge) S(c, r, c === a || c === b ? '.' : '=', R_IFC);
+        else if (c === a || c === b) S(c, r, '|', R_IFC);
+        else if ((c - a) % 2 === 0) S(c, r, '|', R_IFC, 1);
+        else S(c, r, ':', R_IWIN);
+      }
+    }
+    // Crown: fins rising higher at the corners than in the middle.
+    const a = c0 + 2, b = c1 - 2, half = Math.max(1, (b - a) / 2), mid = (a + b) / 2;
+    for (let c = a; c <= b; c += (b - a) % 2 ? 1 : 2) {
+      const q = Math.abs(c - mid) / half;
+      const hf = Math.max(1, Math.round(crownH * (0.45 + 0.55 * q)));
+      for (let k = 1; k <= hf; k++) {
+        const r = s1 - k;
+        const g = k < hf ? '|' : c < mid - 0.5 ? '\\' : c > mid + 0.5 ? '/' : '^';
+        S(c, r, g, R_IFC);
+      }
+    }
+    structs[curSid - 1].r = s1 - crownH;
+  }
+
+  // Bank of China Tower: stepped, sloping roofs and big X bracing in every segment.
+  function boc(cx, w, h) {
+    const top = hr - h, c0 = cx - (w >> 1), span = w - 1;
+    begin('boc', T.BOC, LM_DUR.boc, top, { c: c0 + 1, r: top });
+    const stepsY = [0, 0.46, 0.64, 0.82, 1.0], stepsW = [1, 0.74, 0.5, 0.26, 0];
+    const re = new Float32Array(h + 2);  // right edge (column offset) per row counted from the bottom
+    for (let y = 0; y <= h + 1; y++) {
+      let wv = 0;
+      for (let k = 0; k < 4; k++) {
+        const y0 = Math.round(stepsY[k] * h), y1 = Math.round(stepsY[k + 1] * h);
+        if (y < y0 || y >= y1) continue;
+        const wa = stepsW[k] * span, wb = stepsW[k + 1] * span;
+        const slope = Math.max(1, Math.round((wa - wb) / 2));          // sloping roof, about 2 columns per row
+        wv = y >= y1 - slope ? wa + (wb - wa) * (y - (y1 - slope) + 1) / (slope + 1) : wa;
+      }
+      re[y] = Math.round(wv);
+    }
+    // Segments (rows from the bottom); each holds one big X across its own base width.
+    const YS = [0, 0.23, 0.46, 0.64, 0.82, 1].map(f => Math.round(f * h));
+    for (let y = 0; y < h; y++) {
+      const r = hr - 1 - y, e = re[y], eUp = re[y + 1];
+      if (e < 1) { if (e >= 0) S(c0, r, '/', R_BOC); continue; }
+      let k = 0;
+      while (k < 4 && y >= YS[k + 1]) k++;
+      const y0 = YS[k], y1 = Math.max(y0 + 1, YS[k + 1]), e0 = re[y0];
+      const f0 = (y - y0) / (y1 - y0), f1 = (y + 1 - y0) / (y1 - y0);
+      const a0 = Math.round(f0 * e0), a1 = Math.max(a0, Math.round(f1 * e0) - 1);
+      for (let dx = 0; dx <= e; dx++) {
+        const c = c0 + dx;
+        if (dx === 0) { S(c, r, '|', R_BOC); continue; }
+        if (dx === e) { S(c, r, eUp < e ? '/' : '|', R_BOC); continue; }
+        if (dx > eUp) { S(c, r, '/', R_BOC); continue; }           // the sloping roof itself
+        if (y === y0 && y > 0) { S(c, r, '=', R_BOC, 1); continue; }
+        const inA = dx >= a0 && dx <= a1, inB = e0 - dx >= a0 && e0 - dx <= a1;
+        if (inA && inB) S(c, r, 'X', R_BOC);
+        else if (inA) S(c, r, '/', R_BOC);
+        else if (inB) S(c, r, '\\', R_BOC);
+        else S(c, r, (dx + y) % 2 ? '.' : ' ', R_BFILL);
+      }
+    }
+    // Twin masts above the summit.
+    const topRowAt = dx => { let y = h - 1; while (y > 0 && re[y] < dx) y--; return hr - 1 - y; };
+    [[1, 0.13], [Math.min(3, span), 0.09]].forEach(([dx, f], k) => {
+      const r0 = topRowAt(dx), mh = Math.max(2, Math.round(h * f));
+      for (let j = 1; j <= mh; j++) S(c0 + dx, r0 - j, '|', R_MAST);
+      S(c0 + dx, r0 - mh - 1, 'o', R_BEACON, k * 3);
+    });
+    structs[curSid - 1].r = topRowAt(1);
+  }
+
+  // Central Plaza: gold body, a glass pyramid that changes colour, and a mast.
+  function plaza(cx, w, h) {
+    const c0 = cx - (w >> 1), c1 = c0 + w - 1, pyr = Math.max(2, (w - 1) >> 1);
+    const top = hr - h, bodyTop = top + pyr, mh = Math.max(3, Math.round(h * 0.16));
+    begin('plaza', T.PLAZA, LM_DUR.plaza, top - mh, { c: cx, r: top - mh });
+    curH = Math.max(1, hr - 1 - (top - mh));
+    for (let r = bodyTop; r < hr; r++) for (let c = c0; c <= c1; c++) {
+      const dx = c - c0;
+      if (r === bodyTop) S(c, r, c === c0 || c === c1 ? '/' : '=', R_CPT);
+      else if (c === c0 || c === c1) S(c, r, '|', R_CPOUT);
+      else if (c === cx) S(c, r, ':', R_CPB, 2);
+      else if ((r - bodyTop) % 2 === 1) S(c, r, '=', R_CPB, 0);
+      else S(c, r, dx % 3 === 0 ? '=' : '#', R_CPB, 1);
+    }
+    for (let k = 1; k <= pyr; k++) {
+      const r = bodyTop - k, a = c0 + k, b = c1 - k;
+      if (a > b) break;
+      if (a === b || k === pyr) { S(cx, r, 'A', R_CPT); break; }
+      for (let c = a; c <= b; c++) S(c, r, c === a ? '/' : c === b ? '\\' : '=', R_CPT);
+    }
+    const apex = bodyTop - pyr;
+    for (let k = 1; k <= mh; k++) S(cx, apex - k, '|', R_MAST);
+    S(cx, apex - mh - 1, '.', R_BEACON, 5);
+    structs[curSid - 1].r = apex;
+  }
+
+  // The Center: a stack of neon light bars and a stepped crown.
+  let centerBars = 1;
+  function center(cx, w, h) {
+    const c0 = cx - (w >> 1), c1 = c0 + w - 1, crown = 3, sp = Math.max(2, Math.round(h * 0.08));
+    const top = hr - h, bodyTop = top + crown;
+    begin('center', T.CENTER, LM_DUR.center, top - sp, { c: cx, r: top });
+    curH = Math.max(1, hr - 1 - (top - sp));
+    centerBars = Math.max(1, Math.floor((hr - 1 - bodyTop) / 2));
+    for (let r = bodyTop; r < hr; r++) for (let c = c0; c <= c1; c++) {
+      const k = Math.floor((hr - 1 - r) / 2);   // bar index from the bottom
+      if (r === bodyTop) S(c, r, c === c0 || c === c1 ? '.' : '-', R_COUT);
+      else if (c === c0 || c === c1) S(c, r, '|', R_COUT);
+      else if ((hr - 1 - r) % 2 === 1) S(c, r, '=', R_CTR, Math.min(255, k));
+      else S(c, r, ':', R_COUT, 1);
+    }
+    for (let k = 1; k <= crown; k++) {
+      const r = bodyTop - k, a = c0 + k, b = c1 - k;
+      if (a >= b) { S(cx, r, '^', R_COUT); continue; }
+      for (let c = a; c <= b; c++) S(c, r, c === a ? '/' : c === b ? '\\' : k === 1 ? '=' : '-', k === 1 ? R_CTR : R_COUT, k === 1 ? Math.min(255, centerBars) : 0);
+    }
+    for (let k = 1; k <= sp; k++) S(cx, top - k + 1, '|', R_MAST);
+    S(cx, top - sp, '.', R_BEACON, 2);
+  }
+
+  function buildStructures() {
+    SG = new Uint8Array(n); SR = new Uint8Array(n); SA = new Uint8Array(n); SI = new Uint8Array(n);
+    SRES = new Float32Array(n).fill(1e9);
+    structs = [];
+    const rowsOf = f => Math.max(2, Math.round(f * SHt / ch));
+    const colsOf = f => Math.max(5, Math.round(f * M / cw));
+    const S0 = Math.min(W * 0.88, M * 1.3), left = W / 2 - S0 / 2;
+    const colAt = f => Math.round((left + f * S0) / cw);
+
+    // Back row of low, hazy towers, then a front row with windows.
+    const br = mulberry32(1997);
+    for (let c = -2; c < cols;) {
+      const w = 3 + ((br() * 5) | 0);
+      building(c, w, rowsOf(0.08 + 0.15 * br()), true, br);
+      c += w - 1;
+    }
+    for (let c = -1; c < cols;) {
+      const w = Math.max(4, Math.round((0.022 + 0.03 * br()) * M / cw));
+      const xc = (c + w / 2) * cw / W;
+      const tall = br() < 0.18 ? 0.1 : 0;
+      building(c, w, rowsOf((0.05 + 0.13 * br() + tall) * (xc < 0.08 || xc > 0.92 ? 0.8 : 1)), false, br);
+      c += w + (br() < 0.25 ? 1 : 0);
+    }
+    // Landmarks, west to east as seen from Kowloon.
+    center(colAt(0.06), colsOf(0.075) | 1, rowsOf(0.3));
+    ifc(colAt(0.29), colsOf(0.095) | 1, rowsOf(0.47));
+    boc(colAt(0.57), colsOf(0.13) | 1, rowsOf(0.4));
+    plaza(colAt(0.9), colsOf(0.08) | 1, rowsOf(0.33));
+
+    let k = 0;
+    for (let i = 0; i < n; i++) if (SR[i]) k++;
+    SLIST = new Int32Array(k); k = 0;
+    for (let i = 0; i < n; i++) if (SR[i]) SLIST[k++] = i;
+    nStruct = k;
+
+    // Laser origins: every landmark roof plus the tallest ordinary towers.
+    beams = [];
+    const lm = structs.filter(s => s.kind !== 'bld');
+    const tallest = structs.filter(s => s.kind === 'bld').sort((a, b) => a.top - b.top).slice(0, 3);
+    [...lm, ...tallest].forEach((s, j) => {
+      const sid = structs.indexOf(s) + 1;
+      beams.push({ sid, c: s.c, r: s.r, ph: j * 1.7, base: 0 });
+      if (s.kind !== 'bld') beams.push({ sid, c: s.c, r: s.r, ph: j * 1.7 + 2.4, base: 0 });
+    });
+    beams.forEach((b, j) => { b.base = (j / Math.max(1, beams.length - 1) - 0.5) * 1.1; b.col = j; });
+  }
+
+  // ---------- Scene state ----------
+  let t = T_START, clk = 0, par = 0, parTo = 0;
+  let centerMode = 0, plazaHue = 0, centerFlash = -99, plazaFlash = -99;
+  let userShow = -99, showNo = 0, aimX = 0, aimY = 0, aimT = -99;
+  let boats = [], nextJunk = true;
+  let built = 0, letters = 0, lit = 0, litPrev = -1, phaseIdx = 0, typed = 0;
+
+  // ---------- Boats ----------
+  const MIRROR = { '(': ')', ')': '(', '/': '\\', '\\': '/', '[': ']', ']': '[' };
+  const BOAT = {
+    junk: ['  |\\   |\\  ', '  |)\\  |)\\ ', '  |))\\ |))\\', '\\_|____|___/'],
+    ferry: ['     _|_     ', '  _[o_o_o]_  ', '\\=_=_=_=_=_=/']
+  };
+  function spawnBoat(type, p, dir, x, auto) {
+    p = clamp(p, 0.04, 0.8);
+    const L = BOAT[type][0].length;
+    const v = M * (type === 'ferry' ? 0.042 : 0.03) * (reduced ? 0.4 : 1) * (0.85 + 0.3 * Math.random());
+    boats.push({ type, p, dir, x: x != null ? x : dir > 0 ? -L * cw * 0.6 : W + L * cw * 0.6, L, v, auto: !!auto });
+    music('event', type, { p });
+  }
+  function seedBoats() {
+    boats = boats.filter(b => !b.auto);
+    spawnBoat('junk', 0.18, 1, W * 0.12, true);
+    spawnBoat('ferry', 0.42, -1, W * 0.86, true);
+  }
+
+  // ---------- Light show ----------
+  const BEAM_COLS = [[70, 255, 140], [80, 200, 255], [190, 110, 255], [255, 80, 190], [235, 245, 255], [120, 255, 230]];
+  function showEnv() {
+    let e = 0;
+    if (!reduced && t >= T.SHOW && t < T.SHOW_END) e = smooth((t - T.SHOW) / 0.6) * (1 - smooth((t - T.SHOW_END + 0.8) / 0.8));
+    const u = clk - userShow;
+    if (u >= 0 && u < SHOW_LEN) e = Math.max(e, smooth(u / 0.4) * (1 - smooth((u - SHOW_LEN + 1) / 1)));
+    return e * (reduced ? 0.55 : 1);
+  }
+
+  // ---------- Render ----------
+  const tmp = [0, 0, 0], tmp2 = [0, 0, 0];
+  const PLAZA_BODY = [[255, 190, 80], [255, 120, 170], [110, 240, 170], [150, 205, 255], [190, 140, 255]];
+  const PLAZA_TOP = [0.0, 0.83, 0.62, 0.36, 0.12, 0.95];
+
+  function put(i, r, g, b, k, e) { CR[i] = r; CG[i] = g; CB[i] = b; CK[i] = k; EMI[i] = e > 255 ? 255 : e; NF[i] = 1; }
+  function bg(i, r, g, b) { BR[i] = r; BGc[i] = g; BB[i] = b; }
+
+  function centerColor(k, out) {
+    const sp = reduced ? 0.25 : 1, nb = Math.max(1, centerBars);
+    switch (centerMode) {
+      case 0: return hsv(k / nb * 0.8 + 0.12 - clk * 0.09 * sp, 0.85, 1, out);            // rainbow drifting up
+      case 1: return hsv(clk * 0.05 * sp + 0.55, 0.8, 1, out);                            // one colour, slowly turning
+      case 2: {                                                                            // cyan chase
+        hsv(0.52 + 0.3 * k / nb, 0.8, 1, out);
+        const on = reduced ? 1 : ((k + Math.floor(clk * 5)) % 4 === 0 ? 1.15 : 0.45);
+        out[0] *= on; out[1] *= on; out[2] *= on; return out;
+      }
+      default: {                                                                           // magenta / gold stripes
+        const sw = reduced ? 0 : Math.floor(clk / 1.2);
+        return (k + sw) % 2 ? hsv(0.9, 0.75, 1, out) : hsv(0.12, 0.75, 1, out);
+      }
+    }
+  }
+  function plazaTop(out) {
+    const per = reduced ? 8 : 2.4, xf = reduced ? 3 : 0.5;
+    const u = clk / per, a = Math.floor(u), f = smooth((u - a - (1 - xf / per)) / (xf / per));
+    hsv(PLAZA_TOP[a % 6], 0.8, 1, tmp2);
+    hsv(PLAZA_TOP[(a + 1) % 6], 0.8, 1, out);
+    out[0] = tmp2[0] + (out[0] - tmp2[0]) * f; out[1] = tmp2[1] + (out[1] - tmp2[1]) * f; out[2] = tmp2[2] + (out[2] - tmp2[2]) * f;
+    return out;
+  }
+
+  function buildScene() {
+    EMI.fill(0); NF.fill(0); CK.fill(0);
+    const lightK = reduced ? 1 : smooth((t - T.LIGHTS) / T.LIGHTS_DUR);
+    const blink = s => reduced ? 0.75 : ((clk * 0.8 + s * 0.13) % 1 < 0.5 ? 1 : 0.15);
+    const pS = reduced ? 0 : Math.round(par * 4), pR = reduced ? 0 : Math.round(par * 2);
+
+    // ---- Sky and stars ----
+    const starA = smooth(clk / 1.2);
+    for (let r = 0; r < hr; r++) {
+      const low = r / hr;
+      for (let c = 0; c < cols; c++) {
+        const i = r * cols + c;
+        CR[i] = 0; bg(i, skyR[r], skyG[r], skyB[r]);
+        const h = hash2(c + pS + 4000, r);
+        if (h < 0.014 * (1 - low * 0.8)) {
+          const tw = reduced ? 0.8 : 0.55 + 0.45 * Math.sin(clk * (1.3 + h * 300) + h * 9e3);
+          const s = starA * tw * (1 - low * 0.6);
+          const warm = h < 0.0015;
+          CR[i] = (warm ? 255 : 200) * s; CG[i] = (warm ? 190 : 210) * s; CB[i] = (warm ? 140 : 255) * s;
+          CK[i] = h < 0.003 ? C_STAR : h < 0.007 ? C_PLUS : C_DOT;
+          EMI[i] = h < 0.004 ? 90 * s : 0;
+        }
+      }
+    }
+
+    // ---- The Peak: ridge outline, dark hillside below with a few lights ----
+    const peakDone = c => T.PEAK + T.PEAK_DUR * (c / cols) * 0.9;
+    for (let c = 0; c < cols; c++) {
+      const rc = ridge[c + 4 + pR], rn = ridge[c + 5 + pR];
+      const t0 = peakDone(c);
+      if (t < t0 - SCR) continue;
+      const scr = t < t0;
+      const r0 = Math.floor(Math.min(rc, rn)), r1 = Math.max(r0, Math.floor(Math.max(rc, rn) - 0.01));
+      const d = rn - rc;
+      const g = Math.abs(d) < 0.45 ? (rc - Math.floor(rc) > 0.5 ? C_US : C_DASH) : d < 0 ? C_FS : C_BS;
+      for (let r = Math.max(0, r0); r <= r1 && r < hr; r++) {
+        const i = r * cols + c;
+        if (scr) put(i, 90, 180, 230, G_SCR[(hash2(i, Math.floor(clk * 24)) * 16) | 0], 50);
+        else put(i, 92, 116, 170, g, 0);
+      }
+      if (scr) continue;
+      for (let r = r1 + 1; r < hr; r++) {
+        const i = r * cols + c, h = HSH[i];
+        bg(i, 8, 11, 24); NF[i] = 1;
+        if (h < 6) put(i, 255, 200, 130, C_DOT, 70);
+        else if (h < 22) put(i, 36, 46, 80, C_DOT, 0);
+      }
+    }
+    // A small Peak Tower on the summit.
+    if (t >= peakDone(peakC) + 0.3) {
+      const r = Math.floor(ridge[peakC]) - 1, c = peakC - 4 - pR;
+      if (r >= 1 && c >= 1 && c < cols - 1) {
+        ['\\', '_', '/'].forEach((g, k) => put((r - 1) * cols + c + k - 1, 235, 222, 190, ci(g), 100));
+        put(r * cols + c, 150, 150, 170, C_PIPE, 0);
+      }
+    }
+
+    // ---- Structures ----
+    built = 0; lit = 0;
+    const cFl = reduced ? 0 : Math.max(0, 1 - (clk - centerFlash) / 0.6), pFl = reduced ? 0 : Math.max(0, 1 - (clk - plazaFlash) / 0.6);
+    const pb = PLAZA_BODY[plazaHue % PLAZA_BODY.length];
+    plazaTop(tmp2); const ptR = tmp2[0], ptG = tmp2[1], ptB = tmp2[2];
+    const flick = Math.floor(clk * 0.2);
+    for (let q = 0; q < nStruct; q++) {
+      const i = SLIST[q], res = SRES[i];
+      if (t < res - SCR) continue;
+      bg(i, 7, 9, 20);
+      if (t < res) {
+        const f = 1 - (res - t) / SCR;
+        put(i, 80 + 100 * f, 170 + 60 * f, 255, G_SCR[(hash2(i, Math.floor(clk * 24)) * 16) | 0], 70 * f);
+        continue;
+      }
+      built++;
+      const g = SG[i], aux = SA[i];
+      switch (SR[i]) {
+        case R_OUT: put(i, 70 + 20 * lightK, 88 + 22 * lightK, 140 + 25 * lightK, g, 0); break;
+        case R_BODY: put(i, 40, 50, 84, g, 0); break;
+        case R_BACK: bg(i, 6, 8, 18); put(i, 44, 54, 92, g, 0); break;
+        case R_WIN: case R_BWIN: {
+          const hv = hash2(i, 911);
+          let on = hv < (SR[i] === R_WIN ? 0.1 + 0.55 * lightK : 0.04 + 0.3 * lightK);
+          if (!reduced && hash2(i, flick + ((hv * 40) | 0)) < 0.03) on = !on;   // the odd light going on or off
+          if (!on) { put(i, 40, 50, 86, SR[i] === R_WIN ? g : C_DOT, 0); break; }
+          lit++;
+          const tone = hash2(i, 313), dim = SR[i] === R_BWIN ? 0.6 : 1;
+          if (tone < 0.5) put(i, 255 * dim, 196 * dim, 110 * dim, g, 140 * dim);
+          else if (tone < 0.8) put(i, 235 * dim, 238 * dim, 225 * dim, g, 130 * dim);
+          else if (tone < 0.95) put(i, 140 * dim, 210 * dim, 255 * dim, g, 130 * dim);
+          else put(i, 255 * dim, 110 * dim, 170 * dim, g, 150 * dim);
+          break;
+        }
+        case R_IFC:
+          if (aux) put(i, 80 + 50 * lightK, 100 + 60 * lightK, 150 + 65 * lightK, g, 0);
+          else put(i, 160 + 60 * lightK, 178 + 60 * lightK, 220 + 35 * lightK, g, 30 + 80 * lightK);
+          break;
+        case R_IWIN: {
+          const on = hash2(i, 515) < 0.2 + 0.6 * lightK;
+          if (on) { lit++; put(i, 170, 215, 255, g, 110); } else put(i, 60, 76, 120, g, 0);
+          break;
+        }
+        case R_BOC: put(i, 150 + 75 * lightK, 172 + 64 * lightK, 225 + 30 * lightK, g, aux ? 40 + 60 * lightK : 30 + 90 * lightK); break;
+        case R_BFILL: {
+          const on = HSH[i] < 80 * lightK;
+          put(i, on ? 110 : 46, on ? 160 : 62, on ? 255 : 120, g, on ? 70 : 0);
+          break;
+        }
+        case R_CPB: case R_CPOUT: {
+          const k = SR[i] === R_CPOUT ? 0.8 : aux === 0 ? 0.62 : aux === 2 ? 1.15 : 1;
+          const b = (0.35 + 0.65 * lightK) * k * (1 + 0.5 * pFl);
+          put(i, pb[0] * b, pb[1] * b, pb[2] * b, g, 150 * lightK * Math.min(1, k));
+          break;
+        }
+        case R_CPT: {
+          const b = (0.3 + 0.7 * lightK) * (1 + 0.5 * pFl);
+          put(i, (ptR * 0.85 + 30) * b, (ptG * 0.85 + 30) * b, (ptB * 0.85 + 30) * b, g, 180 * lightK);
+          break;
+        }
+        case R_CTR: {
+          centerColor(aux, tmp);
+          const b = 1 + 0.6 * cFl;
+          const pre = 1 - lightK;
+          put(i, (tmp[0] * lightK + 70 * pre) * b, (tmp[1] * lightK + 80 * pre) * b, (tmp[2] * lightK + 110 * pre) * b, g, 190 * lightK);
+          break;
+        }
+        case R_COUT: if (aux) put(i, 40, 46, 74, g, 0); else put(i, 120 + 40 * lightK, 128 + 40 * lightK, 170 + 40 * lightK, g, 0); break;
+        case R_MAST: put(i, 110, 120, 150, g, 0); break;
+        case R_BEACON: { const b = blink(aux); put(i, 255 * b, 50 * b, 60 * b, g, 230 * b); break; }
+      }
+    }
+
+    // ---- Lasers / searchlights from the rooftops ----
+    const env = showEnv();
+    if (env > 0.01 && beams.length) {
+      const aim = clk - aimT < 3;
+      const maxL = Math.hypot(W, H), spd = reduced ? 0.22 : 1.05;
+      for (const bm of beams) {
+        const s = structs[bm.sid - 1], up = t >= s.t0 + s.dur;
+        const ox = (bm.c + 0.5) * cw, oy = (up ? bm.r : hr) * ch;
+        let a = bm.base + 0.55 * Math.sin(clk * spd + bm.ph);
+        if (aim) a = Math.atan2(aimX - ox, Math.max(ch, oy - aimY)) + (bm.base * 0.25) + (reduced ? 0 : 0.08 * Math.sin(clk * 2 + bm.ph));
+        a = clamp(a, -1.3, 1.3);
+        const col = BEAM_COLS[(bm.col + showNo) % BEAM_COLS.length];
+        const dx = Math.sin(a), dy = -Math.cos(a), step = Math.min(cw, ch) * 0.7;
+        const gl = Math.abs(a) > 1.15 ? C_DASH : Math.abs(a) < 0.22 ? C_PIPE : a > 0 ? C_FS : C_BS;
+        let last = -1;
+        for (let d = ch * 0.6; ; d += step) {
+          const x = ox + dx * d, y = oy + dy * d;
+          if (y < 0 || x < 0 || x >= W) break;
+          const c = (x / cw) | 0, r = (y / ch) | 0;
+          if (r >= hr) continue;
+          const i = r * cols + c;
+          if (i === last) continue;
+          last = i;
+          if (SR[i] && t >= SRES[i]) continue;    // passes behind the towers
+          const k = env * (1 - 0.65 * d / maxL) * (reduced ? 1 : 0.85 + 0.15 * Math.sin(clk * 23 + d * 0.05));
+          CR[i] = Math.max(CR[i], col[0] * k); CG[i] = Math.max(CG[i], col[1] * k); CB[i] = Math.max(CB[i], col[2] * k);
+          if (k > 0.22) CK[i] = gl;
+          EMI[i] = Math.max(EMI[i], 210 * k);
+          BR[i] += col[0] * k * 0.08; BGc[i] += col[1] * k * 0.08; BB[i] += col[2] * k * 0.08;
+        }
+        const oc = bm.c, or = (up ? bm.r : hr) - 1;
+        if (or >= 0 && oc >= 0 && oc < cols) { const i = or * cols + oc; put(i, col[0], col[1], col[2], C_STAR, 255 * env); }
+      }
+    }
+
+    // ---- Harbour: promenade, ripples, mirrored reflections ----
+    const reflA = reduced ? 1 : 0.18 + 0.82 * smooth((t - T.REFL) / T.REFL_DUR);
+    const wDepth = rows - hr;
+    for (let r = hr; r < rows; r++) {
+      const p = (r - hr) / Math.max(1, wDepth), dark = 1 - 0.4 * p;
+      const fu = M * (0.08 + 0.6 * p), vv = r * 0.13 + clk * (reduced ? 0.01 : 0.04);
+      const fade = Math.exp(-p * 1.5);
+      const rm = hr - 1 - Math.floor((r - hr - 1) * 0.92);
+      for (let c = 0; c < cols; c++) {
+        const i = r * cols + c, h = HSH[i];
+        CR[i] = 0; bg(i, 3, 5, 12);
+        const t0 = T.HARBOUR + 0.9 * p + 0.25 * h / 255;
+        if (t < t0 - SCR) continue;
+        NF[i] = 1;
+        bg(i, 6 * dark, 10 * dark, 24 * dark);
+        if (t < t0) { put(i, 40, 100, 180, G_SCR[(hash2(i, Math.floor(clk * 24)) * 16) | 0], 40); continue; }
+        if (r === hr) {
+          if (c % 12 === 6) put(i, 255, 205, 130, C_O, 170);
+          else put(i, 74, 84, 126, c % 4 === 2 ? C_PLUS : C_DASH, 0);
+          continue;
+        }
+        const x = (c + 0.5) * cw;
+        const rn = noise(x / fu + clk * 0.012 * (r & 1 ? 1 : -1) * (reduced ? 0.3 : 1), vv);
+        const m = 0.55 + 0.9 * rn;
+        let R = 22 * dark * m, G = 36 * dark * m, B = 78 * dark * m, k = G_WATER[(rn * 7.99) | 0], e = 0;
+        if (rm >= 0) {
+          const wob = Math.round((rn - 0.5) * (1 + 5 * p));
+          const sc = clamp(c + wob, 0, cols - 1), j = rm * cols + sc;
+          if (EMI[j] > 0 && rn > 0.36) {
+            const s = reflA * fade * (rn > 0.5 ? 0.9 : 0.35) * (0.35 + EMI[j] / 255);
+            R += CR[j] * s; G += CG[j] * s; B += CB[j] * s;
+            if (s > 0.2) { k = rn > 0.66 ? C_DASH : C_EQ; e = Math.min(160, EMI[j] * s); }
+            BR[i] += CR[j] * s * 0.12; BGc[i] += CG[j] * s * 0.12; BB[i] += CB[j] * s * 0.12;
+          }
+        }
+        put(i, R, G, B, k, e);
+      }
+    }
+
+    // ---- Boats and their wakes ----
+    for (const bt of boats) {
+      const rB = hr + 3 + Math.round(bt.p * (wDepth - 8)), cH = Math.round(bt.x / cw);
+      const tpl = BOAT[bt.type], L = bt.L, c0 = cH - (L >> 1);
+      const wl = Math.round(L * 2.2);
+      for (let k = 1; k < wl; k++) {
+        const c = cH - bt.dir * ((L >> 1) + k);
+        if (c < 0 || c >= cols) continue;
+        const a = 1 - k / wl, off = Math.floor(k / 6);
+        for (const rr of off ? [rB - off, rB + off] : [rB]) {
+          if (rr <= hr || rr >= rows) continue;
+          const i = rr * cols + c;
+          put(i, CR[i] + 70 * a, CG[i] + 80 * a, CB[i] + 100 * a, k % 3 ? C_TILDE : C_DASH, EMI[i]);
+        }
+      }
+      for (let y = 0; y < tpl.length; y++) {
+        const rr = rB - (tpl.length - 1 - y);
+        if (rr <= hr || rr >= rows) continue;
+        const row = tpl[y];
+        for (let x = 0; x < L; x++) {
+          let g = row[bt.dir > 0 ? x : L - 1 - x];
+          if (g === ' ') continue;
+          if (bt.dir < 0 && MIRROR[g]) g = MIRROR[g];
+          const c = c0 + x;
+          if (c < 0 || c >= cols) continue;
+          const i = rr * cols + c, gi = ci(g);
+          bg(i, 6, 8, 16);
+          if (bt.type === 'junk') {
+            if (y === tpl.length - 1) put(i, 150, 92, 56, gi, 0);
+            else if (g === '|') put(i, 140, 100, 70, gi, 0);
+            else put(i, 240, 62, 52, gi, 60);
+          } else if (y === tpl.length - 1) put(i, 50, 190, 100, gi, 40);
+          else if (g === 'o') put(i, 255, 222, 140, gi, 180);
+          else put(i, 225, 232, 228, gi, 30);
+        }
+      }
+      // Stern lantern.
+      const sc = cH - bt.dir * (L >> 1), sr = rB - 1;
+      if (sc >= 0 && sc < cols && sr > hr) put(sr * cols + sc, 255, 190, 100, C_DOT, 200);
+    }
+
+    // ---- Loop fade: everything but the sky ----
+    const fa = reduced ? 1 : 1 - smooth((t - T.FADE) / T.FADE_DUR);
+    if (fa < 1) {
+      for (let i = 0; i < n; i++) {
+        if (!NF[i]) continue;
+        CR[i] *= fa; CG[i] *= fa; CB[i] *= fa; EMI[i] *= fa;
+        const r = (i / cols) | 0, sR = r < hr ? skyR[r] : 3, sG = r < hr ? skyG[r] : 5, sB = r < hr ? skyB[r] : 12;
+        BR[i] = sR + (BR[i] - sR) * fa; BGc[i] = sG + (BGc[i] - sG) * fa; BB[i] = sB + (BB[i] - sB) * fa;
+        if (fa < 0.04) CK[i] = 0;
+      }
+    }
+  }
+
+  // Quantise, bucket by colour and draw; fill the backing and glow images.
+  function drawCells() {
+    const bd = bImg.data, ed = eImg.data;
+    counts.fill(0);
+    letters = 0;
+    for (let i = 0; i < n; i++) {
+      const r = Math.min(255, CR[i]), g = Math.min(255, CG[i]), b = Math.min(255, CB[i]);
+      const key = ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3);
+      keys[i] = key; counts[key]++;
+      if (CK[i] && key) letters++;
+      const j = i * 4;
+      bd[j] = BR[i]; bd[j + 1] = BGc[i]; bd[j + 2] = BB[i]; bd[j + 3] = 255;
+      const e = EMI[i];
+      if (e) { const s = e / 255; ed[j] = r * s; ed[j + 1] = g * s; ed[j + 2] = b * s; ed[j + 3] = 255; }
+      else { ed[j] = 0; ed[j + 1] = 0; ed[j + 2] = 0; ed[j + 3] = 0; }
+    }
+    bctx.putImageData(bImg, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(back, 0, 0, cols * cw, rows * ch);
+
+    let acc = 0;
+    for (let c = 0; c < NKEY; c++) { const v = counts[c]; counts[c] = acc; acc += v; }
+    for (let i = 0; i < n; i++) order[counts[keys[i]]++] = i;
+    ctx.textBaseline = 'top';
+    ctx.font = cellFont;
+    let cur = -1;
+    for (let k = 0; k < n; k++) {
+      const i = order[k], ky = keys[i];
+      if (CK[i] === 0 || ky === 0) continue;
+      if (ky !== cur) { cur = ky; ctx.fillStyle = colStr(ky); }
+      const row = (i / cols) | 0;
+      ctx.fillText(CH[CK[i]], (i - row * cols) * cw, row * ch);
+    }
+
+    // Bloom from emissive cells (windows, neon, lasers, reflections), blurred at grid resolution.
+    ectx.putImageData(eImg, 0, 0);
+    gctx.globalCompositeOperation = 'copy';
+    gctx.filter = 'blur(1.3px)';
+    gctx.drawImage(emis, 0, 0);
+    gctx.filter = 'none';
+    hctx.globalCompositeOperation = 'copy';
+    hctx.filter = 'blur(3.5px)';
+    hctx.drawImage(emis, 0, 0);
+    hctx.filter = 'none';
+    ctx.save();
+    ctx.imageSmoothingEnabled = true;
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 0.55;
+    ctx.drawImage(glow, 0, 0, cols * cw, rows * ch);
+    ctx.globalAlpha = 0.45;
+    ctx.drawImage(halo, 0, 0, cols * cw, rows * ch);
+    ctx.restore();
+  }
+
+  // The title types out in red near the bottom of the harbour.
+  function drawTitle() {
+    typed = reduced ? TITLE.length : clamp(Math.floor((t - T.TITLE) * T.TITLE_CPS), 0, TITLE.length);
+    if (t < T.TITLE && !reduced) return;
+    const fa = reduced ? 1 : 1 - smooth((t - T.FADE) / T.FADE_DUR);
+    if (fa <= 0.01) return;
+    const tfs = clamp(Math.round(W / 22), 16, 40), step = tfs * 0.78;
+    const x0 = W / 2 - step * (TITLE.length - 1) / 2, y = H * (W < H ? 0.85 : 0.87);
+    ctx.save();
+    ctx.font = `700 ${tfs}px ${MONO}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(255, 60, 90, 0.85)';
+    ctx.shadowBlur = tfs * 0.45;
+    ctx.globalAlpha = fa;
+    for (let k = 0; k < typed; k++) {
+      let g = TITLE[k];
+      if (g === ' ') continue;
+      const age = (t - T.TITLE) - k / T.TITLE_CPS;
+      if (!reduced && age < 0.12) g = CH[G_SCR[(hash2(k, Math.floor(clk * 30)) * 16) | 0]];
+      ctx.fillStyle = !reduced && age < 0.12 ? '#ffd0d8' : '#ff5a70';
+      ctx.fillText(g, x0 + k * step, y);
+    }
+    if (!reduced && typed < TITLE.length && (clk * 2.5) % 1 < 0.6) { ctx.fillStyle = '#ff5a70'; ctx.fillText('_', x0 + typed * step, y); }
+    ctx.restore();
+    letters += typed;
+  }
+
+  function render() {
+    ctx.fillStyle = '#04060f';
+    ctx.fillRect(0, 0, W, H);
+    buildScene();
+    drawCells();
+    drawTitle();
+  }
+
+  // ---------- Update ----------
+  function update(dt) {
+    clk += dt;
+    if (!reduced) {
+      t += dt;
+      if (t >= T.END) { t = 0; boats = boats.filter(b => !b.auto); music('restart'); }
+    }
+    if (Math.abs(parTo - par) > 0.002) par += (parTo - par) * Math.min(1, dt * 1.8);
+    for (const b of boats) b.x += b.dir * b.v * dt;
+    boats = boats.filter(b => b.x > -b.L * cw * 1.5 && b.x < W + b.L * cw * 1.5);
+  }
+
+  // ---------- Loop, HUD, controls ----------
+  let paused = false, last = performance.now();
+  let frames = 0, fpsT = last, fps = 0, hudT = 0;
+  const PH = [
+    [0, 'sky', '星空'], [T.HARBOUR, 'harbour', '海港'], [T.PEAK, 'peak', '山頂'], [T.SKYLINE, 'skyline', '天際線'],
+    [T.CENTER, 'the center', '中環中心'], [T.IFC, 'ifc', '國金二期'], [T.BOC, 'boc', '中銀大廈'], [T.PLAZA, 'central plaza', '中環廣場'],
+    [T.LIGHTS, 'lights', '亮燈'], [T.BOATS, 'boats', '船隻'], [T.REFL, 'reflections', '倒影'], [T.SHOW, 'symphony', '幻彩詠香江'],
+    [T.TITLE, 'title', '標題'], [T.HOLD, 'hold', '停留'], [T.FADE, 'fade', '淡出']
+  ];
+  function phaseAt(tt) { let k = 0; while (k + 1 < PH.length && tt >= PH[k + 1][0]) k++; return k; }
+
+  function updateHud(now) {
+    const tail = paused ? (zh ? '已暫停' : 'paused') : `${fps} fps`;
+    const ph = PH[phaseIdx][zh ? 2 : 1], pct = (nStruct ? built / nStruct * 100 : 0).toFixed(1);
+    const L = letters.toLocaleString('en-US');
+    hudEl.textContent = W < 640
+      ? (zh ? `${ph}  建成 ${pct}%  ${tail}` : `${ph}  built ${pct}%  ${tail}`)
+      : (zh ? `階段 ${ph}  建成 ${pct}%  字元 ${L}  ${tail}` : `phase ${ph}  built ${pct}%  letters ${L}  ${tail}`);
+    hudT = now;
+  }
+
+  let seeded = false;
+  function frame(now) {
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); // no jumps after a hidden tab
+    last = now;
+    if (needResize) { resize(); if (!seeded) { seeded = true; if (reduced || t >= T.BOATS) seedBoats(); } }
+    if (!paused) {
+      const t1 = t, typed1 = typed;
+      update(dt);
+      render(); dirty = false; frames++;
+      soundCues(t1, t, typed1);
+    } else if (dirty) { render(); dirty = false; frames++; }
+    phaseIdx = phaseAt(t);
+    if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
+    if (now - hudT >= 250) updateHud(now);
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- Sound cues ----------
+  const music = (fn, ...a) => window.AsciiAudio && AsciiAudio[fn](...a);
+  const crossed = (a, b, x) => a < x && x <= b;
+  let laserT = -99;
+  function soundCues(a, b, typed1) {
+    if (crossed(a, b, T.BOATS) && !reduced) seedBoats();   // boats sail in every loop (also without sound)
+    if (!window.AsciiAudio) return;
+    if (crossed(a, b, T.HARBOUR)) music('event', 'harbour');
+    if (crossed(a, b, T.SKYLINE)) music('event', 'build', { n: 0 });
+    [T.CENTER, T.IFC, T.BOC, T.PLAZA].forEach((x, k) => { if (crossed(a, b, x)) music('event', 'build', { n: k + 1 }); });
+    if (crossed(a, b, T.LIGHTS)) music('event', 'lightsOn');
+    if (litPrev >= 0 && lit > litPrev + 2) music('event', 'light', { n: lit - litPrev });
+    litPrev = lit;
+    if (showEnv() > 0.4 && clk - laserT > 1.7) { laserT = clk; music('event', 'laser', { k: Math.random() }); }
+    if (typed > typed1 && TITLE[typed - 1] !== ' ') music('event', 'type', { last: typed === TITLE.length });
+    if (crossed(a, b, T.FADE)) music('event', 'fade');
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
+  function replay() {
+    t = T_START; userShow = -99; paused = false; boats = [];
+    if (reduced) seedBoats();
+    dirty = true; music('resume'); music('restart');
+  }
+  function startShow() {
+    // Restart the show, or extend it if it is already running.
+    userShow = clk - userShow < SHOW_LEN ? Math.max(userShow, clk - 0.5) : clk;
+    showNo++;
+    laserT = clk;
+    music('event', 'laser', { k: 1 });
+  }
+  function sendBoat(x, y) {
+    const type = nextJunk ? 'junk' : 'ferry';
+    nextJunk = !nextJunk;
+    spawnBoat(type, (y - yH - 3 * ch) / Math.max(1, H - yH - 8 * ch), x < W / 2 ? 1 : -1);
+  }
+
+  // What is under a screen point: a resolved structure, the harbour, or the sky.
+  function hit(x, y) {
+    if (y >= yH) return 'water';
+    const c = Math.floor(x / cw), r = Math.floor(y / ch);
+    for (const dc of [0, -1, 1]) {
+      const cc = c + dc;
+      if (cc < 0 || cc >= cols || r < 0 || r >= hr) continue;
+      const i = r * cols + cc;
+      if (SR[i] && t >= SRES[i] - SCR) return structs[SI[i] - 1].kind;
+    }
+    return 'sky';
+  }
+  function tapAt(x, y) {
+    const k = hit(x, y);
+    if (k === 'water') { if (reduced || t >= T.HARBOUR) sendBoat(x, y); }
+    else if (k === 'center') { centerMode = (centerMode + 1) % 4; centerFlash = clk; music('event', 'neon', { n: centerMode }); }
+    else if (k === 'plaza') { plazaHue = (plazaHue + 1) % PLAZA_BODY.length; plazaFlash = clk; music('event', 'neon', { n: plazaHue + 4 }); }
+    else startShow();
+    dirty = true;
+  }
+
+  addEventListener('resize', () => { needResize = true; });
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return; // leave Cmd/Ctrl+R alone
+    if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
+    else if (e.key === 'r' || e.key === 'R') replay();
+    else if (e.key === 'l' || e.key === 'L') startShow();
+    else if (e.key === 'b' || e.key === 'B') sendBoat(Math.random() * W, yH + (H - yH) * (0.15 + 0.4 * Math.random()));
+  });
+  // Tap = act on what is under the finger, two quick taps = pause / resume.
+  // A press only counts as a tap if it moved less than 8 px; moving (or dragging) aims the lasers and pans the parallax.
+  let downX = 0, downY = 0, pressed = false, dragged = false, tapTimer = 0, tapResumed = false;
+  const aimAt = e => { aimX = e.clientX; aimY = e.clientY; aimT = clk; if (!reduced) parTo = clamp(e.clientX / W * 2 - 1, -1, 1); };
+  canvas.addEventListener('pointerdown', e => {
+    pressed = true; dragged = false; downX = e.clientX; downY = e.clientY;
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (pressed && Math.hypot(e.clientX - downX, e.clientY - downY) >= 8) dragged = true;
+    if (e.pointerType === 'mouse' || dragged) aimAt(e);
+  });
+  const ptrOff = () => { pressed = false; parTo = 0; };
+  canvas.addEventListener('pointerleave', ptrOff);
+  canvas.addEventListener('pointercancel', ptrOff);
+  canvas.addEventListener('pointerup', e => {
+    const wasTap = pressed && !dragged;
+    pressed = false;
+    if (e.pointerType !== 'mouse') parTo = 0;
+    if (e.button > 0 || !wasTap) return;
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; if (!tapResumed) togglePause(); return; }
+    tapTimer = setTimeout(() => { tapTimer = 0; }, 280);
+    tapResumed = paused;
+    if (paused) { togglePause(); return; }   // a tap on the paused scene just resumes it
+    tapAt(e.clientX, e.clientY);
+  });
+
+  // Hint language: ?lang= wins, then saved site preference, then browser.
+  let pref = null;
+  try { pref = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (!pref) { try { pref = localStorage.getItem('lang'); } catch (e) {} }
+  if (!pref) pref = navigator.language || 'en';
+  const zh = String(pref).toLowerCase().startsWith('zh');
+  document.documentElement.lang = zh ? 'zh-Hant' : 'en';
+  // Touch screens have no keyboard, and the full hint would not fit on a phone.
+  const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  hintEl.textContent = touch ? (zh ? '點天空放雷射 · 點霓虹大廈換色 · 點海面開船 · 雙擊暫停' : 'tap sky: lasers · neon tower: colours · water: boat')
+                             : (zh ? '點天空放雷射燈光秀 · 點中環中心/中環廣場換色 · 點海面開船 · 雙擊/空白鍵 暫停 · R 重播 · M 音樂'
+                                   : 'click sky: laser show · click The Center / Central Plaza: colours · click water: boat · Space pause · R replay · M music');
+
+  // Score: an original neon-noir lo-fi ballad in D major at 80 bpm, so one 8-bar pass (32 beats)
+  // is exactly the 24 s scene loop; it restarts with every loop. Progression Dmaj7 - A/C# - Bm9 -
+  // F#m7 - Gmaj9 - D/F# - Em9 - A9sus4 on a warm electric piano and a dark pad, a round bass, a
+  // half-time brushed beat from bar 3, and a pentatonic lead with a dotted-eighth echo over bars
+  // 4-8. Under it, the harbour laps at the sea wall. Lasers sweep, the Star Ferry sounds its horn,
+  // the junk knocks and rings, neon taps chime, windows ping as they light and the title types.
+  if (window.AsciiAudio) AsciiAudio.init({
+    bpm: 80, master: 0.8, reverb: 0.32, reverbTime: 3.4,
+    build(a) {
+      const c = a.ctx, N = AsciiAudio.notes, LOOP = 32;
+      const sw = s => s % 2 ? a.beats(0.07) : 0;   // lazy swing on the off-beats
+
+      // Harbour: an endless soft noise bed, lapping in slow swells.
+      const len = c.sampleRate * 4, buf = c.createBuffer(1, len, c.sampleRate), dd = buf.getChannelData(0);
+      let b0 = 0;
+      for (let i = 0; i < len; i++) { b0 = 0.965 * b0 + 0.035 * (Math.random() * 2 - 1); dd[i] = b0 * 3; }
+      const src = c.createBufferSource(), fl = c.createBiquadFilter(), wg = c.createGain();
+      src.buffer = buf; src.loop = true; fl.type = 'lowpass'; fl.frequency.value = 380; fl.Q.value = 0.4; wg.gain.value = 0;
+      src.connect(fl); fl.connect(wg); wg.connect(a._out({ bus: 'sfx', pan: 0.1 }, 0.3));
+      src.start(a.time(0));
+      a.every(0.5, (tt, k) => {
+        const s = 0.5 + 0.5 * Math.sin(k * 0.23) * Math.sin(k * 0.061 + 2);
+        wg.gain.setTargetAtTime(0.04 + 0.06 * s, tt, 0.6);
+        fl.frequency.setTargetAtTime(260 + 320 * s, tt, 0.6);
+      });
+
+      // Electric piano: triangle pluck plus a soft bell tine, gently strummed.
+      const ep = (tt, notes, dur, vel) => notes.forEach((nt, j) => {
+        const u = tt + j * 0.02;
+        a.pluck(u, nt, dur, { type: 'triangle', vel, pan: -0.3 + j * 0.16, wet: 0.4 });
+        a.bell(u, nt, dur * 0.5, { vel: vel * 0.1, wet: 0.45 });
+      });
+      const PROG = [
+        ['D2', ['F#3', 'A3', 'C#4', 'E4']], ['C#2', ['E3', 'A3', 'C#4', 'E4']],
+        ['B1', ['D3', 'F#3', 'A3', 'C#4']], ['F#2', ['E3', 'A3', 'C#4', 'F#4']],
+        ['G1', ['F#3', 'B3', 'D4', 'A4']], ['F#2', ['F#3', 'A3', 'D4', 'E4']],
+        ['E2', ['D3', 'G3', 'B3', 'F#4']], ['A1', ['D3', 'G3', 'B3', 'E4']]
+      ];
+      const T5 = n => AsciiAudio.transpose(n, 7);
+      a.every(0.5, (tt, s) => {
+        const beat = (s / 2) % LOOP, bar = Math.floor(beat / 4), inBar = beat % 4;
+        const [root, chd] = PROG[bar];
+        tt += sw(s);
+        if (inBar === 0) a.pad(tt, chd.map(x => AsciiAudio.transpose(x, -12)), a.beats(3.6), { vel: 0.22, cutoff: 800, attack: 0.9, release: 1.6, wet: 0.55 });
+        if (bar >= 1) {
+          if (inBar === 0) ep(tt, chd, 2.6, bar === 7 ? 0.3 : 0.4);
+          if (inBar === 2.5) ep(tt, chd.slice(1), 1.3, 0.2);
+        }
+        if (bar >= 1 && bar < 7) {
+          if (inBar === 0) a.bass(tt, root, a.beats(1.6), { vel: 0.5 });
+          if (inBar === 2.5) a.bass(tt, T5(root), a.beats(0.5), { vel: 0.32 });
+          if (inBar === 3) a.bass(tt, root, a.beats(0.8), { vel: 0.36 });
+        }
+        // Half-time brushed beat: kick on one and the "and" of three, rim on three, swung hats.
+        if (bar >= 2 && bar < 7) {
+          if (inBar === 0 || inBar === 2.5) a.kick(tt, 0.4);
+          if (inBar === 2) a.noise(tt + 0.01, { dur: 0.24, filter: 'bandpass', freq: 2000, q: 0.6, attack: 0.006, vel: 0.24, wet: 0.25 });
+          a.noise(tt, { dur: 0.045, filter: 'bandpass', freq: 7600, q: 0.8, attack: 0.004, vel: s % 2 ? 0.06 : 0.1, pan: 0.3, wet: 0.05 });
+        }
+      });
+      // Vinyl crackle.
+      a.every(0.25, tt => {
+        if (Math.random() < 0.3) a.noise(tt + Math.random() * a.beats(0.25), { dur: 0.006, filter: 'highpass', freq: 3000, vel: 0.04 + Math.random() * 0.05, pan: (Math.random() - 0.5) * 0.6, wet: 0, bus: 'sfx' });
+      });
+
+      // Pentatonic lead over bars 4-8, with a quiet dotted-eighth echo.
+      const tune = N('A4:1 B4:.5 D5 E5:1.5 F#5:.5 | E5:1 D5:.5 B4 D5:2 | F#5:1 A5:.5 F#5 E5:1 D5 | ' +
+                     'B4:1.5 D5:.5 E5:1 F#5:.5 E5 | E5:3 r:1');
+      a.part(tune, (tt, e) => {
+        a.lead(tt, e.note, e.sec * 0.95, { vel: 0.5, wet: 0.45, pan: 0.15, cutoff: 2600 });
+        a.lead(tt + a.beats(0.75), e.note, e.sec * 0.6, { vel: 0.16, wet: 0.7, pan: -0.35, cutoff: 1800 });
+      }, { length: LOOP, offset: 12 });
+
+      // Effects in sync with the picture.
+      const SP = AsciiAudio.scale('D6', 'pentatonic', 8);
+      a.on('harbour', (a, d, t) => a.sweep(t, 1.6, { from: 200, to: 900, vel: 0.12, bus: 'sfx', wet: 0.5 }), { gap: 5 });
+      a.on('build', (a, d, t) => {
+        a.whoosh(t, { dur: 0.8, vel: 0.18 });
+        a.bell(t + 0.3, ['D5', 'F#5', 'A5', 'B5', 'D6'][d.n % 5], 1.6, { vel: 0.2, bus: 'sfx', wet: 0.5 });
+      }, { gap: 0.6 });
+      a.on('lightsOn', (a, d, t) => a.chime(t, 'D6', 3, { vel: 0.2 }), { gap: 5 });
+      a.on('light', (a, d, t) => a.bell(t, SP[(Math.random() * SP.length) | 0], 1, { vel: 0.06, bus: 'sfx', wet: 0.6, pan: (Math.random() - 0.5) * 0.8 }), { gap: 0.35 });
+      a.on('laser', (a, d, t) => {
+        // Two crossing filtered sweeps, one up, one down, plus a soft zap.
+        a.sweep(t, 1.1, { from: 500, to: 4200, q: 6, vel: 0.14, bus: 'sfx', wet: 0.5, pan: -0.4 });
+        a.sweep(t + 0.25, 1.1, { from: 3800, to: 600, q: 6, vel: 0.11, bus: 'sfx', wet: 0.5, pan: 0.4 });
+        const g = c.createGain(), o = c.createOscillator(), out = a._out({ bus: 'sfx', pan: 0 }, 0.4);
+        o.type = 'sawtooth'; o.frequency.setValueAtTime(1800, t); o.frequency.exponentialRampToValueAtTime(220, t + 0.35);
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.025, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
+        o.connect(g); g.connect(out); o.start(t); o.stop(t + 0.45);
+      }, { gap: 1 });
+      a.on('ferry', (a, d, t) => {
+        // A deep two-note ship's horn: one long blast, a short one after.
+        [[0, 1.1], [1.45, 0.5]].forEach(([o, dur]) => {
+          const out = a._out({ bus: 'sfx', pan: 0.15 }, 0.55), lp = c.createBiquadFilter(), g = c.createGain();
+          lp.type = 'lowpass'; lp.frequency.value = 520; lp.connect(g); g.connect(out);
+          const tt = t + o, v = 0.06;
+          g.gain.setValueAtTime(0, tt); g.gain.linearRampToValueAtTime(v, tt + 0.08);
+          g.gain.setValueAtTime(v, tt + dur); g.gain.linearRampToValueAtTime(0, tt + dur + 0.35);
+          [110, 138.6].forEach(f => { const os = c.createOscillator(); os.type = 'sawtooth'; os.frequency.value = f; os.connect(lp); os.start(tt); os.stop(tt + dur + 0.4); });
+        });
+      }, { gap: 2 });
+      a.on('junk', (a, d, t) => {
+        // Wooden knocks and a small temple bell.
+        [0, 0.16].forEach(o => a.noise(t + o, { dur: 0.08, filter: 'bandpass', freq: 700, q: 4, vel: 0.35, bus: 'sfx', wet: 0.2 }));
+        a.bell(t + 0.4, 'A5', 2.2, { vel: 0.22, bus: 'sfx', wet: 0.55 });
+      }, { gap: 1.5 });
+      a.on('neon', (a, d, t) => a.chime(t, SP[d.n % SP.length], 1.8, { vel: 0.2 }), { gap: 0.15 });
+      a.on('type', (a, d, t) => a.tick(t, { vel: 0.25, bell: d.last, note: 'D7' }), { gap: 0.03 });
+      a.on('fade', (a, d, t) => a.sweep(t, T.FADE_DUR, { from: 2600, to: 300, q: 1.2, attack: 0.8, vel: 0.1, bus: 'sfx', wet: 0.6 }), { gap: 5 });
+    }
+  });
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
