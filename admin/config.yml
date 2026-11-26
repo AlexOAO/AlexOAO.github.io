@@ -778,7 +778,7 @@ collections:
         fields:
           - { name: updated, label: "最後更新（例如 2026/11）", widget: string }
           - name: cycle4
-            label: "IDP 四步循環（圓環與彈出視窗是方法論；點選後跳到下方「我的實際規劃」）"
+            label: "IDP 四步循環（圓環與彈出視窗是方法論；點選每一項會跳到頁面上對應的段落）"
             widget: object
             collapsed: true
             fields:
@@ -796,16 +796,13 @@ collections:
                   - { name: name, label: "步驟名稱（圓環上顯示）", widget: string }
                   - { name: sub, label: "一句說明", widget: string }
                   - name: method
-                    label: "方法論的問題與我的回答（方法論文字請勿修改，只改「我的回答」）"
+                    label: "方法論的問題（固定文字，請勿修改）與點選後跳到的段落"
                     label_singular: "項目"
                     widget: list
                     summary: "{{fields.q}}"
                     fields:
                       - { name: q, label: "方法論的問題（固定文字）", widget: string }
-                      - { name: a, label: "我的回答（還沒有就寫「待補充」）", widget: text }
-                      - { name: href, label: "連到頁面哪一段（選填：#sec-1 成長層級、#sec-2 職能、#sec-3 優先順序、#sec-4 路徑、#sec-6 衡量）", widget: string, required: false }
-              - { name: mine, label: "「我的實際規劃」區塊標題", widget: string }
-              - { name: mineSub, label: "「我的實際規劃」說明", widget: string }
+                      - { name: href, label: "點選後跳到哪一段（留空＝顯示「待補充」）", widget: select, required: false, options: [{ label: "我的目標（頁首）", value: "#goal" }, { label: "職能冰山模型", value: "#sec-ice" }, { label: "三年發展藍圖", value: "#sec-plan3" }, { label: "1 三個成長層級", value: "#sec-1" }, { label: "2 八項職能", value: "#sec-2" }, { label: "3 優先順序象限", value: "#sec-3" }, { label: "4 三年發展路徑", value: "#sec-4" }, { label: "5 AI 價值循環", value: "#sec-5" }, { label: "6 衡量方式與年度檢核", value: "#sec-6" }, { label: "我的工作方式", value: "#sec-7" }] }
           - name: iceberg
             label: "職能冰山模型（點擊泡泡會跳出視窗）"
             widget: object

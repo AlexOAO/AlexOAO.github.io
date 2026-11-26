@@ -1,9 +1,7 @@
 {
   "cycle4": {
     "title": "The IDP four-step cycle",
-    "sub": "One round a year. The ring is the IDP method; click a step to see the questions it asks, then jump to my actual plan below.",
-    "mine": "My actual plan, answering each step",
-    "mineSub": "Left: the method's question. Right: my answer. Items marked “to be added” are in progress.",
+    "sub": "One round a year. The ring is the IDP method; click a step to see its questions, then jump to the part of this page that answers each.",
     "steps": [
       {
         "key": "intent",
@@ -12,20 +10,19 @@
         "method": [
           {
             "q": "Organization and department needs",
-            "a": "The department needs AI to move from pilots to investable, scalable work, with every investment able to say whether it was worth it"
+            "href": "#sec-5"
           },
           {
             "q": "Skills needed for the current (or future) role",
-            "a": "Today, as AI BA: problem framing and business cases; as a future value owner: portfolio management and cross-team decisions",
             "href": "#sec-1"
           },
           {
             "q": "Personal values and willingness",
-            "a": "Accountable for value, evidence first; willing to stand between the business and IT and see things through to launch"
+            "href": "#sec-7"
           },
           {
             "q": "Career aspirations and achievement motivation",
-            "a": "Within three years, become a value owner accountable for AI results and investment"
+            "href": "#goal"
           }
         ]
       },
@@ -36,24 +33,21 @@
         "method": [
           {
             "q": "Performance to date",
-            "a": "Found 12 platform issues before purchase; built a 3,600-case guardrail test bank; finished four working Agent prototypes"
+            "href": "#sec-1"
           },
           {
-            "q": "Feedback and suggestions received",
-            "a": "To be added (feedback from my manager and colleagues)"
+            "q": "Feedback and suggestions received"
           },
           {
             "q": "Identify my main strengths and distinctive talents",
-            "a": "Finance × AI: I speak the business's language and build prototypes myself; covering several roles while the department was new showed me the whole AI project"
+            "href": "#sec-ice"
           },
           {
             "q": "Recognize areas to strengthen or improve (the competency gap)",
-            "a": "Process design, business case and cross-team leadership, each from level 2 to 4",
             "href": "#sec-2"
           },
           {
             "q": "Set development goals from career intent and self-assessment",
-            "a": "Within three years, go from co-creating value to owning it",
             "href": "#sec-3"
           }
         ]
@@ -65,20 +59,18 @@
         "method": [
           {
             "q": "Turn development goals into concrete items (skills, knowledge or behaviour change)",
-            "a": "Skill: customer journey design; knowledge: investment proposals and benefit tracking; behaviour: chairing cross-team decisions"
+            "href": "#sec-plan3"
           },
           {
             "q": "Prioritize the items and plan timing and resources",
-            "a": "Months 0–6 journey map → months 6–12 investment proposal → months 6–24 chair the investment gate",
             "href": "#sec-4"
           },
           {
-            "q": "Reach agreement with my manager and gain support",
-            "a": "To be added (goals and resources agreed with my manager)"
+            "q": "Reach agreement with my manager and gain support"
           },
           {
             "q": "Complete this year's development plan (S.M.A.R.T.)",
-            "a": "This year: 1 customer journey being changed, 1 evidence pack, 1 investment proposal"
+            "href": "#sec-6"
           }
         ]
       },
@@ -89,16 +81,14 @@
         "method": [
           {
             "q": "Carry out the development plan",
-            "a": "Follow the three-year roadmap; every step has a checkable milestone",
             "href": "#sec-4"
           },
           {
             "q": "Review and track progress regularly (use the performance cycle's checkpoints to discuss with my manager)",
-            "a": "Results monthly, investment quarterly, IDP yearly; discussed with my manager at performance reviews"
+            "href": "#sec-5"
           },
           {
             "q": "Measure the effect and adjust in time",
-            "a": "Measured with the yearly checklist and two periods of benefit tracking; next year's plan adjusts to the results",
             "href": "#sec-6"
           }
         ]

@@ -167,20 +167,10 @@
     .dlg-body ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.5rem; }
     .dlg-body li { padding: 0.6rem 0.8rem; border-radius: 10px; background: #0b1426; border-left: 3px solid var(--c, #60a5fa); line-height: 1.6; font-size: 0.95rem; }
     .dlg-more { display: inline-block; margin-top: 0.9rem; color: #93c5fd; font-weight: 600; }
-    /* my plan: method question -> my answer, one row each; popups jump here */
-    .mine { display: grid; gap: 0.9rem; margin-top: 1rem; }
-    .mine-step { border-radius: 14px; background: var(--box); border: 1px solid var(--line); border-top: 4px solid var(--c); padding: 0.9rem 1rem; scroll-margin-top: 5rem; }
-    .mine-step h3 { margin: 0 0 0.6rem !important; font-size: 1.05rem; display: flex; gap: 0.6rem; align-items: baseline; }
-    .mine-step h3 em { font-style: normal; font-size: 0.82rem; color: var(--mute); font-weight: 500; }
-    .mrow { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr); gap: 0.8rem; padding: 0.55rem 0.6rem; border-top: 1px solid var(--line); border-radius: 8px; scroll-margin-top: 6rem; }
-    .mrow:target, .mine-step:target, .mrow.hit, .mine-step.hit { background: rgba(245, 158, 11, 0.12); box-shadow: 0 0 0 2px #f59e0b; }
-    .mrow .mq { font-size: 0.85rem; color: var(--mute); line-height: 1.55; }
-    .mrow .ma { font-size: 0.92rem; color: var(--ink); line-height: 1.6; }
-    .mrow .ma.todo { color: #fbbf24; }
-    .mrow .ma a { margin-left: 0.4rem; font-size: 0.8rem; color: #93c5fd; white-space: nowrap; }
+    h2.hit, .goal.hit { box-shadow: -14px 0 0 -8px #f59e0b; }
+    .pending { color: #fbbf24; font-size: 0.82rem; white-space: nowrap; }
     .dlg-body li a { color: var(--ink); text-decoration: none; display: flex; justify-content: space-between; gap: 0.6rem; }
     .dlg-body li a span { color: #93c5fd; white-space: nowrap; font-size: 0.85rem; }
-    @media (max-width: 760px) { .mrow { grid-template-columns: minmax(0, 1fr); gap: 0.2rem; } }
     @media (max-width: 760px) { .intro2 { grid-template-columns: minmax(0, 1fr); } .intro2 svg { max-width: 360px; margin: 0 auto; } .ksa { grid-template-columns: minmax(0, 1fr); } }
     @media (max-width: 760px) {
       .sum, .lv, .two, .rm-body, .ms, .ck, .traits { grid-template-columns: minmax(0, 1fr); }
@@ -202,7 +192,7 @@
     <header class="post-header">
       <p class="eyebrow">IDP · Individual Development Plan</p>
       <h1 id="title">個人發展計畫</h1>
-      <p class="goal" id="goal"></p>
+      <p class="goal" id="goal" style="scroll-margin-top:6rem"></p>
       <p class="tagline" id="tagline"></p>
       <div class="sum" id="sum"></div>
     </header>
@@ -213,7 +203,7 @@
   <script>
     const { esc, dataPath, getJSON } = Site;
     const I18N = {
-      en: { see: 'My answer', seeAll: 'See my actual plan', mineTag: 'My plan', close: 'Close', idpTag: 'IDP framework', iceTag: 'Self-assessment', title: 'Individual Development Plan', back: 'Back to the homepage', toggle: '中文',
+      en: { goalName: 'My goal', pending: 'To be added', close: 'Close', idpTag: 'IDP framework', iceTag: 'Self-assessment', title: 'Individual Development Plan', back: 'Back to the homepage', toggle: '中文',
         milestone: 'Milestone', q1: 'Where I am going', h1: 'Three levels of growth',
         q2: 'Where I am now', h2: 'Eight competencies: now vs three-year target', now: 'Now', target: 'Three-year target', comp: 'Competency', ev: 'Evidence',
         q3: 'What to build first', h3: 'Priority quadrant', xAxis: 'Importance to the goal →', yAxis: 'Gap to target →',
@@ -221,7 +211,7 @@
         q5: 'Steps I have walked', h5: 'The AI value cycle', loop: '↺ Results feed the next problem',
         q6: 'How I will know', h6: 'Measures and yearly checklist', check: 'Yearly minimum',
         h7: 'How I work', updated: 'Last updated', level: 'Level', loadError: 'Content failed to load. A network filter may block this site.' },
-      zh: { see: '我的回答', seeAll: '看我的實際規劃', mineTag: '我的規劃', close: '關閉', idpTag: 'IDP 框架', iceTag: '自我評估', title: '個人發展計畫', back: '回到首頁', toggle: 'EN',
+      zh: { goalName: '我的目標', pending: '待補充', close: '關閉', idpTag: 'IDP 框架', iceTag: '自我評估', title: '個人發展計畫', back: '回到首頁', toggle: 'EN',
         milestone: '里程碑', q1: '我要去哪裡', h1: '三個成長層級',
         q2: '我現在在哪裡', h2: '八項職能：目前與三年目標', now: '目前', target: '三年目標', comp: '職能', ev: '證據',
         q3: '先培養什麼', h3: '優先順序象限圖', xAxis: '對目標的重要性 →', yAxis: '與目標的差距 →',
@@ -243,7 +233,7 @@
         <h3>${esc(p.name)}</h3><p class="bp-line">${esc(p.line)}</p>
         ${p.tasks.map((t, j) => `<div class="bp-task"><b><i>${j + 1}</i>${esc(t.t)}</b><p>${esc(t.d)}</p></div>`).join('')}
         <div class="bp-ms"><span>${esc(T('milestone'))}</span><p>${esc(p.milestone)}</p></div></div>`).join('');
-      return `<section class="bp"><h2 class="bp-h">${esc(b.title)}</h2><p class="bp-sub">${esc(b.sub)}</p><div class="bp-cols">${cols}</div>
+      return `<section class="bp"><h2 class="bp-h" id="sec-plan3" style="scroll-margin-top:5rem">${esc(b.title)}</h2><p class="bp-sub">${esc(b.sub)}</p><div class="bp-cols">${cols}</div>
         <div class="bp-foot">
           <div class="bp-box"><span class="bp-k">${esc(b.have_title)}</span><div class="bp-have">${b.have.map(h => `<div><b>${esc(h.k)}</b><span>${esc(h.v)}</span></div>`).join('')}</div></div>
           <div class="bp-box"><span class="bp-k">${esc(b.axes_title)}</span><div class="bp-axes">${b.axes.map((a, i) => `<div><i>${i + 1}</i>${esc(a)}</div>`).join('')}</div></div>
@@ -349,19 +339,9 @@
       });
       svg += '<polygon points="300,138 286,152 314,152" fill="#f59e0b"/><rect x="295" y="152" width="10" height="16" fill="#f59e0b"/>';
       const btns = ic.items.map((it, i) => `<button class="${it.level}" data-open="ice" data-i="${i}"><b>${esc(it.name)}${zh ? ` <small>${esc(it.en)}</small>` : ''}</b><span>${esc(it.desc)}</span></button>`).join('');
-      return `<p class="q">${esc(T('iceTag'))}</p><h2 style="margin-top:2.6rem">${esc(ic.title)}</h2><p class="lead2">${esc(ic.sub)}</p>
+      return `<p class="q">${esc(T('iceTag'))}</p><h2 id="sec-ice" style="margin-top:2.6rem;scroll-margin-top:5rem">${esc(ic.title)}</h2><p class="lead2">${esc(ic.sub)}</p>
         <div class="intro2"><svg viewBox="0 0 600 440" role="group" aria-label="${esc(ic.title)}">${svg}</svg><div><div class="ksa">${btns}</div><p class="src4">${esc(ic.source)}</p></div></div>`;
     }
-    // ── My actual plan: every method question of the four steps, answered; the popups link to these rows ──
-    function myPlan(c) {
-      const todo = a => /^待補充|^To be added/.test(a);
-      const steps = c.steps.map((st, i) => `<div class="mine-step" id="my-${i}" style="--c:${STEP_COLORS[i]}">
-        <h3>${String(i + 1).padStart(2, '0')} ${esc(st.name)}<em>${esc(st.sub)}</em></h3>
-        ${st.method.map((m, j) => `<div class="mrow" id="my-${i}-${j}"><div class="mq">${esc(m.q)}</div>
-          <div class="ma${todo(m.a) ? ' todo' : ''}">${esc(m.a)}${m.href ? `<a href="${esc(m.href)}">→</a>` : ''}</div></div>`).join('')}</div>`).join('');
-      return `<p class="q">${esc(T('mineTag'))}</p><h2 id="sec-mine" style="margin-top:2.6rem">${esc(c.mine)}</h2><p class="lead2">${esc(c.mineSub)}</p><div class="mine">${steps}</div>`;
-    }
-
     // ── Popup: one <dialog> for both diagrams ──
     let current = null;
     function openPopup(kind, i) {
@@ -369,7 +349,12 @@
       const dlg = document.getElementById('dlg');
       let color, no = '', title, sub, items, more;
       if (kind === 'step') { const st = current.cycle4.steps[i]; color = STEP_COLORS[i]; no = String(i + 1).padStart(2, '0'); title = st.name; sub = st.sub;
-        items = st.method.map((m, j) => ({ html: `<a href="#my-${i}-${j}" data-close>${esc(m.q)}<span>${esc(T('see'))} ↓</span></a>` })); more = { text: T('seeAll'), href: `#my-${i}` }; }
+        items = st.method.map(m => {
+          const el = m.href && document.getElementById(m.href.slice(1));
+          const name = el ? (el.id === 'goal' ? T('goalName') : el.textContent.trim()) : '';
+          return { html: el ? `<a href="${esc(m.href)}" data-close>${esc(m.q)}<span>${esc(name)} ↓</span></a>`
+                            : `<span style="display:flex;justify-content:space-between;gap:.6rem">${esc(m.q)}<span class="pending">${esc(T('pending'))}</span></span>` };
+        }); more = null; }
       else { const it = current.iceberg.items[i]; color = it.level === 'above' ? '#0ea5e9' : '#f59e0b'; title = `${it.name}${Site.getLang() === 'en' ? '' : ' ' + it.en}`; sub = `${it.level === 'above' ? current.iceberg.above : current.iceberg.below}｜${it.desc}`; items = it.items; }
       dlg.style.setProperty('--c', color);
       dlg.innerHTML = `<div class="dlg-head"><div class="tx"><h3>${no ? `${no} ` : ''}${esc(title)}</h3><p>${esc(sub)}</p></div>
@@ -385,7 +370,7 @@
         dlg.close();
         // Jump after the popup is closed: a modal dialog blocks scrolling the page behind it.
         if (a) setTimeout(() => {
-          const id = a.getAttribute('href').slice(1), el = document.getElementById(id);
+          const id = a.getAttribute('href').slice(1), el = document.getElementById(id === 'sec-top' ? 'goal' : id);
           if (!el) return;
           history.replaceState(null, '', '#' + id);
           document.querySelectorAll('.hit').forEach(x => x.classList.remove('hit'));
@@ -430,7 +415,6 @@
         document.getElementById('idp').innerHTML = `
           ${d.cycle4 ? ring4(d.cycle4) : ''}
           ${d.iceberg ? iceberg(d.iceberg) : ''}
-          ${d.cycle4 ? myPlan(d.cycle4) : ''}
           ${d.blueprint ? blueprint(d.blueprint) : ''}
           ${head('1 · ' + T('q1'), T('h1'), 'sec-1')}<div class="lv">${lvl}</div>
           ${head('2 · ' + T('q2'), T('h2'), 'sec-2')}
@@ -442,7 +426,7 @@
           ${head('5 · ' + T('q5'), T('h5'), 'sec-5')}<div class="cy">${cy}</div><p class="loop">${esc(T('loop'))}</p>
           ${head('6 · ' + T('q6'), T('h6'), 'sec-6')}<div class="ms">${d.measures.map(m => `<div class="box"><b>${esc(m.name)}</b><span>${esc(m.what)}</span></div>`).join('')}</div>
           <p class="rm-k k-out">${esc(T('check'))}</p><ul class="ck">${d.checklist.map(x => `<li>${esc(x)}</li>`).join('')}</ul><p class="lead2">${esc(d.review)}</p>
-          <h2>${esc(T('h7'))}</h2><div class="traits">${d.traits.map(t => Array.isArray(t) ? { name: t[0], desc: t[1] } : t).map(t => `<div class="box"><b>${esc(t.name)}</b>${esc(t.desc)}</div>`).join('')}</div>
+          <h2 id="sec-7" style="scroll-margin-top:5rem">${esc(T('h7'))}</h2><div class="traits">${d.traits.map(t => Array.isArray(t) ? { name: t[0], desc: t[1] } : t).map(t => `<div class="box"><b>${esc(t.name)}</b>${esc(t.desc)}</div>`).join('')}</div>
           <p class="updated">${esc(T('updated'))}：${esc(d.updated)}</p>`;
       }).catch(e => { console.error(e); document.getElementById('idp').innerHTML = `<p class="error">${esc(T('loadError'))}</p>`; });
     }
