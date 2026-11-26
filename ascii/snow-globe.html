@@ -1,0 +1,1359 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ASCII Snow Globe | Alex Li (李翔緯)</title>
+  <meta name="description" content="A 3D snow globe drawn entirely with ASCII characters: gold lines sweep the glass into shape, a log cabin with glowing windows rises from the snow between pine trees, a snowman, string lights and chimney smoke. Drag to spin it and shake up a flurry. Vanilla JS on a single canvas.">
+  <meta name="theme-color" content="#05070d">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;600;800&display=swap">
+  <style>
+    :root {
+      --bg: #0b1120;
+      --sky: #05070d;
+      --text: #e6edf6;
+      --muted: #a3b1c6;
+      --accent: #3b82f6;
+      --mono: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--sky);
+      color: var(--text);
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    canvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100svh;
+      display: block;
+      touch-action: none; /* dragging spins and shakes the globe; no scroll or double-tap zoom */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: grab;
+    }
+    canvas.dragging { cursor: grabbing; }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .back {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(59, 130, 246, 0.45);
+      background: rgba(59, 130, 246, 0.12);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .back:hover, .back:focus-visible {
+      background: rgba(59, 130, 246, 0.28);
+      border-color: var(--accent);
+      outline: none;
+    }
+    .hud, .hint {
+      position: fixed;
+      z-index: 1;
+      bottom: 12px;
+      color: var(--muted);
+      opacity: 0.75;
+      font: 11px/1.4 var(--mono);
+      white-space: pre;
+      pointer-events: none;
+      max-width: calc(100% - 24px);
+      overflow: hidden;
+    }
+    .hud { left: 12px; }
+    .hint {
+      right: 12px;
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    @media (max-width: 640px) {
+      .hud, .hint { font-size: 10px; }
+      .hint { bottom: 30px; } /* stack above the HUD on narrow screens */
+    }
+  </style>
+</head>
+<body>
+  <h1 class="sr-only">ASCII Snow Globe</h1>
+  <a class="back" href="./">← ASCII</a>
+  <canvas id="c" role="img" aria-label="Animated 3D snow globe drawn with ASCII characters: a log cabin with lit windows, pine trees and a snowman inside swirling snow, on a wooden base"></canvas>
+  <div class="hud" id="hud" aria-hidden="true"></div>
+  <div class="hint" id="hint"></div>
+
+<script src="ascii-audio.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  // ---------- Timeline (seconds of scene time) ----------
+  const T = {
+    RING: 0.3, RING_DUR: 1.0,          // gold collar traces around
+    BASE: 0.7, BASE_DUR: 1.5,          // wooden base fills top-down
+    BAND: 2.0, BAND_DUR: 0.9,          // engraved lettering runs around the base
+    GLASS: 1.6, GLASS_DUR: 2.2,        // gold lines sweep the glass into shape
+    SPARK: 3.8,                        // glint on top when the glass closes
+    GROUND: 4.2, GROUND_DUR: 1.2,
+    CABIN: 5.2, CABIN_DUR: 2.0,
+    ROOF: 6.9, ROOF_DUR: 0.9,
+    CHIMNEY: 7.6,
+    WINDOWS: 8.1, WIN_GAP: 0.22,
+    TREES: 8.6, TREE_DUR: 1.1, TREE_GAP: 0.25,
+    SNOWMAN: 10.0, SNOWMAN_DUR: 0.7,
+    LIGHTS: 10.8, LIGHTS_DUR: 1.8,
+    SWIRL: 12.8,
+    ROOFSNOW: 13.2, ROOFSNOW_DUR: 3.0,
+    MSG: 16.0, LETTER: 0.16,
+    DONE: 18.0,
+    LOOP: 44.0, FADE: 1.2
+  };
+
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
+
+  // ---------- Camera / world (globe centre at the origin, glass radius 1, y up, +z faces the viewer) ----------
+  const CAM_D = 3.4;
+  const PIVOT = -0.18;
+  const TILT = 0.3;                    // look down a little so the snowy ground reads as an ellipse
+  const ct = Math.cos(TILT), st = Math.sin(TILT);
+  const LX0 = -0.5, LY0 = 0.62, LZ0 = 0.6;
+  const LN = Math.hypot(LX0, LY0, LZ0);
+  const LX = LX0 / LN, LY = LY0 / LN, LZ = LZ0 / LN;
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  const rng = mulberry32(20261224);
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const smooth = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
+  const TAU = Math.PI * 2;
+
+  // Snowy ground inside the globe: a gentle mound.
+  const G0 = -0.36, GH = 0.07, GR = 0.92;
+  const groundY = r => G0 + GH * Math.max(0, 1 - (r / GR) * (r / GR));
+  const COLLAR_Y = -0.82;              // where the glass disappears into the base
+
+  // ---------- Characters & colours ----------
+  const CH = [];
+  const ci = s => { let i = CH.indexOf(s); if (i < 0) { CH.push(s); i = CH.length - 1; } return i; };
+  const R_WOOD = [...'.:-=+x%#&@'].map(ci);
+  const R_GOLD = [...'-=+%&@'].map(ci);
+  const R_TREE = [...'.vx%&W#'].map(ci);
+  const R_BALL = [...'.oO@'].map(ci);
+  const R_GROUND = [...'.:-~'].map(ci);
+  const C_DOT = ci('.'), C_COLON = ci(':'), C_STAR = ci('*'), C_PLUS = ci('+'), C_EQ = ci('='), C_DASH = ci('-'),
+        C_UND = ci('_'), C_BAR = ci('|'), C_SL = ci('/'), C_BS = ci('\\'), C_HASH = ci('#'), C_AT = ci('@'),
+        C_o = ci('o'), C_O = ci('O'), C_CARET = ci('^'), C_TILDE = ci('~'), C_GT = ci('>'), C_LT = ci('<'),
+        C_TICK = ci('\''), C_BTICK = ci('`'), C_v = ci('v');
+  const BAND_TEXT = '* WARM WISHES * SNOWY NIGHTS *';
+  [...BAND_TEXT].forEach(ci);
+
+  const LEVELS = 16;
+  const PAL = [];
+  const pal = (r, g, b) => { PAL.push([r, g, b]); return PAL.length - 1; };
+  const P_WOOD = pal(160, 96, 54), P_WOOD2 = pal(132, 76, 42), P_WOODDK = pal(84, 48, 30);
+  const P_GOLD = pal(238, 184, 72), P_GOLD2 = pal(255, 214, 120);
+  const P_SNOW = pal(226, 236, 252), P_SNOWB = pal(150, 175, 215);
+  const P_LOG = pal(156, 96, 54), P_LOG2 = pal(122, 72, 40), P_CORNER = pal(226, 180, 118);
+  const P_WIN = pal(255, 198, 92), P_WINOFF = pal(70, 88, 128);
+  const P_DOOR = pal(96, 54, 30), P_ROOF = pal(168, 50, 44), P_ROOF2 = pal(132, 38, 38);
+  const P_STONE = pal(132, 124, 118);
+  const GREENS = [pal(30, 140, 60), pal(40, 168, 70), pal(62, 196, 86), pal(36, 150, 88)];
+  const P_TRUNK = pal(112, 70, 40);
+  const P_SM = pal(236, 242, 255), P_DARK = pal(58, 58, 72), P_NOSE = pal(255, 138, 40), P_SCARF = pal(222, 44, 54);
+  const P_WREATH = pal(42, 160, 66), P_BOW = pal(232, 44, 56);
+  const P_LIGHTS = [pal(255, 84, 84), pal(90, 225, 115), pal(96, 156, 255), pal(255, 212, 84), pal(255, 120, 220)];
+  const P_RIM = pal(150, 186, 222), P_GLASS = pal(235, 245, 255), P_SWEEP = pal(250, 196, 82);
+  const P_FLAKE = pal(245, 250, 255), P_SMOKE = pal(165, 170, 182);
+
+  // Kinds of points
+  const K_WOOD = 0, K_BAND = 1, K_GOLD = 2, K_GROUND = 3, K_SNOWVOL = 4, K_LOG = 5, K_CORNER = 6,
+        K_WINDOW = 7, K_FIXED = 8, K_ROOF = 9, K_TREE = 10, K_BALL = 11, K_LIGHT = 12,
+        K_FLAKE = 13, K_SMOKE = 14, K_SWEEP = 15, K_RIM = 16, K_GLASS = 17, K_TEXT = 18;
+
+  // ---------- Build the static scene ----------
+  const B = { x: [], y: [], z: [], nx: [], ny: [], nz: [], k: [], p: [], t0: [], ph: [], aux: [], hc: [] };
+  function add(x, y, z, nx, ny, nz, k, p, t0, ph, aux, hc) {
+    const l = Math.hypot(nx, ny, nz) || 1;
+    B.x.push(x); B.y.push(y); B.z.push(z);
+    B.nx.push(nx / l); B.ny.push(ny / l); B.nz.push(nz / l);
+    B.k.push(k); B.p.push(p); B.t0.push(t0); B.ph.push(ph || 0); B.aux.push(aux || 0); B.hc.push(hc || 0);
+  }
+
+  // Gold collar hugging the glass where it meets the base.
+  {
+    const r0 = 0.59;
+    for (let y = -0.905; y <= COLLAR_Y + 1e-6; y += 0.011) {
+      const u = (y + 0.905) / 0.085, r = r0 + 0.018 * Math.sin(Math.PI * u);
+      for (let a = 0; a < TAU; a += 0.011 / r) {
+        add(Math.cos(a) * r, y, Math.sin(a) * r, Math.cos(a), 0.25 + 0.6 * (u - 0.5), Math.sin(a),
+            K_GOLD, P_GOLD, T.RING + a / TAU * T.RING_DUR, rng(), 0, 0);
+      }
+    }
+  }
+  // Wooden base: a squat drum, slightly bellied and narrowing to a foot, with gold trim and a dark band for lettering.
+  const BASE_TOP = -0.9, BASE_H = 0.44, BASE_BOT = BASE_TOP - BASE_H, BASE_R0 = 0.76;
+  const baseR = s => BASE_R0 + 0.035 * Math.sin(s * Math.PI) - 0.1 * Math.pow(s, 1.5);
+  const baseDR = s => 0.035 * Math.PI * Math.cos(s * Math.PI) - 0.15 * Math.sqrt(s);   // dr/ds
+  const BAND_S = 0.47, BAND_Y = BASE_TOP - BAND_S * BASE_H;
+  {
+    for (let r = 0.015; r <= BASE_R0 + 1e-6; r += r < 0.42 ? 0.016 : 0.011) {   // solid top of the base
+      for (let a = 0; a < TAU; a += 0.011 / r)
+        add(Math.cos(a) * r, BASE_TOP, Math.sin(a) * r, 0, 1, 0, K_WOOD, P_WOOD2,
+            T.BASE + (1 - r / BASE_R0) * 0.5, 0.5 + 0.5 * Math.sin(r * 90 + Math.sin(a * 5) * 2), rng(), 0);
+    }
+    for (let y = BASE_TOP - 0.008; y >= BASE_BOT - 1e-6; y -= 0.014) {
+      const s = (BASE_TOP - y) / BASE_H, r = baseR(s), ny = baseDR(s) / BASE_H;
+      const trim = Math.abs(s - 0.27) < 0.02 || Math.abs(s - 0.67) < 0.02;
+      const band = s > 0.3 && s < 0.64;
+      const t0 = T.BASE + s * T.BASE_DUR;
+      for (let a = 0; a < TAU; a += 0.011 / r) {
+        const c = Math.cos(a), sn = Math.sin(a);
+        const grain = 0.5 + 0.5 * Math.sin(y * 95 + 2.6 * Math.sin(a * 3 + y * 18) + Math.sin(a * 11) * 0.8);
+        if (trim) add(c * r, y, sn * r, c, ny, sn, K_GOLD, P_GOLD, t0, rng(), 0, C_EQ);
+        else if (band) add(c * r, y, sn * r, c, ny, sn, K_BAND, P_WOODDK, t0, grain, 0, 0);
+        else add(c * r, y, sn * r, c, ny, sn, K_WOOD, grain > 0.55 ? P_WOOD : P_WOOD2, t0, grain, 0, 0);
+      }
+    }
+    // Foot: a slightly wider dark lip.
+    const rf = baseR(1) + 0.03;
+    for (let y = BASE_BOT; y >= BASE_BOT - 0.05; y -= 0.012)
+      for (let a = 0; a < TAU; a += 0.011 / rf)
+        add(Math.cos(a) * rf, y, Math.sin(a) * rf, Math.cos(a), 0, Math.sin(a), K_WOOD, P_WOODDK, T.BASE + T.BASE_DUR, rng(), 0, 0);
+    for (let r = baseR(1); r <= rf; r += 0.01)
+      for (let a = 0; a < TAU; a += 0.011 / r)
+        add(Math.cos(a) * r, BASE_BOT, Math.sin(a) * r, 0, 1, 0, K_WOOD, P_WOODDK, T.BASE + T.BASE_DUR, rng(), 0, 0);
+  }
+
+  // Snowy ground disc inside the glass.
+  for (let x = -0.95; x <= 0.95; x += 0.011) {
+    for (let z = -0.95; z <= 0.95; z += 0.03) {
+      const zz = z + (rng() - 0.5) * 0.02, r = Math.hypot(x, zz), y = groundY(r);
+      if (x * x + zz * zz + y * y > 0.965 * 0.965) continue;
+      const s = 2 * GH / (GR * GR);
+      add(x, y, zz, x * s, 1, zz * s, K_GROUND, P_SNOW,
+          T.GROUND + (r / 0.95) * T.GROUND_DUR * 0.8 + rng() * 0.15, rng(), rng(), 0);
+    }
+  }
+
+  // Cabin (front faces +z).
+  const CX = 0.42, CZ = 0.24, Y0 = groundY(0) - 0.012, WALL = 0.3, YW = Y0 + WALL;
+  const RIDGE = YW + 0.2, RZ = 0.31, RXO = 0.48;
+  const roofY = z => RIDGE - (RIDGE - YW + 0.03) * Math.abs(z) / RZ;
+  const LOG = 0.033;
+  const WINDOWS = [   // [face, centre u, centre y, half width, half height]
+    ['f', -0.25, Y0 + 0.155, 0.065, 0.06], ['f', 0.25, Y0 + 0.155, 0.065, 0.06],
+    ['x+', 0, Y0 + 0.155, 0.06, 0.055], ['b', 0.21, Y0 + 0.155, 0.065, 0.06],
+    ['b', -0.21, Y0 + 0.155, 0.065, 0.06], ['x-', 0, Y0 + 0.155, 0.06, 0.055]
+  ];
+  const winT = WINDOWS.map((_, i) => T.WINDOWS + i * T.WIN_GAP);
+  {
+    const ST = 0.0095;
+    const wallT = y => T.CABIN + clamp((y - Y0) / WALL, 0, 1) * T.CABIN_DUR * 0.75 + rng() * 0.05;
+    // A wall point: logs, corners, windows, door, wreath.
+    const wallPt = (x, y, z, nx, nz, face, u) => {
+      const f = ((y - Y0) / LOG) % 1, row = Math.floor((y - Y0) / LOG);
+      const t0 = wallT(y);
+      for (let w = 0; w < WINDOWS.length; w++) {
+        const [fc, wu, wy, hw, hh] = WINDOWS[w];
+        if (fc !== face || Math.abs(u - wu) > hw + 0.012 || Math.abs(y - wy) > hh + 0.012) continue;
+        if (Math.abs(u - wu) > hw || Math.abs(y - wy) > hh) {  // frame
+          add(x, y, z, nx, 0, nz, K_FIXED, P_CORNER, t0, 0, 0, Math.abs(y - wy) > hh ? C_EQ : C_BAR); return;
+        }
+        const mull = Math.abs(u - wu) < 0.008 || Math.abs(y - wy) < 0.008;
+        add(x, y, z, nx, 0, nz, K_WINDOW, P_WIN, t0, rng() * TAU, winT[w], mull ? C_PLUS : C_HASH); return;
+      }
+      if (face === 'f' && Math.abs(u) < 0.07 && y < Y0 + 0.235) {   // door, wreath, knob
+        const dy = y - (Y0 + 0.165), d = Math.hypot(u, dy);
+        if (Math.abs(d - 0.034) < 0.009) { add(x, y, z + 0.004, nx, 0, nz, K_FIXED, dy < -0.024 && Math.abs(u) < 0.014 ? P_BOW : P_WREATH, t0, 0, 0, C_o); return; }
+        if (Math.abs(u - 0.045) < 0.008 && Math.abs(y - (Y0 + 0.1)) < 0.008) { add(x, y, z, nx, 0, nz, K_FIXED, P_GOLD2, t0, 0, 0, C_o); return; }
+        const edge = Math.abs(u) > 0.06 || y > Y0 + 0.225;
+        add(x, y, z, nx, 0, nz, K_FIXED, edge ? P_CORNER : P_DOOR, t0, 0, 0, edge ? (y > Y0 + 0.225 ? C_EQ : C_BAR) : C_BAR); return;
+      }
+      const corner = Math.abs(Math.abs(x) - CX) < 0.022 && Math.abs(Math.abs(z) - CZ) < 0.022;
+      if (corner) { add(x, y, z, nx, 0, nz, K_CORNER, P_CORNER, t0, 0, 0, f < 0.25 ? C_DASH : C_AT); return; }
+      add(x, y, z, nx, 0, nz, K_LOG, row % 2 ? P_LOG : P_LOG2, t0, rng(), 0, f < 0.22 ? C_DASH : C_EQ);
+    };
+    for (let y = Y0; y <= YW + 1e-6; y += ST) {
+      for (let x = -CX; x <= CX + 1e-6; x += ST) {
+        wallPt(x, y, CZ, 0, 1, 'f', x);
+        wallPt(x, y, -CZ, 0, -1, 'b', x);
+      }
+      for (let z = -CZ; z <= CZ + 1e-6; z += ST) {
+        wallPt(CX, y, z, 1, 0, 'x+', z);
+        wallPt(-CX, y, z, -1, 0, 'x-', z);
+      }
+    }
+    // Gables (log triangles under the roof on each side).
+    for (let z = -CZ; z <= CZ + 1e-6; z += ST)
+      for (let y = YW; y <= roofY(z) - 0.006; y += ST) {
+        const f = ((y - Y0) / LOG) % 1, row = Math.floor((y - Y0) / LOG);
+        const t0 = T.CABIN + T.CABIN_DUR * 0.75 + (y - YW) / 0.2 * T.CABIN_DUR * 0.25;
+        for (const sx of [-1, 1])
+          add(sx * CX, y, z, sx, 0, 0, K_LOG, row % 2 ? P_LOG : P_LOG2, t0, rng(), 0, f < 0.22 ? C_DASH : C_EQ);
+      }
+    // Roof: two slopes, red tiles that slowly gather snow (aux = when this bit is snowed over).
+    const sl = (RIDGE - YW + 0.03) / RZ, nyR = 1 / Math.hypot(1, sl), nzR = sl / Math.hypot(1, sl);
+    for (let z = 0; z <= RZ + 1e-6; z += ST * 0.8)
+      for (let x = -RXO; x <= RXO + 1e-6; x += ST)
+        for (const sz of [-1, 1]) {
+          const y = roofY(z);
+          const t0 = T.ROOF + (1 - z / RZ) * T.ROOF_DUR * 0.85 + rng() * 0.1;
+          const snowT = z / RZ > 0.8 && rng() < 0.6 ? 1e9 : T.ROOFSNOW + Math.pow(rng(), 0.7) * T.ROOFSNOW_DUR * (0.4 + 0.6 * z / RZ);
+          const tile = Math.floor(x / 0.04 + (Math.floor(z / 0.03) % 2) * 0.5) % 2;
+          add(x, y, sz * z, 0, nyR, sz * nzR, K_ROOF, tile ? P_ROOF : P_ROOF2, t0, rng(), snowT, 0);
+        }
+    // Chimney (stone).
+    const CHX0 = 0.17, CHX1 = 0.27, CHZ0 = -0.16, CHZ1 = -0.07, CHTOP = RIDGE + 0.09;
+    for (let y = roofY(CHZ1) - 0.02; y <= CHTOP + 1e-6; y += ST * 0.9) {
+      const mort = (((y - YW) / 0.022) % 1) < 0.3;
+      const t0 = T.CHIMNEY + clamp((y - YW) / (CHTOP - YW), 0, 1) * 0.4;
+      for (let x = CHX0; x <= CHX1 + 1e-6; x += ST) {
+        add(x, y, CHZ1, 0, 0, 1, K_FIXED, P_STONE, t0, 0, 0, mort ? C_EQ : C_HASH);
+        add(x, y, CHZ0, 0, 0, -1, K_FIXED, P_STONE, t0, 0, 0, mort ? C_EQ : C_HASH);
+      }
+      for (let z = CHZ0; z <= CHZ1 + 1e-6; z += ST) {
+        add(CHX1, y, z, 1, 0, 0, K_FIXED, P_STONE, t0, 0, 0, mort ? C_EQ : C_HASH);
+        add(CHX0, y, z, -1, 0, 0, K_FIXED, P_STONE, t0, 0, 0, mort ? C_EQ : C_HASH);
+      }
+    }
+  }
+  const CHIM_TOP = [0.22, RIDGE + 0.11, -0.115];
+
+  // String lights along both eaves and up the gable edges (aux = twinkle speed).
+  const lightT0 = [];
+  {
+    const pts = [];
+    const n = 17;
+    for (let i = 0; i < n; i++) {
+      const x = -RXO + 0.03 + (2 * RXO - 0.06) * i / (n - 1), sag = 0.012 * Math.sin(((i * 3) % n) / n * Math.PI);
+      pts.push([x, YW - 0.035 - sag, RZ + 0.004, 0, 0, 1]);
+    }
+    for (let i = 0; i < n; i++) {
+      const x = RXO - 0.03 - (2 * RXO - 0.06) * i / (n - 1);
+      pts.push([x, YW - 0.035, -RZ - 0.004, 0, 0, -1]);
+    }
+    pts.forEach((q, i) => {
+      const t0 = T.LIGHTS + i / pts.length * T.LIGHTS_DUR;
+      lightT0.push(t0);
+      const p = P_LIGHTS[i % P_LIGHTS.length], ph = rng() * TAU, sp = 1.5 + 2.5 * rng();
+      for (let j = 0; j < 3; j++) add(q[0] + (j - 1) * 0.004, q[1], q[2], q[3], q[4] + 0.3, q[5], K_LIGHT, p, t0, ph, sp, 0);
+    });
+  }
+
+  // Pine trees: tiered cones; aux = when snow settles on this needle.
+  const TREES = [
+    { x: -0.69, z: 0.0, h: 0.52, r: 0.16 }, { x: 0.7, z: -0.06, h: 0.58, r: 0.17 },
+    { x: -0.3, z: -0.6, h: 0.4, r: 0.12 }, { x: 0.32, z: -0.62, h: 0.34, r: 0.11 },
+    { x: 0.6, z: 0.47, h: 0.25, r: 0.08 }
+  ];
+  const treeT0 = TREES.map((_, i) => T.TREES + i * T.TREE_GAP);
+  TREES.forEach((tr, ti) => {
+    const gy = groundY(Math.hypot(tr.x, tr.z)), yb = gy + 0.035;
+    const env = u => { const f = ((1 - u) * 4.2) % 1; return tr.r * (1 - u) * (0.72 + 0.28 * Math.pow(f, 0.6)) + 0.004; };
+    const n = Math.round(tr.r * tr.h * 3e4);
+    for (let i = 0; i < n; i++) {
+      const u = 1 - Math.sqrt(rng()), a = rng() * TAU;
+      const r = env(u) * (1 - 0.3 * Math.pow(rng(), 2.5));
+      const c = Math.cos(a), s = Math.sin(a);
+      const ny = 0.45 + (rng() - 0.5) * 0.6;
+      const tierTop = ((1 - u) * 4.2) % 1 < 0.3;
+      const snowT = tierTop || rng() < 0.12 ? T.ROOFSNOW + rng() * T.ROOFSNOW_DUR : 1e9;
+      add(tr.x + c * r, yb + u * tr.h, tr.z + s * r, c + (rng() - 0.5) * 0.5, ny, s + (rng() - 0.5) * 0.5,
+          K_TREE, GREENS[(rng() * GREENS.length) | 0], treeT0[ti] + u * T.TREE_DUR + rng() * 0.08, rng(), snowT, 0);
+    }
+    for (let y = gy - 0.01; y < yb + 0.01; y += 0.008)
+      for (let a = 0; a < TAU; a += 0.5)
+        add(tr.x + Math.cos(a) * 0.022, y, tr.z + Math.sin(a) * 0.022, Math.cos(a), 0, Math.sin(a), K_FIXED, P_TRUNK, treeT0[ti], 0, 0, C_BAR);
+  });
+
+  // Snowman at the front left, wearing a scarf and a little hat.
+  {
+    const sx = -0.52, sz = 0.47, gy = groundY(Math.hypot(sx, sz));
+    const balls = [[gy + 0.06, 0.075], [gy + 0.165, 0.055], [gy + 0.245, 0.04]];
+    balls.forEach(([by, br], bi) => {
+      const M = Math.round(br * br * 2.4e5);
+      for (let j = 0; j < M; j++) {
+        const zz = 1 - 2 * (j + 0.5) / M, rr = Math.sqrt(1 - zz * zz), phi = j * 2.39996;
+        const nx = rr * Math.cos(phi), ny = zz, nz = rr * Math.sin(phi);
+        add(sx + nx * br, by + ny * br, sz + nz * br, nx, ny, nz, K_BALL, P_SM, T.SNOWMAN + bi * T.SNOWMAN_DUR / 3, 0, 0, 0);
+      }
+    });
+    const hy = balls[2][0], ts = T.SNOWMAN + T.SNOWMAN_DUR;
+    for (const ex of [-0.015, 0.015]) add(sx + ex, hy + 0.01, sz + 0.039, 0, 0, 1, K_FIXED, P_DARK, ts, 0, 0, C_o);
+    for (let j = 0; j < 6; j++) add(sx, hy - 0.004, sz + 0.04 + j * 0.007, 0.3, 0.2, 1, K_FIXED, P_NOSE, ts, 0, 0, C_GT);
+    for (let j = 0; j < 3; j++) add(sx, balls[1][0] + 0.02 - j * 0.022, sz + 0.054, 0, 0, 1, K_FIXED, P_DARK, ts, 0, 0, C_o);
+    for (let a = 0; a < TAU; a += 0.12)               // scarf
+      for (let dy = -0.008; dy <= 0.008; dy += 0.008)
+        add(sx + Math.cos(a) * 0.046, hy - 0.035 + dy, sz + Math.sin(a) * 0.046, Math.cos(a), 0, Math.sin(a), K_FIXED, P_SCARF, ts, 0, 0, C_EQ);
+    for (let y = hy + 0.03; y <= hy + 0.075; y += 0.008)  // hat
+      for (let a = 0; a < TAU; a += 0.25) {
+        const r = y < hy + 0.038 ? 0.048 : 0.03;
+        add(sx + Math.cos(a) * r, y, sz + Math.sin(a) * r, Math.cos(a), 0.3, Math.sin(a), K_FIXED, P_DARK, ts, 0, 0, C_HASH);
+      }
+  }
+
+  const N = B.x.length;
+  const PX = Float32Array.from(B.x), PY = Float32Array.from(B.y), PZ = Float32Array.from(B.z);
+  const NX = Float32Array.from(B.nx), NY = Float32Array.from(B.ny), NZ = Float32Array.from(B.nz);
+  const KD = Uint8Array.from(B.k), PP = Uint16Array.from(B.p), HC = Uint8Array.from(B.hc);
+  const T0 = Float32Array.from(B.t0), PH = Float32Array.from(B.ph), AUX = Float32Array.from(B.aux);
+  for (const k in B) B[k] = null;
+
+  // Snow packed below the ground, seen through the glass. Symmetric, so it is kept facing the viewer.
+  const VL = [];
+  for (let y = COLLAR_Y - 0.03; y <= G0 + 0.01; y += 0.016) {
+    const r = Math.sqrt(Math.max(0, 0.975 * 0.975 - y * y));
+    for (let a = -1.9; a <= 1.9; a += 0.011 / r) {
+      const x = Math.sin(a) * r, z = Math.cos(a) * r;
+      if (y > groundY(r) - 0.004) continue;
+      VL.push(x, y, z, rng());
+    }
+  }
+  const VLA = Float32Array.from(VL), VLN = VLA.length / 4;
+
+  // Colour strings cached per (palette entry, brightness level).
+  const NCOLOR = PAL.length * LEVELS;
+  const COLSTR = new Array(NCOLOR);
+  PAL.forEach(([r, g, b], p) => {
+    for (let l = 0; l < LEVELS; l++) {
+      const m = 0.3 + 1.05 * l / (LEVELS - 1), w = Math.max(0, m - 1) * 160;
+      const lift = v => Math.min(255, v * m + w) | 0;
+      COLSTR[p * LEVELS + l] = `rgb(${lift(r)},${lift(g)},${lift(b)})`;
+    }
+  });
+  const STAR_COLS = [];
+  for (let l = 0; l < 8; l++) STAR_COLS.push(`rgba(190,205,235,${(0.1 + 0.5 * l / 7).toFixed(3)})`);
+
+  const MSG = 'M A K E   A   W I S H';
+  const LETTERS = MSG.replace(/ /g, '').length;
+  const MSG_COLS = ['#ef4444', '#fbbf24', '#22c55e'];
+
+  // ---------- Canvas, grid, layout ----------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const hudEl = document.getElementById('hud');
+  const hintEl = document.getElementById('hint');
+
+  let W = 0, H = 0, fs = 10, cw = 6, ch = 11, cols = 0, rows = 0;
+  let S = 300, ox = 0, oy = 0, msgY = 0, msgFs = 12, msgCw = 7, horizonY = 0;
+  let cellFont = '', snowFont = '', msgFont = '', bgGrad = null;
+  let zbuf, stampA, cchar, ccol, ckind, clb, touched, order, nT = 0, stamp = 0;
+  const counts = new Uint32Array(NCOLOR);
+  let skyStars = [], snowBack = null, snowFront = null;
+  const bgCanvas = document.createElement('canvas'), bctx = bgCanvas.getContext('2d');
+  let bandRing = [], NTXT = 1;
+  let needResize = true, dirty = true;
+
+  function resize() {
+    needResize = false;
+    W = canvas.clientWidth || innerWidth;
+    H = canvas.clientHeight || innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    fs = clamp(Math.round(Math.min(W, H * 0.8) / 80), 7, 14);
+    cellFont = `${fs}px ${MONO}`;
+    snowFont = `${Math.round(fs * 1.3)}px ${MONO}`;
+    ctx.font = cellFont;
+    cw = ctx.measureText('M').width || fs * 0.6;
+    ch = fs * 1.1;
+    cols = Math.ceil(W / cw);
+    rows = Math.ceil(H / ch);
+    const n = cols * rows;
+    zbuf = new Float32Array(n); stampA = new Uint32Array(n);
+    cchar = new Uint8Array(n); ccol = new Uint16Array(n); ckind = new Uint8Array(n); clb = new Float32Array(n);
+    touched = new Int32Array(n); order = new Int32Array(n); stamp = 0;
+
+    msgFs = Math.max(8, Math.min(fs * 1.7, (W - 32) / (MSG.length * 0.62)));
+    msgFont = `700 ${msgFs.toFixed(1)}px ${MONO}`;
+    ctx.font = msgFont;
+    msgCw = ctx.measureText('M').width;
+
+    // Fit globe + glint + base + message: ~1.38 S above the pivot, ~1.5 S below, half width ~1.1 S.
+    const TOP = 46, BOT = 54, msgH = msgFs * 2.4;
+    S = Math.max(40, Math.min(H * 0.4, (W / 2 - 12) / 1.1, (H - TOP - BOT - msgH) / 2.88));
+    const top = TOP + Math.max(0, (H - TOP - BOT - 2.88 * S - msgH) / 2);
+    ox = W / 2;
+    oy = top + 1.38 * S;
+    msgY = oy + 1.5 * S + msgFs * 1.3;
+    horizonY = oy + 0.12 * S;
+    makeHalos();
+
+    bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, '#04060c');
+    bgGrad.addColorStop(1, '#0b1120');
+
+    const r2 = mulberry32(11);
+    const nStars = Math.round(cols * rows * 0.012);
+    const SCH = ['.', '·', '+'];
+    skyStars = [];
+    for (let i = 0; i < nStars; i++) {
+      const q = r2(), y = ((r2() * rows) | 0) * ch;
+      if (y > horizonY && r2() < 0.7) continue;
+      skyStars.push({
+        x: ((r2() * cols) | 0) * cw, y,
+        c: SCH[q < 0.6 ? 0 : q < 0.9 ? 1 : 2], ph: r2() * 6.283, sp: 0.5 + r2() * 2
+      });
+    }
+    // Static backdrop, drawn once per resize: sky gradient plus a faint dotted snowfield, denser toward the bottom.
+    bgCanvas.width = canvas.width; bgCanvas.height = canvas.height;
+    bctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    bctx.fillStyle = bgGrad; bctx.fillRect(0, 0, W, H);
+    bctx.font = cellFont; bctx.textBaseline = 'top';
+    bctx.fillStyle = 'rgba(120,140,175,0.16)';
+    for (let r = Math.ceil(horizonY / ch); r < rows; r++) {
+      const d = (r * ch - horizonY) / Math.max(1, H - horizonY);
+      for (let c = 0; c < cols; c++) {
+        const h = Math.abs((Math.sin(c * 12.9898 + r * 78.233) * 43758.5453) % 1);
+        if (h < 0.12 + 0.35 * d) bctx.fillText(h < 0.05 ? '-' : '.', c * cw, r * ch);
+      }
+    }
+    const area = W * H, SNOW_FACTOR = reduced ? 0.35 : 1;
+    snowBack = makeSnow(Math.round(area / 3200 * SNOW_FACTOR), false, r2);
+    snowFront = makeSnow(Math.round(area / 15000 * SNOW_FACTOR), true, r2);
+
+    // Engraved lettering around the base: one character slot per cell at the front, the phrase three times round.
+    NTXT = Math.max(12, Math.round(TAU * BAND_RT * S * BAND_F / cw));
+    const PL = BAND_TEXT.length, reps = Math.max(1, Math.min(3, Math.floor(NTXT / (PL + 4))));
+    let ring = '';
+    for (let i = 0; i < reps; i++) {
+      const gap = Math.floor(NTXT * (i + 1) / reps) - Math.floor(NTXT * i / reps) - PL;
+      ring += BAND_TEXT;
+      for (let j = 0; j < gap; j++) ring += j % 3 === 1 ? '~' : ' ';
+    }
+    bandRing = [...ring.slice(0, NTXT)].map(ci);
+    NTXT = bandRing.length;
+    dirty = true;
+  }
+
+  // Snow layout: [x, y, vy, phase, amp, isStar] per flake.
+  function makeSnow(n, front, r) {
+    const a = new Float32Array(n * 6), slow = reduced ? 0.6 : 1;
+    for (let i = 0; i < n; i++) {
+      const o = i * 6;
+      a[o] = r() * W; a[o + 1] = r() * H;
+      a[o + 2] = (front ? 32 + 36 * r() : 14 + 22 * r()) * slow;
+      a[o + 3] = r() * 6.283; a[o + 4] = 8 + 14 * r();
+      a[o + 5] = r() < (front ? 0.6 : 0.35) ? 1 : 0;
+    }
+    return a;
+  }
+  function updateSnow(a, dt) {
+    for (let o = 0; o < a.length; o += 6) {
+      a[o + 1] += a[o + 2] * dt;
+      a[o] += Math.cos(skyT * 0.9 + a[o + 3]) * a[o + 4] * dt;
+      if (a[o + 1] > H + 10) { a[o + 1] = -10; a[o] = Math.random() * W; }
+      if (a[o] < -10) a[o] += W + 20; else if (a[o] > W + 10) a[o] -= W + 20;
+    }
+  }
+
+  // ---------- Snow inside the globe (globe frame) ----------
+  const NF = reduced ? 200 : 340;
+  const FX = new Float32Array(NF), FY = new Float32Array(NF), FZ = new Float32Array(NF);
+  const FVX = new Float32Array(NF), FVY = new Float32Array(NF), FVZ = new Float32Array(NF);
+  const FS = new Float32Array(NF), FSET = new Uint8Array(NF);
+  let flakesOn = false, stir = 0;
+  const STIR_BASE = reduced ? 0.03 : 0.07;
+  function resetFlakes() {
+    for (let i = 0; i < NF; i++) {
+      let x, y, z;
+      do { x = Math.random() * 2 - 1; y = Math.random() * 1.3 - 0.35; z = Math.random() * 2 - 1; }
+      while (x * x + y * y + z * z > 0.85);
+      FX[i] = x; FY[i] = y; FZ[i] = z;
+      FVX[i] = (Math.random() - 0.5) * 0.1; FVY[i] = -0.05 * Math.random(); FVZ[i] = (Math.random() - 0.5) * 0.1;
+      FS[i] = Math.random(); FSET[i] = 0;
+    }
+  }
+  function stepFlakes(dt) {
+    const g = 0.36, drag = Math.exp(-2.2 * dt), sw = stir * 1.5;
+    for (let i = 0; i < NF; i++) {
+      let x = FX[i], y = FY[i], z = FZ[i];
+      if (FSET[i]) {
+        // Settled flakes are lifted again when the globe is stirred hard enough.
+        if (stir > 0.42 && Math.random() < dt * stir * 2.5) {
+          FSET[i] = 0; FVY[i] = 0.3 + Math.random() * stir * 0.9;
+          FVX[i] = (Math.random() - 0.5) * stir; FVZ[i] = (Math.random() - 0.5) * stir;
+        } else continue;
+      }
+      const r = Math.hypot(x, z) + 1e-4;
+      let ax = -z / r * sw + 0.05 * Math.sin(skyT * 1.3 + i * 1.7);
+      let az = x / r * sw + 0.05 * Math.cos(skyT * 1.1 + i * 2.3);
+      let ay = -g + stir * (0.55 + 0.9 * Math.sin(skyT * 1.7 + i * 0.61 + y * 3));
+      ax += stir * 0.9 * Math.sin(skyT * 2.1 + i * 0.37 + y * 4);
+      az += stir * 0.9 * Math.cos(skyT * 1.9 + i * 0.53 + x * 4);
+      let vx = (FVX[i] + ax * dt) * drag, vy = (FVY[i] + ay * dt) * drag, vz = (FVZ[i] + az * dt) * drag;
+      x += vx * dt; y += vy * dt; z += vz * dt;
+      const d = Math.hypot(x, y, z);
+      if (d > 0.94) {
+        const k = 0.94 / d; x *= k; y *= k; z *= k;
+        const vn = (vx * x + vy * y + vz * z) / 0.94;
+        if (vn > 0) { vx -= 1.6 * vn * x / 0.94; vy -= 1.6 * vn * y / 0.94; vz -= 1.6 * vn * z / 0.94; }
+      }
+      // On the roof?
+      if (Math.abs(x) < RXO && Math.abs(z) < RZ) {
+        const ry = roofY(z) + 0.008;
+        if (y < ry && y > ry - 0.05 && vy < 0) {
+          if (stir < 0.3) { y = ry; FSET[i] = 1; } else vy = Math.abs(vy) * 0.4;
+        }
+      }
+      const gy = groundY(Math.hypot(x, z)) + 0.008;
+      if (y < gy) {
+        y = gy;
+        if (stir < 0.3 && vy < 0.05) FSET[i] = 1; else vy = Math.abs(vy) * 0.5 + stir * 0.2;
+      }
+      FX[i] = x; FY[i] = y; FZ[i] = z; FVX[i] = vx; FVY[i] = vy; FVZ[i] = vz;
+    }
+  }
+  let shakes = 0;
+  function shake(strength) {
+    if (!flakesOn) { flakesOn = true; resetFlakes(); }
+    stir = Math.min(2.2, stir + strength);
+    for (let i = 0; i < NF; i++) {
+      if (FSET[i] && Math.random() < 0.85) { FSET[i] = 0; FVY[i] = (0.4 + Math.random() * 1.1) * strength; }
+      FVX[i] += (Math.random() - 0.5) * strength; FVZ[i] += (Math.random() - 0.5) * strength;
+    }
+    wobV += (shakes++ % 2 ? -1 : 1) * S * 0.9 * Math.min(1.5, strength);
+    music('event', 'shake', { s: strength });
+  }
+
+  // Chimney smoke puffs (globe frame).
+  const puffs = [];
+  let puffClock = 0;
+  function stepPuffs(dt) {
+    if (t > T.CHIMNEY + 0.6) {
+      puffClock -= dt;
+      if (puffClock <= 0) {
+        puffClock = 0.65 + Math.random() * 0.3;
+        puffs.push({ x: CHIM_TOP[0], y: CHIM_TOP[1], z: CHIM_TOP[2], age: 0, s: Math.random() });
+      }
+    }
+    for (let i = puffs.length - 1; i >= 0; i--) {
+      const p = puffs[i];
+      p.age += dt; p.y += (0.1 - 0.02 * p.age) * dt;
+      p.x += (0.035 + Math.sin(skyT * 0.8 + p.s * 6) * 0.03 + stir * 0.1) * dt;
+      p.z += Math.cos(skyT * 0.7 + p.s * 5) * 0.02 * dt;
+      if (p.age > 4.2 || p.x * p.x + p.y * p.y + p.z * p.z > 0.8) puffs.splice(i, 1);
+    }
+  }
+
+  // ---------- Projection + z-buffered splat ----------
+  let cr = 1, sr = 0, t = reduced ? T.DONE : 0, skyT = 0;
+  let yaw = 0, userYaw = 0, userYawV = 0;
+  let wobX = 0, wobV = 0, RC = 1, RS = 0, RX0 = 0, RY0 = 0, SHX = 0;
+  let projX = 0, projY = 0, projZ = 0;
+
+  function projV(rx, y2, z2) {
+    const f = CAM_D / (CAM_D - z2);
+    let px = ox + rx * S * f, py = oy - y2 * S * f;
+    const dx = px - RX0, dy = py - RY0;
+    projX = RX0 + dx * RC - dy * RS + SHX; projY = RY0 + dx * RS + dy * RC; projZ = z2;
+  }
+  function project(x, y, z) {
+    const rx = x * cr + z * sr, rz = z * cr - x * sr, yy = y - PIVOT;
+    projV(rx, yy * ct - rz * st, yy * st + rz * ct);
+  }
+
+  // Write one cell (nearest wins). z is view depth (larger = closer).
+  function put(px, py, z, cc, col, k, b) {
+    if (px < 0 || py < 0) return;
+    const cl = (px / cw) | 0, row = (py / ch) | 0;
+    if (cl >= cols || row >= rows) return;
+    const c = row * cols + cl;
+    if (stampA[c] !== stamp) { stampA[c] = stamp; touched[nT++] = c; }
+    else if (zbuf[c] >= z) return;
+    zbuf[c] = z; cchar[c] = cc; ccol[c] = col; ckind[c] = k; clb[c] = b;
+  }
+
+  function splat(x, y, z, nx, ny, nz, k, p, ph, aux, hc, boost) {
+    const rx = x * cr + z * sr, rz = z * cr - x * sr, yy = y - PIVOT;
+    const y2 = yy * ct - rz * st, z2 = yy * st + rz * ct;
+    const f = CAM_D / (CAM_D - z2);
+    let px = ox + rx * S * f, py = oy - y2 * S * f;
+    const dx = px - RX0, dy = py - RY0;
+    px = RX0 + dx * RC - dy * RS + SHX; py = RY0 + dx * RS + dy * RC;
+    if (px < 0 || py < 0) return;
+    const col = (px / cw) | 0, row = (py / ch) | 0;
+    if (col >= cols || row >= rows) return;
+    const c = row * cols + col;
+    const fresh = stampA[c] !== stamp;
+    if (!fresh && zbuf[c] >= z2) return;
+
+    const rnx = nx * cr + nz * sr, rnz = nz * cr - nx * sr;
+    const ny2 = ny * ct - rnz * st, nz2 = ny * st + rnz * ct;
+    if (k <= K_GOLD && nz2 < -0.05) return;           // the base is solid: skip its far side
+    let lam = rnx * LX + ny2 * LY + nz2 * LZ;
+    if (lam < 0) lam = 0;
+    let dd = (z2 + 1) / 2;
+    dd = 0.62 + 0.38 * (dd < 0 ? 0 : dd > 1 ? 1 : dd);
+
+    let b, cc = hc;
+    switch (k) {
+      case K_WOOD:
+        b = clamp((0.3 + 0.7 * lam) * dd * (0.75 + 0.4 * ph), 0, 1); cc = R_WOOD[(2 + b * 7.99) | 0]; break;
+      case K_BAND:
+        b = clamp((0.15 + 0.4 * lam) * dd, 0, 1); cc = ph > 0.6 ? C_DASH : C_DOT; break;
+      case K_GOLD: {
+        const gl = Math.pow(Math.max(0, Math.sin(rnx * 3 - skyT * 1.1 + ph * 0.6)), 24) * 0.5;
+        b = clamp((0.3 + 0.7 * lam) * dd + gl, 0, 1); cc = hc || R_GOLD[(b * 5.99) | 0]; break;
+      }
+      case K_GROUND: {
+        b = clamp((0.42 + 0.58 * lam) * dd, 0, 1);
+        if (aux > 0.97) { const tw = 0.5 + 0.5 * Math.sin(skyT * 3 + ph * 40); b = 0.5 + 0.5 * tw; cc = tw > 0.7 ? C_STAR : C_PLUS; }
+        else cc = R_GROUND[ph < 0.45 ? 0 : ph < 0.75 ? 1 : ph < 0.9 ? 2 : 3];
+        break;
+      }
+      case K_LOG: case K_CORNER: case K_FIXED:
+        b = clamp((0.25 + 0.75 * lam) * dd, 0, 1); break;
+      case K_WINDOW:
+        if (t < aux) { b = 0.45; p = P_WINOFF; }
+        else {
+          const on = clamp((t - aux) / 0.3, 0, 1);
+          b = (0.75 + 0.12 * Math.sin(skyT * 7 + ph) + 0.08 * Math.sin(skyT * 13.7 + ph * 2)) * on + 0.4 * (1 - on);
+          b = clamp(b, 0, 1);
+        }
+        break;
+      case K_ROOF:
+        if (t < aux) { b = clamp((0.25 + 0.75 * lam) * dd, 0, 1); cc = C_CARET; }
+        else { p = P_SNOW; b = clamp((0.45 + 0.55 * lam) * dd, 0, 1); cc = ph < 0.5 ? C_TILDE : ph < 0.8 ? C_EQ : C_DASH; }
+        break;
+      case K_TREE:
+        if (t >= aux) { p = P_SNOW; b = clamp((0.5 + 0.5 * lam) * dd, 0, 1); cc = ph < 0.6 ? C_STAR : C_DOT; }
+        else { b = clamp((0.25 + 0.75 * lam) * dd, 0, 1); cc = R_TREE[(b * 6.99) | 0]; }
+        break;
+      case K_BALL:
+        b = clamp((0.3 + 0.7 * lam) * dd, 0, 1); cc = R_BALL[(b * 3.99) | 0]; break;
+      case K_LIGHT: {
+        const s = 0.5 + 0.5 * Math.sin(skyT * aux + ph);
+        b = 0.4 + 0.6 * s * s; cc = b > 0.75 ? C_O : C_o; break;
+      }
+      case K_FLAKE:
+        b = clamp(0.55 + 0.45 * ph, 0, 1); cc = ph > 0.72 ? C_STAR : ph > 0.4 ? C_PLUS : C_DOT; break;
+      case K_SMOKE:
+        b = aux; cc = ph > 0.66 ? C_O : ph > 0.25 ? C_o : C_DOT; break;
+      default: // K_SWEEP
+        b = aux; cc = b > 0.8 ? C_STAR : b > 0.35 ? C_PLUS : C_DOT;
+    }
+    if (boost > 0) b = Math.min(1, b + boost);
+    if (fresh) { stampA[c] = stamp; touched[nT++] = c; }
+    zbuf[c] = z2; cchar[c] = cc; ccol[c] = p * LEVELS + ((b * 15.99) | 0); ckind[c] = k; clb[c] = b;
+  }
+
+  // Gold lines sweeping round the glass while it forms (globe frame, so they turn with it).
+  const SWEEPS = [-0.12, 0.1, 0.3, 0.5, 0.68, 0.84];
+  const SWEEP_SPEED = TAU / 1.05, SWEEP_LEN = TAU * 1.15;
+  function buildSweeps() {
+    const end = T.GLASS + T.GLASS_DUR;
+    if (t < T.GLASS || t > end + 0.9) return;
+    const fade = 1 - smooth((t - end) / 0.9);
+    for (let k = 0; k < SWEEPS.length; k++) {
+      const tk = T.GLASS + k * 0.2;
+      if (t < tk) continue;
+      const head = Math.min(SWEEP_LEN, (t - tk) * SWEEP_SPEED);
+      const lat0 = SWEEPS[k], cl0 = Math.cos(lat0), da = 0.011 / cl0, ph0 = k * 1.3;
+      for (let a = 0; a <= head; a += da) {
+        const age = (head - a) / SWEEP_SPEED + Math.max(0, (t - tk) - SWEEP_LEN / SWEEP_SPEED);
+        const b = Math.exp(-age / 0.8) * fade;
+        if (b < 0.06) continue;
+        const lat = lat0 + 0.11 * Math.sin(1.5 * a + k * 1.7);
+        const cl = Math.cos(lat), x = Math.cos(a + ph0) * cl, z = Math.sin(a + ph0) * cl, y = Math.sin(lat);
+        splat(x, y, z, x, y, z, K_SWEEP, P_SWEEP, 0, Math.min(1, b), 0, 0);
+      }
+    }
+  }
+
+  // Glass outline: the silhouette circle of the sphere as seen from the camera, drawn with / \ | - _.
+  const RIM_PTS = [];
+  let rimMinX = 0, rimMaxX = 0, rimMinY = 0, rimMaxY = 0, collarSY = 0, baseBotSY = 0;
+  function buildRim() {
+    const prog = reduced ? 1 : clamp((t - T.GLASS - 0.15) / (T.GLASS_DUR - 0.15), 0, 1);
+    const yy = -PIVOT, cy = yy * ct, cz = yy * st;         // sphere centre in view space
+    let vx = 0, vy = cy, vz = cz - CAM_D;
+    const d = Math.hypot(vx, vy, vz); vx /= d; vy /= d; vz /= d;
+    const qy = cy - vy / d, qz = cz - vz / d, rho = Math.sqrt(1 - 1 / (d * d));
+    // u = (1,0,0), w = v x u = (0, vz, -vy); sin(theta) = 1 is the bottom.
+    const rp = rho * S * CAM_D / (CAM_D - cz);
+    const n = Math.max(64, Math.ceil(TAU * rp / Math.min(cw, ch) * 2.2));
+    RIM_PTS.length = 0;
+    rimMinX = rimMinY = 1e9; rimMaxX = rimMaxY = -1e9;
+    for (let i = 0; i <= n; i++) {
+      const th = i / n * TAU;
+      const x2 = Math.cos(th) * rho, y2 = qy + Math.sin(th) * rho * vz, z2 = qz - Math.sin(th) * rho * vy;
+      projV(x2, y2, z2);
+      const wy = y2 * ct + z2 * st + PIVOT;                // back to world height
+      RIM_PTS.push(projX, projY, projZ, wy, th);
+      if (projX < rimMinX) rimMinX = projX; if (projX > rimMaxX) rimMaxX = projX;
+      if (projY < rimMinY) rimMinY = projY; if (projY > rimMaxY) rimMaxY = projY;
+    }
+    if (prog <= 0) return;
+    const col = P_RIM * LEVELS + 12;
+    for (let i = 0; i < n; i++) {
+      const o = i * 5;
+      if (RIM_PTS[o + 3] < COLLAR_Y + 0.01) continue;
+      let dth = Math.abs(RIM_PTS[o + 4] - Math.PI / 2); if (dth > Math.PI) dth = TAU - dth;
+      if (dth > prog * Math.PI) continue;
+      const a = i === 0 ? n - 1 : i - 1, bI = i + 1;
+      const dx = RIM_PTS[bI * 5] - RIM_PTS[a * 5], dy = (RIM_PTS[bI * 5 + 1] - RIM_PTS[a * 5 + 1]) * cw / ch;
+      const s = Math.abs(dy) / (Math.abs(dx) + 1e-6);
+      let cc;
+      if (s < 0.42) cc = RIM_PTS[o + 1] > (rimMinY + rimMaxY) / 2 ? C_UND : C_DASH;
+      else if (s > 2.4) cc = C_BAR;
+      else cc = dx * dy < 0 ? C_SL : C_BS;
+      put(RIM_PTS[o], RIM_PTS[o + 1], RIM_PTS[o + 2] + 0.35, cc, col, K_RIM, 0.75);
+    }
+  }
+
+  // Curved highlights on the front of the glass (only over sky, snow or flakes, never over the cabin).
+  function buildGlass() {
+    const a = reduced ? 1 : smooth((t - T.GLASS - T.GLASS_DUR + 0.3) / 1.2);
+    if (a <= 0) return;
+    const pcx = (rimMinX + rimMaxX) / 2, pcy = (rimMinY + rimMaxY) / 2;
+    const rx = (rimMaxX - rimMinX) / 2, ry = (rimMaxY - rimMinY) / 2;
+    const c0 = Math.max(0, (rimMinX / cw) | 0), c1 = Math.min(cols - 1, (rimMaxX / cw) | 0);
+    const r0 = Math.max(0, (rimMinY / ch) | 0), r1 = Math.min(rows - 1, (collarSY / ch) | 0);
+    const sweep = (skyT * 0.09) % 1;               // a slow glint that travels along the streak
+    for (let row = r0; row <= r1; row++) {
+      const v = ((row + 0.5) * ch - pcy) / ry;
+      for (let cl = c0; cl <= c1; cl++) {
+        const u = ((cl + 0.5) * cw - pcx) / rx, d2 = u * u + v * v;
+        if (d2 > 0.93 || d2 < 0.3) continue;
+        const ang = Math.atan2(-v, u);             // 0 = right, pi/2 = top
+        let s = 0, cc = C_DOT;
+        // Main streak: an arc on the upper left.
+        if (ang > 1.75 && ang < 2.85 && d2 > 0.66 && d2 < 0.76) {
+          const m = 0.75 * Math.sin((ang - 1.75) / 1.1 * Math.PI) * (1 - Math.abs(d2 - 0.71) / 0.05);
+          const gl = Math.exp(-Math.pow(((ang - 1.75) / 1.1 - sweep * 1.6 + 0.3) * 6, 2));
+          s = m * (0.55 + 0.6 * gl);
+          cc = ang > 2.45 ? C_BAR : ang > 2.1 ? C_SL : C_DASH;
+          if (ang < 2.0) cc = C_BTICK;
+        // Small secondary glint on the lower right.
+        } else if (ang < -0.35 && ang > -0.95 && d2 > 0.7 && d2 < 0.84) {
+          s = 0.35 * Math.sin((ang + 0.95) / 0.6 * Math.PI);
+          cc = C_TICK;
+        }
+        if (s < 0.15) continue;
+        const c = row * cols + cl;
+        if (stampA[c] === stamp) {
+          const k = ckind[c];
+          if (k !== K_FLAKE && k !== K_GROUND && k !== K_SNOWVOL && k !== K_SWEEP) continue;
+        }
+        put(cl * cw + 0.1, row * ch + 0.1, 5, cc, P_GLASS * LEVELS + ((clamp(s * a, 0, 1) * 15.99) | 0), K_GLASS, s * a);
+      }
+    }
+  }
+
+  // Lettering that runs around the base band and turns with the globe. Sampled once per text cell on
+  // the front row, so letters never collide or leave holes; they fade toward the sides.
+  const BAND_RT = baseR(BAND_S) + 0.006;
+  const BAND_F = CAM_D / (CAM_D - ((BAND_Y - PIVOT) * st + BAND_RT * ct));   // perspective at the front of the band
+  function buildBandText() {
+    if (t < T.BAND) return;
+    const shown = reduced ? NTXT : Math.floor(clamp((t - T.BAND) / T.BAND_DUR, 0, 1) * NTXT);
+    project(-sr * BAND_RT, BAND_Y, cr * BAND_RT);
+    const rowY = (Math.floor(projY / ch) + 0.5) * ch, z = projZ + 0.02;
+    project(0, BAND_Y, 0);
+    const cx = projX, rpx = BAND_RT * S * BAND_F;
+    const c0 = Math.floor((cx - rpx * 0.7) / cw), c1 = Math.ceil((cx + rpx * 0.7) / cw);
+    for (let c = c0; c <= c1; c++) {
+      const u = ((c + 0.5) * cw - cx) / rpx;
+      if (u < -0.7 || u > 0.7) continue;
+      const th = Math.asin(u), cs = Math.cos(th), sn = u;
+      const a = Math.atan2(cr * cs + sr * sn, -sr * cs + cr * sn);
+      let f = (-a / TAU) % 1; if (f < 0) f += 1;
+      const i = Math.floor(f * NTXT) % NTXT;
+      if (i >= shown) continue;
+      const cc = bandRing[i];
+      if (CH[cc] === ' ') continue;
+      const gl = Math.pow(Math.max(0, Math.sin(u * 3 - skyT * 1.1)), 24) * 0.35;
+      const b = clamp(0.2 + 0.85 * cs * cs * cs + gl, 0, 1);
+      put((c + 0.5) * cw, rowY, z, cc, P_GOLD2 * LEVELS + ((b * 15.99) | 0), K_TEXT, b);
+    }
+  }
+
+  function buildScene() {
+    cr = Math.cos(yaw); sr = Math.sin(yaw);
+    stamp++; nT = 0;
+
+    for (let i = 0; i < N; i++) {
+      const t0 = T0[i];
+      if (t < t0) continue;
+      const age = t - t0, boost = age < 0.22 && !reduced ? 0.7 * (1 - age / 0.22) : 0;
+      splat(PX[i], PY[i], PZ[i], NX[i], NY[i], NZ[i], KD[i], PP[i], PH[i], AUX[i], HC[i], boost);
+    }
+
+    // Packed snow under the ground, kept facing the viewer.
+    if (t >= T.GROUND) {
+      const keepC = cr, keepS = sr;
+      cr = 1; sr = 0;
+      const lim = (G0 + 0.01) - (COLLAR_Y - 0.03), prog = reduced ? 2 : (t - T.GROUND) / (T.GROUND_DUR * 0.8);
+      for (let i = 0; i < VLN; i++) {
+        const o = i * 4, x = VLA[o], y = VLA[o + 1], z = VLA[o + 2], q = VLA[o + 3];
+        if ((y - (COLLAR_Y - 0.03)) / lim > prog) continue;
+        const l = Math.hypot(x, y, z);
+        splat(x, y, z, x / l, y / l, z / l, K_FIXED, P_SNOWB, 0, 0, q < 0.55 ? C_DOT : q < 0.92 ? C_COLON : C_DASH, 0);
+      }
+      cr = keepC; sr = keepS;
+    }
+
+    if (flakesOn) for (let i = 0; i < NF; i++)
+      splat(FX[i], FY[i], FZ[i], 0, 0, 1, K_FLAKE, P_FLAKE, FS[i], 0, 0, 0);
+
+    for (const p of puffs) {
+      const r = 0.018 + 0.03 * p.age, b = clamp(0.85 - p.age / 4.6, 0, 1) * clamp(p.age / 0.3, 0, 1);
+      for (let j = 0; j < 10; j++) {
+        const zz = 1 - 2 * (j + 0.5) / 10, rr = Math.sqrt(1 - zz * zz), phi = j * 2.39996 + p.s * 6;
+        splat(p.x + rr * Math.cos(phi) * r, p.y + zz * r, p.z + rr * Math.sin(phi) * r, 0, 0, 1,
+              K_SMOKE, P_SMOKE, (j * 0.37 + p.s) % 1, b, 0, 0);
+      }
+    }
+
+    buildSweeps();
+    project(0, COLLAR_Y, 0.6); collarSY = projY;
+    project(0, BASE_BOT - 0.05, baseR(1) + 0.03); baseBotSY = projY;
+    buildRim();
+    buildBandText();
+    buildGlass();
+  }
+
+  // Bucket by colour so fillStyle changes once per colour, not once per cell.
+  function drawCells() {
+    counts.fill(0);
+    for (let i = 0; i < nT; i++) counts[ccol[touched[i]]]++;
+    let acc = 0;
+    for (let c = 0; c < NCOLOR; c++) { const n = counts[c]; counts[c] = acc; acc += n; }
+    for (let i = 0; i < nT; i++) { const c = touched[i]; order[counts[ccol[c]]++] = c; }
+    let cur = -1;
+    for (let i = 0; i < nT; i++) {
+      const c = order[i], cc = ccol[c];
+      if (cc !== cur) { cur = cc; ctx.fillStyle = COLSTR[cc]; }
+      const row = (c / cols) | 0;
+      ctx.fillText(CH[cchar[c]], (c - row * cols) * cw, row * ch);
+    }
+  }
+
+  // ---------- Sky, snow, glint FX, message ----------
+  function drawSky() {
+    for (let i = 0; i < skyStars.length; i++) {
+      const s = skyStars[i];
+      ctx.fillStyle = STAR_COLS[((0.5 + 0.5 * Math.sin(skyT * s.sp + s.ph)) * 7.99) | 0];
+      ctx.fillText(s.c, s.x, s.y);
+    }
+  }
+
+  // Warm halos over lit windows and string lights.
+  let halos = [];
+  function makeHalos() {
+    const R = Math.max(6, cw * 2.2);
+    halos = PAL.map(([r, g, b], p) => {
+      if (!P_LIGHTS.includes(p) && p !== P_WIN) return null;
+      const c = document.createElement('canvas');
+      c.width = c.height = Math.ceil(R * 2);
+      const x = c.getContext('2d'), gr = x.createRadialGradient(R, R, 0, R, R, R);
+      gr.addColorStop(0, 'rgba(255,255,255,0.9)');
+      gr.addColorStop(0.2, `rgba(${r},${g},${b},0.8)`);
+      gr.addColorStop(0.55, `rgba(${r},${g},${b},0.2)`);
+      gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
+      x.fillStyle = gr; x.fillRect(0, 0, c.width, c.height);
+      return c;
+    });
+  }
+  function drawHalos() {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < nT; i++) {
+      const c = touched[i], k = ckind[c];
+      if (k !== K_LIGHT && k !== K_WINDOW) continue;
+      const img = halos[(ccol[c] / LEVELS) | 0], row = (c / cols) | 0;
+      if (!img) continue;
+      ctx.globalAlpha = k === K_LIGHT ? clb[c] : clb[c] * 0.22;
+      ctx.drawImage(img, (c - row * cols + 0.5) * cw - img.width / 2, (row + 0.5) * ch - img.height / 2);
+    }
+    ctx.restore();
+  }
+
+  function drawSnow(a, front) {
+    ctx.font = front ? snowFont : cellFont;
+    ctx.fillStyle = front ? 'rgba(255,255,255,0.9)' : 'rgba(220,232,255,0.65)';
+    for (let o = 0; o < a.length; o += 6) ctx.fillText(a[o + 5] ? '*' : '.', a[o], a[o + 1]);
+  }
+
+  const RAYS = [[1, 0, '-'], [-1, 0, '-'], [0, -1, '|'], [0, 1, '|'],
+                [1, -1, '/'], [-1, 1, '/'], [-1, -1, '\\'], [1, 1, '\\']];
+  function drawGlint() {
+    if (t < T.SPARK || t > T.SPARK + 2.5) return;
+    const a = t - T.SPARK;
+    project(0, 1.0, 0.05);
+    const sx = projX, sy = projY;
+    ctx.globalCompositeOperation = 'lighter';
+    const gA = Math.min(1, a / 0.2) * Math.max(0, 1 - a / 2.5) * 0.45;
+    const gr = S * 0.32;
+    let g = ctx.createRadialGradient(sx, sy, 0, sx, sy, gr);
+    g.addColorStop(0, `rgba(255,214,120,${gA.toFixed(3)})`);
+    g.addColorStop(1, 'rgba(255,190,80,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(sx - gr, sy - gr, gr * 2, gr * 2);
+    if (a < 0.5) {
+      const p = a / 0.5, fa = (1 - p) * (1 - p) * 0.9, fr = S * (0.1 + 0.3 * p);
+      g = ctx.createRadialGradient(sx, sy, 0, sx, sy, fr);
+      g.addColorStop(0, `rgba(255,255,255,${fa.toFixed(3)})`);
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(sx - fr, sy - fr, fr * 2, fr * 2);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+    if (a < 1.5) {
+      const p = a / 1.5, len = Math.pow(1 - p, 1.4);
+      ctx.font = cellFont;
+      ctx.fillStyle = `rgba(255,228,150,${(0.35 + 0.65 * (1 - p)).toFixed(3)})`;
+      const scol = Math.floor(sx / cw), srow = Math.floor(sy / ch);
+      for (let r = 0; r < RAYS.length; r++) {
+        const [dx, dy, c] = RAYS[r];
+        const max = dy === 0 ? S * 0.6 / cw : dx === 0 ? S * 0.5 / ch : S * 0.3 / cw;
+        const n = Math.round(max * len);
+        for (let j = 1; j <= n; j++) ctx.fillText(c, (scol + dx * j) * cw, (srow + dy * j) * ch);
+      }
+      ctx.fillStyle = '#fff';
+      ctx.fillText('*', scol * cw, srow * ch);
+    }
+  }
+
+  let lettersShown = 0;
+  function drawMessage() {
+    lettersShown = 0;
+    if (t < T.MSG) return;
+    const n = Math.min(LETTERS, Math.floor((t - T.MSG) / T.LETTER) + 1);
+    ctx.font = msgFont;
+    ctx.textBaseline = 'middle';
+    const x0 = W / 2 - MSG.length * msgCw / 2;
+    const shift = Math.floor(skyT * 1.5);
+    let li = 0, i = 0;
+    for (; i < MSG.length; i++) {
+      const c = MSG[i];
+      if (c === ' ') continue;
+      if (li >= n) break;
+      const age = t - (T.MSG + li * T.LETTER);
+      ctx.globalAlpha = 0.78 + 0.22 * Math.sin(skyT * 3 + li * 1.7);
+      ctx.fillStyle = age < 0.15 ? '#ffffff' : MSG_COLS[(li + shift) % 3];
+      ctx.fillText(c, x0 + i * msgCw, msgY);
+      li++;
+    }
+    if (n < LETTERS && (skyT * 3 | 0) % 2 === 0) {
+      ctx.globalAlpha = 0.8; ctx.fillStyle = '#e6edf6';
+      ctx.fillText('_', x0 + i * msgCw, msgY);
+    }
+    ctx.globalAlpha = 1;
+    ctx.textBaseline = 'top';
+    lettersShown = n;
+  }
+
+  // Bloom: shrink the frame, remove the background with 'difference', blur, and add it back on top.
+  const glow = document.createElement('canvas'), gctx = glow.getContext('2d');
+  const GLOW_DIV = 5, GLOW_A = 0.8;
+  function drawGlow() {
+    const gw = Math.ceil(W / GLOW_DIV), gh = Math.ceil(H / GLOW_DIV);
+    if (glow.width !== gw || glow.height !== gh) { glow.width = gw; glow.height = gh; }
+    gctx.setTransform(1, 0, 0, 1, 0, 0);
+    gctx.globalCompositeOperation = 'copy';
+    gctx.filter = 'blur(2px)';
+    gctx.drawImage(canvas, 0, 0, gw, gh);
+    gctx.filter = 'none';
+    gctx.globalCompositeOperation = 'difference';
+    gctx.setTransform(gw / W, 0, 0, gh / H, 0, 0);
+    gctx.fillStyle = bgGrad;
+    gctx.fillRect(0, 0, W, H);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = GLOW_A;
+    ctx.drawImage(glow, 0, 0, W, H);
+    ctx.restore();
+  }
+
+  function render() {
+    ctx.drawImage(bgCanvas, 0, 0, W, H);
+    ctx.textBaseline = 'top';
+    ctx.font = cellFont;
+    drawSky();
+    drawSnow(snowBack, false);
+    ctx.font = cellFont;
+    buildScene();
+    drawCells();
+    drawHalos();
+    drawGlint();
+    drawGlow();
+    drawSnow(snowFront, true);
+    drawMessage();
+    if (fadeT >= 0) {
+      ctx.fillStyle = `rgba(4,6,12,${smooth(fadeT / T.FADE).toFixed(3)})`;
+      ctx.fillRect(0, 0, W, H);
+    }
+  }
+
+  // ---------- Motion ----------
+  // Turn toward the front while building, then sway gently; dragging adds a spin with momentum.
+  function baseYaw() {
+    if (reduced) return 0.22 * Math.sin(skyT * 0.12);
+    const e = smooth(clamp(t / (T.MSG + 0.5), 0, 1));
+    const sway = 0.38 * Math.sin(0.3 * Math.max(0, t - T.MSG - 0.5)) * smooth((t - T.MSG - 0.5) / 4);
+    return -2.7 * (1 - e) + sway;
+  }
+
+  let paused = false, last = performance.now();
+  let frames = 0, fpsT = last, fps = 0, hudT = 0;
+  let fadeT = -1, lastInput = -1e9, autoShakeT = 0;
+  let dragging = false;
+
+  function updateHud(now) {
+    let nl = 0;
+    for (let i = 0; i < lightT0.length; i++) if (t >= lightT0[i]) nl++;
+    let nf = 0;
+    if (flakesOn) for (let i = 0; i < NF; i++) if (!FSET[i]) nf++;
+    const deg = ((yaw * 180 / Math.PI) % 360 + 360) % 360;
+    hudEl.textContent = `rotation ${deg.toFixed(1)}°  lights ${nl}  flurry ${nf}  ` + (paused ? 'paused' : `${fps} fps`);
+    hudT = now;
+  }
+
+  function step(dt, now) {
+    const t1 = t;
+    t += dt; skyT += dt;
+    updateSnow(snowBack, dt); updateSnow(snowFront, dt);
+
+    if (!flakesOn && t >= T.SWIRL) shake(reduced ? 0.5 : 1.35);
+    stir = STIR_BASE + (stir - STIR_BASE) * Math.exp(-dt * 0.38);
+    if (flakesOn) {
+      const n = dt > 1 / 40 ? 2 : 1;
+      for (let i = 0; i < n; i++) stepFlakes(dt / n);
+    }
+    stepPuffs(dt);
+
+    // Idle: give the globe a little shake now and then.
+    if (!reduced && t > T.DONE && now - lastInput > 9000) {
+      autoShakeT += dt;
+      if (autoShakeT > 15) { autoShakeT = 0; shake(0.9); }
+    } else autoShakeT = 0;
+
+    // Spin momentum and the springy wobble.
+    if (!dragging) { userYaw += userYawV * dt; userYawV *= Math.exp(-dt * 2.2); }
+    const acc = -55 * wobX - 7 * wobV;
+    wobV += acc * dt; wobX += wobV * dt;
+    yaw = baseYaw() + userYaw;
+    soundCues(t1, t);
+
+    // Loop: fade out and build it again (unless someone is playing with it).
+    if (!reduced) {
+      if (fadeT < 0 && t > T.LOOP && now - lastInput > 8000) fadeT = 0;
+      if (fadeT >= 0) {
+        fadeT += dt;
+        if (fadeT > T.FADE) restartScene();
+      }
+    }
+  }
+
+  function frame(now) {
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000));
+    last = now;
+    if (needResize) resize();
+    RX0 = ox; RY0 = oy + 1.5 * S;
+    const roll = clamp(wobX / S, -0.08, 0.08) * 0.9;
+    RC = Math.cos(roll); RS = Math.sin(roll); SHX = wobX * 0.35;
+    if (!paused) step(dt, now);
+    if (!paused || dirty) { render(); dirty = false; frames++; }
+    if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
+    if (now - hudT >= 250) updateHud(now);
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- Music (ascii-audio.js) ----------
+  const music = (fn, ...a) => window.AsciiAudio && AsciiAudio[fn](...a);
+  const crossed = (a, b, x) => a < x && x <= b;
+  const LOG_ROWS = Math.round(WALL / LOG);
+  function soundCues(a, b) {
+    if (!window.AsciiAudio) return;
+    if (crossed(a, b, T.RING)) music('event', 'ring');
+    if (crossed(a, b, T.GLASS)) music('event', 'glass');
+    if (crossed(a, b, T.SPARK)) music('event', 'spark');
+    if (crossed(a, b, T.GROUND)) music('event', 'ground');
+    for (let i = 0; i < LOG_ROWS; i++) if (crossed(a, b, T.CABIN + i / LOG_ROWS * T.CABIN_DUR * 0.75)) music('event', 'log', { i });
+    if (crossed(a, b, T.ROOF)) music('event', 'roof');
+    for (let i = 0; i < winT.length; i++) if (crossed(a, b, winT[i])) music('event', 'window', { i });
+    for (let i = 0; i < treeT0.length; i++) if (crossed(a, b, treeT0[i])) music('event', 'tree', { i });
+    if (crossed(a, b, T.SNOWMAN)) music('event', 'snowman');
+    let nl = 0;
+    for (let i = 0; i < lightT0.length; i++) if (crossed(a, b, lightT0[i])) nl++;
+    if (nl) music('event', 'light', { n: nl });
+    for (let i = 0; i < LETTERS; i++) if (crossed(a, b, T.MSG + i * T.LETTER)) music('event', 'letter', { i, last: i === LETTERS - 1 });
+  }
+
+  function restartScene() {
+    t = reduced ? T.DONE : 0; userYaw = 0; userYawV = 0; fadeT = -1;
+    flakesOn = false; stir = 0; puffs.length = 0; autoShakeT = 0;
+    if (reduced) { flakesOn = true; resetFlakes(); }
+    dirty = true;
+  }
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
+  function replay() { restartScene(); paused = false; music('resume'); music('restart'); }
+  function shakeNow(s) {
+    lastInput = performance.now(); fadeT = -1;
+    if (paused) { paused = false; music('resume'); }
+    shake(s);
+  }
+
+  addEventListener('resize', () => { needResize = true; });
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
+    else if (e.key === 'r' || e.key === 'R') replay();
+    else if (e.key === 's' || e.key === 'S' || e.key === 'Enter') shakeNow(reduced ? 0.6 : 1.1);
+  });
+
+  // Drag sideways to spin the globe; the faster you drag, the more the snow sloshes and swirls.
+  // A tap on the globe shakes it; a tap elsewhere pauses; two quick taps replay.
+  let downX = 0, downY = 0, prevX = 0, prevT = 0, pressed = false, moved = false, pid = -1;
+  function onGlobe(x, y) {
+    const pcx = (rimMinX + rimMaxX) / 2, pcy = (rimMinY + rimMaxY) / 2;
+    const rx = (rimMaxX - rimMinX) / 2 + cw, ry = (rimMaxY - rimMinY) / 2 + ch;
+    const u = (x - pcx) / rx, v = (y - pcy) / ry;
+    if (u * u + v * v <= 1) return true;
+    return Math.abs(x - ox) < 0.95 * S && y >= collarSY - ch && y <= baseBotSY + ch;
+  }
+  canvas.addEventListener('pointerdown', e => {
+    pressed = true; moved = false; pid = e.pointerId;
+    downX = prevX = e.clientX; downY = e.clientY; prevT = performance.now();
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (!pressed || e.pointerId !== pid) return;
+    if (!moved && Math.hypot(e.clientX - downX, e.clientY - downY) < 8) return;
+    if (!moved) { moved = true; dragging = true; canvas.classList.add('dragging'); }
+    const now = performance.now(), dx = e.clientX - prevX, dtm = Math.max(8, now - prevT) / 1000;
+    prevX = e.clientX; prevT = now; lastInput = now; fadeT = -1;
+    const spin = dx / Math.max(120, S) * 1.4;
+    userYaw += spin; userYawV = spin / dtm * 0.6;
+    wobX = clamp(wobX + dx * 0.3, -S * 0.09, S * 0.09);
+    // The fluid lags behind the glass: push flakes against the motion, and stir.
+    const v = Math.abs(dx) / Math.max(120, S);
+    if (flakesOn) {
+      const k = -dx / Math.max(120, S) * 2.2;
+      for (let i = 0; i < NF; i++) if (!FSET[i]) { FVX[i] += k * cr; FVZ[i] += k * sr; }
+    }
+    stir = Math.min(2.2, stir + v * 1.1);
+    if (v > 0.02) music('event', 'slosh', { v });
+    if (paused) { paused = false; music('resume'); }
+  });
+  function release(e) {
+    if (!pressed || (e && e.pointerId !== pid)) return;
+    pressed = false; dragging = false; canvas.classList.remove('dragging');
+  }
+  canvas.addEventListener('pointercancel', release);
+  let tapTimer = 0;
+  canvas.addEventListener('pointerup', e => {
+    const wasTap = pressed && !moved;
+    release(e);
+    if (e.button > 0 || !wasTap) return;
+    const rc = canvas.getBoundingClientRect(), x = e.clientX - rc.left, y = e.clientY - rc.top;
+    if (onGlobe(x, y) && t > T.GLASS + T.GLASS_DUR) { shakeNow(reduced ? 0.6 : 1.2); return; }
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; replay(); }
+    else tapTimer = setTimeout(() => { tapTimer = 0; togglePause(); }, 280);
+  });
+
+  // Hint language: ?lang= wins, then saved site preference, then browser.
+  let pref = null;
+  try { pref = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (!pref) { try { pref = localStorage.getItem('lang'); } catch (e) {} }
+  if (!pref) pref = navigator.language || 'en';
+  const zh = String(pref).toLowerCase().startsWith('zh');
+  document.documentElement.lang = zh ? 'zh-Hant' : 'en';
+  const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  hintEl.textContent = touch ? (zh ? '拖曳旋轉 · 點水晶球搖一搖 · 點空白處暫停 · 雙擊重播'
+                                   : 'drag to spin · tap the globe to shake · tap to pause · double-tap to replay')
+                             : (zh ? '拖曳旋轉 · 點水晶球或按 S 搖一搖 · 空白鍵 暫停 · R 重播 · M 音樂'
+                                   : 'drag to spin · click the globe or S to shake · Space pause · R replay · M music');
+
+  // Score: an original music-box waltz in D major (3/4, 16 bars, 48-beat loop).
+  // Music box melody, celesta "oom-pah-pah", warm pad, soft bass and a sleigh-bell sparkle.
+  if (window.AsciiAudio) AsciiAudio.init({
+    bpm: 132, master: 0.78, reverb: 0.32, reverbTime: 2.8,
+    build(a) {
+      const N = AsciiAudio.notes, LOOP = 48;
+      const tune = N(
+        'A4:1 D5 F#5 | A5:2 F#5:1 | G5:1 B5 A5 | F#5:2 D5:1 | ' +
+        'E5:1 G5 B5 | A5:2 G5:1 | F#5:1 E5 C#5 | E5:3 | ' +
+        'A4:1 D5 F#5 | B5:2 A5:1 | G5:1 F#5 E5 | A5:2 F#5:1 | ' +
+        'B5:1 A5 G5 | F#5:1 A5 D5 | E5:1.5 F#5:.5 E5:1 | D5:3');
+      a.part(tune, (t, e) => a.musicBox(t, e.note, Math.max(1, e.sec * 2.2), { vel: 0.6 }), { length: LOOP });
+      // A high echo of the melody on the second time round, for shimmer.
+      a.part(tune, (t, e) => { if (e.beat >= 24) a.celesta(t + a.beats(0.5), AsciiAudio.transpose(e.note, 12), 0.6, { vel: 0.1, pan: 0.35 }); },
+             { length: LOOP });
+
+      const CH = { D: ['D', 'F#', 'A'], G: ['G', 'B', 'D'], Em: ['E', 'G', 'B'], A: ['A', 'C#', 'E'],
+                   Fsm: ['F#', 'A', 'C#'], Bm: ['B', 'D', 'F#'], A7: ['A', 'C#', 'G'] };
+      const BARS = ['D', 'D', 'G', 'D', 'Em', 'A', 'Fsm', 'A', 'D', 'Bm', 'G', 'D', 'G', 'D', 'A7', 'D'];
+      const chordAt = beat => CH[BARS[Math.floor((beat % LOOP) / 3)]];
+      // Waltz: bass on 1, celesta chord tones on 2 and 3.
+      a.every(1, (t, s) => {
+        const c = chordAt(s), pos = s % 3;
+        if (pos === 0) {
+          a.bass(t, c[0] + '2', a.beats(1.6), { vel: 0.42 });
+          a.pad(t, [c[0] + '3', c[1] + '4', c[2] + '4'], a.beats(2.8), { vel: 0.28, attack: 0.4, release: 0.8, cutoff: 850 });
+        } else {
+          a.celesta(t, c[1] + '4', a.beats(0.8), { vel: 0.17, pan: -0.25 });
+          a.celesta(t + 0.01, c[2] + '4', a.beats(0.8), { vel: 0.14, pan: 0.25 });
+        }
+      });
+      // Soft sleigh bells on beat 1 of every other bar, and a little ting at the turnaround.
+      a.every(3, (t, s) => { if (s % 2 === 1) a.jingle(t, 0.14, { pan: 0.3 }); });
+      a.at(45, t => a.bell(t, 'A6', 2.2, { vel: 0.12, wet: 0.5 }));
+
+      // Sound effects in sync with the animation.
+      const SP = AsciiAudio.scale('D6', 'pentatonic', 10);
+      a.on('ring', (a, d, t) => a.chime(t, 'D5', 2.4, { vel: 0.25 }));
+      a.on('glass', (a, d, t) => { a.sweep(t, 2.2, { vel: 0.22, from: 400, to: 6000, bus: 'sfx' }); a.sparkle(t + 0.4, { count: 4, vel: 0.15, notes: SP, spread: 0.2 }); });
+      a.on('spark', (a, d, t) => { a.chime(t, 'D6', 3, { vel: 0.38 }); a.sparkle(t + 0.05, { count: 3, vel: 0.2, notes: SP }); });
+      a.on('ground', (a, d, t) => a.noise(t, { dur: 1.1, filter: 'lowpass', freq: 1800, freqEnd: 300, attack: 0.3, vel: 0.25, bus: 'sfx', wet: 0.3 }));
+      a.on('log', (a, d, t) => a.thud(t, { vel: 0.3, freq: 170 + d.i * 9 }), { gap: 0.08 });
+      a.on('roof', (a, d, t) => a.pop(t, { freq: 300, vel: 0.2 }));
+      a.on('window', (a, d, t) => a.ding(t, SP[(d.i * 2) % SP.length], { vel: 0.22, dur: 1.4 }));
+      a.on('tree', (a, d, t) => a.sparkle(t, { count: 2, vel: 0.16, notes: SP }));
+      a.on('snowman', (a, d, t) => { a.boing(t, { freq: 280, vel: 0.3 }); a.heart(t + 0.25, { note: 'F#6', vel: 0.22 }); });
+      a.on('light', (a, d, t) => a.sparkle(t, { count: Math.min(2, d.n), vel: 0.14, notes: SP }), { gap: 0.1 });
+      a.on('shake', (a, d, t) => {
+        const v = Math.min(1, d.s);
+        for (let i = 0; i < 6; i++) a.jingle(t + i * 0.07, 0.3 * v * (1 - i * 0.12), { pan: i % 2 ? 0.4 : -0.4, bus: 'sfx' });
+        SP.slice(2, 8).forEach((n, i) => a.bell(t + 0.12 + i * 0.06, n, 1.2, { vel: 0.12 * v, bus: 'sfx', wet: 0.5, pan: i * 0.25 - 0.6 }));
+      }, { gap: 0.4 });
+      a.on('slosh', (a, d, t) => a.shaker(t, Math.min(0.25, 0.08 + d.v), { bus: 'sfx', freq: 5000 }), { gap: 0.09 });
+      a.on('letter', (a, d, t) => a.tick(t, { vel: 0.28, bell: d.last, note: 'D7' }));
+    }
+  });
+
+  if (reduced) { flakesOn = true; resetFlakes(); }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

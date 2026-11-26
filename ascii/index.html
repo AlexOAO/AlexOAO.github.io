@@ -189,6 +189,152 @@
     @keyframes breathe { 50% { transform: translateY(-0.14em); } }
     .k-bed { color: #475569; }
 
+    /* Snow globe preview: pale glass, snowy roof and ground, warm windows, twinkling lights, falling flakes, gold on wood */
+    .sg-glass { color: #93b4d8; }
+    .sg-snow { color: #cbd5e1; }
+    .sg-roof { color: #f1f5f9; }
+    .sg-chim { color: #94a3b8; }
+    .sg-wall { color: #c08552; }
+    .sg-tree { color: #22c55e; }
+    .sg-wood { color: #9a5b2e; }
+    .sg-gold { color: #f5b942; }
+    .sg-win { color: #fcd34d; text-shadow: 0 0 6px rgba(252,211,77,0.85); animation: sgGlow 2.4s ease-in-out infinite; }
+    @keyframes sgGlow { 50% { color: #fde68a; text-shadow: 0 0 10px rgba(252,211,77,1); } }
+    .sg-light { color: #f87171; filter: hue-rotate(calc(var(--x, 0) * 70deg)); text-shadow: 0 0 5px currentColor; animation: twinkle 1.6s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.37s); }
+    .sg-flake { display: inline-block; color: #fff; animation: sgFall 3.2s linear infinite; animation-delay: calc(var(--k, 0) * -0.7s); }
+    @keyframes sgFall { 0% { transform: translateY(-0.6em); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(1.4em); opacity: 0; } }
+    .sg-smoke { display: inline-block; color: #94a3b8; animation: sgSmoke 3s ease-out infinite; }
+    @keyframes sgSmoke { 0% { transform: translate(0, 0.5em); opacity: 0; } 30% { opacity: 0.9; } 100% { transform: translate(0.4em, -0.9em); opacity: 0; } }
+
+    /* Santa's sleigh preview: red sleigh and coat, glowing gold runner, brown reindeer with a red nose,
+       the whole team bobbing in a wave, a twinkling gold trail, moon and mountains */
+    .ss-bob { display: inline-block; animation: ss-bob 1.8s ease-in-out infinite; animation-delay: calc(var(--x, 0) * -0.05s); }
+    @keyframes ss-bob { 50% { transform: translateY(-0.2em); } }
+    .ss-red { color: #ef4444; }
+    .ss-fur { color: #f8fafc; }
+    .ss-skin { color: #fdba8c; }
+    .ss-gift { color: #34d399; }
+    .ss-gold { color: #fcd34d; text-shadow: 0 0 6px rgba(252,211,77,0.75); }
+    .ss-rein { color: #dc2626; }
+    .ss-deer { color: #d08a4e; }
+    .ss-antler { color: #f1e6cc; }
+    .ss-nose { display: inline-block; color: #ff4d4d; text-shadow: 0 0 8px rgba(255,77,77,0.95);
+               animation: ss-bob 1.8s ease-in-out infinite, ss-nose 1.2s ease-in-out infinite; animation-delay: calc(var(--x, 0) * -0.05s), 0s; }
+    @keyframes ss-nose { 50% { color: #fecaca; text-shadow: 0 0 12px rgba(255,90,90,1); } }
+    .ss-trail { color: #fde68a; animation: twinkle 1.3s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.33s); }
+    .ss-star { color: #cbd5e1; animation: twinkle 2.6s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.7s); }
+    .ss-moon { color: #fef9c3; text-shadow: 0 0 10px rgba(254,249,195,0.8); }
+    .ss-mtn { color: #475569; }
+
+    /* Snowy bridge preview: grey night, lamps that glow and sputter, shimmering reflections, drifting snow */
+    .nb-bldg { color: #273449; }
+    .nb-bridge { color: #64748b; }
+    .nb-post, .nb-rail { color: #94a3b8; }
+    .nb-water { color: #1e293b; }
+    .nb-snow { color: #cbd5e1; }
+    .nb-foot { color: #475569; }
+    .nb-lamp { color: #fff; text-shadow: 0 0 8px rgba(241,245,249,0.95); animation: nbFlicker 6s steps(1) infinite; animation-delay: calc(var(--k, 0) * -2.1s); }
+    @keyframes nbFlicker { 0%, 60%, 63%, 66%, 100% { opacity: 1; } 61%, 64% { opacity: 0.2; text-shadow: none; } }
+    .nb-ref { display: inline-block; color: #e2e8f0; animation: nbShimmer 1.6s ease-in-out infinite alternate; animation-delay: calc(var(--k, 0) * -0.37s); }
+    @keyframes nbShimmer { to { color: #64748b; transform: translateX(0.25em); } }
+    .nb-flake { display: inline-block; color: #e2e8f0; animation: nbDrift 4s linear infinite; animation-delay: calc(var(--k, 0) * -0.9s); }
+    @keyframes nbDrift { 0% { transform: translate(0.3em, -0.6em); opacity: 0; } 20%, 80% { opacity: 1; } 100% { transform: translate(-0.5em, 1.2em); opacity: 0; } }
+    .nb-spark { color: #fff; animation: twinkle 2.4s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.7s); }
+
+    /* Cozy Christmas preview: colour-cycling string and tree lights, flipping TV, blinking 12:00, flickering fire, breathing cat */
+    .cr-wire { color: #3f5f45; }
+    .cr-bulb { color: #ef4444; text-shadow: 0 0 6px currentColor; animation: crBulb 2.4s steps(1) infinite; animation-delay: calc(var(--k, 0) * -0.61s); }
+    @keyframes crBulb { 0% { color: #ef4444; } 25% { color: #4ade80; } 50% { color: #60a5fa; opacity: 0.45; } 75% { color: #facc15; } }
+    .cr-tree { color: #16a34a; }
+    .cr-orn { color: #f43f5e; }
+    .cr-star { color: #facc15; text-shadow: 0 0 8px rgba(250,204,21,0.85); animation: twinkle 2.4s ease-in-out infinite; }
+    .cr-trunk { color: #92400e; }
+    .cr-gift-r { color: #dc2626; }
+    .cr-gift-b { color: #3b82f6; }
+    .cr-curtain { color: #b91c1c; }
+    .cr-wood { color: #a16207; }
+    .cr-snow { color: #f8fafc; animation: twinkle 2.2s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.7s); }
+    .cr-moon { color: #fefce8; text-shadow: 0 0 8px rgba(254,252,232,0.9); }
+    .cr-ground { color: #dbeafe; }
+    .cr-tv { color: #a8a29e; }
+    .cr-knob { color: #4ade80; }
+    .cr-screen { animation: crChannel 8s steps(1) infinite; text-shadow: 0 0 6px currentColor; }
+    @keyframes crChannel { 0% { color: #7dd3fc; } 25% { color: #c084fc; } 50% { color: #f87171; } 62% { color: #94a3b8; } 75% { color: #4ade80; } }
+    .cr-clock { color: #4ade80; text-shadow: 0 0 6px rgba(74,222,128,0.8); animation: crBlink 1.2s steps(1) infinite; }
+    @keyframes crBlink { 60% { color: #14532d; text-shadow: none; } }
+    .cr-wreath { color: #15803d; }
+    .cr-bow { color: #ef4444; }
+    .cr-candle { color: #fde68a; text-shadow: 0 0 6px rgba(253,230,138,0.9); animation: twinkle 1.3s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.4s); }
+    .cr-stock { color: #ef4444; }
+    .cr-brick { color: #b45339; }
+    .cr-fire { display: inline-block; color: #fb923c; text-shadow: 0 0 8px rgba(251,146,60,0.9); transform-origin: 50% 100%; animation: flicker 0.8s ease-in-out infinite alternate; animation-delay: calc(var(--k, 0) * -0.17s); }
+    .cr-rug { color: #dc2626; }
+    .cr-rug-in { color: #1e3a8a; }
+    .cr-cat { display: inline-block; color: #fb923c; animation: breathe 3.6s ease-in-out infinite; }
+    .cr-eye { color: #431407; text-shadow: 0 0 2px #fdba74; }
+
+    /* Sunset bridge preview: maroon tower and cables, violet skyline with warm windows, a glowing sun,
+       drifting pink clouds, flapping birds, and a shimmering glitter path on the water */
+    .sb-cloud { display: inline-block; color: #8b3f7f; animation: sbDrift 9s ease-in-out infinite alternate; }
+    .sb-lit { display: inline-block; color: #fb8a7a; animation: sbDrift 7s ease-in-out infinite alternate-reverse; }
+    @keyframes sbDrift { to { transform: translateX(0.35em); } }
+    .sb-star { color: #fde68a; animation: twinkle 2.6s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.9s); }
+    .sb-bird { display: inline-block; color: #f5c2e7; animation: sbFlap 0.7s steps(1) infinite; animation-delay: calc(var(--k, 0) * -0.23s); }
+    @keyframes sbFlap { 50% { transform: scaleY(-0.6); } }
+    .sb-tower { color: #b4557a; }
+    .sb-steel { color: #8e4a72; }
+    .sb-city { color: #5b3463; }
+    .sb-far { color: #6f4472; }
+    .sb-win { color: #fcd34d; animation: twinkle 3.4s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.71s); }
+    .sb-beacon { color: #ef4444; animation: twinkle 1.6s steps(2) infinite; }
+    .sb-sun { color: #fde68a; text-shadow: 0 0 8px rgba(251,146,60,0.9); animation: sbSun 4s ease-in-out infinite; }
+    @keyframes sbSun { 50% { color: #fff7d6; text-shadow: 0 0 12px rgba(253,186,116,1); } }
+    .sb-lamp { color: #fdba74; }
+    .sb-water { color: #6e3f66; }
+    .sb-glint { color: #fff1c1; text-shadow: 0 0 6px rgba(251,191,36,0.8); animation: sbGlint 1.8s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.37s); }
+    @keyframes sbGlint { 50% { color: #fb923c; text-shadow: none; opacity: 0.6; } }
+    .sb-refl { color: #f59e0b; opacity: 0.75; animation: twinkle 2.2s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.5s); }
+    .sb-hull { color: #c06c98; }
+    .sb-light { color: #fde047; text-shadow: 0 0 6px rgba(253,224,71,0.9); }
+    .sb-wake { color: #e9d5ff; }
+
+    /* Aurora preview: cyan ribbon edges with a glow that travels along, flickering green rays,
+       faint violet tops, a dark treeline, pale ice and a shimmering reflection */
+    .au-star { color: #cbd5e1; animation: twinkle 2.6s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.7s); }
+    .au-top { color: #a78bfa; opacity: 0.55; animation: twinkle 3.4s ease-in-out infinite; animation-delay: calc(var(--x, 0) * -0.29s); }
+    .au-ray { color: #34d399; animation: auRay 2.6s ease-in-out infinite; animation-delay: calc(var(--x, 0) * -0.37s); }
+    @keyframes auRay { 50% { color: #a7f3d0; text-shadow: 0 0 6px rgba(52,211,153,0.8); } }
+    .au-edge { color: #67e8f9; text-shadow: 0 0 6px rgba(34,211,238,0.8); animation: auEdge 4s ease-in-out infinite; animation-delay: calc((var(--x, 0) - 17) * 0.12s); }
+    @keyframes auEdge { 50% { color: #ecfeff; text-shadow: 0 0 10px rgba(103,232,249,1); } }
+    .au-tree { color: #334155; }
+    .au-ice { color: #7d9bd6; }
+    .au-refl { color: #2dd4bf; animation: auRefl 2.2s ease-in-out infinite; animation-delay: calc(var(--x, 0) * -0.31s); }
+    @keyframes auRefl { 50% { opacity: 0.3; } }
+
+    /* Cosmic journey preview: white rocket with a red band and a flickering flame over Earth's limb, a ringed planet, a spiral galaxy */
+    .cj-rocket { color: #f1f5f9; }
+    .cj-band { color: #ef4444; }
+    .cj-flame { display: inline-block; color: #fb923c; text-shadow: 0 0 6px rgba(251,146,60,0.85); animation: cjBurn 0.5s ease-in-out infinite alternate; animation-delay: calc(var(--k, 0) * -0.13s); }
+    @keyframes cjBurn { to { color: #fde047; transform: translateY(0.08em); } }
+    .cj-gal { color: #93c5fd; }
+    .cj-core { color: #fef3c7; text-shadow: 0 0 8px rgba(254,243,199,0.9); animation: twinkle 2.6s ease-in-out infinite; }
+    .cj-planet { color: #fcd34d; }
+    .cj-ring { color: #d6b98a; }
+    .cj-atm { color: #7dd3fc; text-shadow: 0 0 6px rgba(125,211,252,0.6); }
+    .cj-sea { color: #3b82f6; }
+    .cj-land { color: #4ade80; }
+
+    /* Heart curve preview: glossy red heart with a pink outline that beats, a glint sweeping across, faint axes */
+    .hc-edge { color: #fda4af; }
+    .hc-ax { color: #64748b; }
+    .hc-hi, .hc-red, .hc-dk { color: var(--c); text-shadow: var(--s, none); animation: hcBeat 1.7s ease-out infinite, hcGlint 6s linear infinite; animation-delay: 0s, calc(var(--x, 0) * 0.05s); }
+    .hc-hi { --c: #fb7185; --s: 0 0 6px rgba(251,113,133,0.75); }
+    .hc-red { --c: #e11d48; }
+    .hc-dk { --c: #9f1239; }
+    @keyframes hcBeat { 0%, 18%, 36%, 100% { filter: none; } 8% { filter: brightness(1.6); } 26% { filter: brightness(1.3); } }
+    @keyframes hcGlint { 0%, 5%, 100% { color: var(--c); text-shadow: var(--s, none); } 2.5% { color: #fff1f2; text-shadow: 0 0 6px rgba(255,255,255,0.85); } }
+    .hc-star { color: #e2e8f0; animation: twinkle 2.2s ease-in-out infinite; animation-delay: calc(var(--k, 0) * -0.7s); }
+
     footer { color: var(--dim); font-size: 0.82rem; margin-top: 4rem; }
 
     @media (max-width: 600px) {
@@ -196,7 +342,7 @@
       .grid { grid-template-columns: 1fr; }
     }
     @media (prefers-reduced-motion: reduce) {
-      body::before, header.intro, .card, .t-light, .t-star, .r-bloom, .r-petal, .m-g, .e-sky, .e-spark, .b-disk, .g-bill, .g-fall, .d-glint, .s-star, .c-flame, .c-conf, .o-crest, .o-foam, .k-tail, .k-heart, .k-blade, .k-fly, .k-z, .k-breathe, h1 .cur { animation: none; }
+      body::before, header.intro, .card, .t-light, .t-star, .r-bloom, .r-petal, .m-g, .e-sky, .e-spark, .b-disk, .g-bill, .g-fall, .d-glint, .s-star, .c-flame, .c-conf, .o-crest, .o-foam, .k-tail, .k-heart, .k-blade, .k-fly, .k-z, .k-breathe, .sg-win, .sg-light, .sg-flake, .sg-smoke, .ss-bob, .ss-nose, .ss-trail, .ss-star, .nb-lamp, .nb-ref, .nb-flake, .nb-spark, .cr-bulb, .cr-star, .cr-snow, .cr-screen, .cr-clock, .cr-candle, .cr-fire, .cr-cat, .sb-cloud, .sb-lit, .sb-star, .sb-bird, .sb-win, .sb-beacon, .sb-sun, .sb-glint, .sb-refl, .au-star, .au-top, .au-ray, .au-edge, .au-refl, .cj-flame, .cj-core, .hc-hi, .hc-red, .hc-dk, .hc-star, h1 .cur { animation: none; }
       .r-petal { opacity: 0; }
       .card, .preview pre { transition: none; }
       .card:hover { transform: none; }
@@ -339,6 +485,78 @@
           en: "A Shiba curled up like a donut under the moon, breathing softly, sending up Z's and dreaming of bones."
         },
         preview: shibaSleepPreview()
+      },
+      {
+        href: 'snow-globe.html',
+        title: { zh: 'ASCII 雪花水晶球', en: 'ASCII Snow Globe' },
+        desc: {
+          zh: '金線掃出玻璃球，雪地上升起亮著暖燈的小木屋、松樹和雪人。拖曳旋轉、點一下搖一搖，雪花就在球裡飛舞。',
+          en: 'Gold lines sweep a glass globe into shape, and a cabin with glowing windows rises among pines and a snowman. Drag to spin it, tap to shake up a flurry.'
+        },
+        preview: snowGlobePreview()
+      },
+      {
+        href: 'santa-sleigh.html',
+        title: { zh: 'ASCII 聖誕老人雪橇', en: "ASCII Santa's Sleigh" },
+        desc: {
+          zh: '聖誕老人駕著雪橇飛過月夜，馴鹿奔馳、金色雪橇留下閃亮尾跡，禮物落下、煙火綻放。點一下放煙火，移動滑鼠讓雪橇升降。',
+          en: "Santa's sleigh flies across a moonlit sky with galloping reindeer, a glittering gold trail, falling presents and fireworks. Tap for fireworks; move to steer the sleigh."
+        },
+        preview: santaSleighPreview()
+      },
+      {
+        href: 'cozy-christmas.html',
+        title: { zh: 'ASCII 童年聖誕夜', en: 'ASCII Cozy Christmas Room' },
+        desc: {
+          zh: '溫暖的木頭客廳：爐火劈啪作響、聖誕樹燈閃爍、老電視自己轉台、錄影機 12:00 一直閃、窗外下著雪，橘貓在地毯上睡覺。點電視、樹、爐火或貓都有反應。',
+          en: 'A warm wood-panelled living room on Christmas night: a crackling fire, twinkling tree lights, an old TV flipping channels, a VCR blinking 12:00, snow past the window and an orange cat asleep on the rug. Tap the TV, tree, fire or cat.'
+        },
+        preview: cozyChristmasPreview()
+      },
+      {
+        href: 'snowy-bridge.html',
+        title: { zh: 'ASCII 雪夜橋邊', en: 'ASCII Snowy Night Bridge' },
+        desc: {
+          zh: '下雪的夜裡，石橋邊的路燈忽明忽滅，倒影在河面上顫動，雪地上只有一行腳印。移動滑鼠吹動風雪，點路燈讓它熄滅或亮起。',
+          en: 'A lonely snowy night by a stone bridge: street lamps flicker, their reflections shiver in the river and one set of footprints crosses the snow. Move to steer the wind; tap a lamp to switch it off or on.'
+        },
+        preview: snowyBridgePreview()
+      },
+      {
+        href: 'sunset-bridge.html',
+        title: { zh: 'ASCII 夕陽大橋', en: 'ASCII Sunset Bridge' },
+        desc: {
+          zh: '字元畫成的河畔夕陽：吊橋、城市天際線，太陽西沉時窗戶一盞盞亮起，雲在飄，水面金光粼粼。移動游標調整太陽高度，點水面放船、點天空放鳥。',
+          en: 'A riverside sunset drawn in characters: a suspension bridge and skyline whose windows light up as the sun sinks, drifting clouds and a shimmering reflection. Move the pointer to set the sun; tap the water for a boat, the sky for birds.'
+        },
+        preview: sunsetBridgePreview()
+      },
+      {
+        href: 'aurora.html',
+        title: { zh: 'ASCII 極光', en: 'ASCII Aurora' },
+        desc: {
+          zh: '青綠色的極光在星空下摺疊、起伏，光柱閃爍，冰封的湖面倒映著光芒。移動游標拉動極光，點一下召喚流星。',
+          en: 'Cyan and green northern lights fold and ripple across a starry sky above a frozen lake that mirrors their glow. Move to bend the ribbons; tap for a shooting star.'
+        },
+        preview: auroraPreview()
+      },
+      {
+        href: 'cosmic-journey.html',
+        title: { zh: 'ASCII 宇宙之旅', en: 'ASCII Cosmic Journey' },
+        desc: {
+          zh: '火箭在紅色煙雲中升空，穿過大氣層繞著旋轉的地球飛行，鏡頭一路拉遠，經過太陽系與群星，直到整個銀河。點一下跳到下一幕，拖曳可以轉動地球和銀河。',
+          en: 'A rocket lifts off in red exhaust clouds, climbs through the atmosphere and circles a spinning Earth, then the view pulls back past the Sun and planets, into the stars and out to the whole galaxy. Tap for the next scene; drag to turn the globe and the galaxy.'
+        },
+        preview: cosmicJourneyPreview()
+      },
+      {
+        href: 'heart-curve.html',
+        title: { zh: 'ASCII 數學愛心', en: 'ASCII Heart Curve' },
+        desc: {
+          zh: '把愛心方程式畫成字元：k 從 0 增加到 100，波浪線越擠越密，填滿成一顆有光澤的紅色愛心，閃光掠過，還會跳動。左右拖曳調整 k，點一下讓它心跳。',
+          en: 'The famous heart equation plotted in characters: as k climbs from 0 to 100 a wavy line packs tighter and fills a glossy red heart that glints and beats. Drag to set k, tap for a heartbeat.'
+        },
+        preview: heartCurvePreview()
       }
     ];
 
@@ -703,6 +921,273 @@
         '  oooooooooooooo ',
         ' ddddddddddddddd '
       ], { m: 'k-moon', s: 'e-sky', z: 'k-z', o: 'k-fur', b: 'k-fur k-breathe', c: 'k-cream', e: 'k-eye', n: 'k-nose', d: 'k-bed' });
+    }
+
+    // Snow globe: glass (g), falling flakes (f), chimney smoke (m), snowy roof (s), pines (t), string lights (l),
+    // glowing windows (w), wreath (r), snowy ground (n), gold collar and lettering (b, L), wooden base (o).
+    function snowGlobePreview() {
+      return paint([
+        '     _.---._     ',
+        '   .\'* . o *\'.   ',
+        '  / .    #  * \\  ',
+        ' | ^  .~~#.  ^ | ',
+        ' |/^\\/~~~~~\\/^\\| ',
+        ' |/^\\o.o.o.o/^\\| ',
+        ' | | |#|o|#| | | ',
+        '  \\:.:.:.:.:.:/  ',
+        '   `-._____.-\'   ',
+        '  /###########\\  ',
+        ' |*WARM WISHES*| ',
+        '  \\###########/  '
+      ], [
+        '     ggggggg     ',
+        '   ggf f m fgg   ',
+        '  g f    c  f g  ',
+        ' g t  ssscs  t g ',
+        ' gtttssssssstttg ',
+        ' gtttllllllltttg ',
+        ' g k dwdrdwd k g ',
+        '  gnnnnnnnnnnng  ',
+        '   bbbbbbbbbbb   ',
+        '  ooooooooooooo  ',
+        ' oLLLLLLLLLLLLLo ',
+        '  ooooooooooooo  '
+      ], { g: 'sg-glass', f: 'sg-flake', m: 'sg-smoke', c: 'sg-chim', s: 'sg-roof', t: 'sg-tree', l: 'sg-light',
+           d: 'sg-wall', w: 'sg-win', r: 'sg-tree', k: 'sg-wood', n: 'sg-snow', b: 'sg-gold', o: 'sg-wood', L: 'sg-gold' });
+    }
+
+    // Santa's sleigh: hat and coat (h), beard (f), face (k), presents (p), red tub (b), glowing gold runner (g),
+    // reins (r), reindeer (d) with antlers (a) and a glowing nose (n), a gold trail (t), moon (m), stars (s), mountains (x).
+    function santaSleighPreview() {
+      return paint([
+        '  +     .         .-.       *    .',
+        '     *           (   )   .      + ',
+        ' .       _^_      `-\'   \\Y/  \\Y/  ',
+        '        (o.o)        .    @>   @> ',
+        '    [#] (~~~)------------##---##  ',
+        '    \\##########/        / \\  / \\  ',
+        '  .  \\________/   +           .   ',
+        '.:*:=o========o=)                 ',
+        '       .   /\\        /\\     /\\    ',
+        '   /\\   /\\/  \\  /\\__/  \\/\\_/  \\_  ',
+        '__/  \\_/      \\/              \\__ '
+      ], [
+        '  s     s         mmm       s    s',
+        '     s           m   m   s      s ',
+        ' s       hhh      mmm   aaa  aaa  ',
+        '        fkkkf        s    dd   dn ',
+        '    ppp hfffhrrrrrrrrrrrrddrrrdd  ',
+        '    bbbbbbbbbbbb        ddd  ddd  ',
+        '  s  bbbbbbbbbb   s           s   ',
+        'ttttggggggggggggg                 ',
+        '       s   xx        xx     xx    ',
+        '   xx   xxx  x  xxxxx  xxxxx  xx  ',
+        'xxx  xxx      xx              xxx '
+      ], { s: 'ss-star', m: 'ss-moon', h: 'ss-red ss-bob', b: 'ss-red ss-bob', f: 'ss-fur ss-bob', k: 'ss-skin ss-bob',
+           p: 'ss-gift ss-bob', g: 'ss-gold ss-bob', r: 'ss-rein ss-bob', d: 'ss-deer ss-bob', a: 'ss-antler ss-bob',
+           n: 'ss-nose', t: 'ss-trail', x: 'ss-mtn' });
+    }
+
+    // Snowy night bridge: falling flakes, two bridge lamps and the big path lamp that flicker,
+    // dim buildings, stone bridge, lamp reflections shimmering in the river, water, railing,
+    // snowy path with lone footprints.
+    function snowyBridgePreview() {
+      const rows = [
+        '  .     *     /    .     .  _/^\\_ ',
+        '   [#]-,   +    [#]-,    *  |@@@| ',
+        ' _|=|_ | .   _|=|__ |   .   |@@@| ',
+        '|:#::#|| |  |#::#::||  .  *  \'=\'  ',
+        '=============================|  . ',
+        ':|:/\'\'\'\'\'\\:|:/\'\'\'\'\'\\:|:/\'--|  ..  ',
+        '::/  =    \\::/ =    \\:/--  |/...  ',
+        '~~~~ = ~~~~~~~ =~~~~~--   /\'.,..  ',
+        ' ~  =  ~   ~  = ~ --|   /..*.,\'...',
+        '   ~ -  ~   ~ -=--  |  /.\'...,..\'.',
+        '-- ~ =   ~--|  =    | /...*..,..\'.'
+      ];
+      const EDGE = [99, 99, 99, 99, 99, 30, 28, 26, 24, 23, 22];   // where the snowy path starts
+      let k = 0;
+      return rows.map((r, y) => [...r].map((c, x) => {
+        if (c === ' ') return c;
+        let cl;
+        if (x >= EDGE[y]) cl = c === ',' ? 'nb-foot' : c === '*' ? 'nb-spark' : 'nb-snow';
+        else if (x >= 27 && y <= 6) cl = c === '@' || c === '^' ? 'nb-lamp' : 'nb-post';
+        else if (y <= 3) cl = '.*+/'.includes(c) && !(c === '/' && y === 0 && x > 26) ? 'nb-flake'
+          : (y === 1 && ((x >= 3 && x <= 5) || (x >= 16 && x <= 18))) ? 'nb-lamp'
+          : (x === 6 || x === 7 || x === 19 || x === 20) && y <= 3 && '-,|'.includes(c) ? 'nb-post' : 'nb-bldg';
+        else if ((c === '=' || c === '-') && y >= 6 && ((x >= 3 && x <= 6) || (x >= 13 && x <= 16))) cl = 'nb-ref';
+        else if (c === '~') cl = 'nb-water';
+        else if (c === '-' || (c === '|' && y >= 7)) cl = 'nb-rail';
+        else cl = 'nb-bridge';
+        // A lamp's letters share one --k so the whole head flickers together.
+        const kk = cl === 'nb-lamp' ? (x >= 27 ? 2 : x >= 16 ? 1 : 0) : k++;
+        const anim = cl === 'nb-flake' || cl === 'nb-ref' || cl === 'nb-lamp' || cl === 'nb-spark';
+        return `<span class="${cl}"${anim ? ` style="--k:${kk};--x:${x}"` : ''}>${Site.esc(c)}</span>`;
+      }).join('')).join('\n');
+    }
+
+    // Cozy Christmas room: string lights (b), tree (g) with lights (l), baubles (o), star (s) and gifts (R U);
+    // window (c curtains, f frame, v snow, M moon, n snowy ground); TV (x) with a flipping screen (e), knobs (p)
+    // and a blinking clock (d); wreath (G) with a bow (r), candles (i), mantel (m), stockings (k), bricks (B), fire (F);
+    // rug (q, N centre) and a breathing cat (C, E eyes).
+    function cozyChristmasPreview() {
+      return paint([
+        'o~~~*~~~o~~~*~~~o~~~*~~~o~~~*~~~o~',
+        '    *   |.------.|   .-o-o-.      ',
+        '   /o\\  ||* . @ ||  o       o     ',
+        '  /+^o\\ || .  * ||   \'-o-o-\'      ',
+        '  /^^+\\ ||^^^^^^||   i   ><   i   ',
+        ' /o^+^^\\|\'------\'| ============== ',
+        ' /+^^o^\\ .-\\--/-.   v |.----.| v  ',
+        '/^o^^+^^\\|======|o   ||  ^^  ||   ',
+        '   |||   |======|o   || ^##^ ||   ',
+        '[#]|||[#][12:00 ]    ||######||   ',
+        '   .~~~~~~~~~~~~~~~~~.   /\\_/\\    ',
+        '  (  ~  (  ====  )  ~ ) =(-.-)__) '
+      ], [
+        'bwwwbwwwbwwwbwwwbwwwbwwwbwwwbwwwbw',
+        '    s   cffffffffc   GGlGlGG      ',
+        '   gog  cfv v M fc  l       l     ',
+        '  glgog cf v  v fc   GGlGlGG      ',
+        '  ggglg cfnnnnnnfc   i   rr   i   ',
+        ' goglgggcffffffffc mmmmmmmmmmmmmm ',
+        ' glggogg xxxxxxxx   k BBBBBBBB k  ',
+        'ggogglgggxeeeeeexp   BB  FF  BB   ',
+        '   ttt   xeeeeeexp   BB FFFF BB   ',
+        'RRRtttUUUxddddd x    BBFFFFFFBB   ',
+        '   qqqqqqqqqqqqqqqqqqq   CCCCC    ',
+        '  q  q  q  NNNN  q  q q CCECECCCC '
+      ], { b: 'cr-bulb', w: 'cr-wire', l: 'cr-bulb', g: 'cr-tree', o: 'cr-orn', s: 'cr-star', t: 'cr-trunk',
+           R: 'cr-gift-r', U: 'cr-gift-b', c: 'cr-curtain', f: 'cr-wood', v: 'cr-snow', M: 'cr-moon', n: 'cr-ground',
+           x: 'cr-tv', e: 'cr-screen', p: 'cr-knob', d: 'cr-clock', G: 'cr-wreath', r: 'cr-bow', i: 'cr-candle',
+           m: 'cr-wood', k: 'cr-stock', B: 'cr-brick', F: 'cr-fire', q: 'cr-rug', N: 'cr-rug-in', C: 'cr-cat', E: 'cr-cat cr-eye' });
+    }
+
+    // Sunset bridge: suspension tower (t), cables and deck (k), lamps (d), skyline (y) with lit windows (w),
+    // a hazy far tower (f), beacons (r), the sun (u), drifting clouds (c, lit edges l), stars (s), birds (b),
+    // water (a) with the sun's glitter (g), window reflections (x), a boat (h hull, o light) and its wake (e).
+    function sunsetBridgePreview() {
+      return paint([
+        ' ~~==~~        .      ~~===~~     ',
+        '~=====~~    v   v   ~~=====~~~    ',
+        '    H===H\\    v         |      .  ',
+        '   /H   H|\\            ##:    *   ',
+        '  / H   H| \\           ### //H=H##',
+        ' /  H===H|#|\\   .@@@.  ##//#|H H:#',
+        '/|  H   H|#|#\\\\@@@@@@@ //#|:|H#H##',
+        ' |  H   H|#|#|:\\      /#|:|#|H#H:#',
+        '==o=H==oH===o====o====o====o====o=',
+        '----H~-_H~-|-~|~+===+--__|--|--_|~',
+        '~~--H~~~H~_:~_:__*==-~~\\_o_/~-~~:-',
+        '_-~-H-_-H-~~~~-~++===--~~~-~-~~~~_'
+      ], [
+        ' cccccc        s      ccccccc     ',
+        'llllllll    b   b   llllllllll    ',
+        '    tttttk    b         y      s  ',
+        '   kt   tkk            yyw    r   ',
+        '  k t   tk k           yyy kkfffyy',
+        ' k  tttttkykk   uuuuu  yykkykf fwy',
+        'kk  t   tkykykkuuuuuuu kkykwkfyfyy',
+        ' k  t   tkykykwk      kykwkykfyfwy',
+        'kkdktkkdtkkkdkkkkdkkkkdkkkkdkkkkdk',
+        'aaaataaataaxaaxagggggaaaaxaaxaaaxa',
+        'aaaataaataaxaaxaagggaaahhohheeaaxa',
+        'aaaataaataaaaaaagggggaaaaaaaaaaaaa'
+      ], { c: 'sb-cloud', l: 'sb-lit', s: 'sb-star', b: 'sb-bird', t: 'sb-tower', k: 'sb-steel', y: 'sb-city', w: 'sb-win',
+           r: 'sb-beacon', f: 'sb-far', u: 'sb-sun', d: 'sb-lamp', a: 'sb-water', g: 'sb-glint', x: 'sb-refl',
+           h: 'sb-hull', o: 'sb-light', e: 'sb-wake' });
+    }
+
+    // Aurora: ribbon edges (e) with a V-shaped fold, rays rising from them (r), faint violet tops (v),
+    // stars (s), the far treeline (t), and a lake of ice floes (i) mirroring the glow (w).
+    function auroraPreview() {
+      return paint([
+        '  +      .        *        .   +  ',
+        '     :  : \' :  \'    \' :  : \' :    ',
+        '  .  |: |!:||!|    :|!: |:|!:| .  ',
+        '    |!||!:|!||!|:  |!|:||!||!|!|  ',
+        '  _/============\\ /=============\\_',
+        '                 V                ',
+        ' .   :  \'   :   \'  :   \' :   \'   .',
+        '|!:|:|!|:|!|  |!:|!|:|!|:|!|:|!|:|',
+        '=========\\_____/==================',
+        '^A^_^^A^__^A^^^A^_^__^^A^^_^A^^^A^',
+        '~=~-  |!|  ~~=~-~ :|!|: ~-=~  |:  ',
+        ' ~~=~ :|: ~=~-~~ ~ |!| ~~=-~ :!: ~'
+      ], [
+        '  s      s        s        s   s  ',
+        '     v  v v v  v    v v  v v v    ',
+        '  s  rr rrrrrrr    rrrr rrrrrr s  ',
+        '    rrrrrrrrrrrrr  rrrrrrrrrrrrr  ',
+        '  eeeeeeeeeeeeeee eeeeeeeeeeeeeeee',
+        '                 e                ',
+        ' s   v  v   v   v  v   v v   v   s',
+        'rrrrrrrrrrrr  rrrrrrrrrrrrrrrrrrrr',
+        'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+        'tttttttttttttttttttttttttttttttttt',
+        'iiii  www  iiiiii wwwww iiii  ww  ',
+        ' iiii www iiiiii i www iiiii www i'
+      ], { s: 'au-star', v: 'au-top', r: 'au-ray', e: 'au-edge', t: 'au-tree', i: 'au-ice', w: 'au-refl' });
+    }
+
+    // Cosmic journey: a rocket (w, red band b, flame f) climbing over Earth's limb (atmosphere a, sea o,
+    // land l), with a ringed planet (p, rings r), a spiral galaxy (g, core c) and twinkling stars (s).
+    function cosmicJourneyPreview() {
+      return paint([
+        ' +          /\\ . ',
+        '  .~-~.  . |..|  ',
+        ' (~@~)     |##|  ',
+        '  \'~-~\'.   |::|  ',
+        '          /|::|\\ ',
+        ' -=O=-     \'**\'  ',
+        '.           **   ',
+        '           *::* +',
+        '            .:   ',
+        '  +  .--~~~--.   ',
+        '  .~\'~~%%~~~\'~.  ',
+        '~\'~~~%%%~~~~%~~\'~'
+      ], [
+        ' s          ww s ',
+        '  ggggg  s wwww  ',
+        ' ggcgg     bbbb  ',
+        '  gggggs   wwww  ',
+        '          wwwwww ',
+        ' rrprr     ffff  ',
+        's           ff   ',
+        '           ffff s',
+        '            ff   ',
+        '  s  aaaaaaaaa   ',
+        '  aaaoolloooaaa  ',
+        'aaooollloooolooaa'
+      ], { s: 'e-sky', w: 'cj-rocket', b: 'cj-band', f: 'cj-flame', g: 'cj-gal', c: 'cj-core',
+           p: 'cj-planet', r: 'cj-ring', a: 'cj-atm', o: 'cj-sea', l: 'cj-land' });
+    }
+
+    // Heart curve: highlight letters (h), red fill (r), shadow (d), pink outline (e), axes (a), sparkles (s).
+    function heartCurvePreview() {
+      return paint([
+        '   ____ ^ ____   ',
+        '  /@$B8\\|/oe{}\\  ',
+        ' |8&@$%#e<>{}[]| ',
+        ' |$B%oue<>{[]zt| ',
+        '--\\oeu{}[]tzrc/->',
+        '   \\u{}tzrcjx/   ',
+        '    \\tjx+=-;/    ',
+        ' *   \\zx=:;/   + ',
+        '      \\+:-/      ',
+        '       \\:/       '
+      ], [
+        '   eeee a eeee   ',
+        '  ehhhheaerrrre  ',
+        ' ehhhhhhrrrrrrre ',
+        ' ehhhrrrrrrrrdde ',
+        'aaerrrrrrrddddeaa',
+        '   errrdddddde   ',
+        '    eddddddde    ',
+        ' s   eddddde   s ',
+        '      eddde      ',
+        '       ede       '
+      ], { h: 'hc-hi', r: 'hc-red', d: 'hc-dk', e: 'hc-edge', a: 'hc-ax', s: 'hc-star' });
     }
 
     function render() {

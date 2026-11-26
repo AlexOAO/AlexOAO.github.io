@@ -1,0 +1,879 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ASCII Heart Curve | Alex Li (李翔緯)</title>
+  <meta name="description" content="The heart curve y = x^(2/3) + 0.9 sin(kx) sqrt(3 - x^2) plotted with ASCII characters: as k climbs from 0 to 100 a wavy line folds into dense red strokes that fill a glossy, shaded heart, which glints, sparkles and beats. Drag to set k, tap for a heartbeat. Vanilla JS on a single canvas.">
+  <meta name="theme-color" content="#030305">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;600;800&family=STIX+Two+Text:ital@0;1&display=swap">
+  <style>
+    :root {
+      --sky: #030305;
+      --text: #e6edf6;
+      --muted: #a3b1c6;
+      --accent: #3b82f6;
+      --mono: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+      --serif: "STIX Two Text", "Times New Roman", Times, serif;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--sky);
+      color: var(--text);
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    canvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100svh;
+      display: block;
+      touch-action: none; /* horizontal drags set k, so the browser must not pan or zoom */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: ew-resize;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .back {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(59, 130, 246, 0.45);
+      background: rgba(59, 130, 246, 0.12);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .back:hover, .back:focus-visible {
+      background: rgba(59, 130, 246, 0.28);
+      border-color: var(--accent);
+      outline: none;
+    }
+    /* The equation and the live k, typeset under the heart. */
+    .eq {
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-family: var(--serif);
+      color: #ff5c7c;
+      text-shadow: 0 0 10px rgba(255, 40, 80, 0.55), 0 0 2px rgba(255, 90, 120, 0.6);
+      line-height: 1.3;
+      white-space: nowrap;
+      pointer-events: none;
+      font-variant-numeric: lining-nums;
+    }
+    .eq i { font-style: italic; }
+    .eq sup { font-size: 0.62em; vertical-align: 0; position: relative; top: -0.62em; margin-left: 0.04em; }
+    .eq .rad { margin-left: 0.08em; }
+    .eq .ov { border-top: 0.07em solid currentColor; padding: 0.06em 0.06em 0 0.1em; }
+    .eq .kv { display: inline-block; min-width: 6.4em; text-align: left; }
+    .eq .kl { text-align: center; }
+    .hud, .hint {
+      position: fixed;
+      z-index: 1;
+      bottom: 12px;
+      color: var(--muted);
+      opacity: 0.75;
+      font: 11px/1.4 var(--mono);
+      white-space: pre;
+      pointer-events: none;
+      max-width: calc(100% - 24px);
+      overflow: hidden;
+    }
+    .hud { left: 12px; }
+    .hint {
+      right: 12px;
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    @media (max-width: 640px) {
+      .hud, .hint { font-size: 10px; }
+      .hint { bottom: 30px; } /* stack above the HUD on narrow screens */
+    }
+  </style>
+</head>
+<body>
+  <h1 class="sr-only">ASCII Heart Curve</h1>
+  <a class="back" href="./">← ASCII</a>
+  <canvas id="c" role="img" aria-label="Animated plot of the heart curve drawn with red ASCII characters on a starry background: as k grows the wavy line packs into dense vertical strokes that fill a glossy, shaded heart, which glints, sparkles and gently beats"></canvas>
+  <div class="eq" id="eq" aria-hidden="true">
+    <div><i>y</i> = <i>x</i><sup>2/3</sup> + 0.9 sin(<i>kx</i>)<span class="rad">√<span class="ov">3 − <i>x</i><sup>2</sup></span></span></div>
+    <div class="kl"><span class="kv"><i>k</i> = <span id="kval">0.00</span></span></div>
+  </div>
+  <div class="hud" id="hud" aria-hidden="true"></div>
+  <div class="hint" id="hint"></div>
+
+<script src="ascii-audio.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  // ---------- Timeline (seconds of scene time; 20 s = 24 beats at 72 bpm) ----------
+  const T = {
+    IN: 0.6,                            // the near-flat curve fades in
+    RISE: 0.4, RISE_DUR: 10.6,          // k climbs 0.15 -> 100, cosine-eased
+    FULL: 11.0,                         // heart complete, heartbeat starts
+    GLINT: 11.7, GLINT_DUR: 1.4,        // a white glint sweeps across
+    POPS: 12.8,                         // sparkles pop on the heart
+    COLLAPSE: 17.6, COLLAPSE_DUR: 1.7,  // k falls back to ~0
+    END: 20.0
+  };
+  const K_MIN = 0.15, K_MAX = 100;
+  const BPM = 72, PULSE_PER = 120 / BPM;  // a lub-dub every two beats
+
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T_START = reduced ? 13.4 : 0;     // reduced motion: open on the finished heart and hold it
+  const T_HOLD_MAX = 16.5;
+  const PULSE_A = reduced ? 0 : 0.034;    // heartbeat scale
+
+  // ---------- Math ----------
+  const SQ3 = Math.sqrt(3);
+  const CY = 0.35;                         // the heart scales about (0, CY) when it beats
+  const XB = x => Math.cbrt(x * x);
+  const AMP = x => 0.9 * Math.sqrt(Math.max(0, 3 - x * x));
+  const curve = (x, k) => XB(x) + Math.sin(k * x) * AMP(x);
+  const YT = 2.72, YB = -1.86;             // vertical extent of the axes (math units)
+  const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
+  const TAU = Math.PI * 2;
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  const rng = mulberry32(20260214);
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const smooth = v => { v = clamp(v, 0, 1); return v * v * (3 - 2 * v); };
+  const hash = (c, s) => {
+    let h = Math.imul(c ^ Math.imul(s, 0x27d4eb2d), 0x9E3779B1);
+    h ^= h >>> 15; h = Math.imul(h, 0x85ebca6b); h ^= h >>> 13;
+    return (h >>> 0) / 4294967296;
+  };
+
+  // ---------- Characters & colours ----------
+  const CH = [];
+  const ci = s => { let i = CH.indexOf(s); if (i < 0) { CH.push(s); i = CH.length - 1; } return i; };
+  const C_SPACE = ci(' ');
+  const C_BAR = ci('|'), C_SL = ci('/'), C_BS = ci('\\'), C_DASH = ci('-'), C_UND = ci('_');
+  const C_PLUS = ci('+'), C_UP = ci('^'), C_GT = ci('>'), C_DOT = ci('.');
+  // Fill letters from deep shadow to the glossy highlight; each cell picks one by hash.
+  const RAMP = ['rtcz+=jx;', 'tzrcjxv+=', 'ztrjxcvfi', 'nuoe<>{}[]', 'aoeu0()<>{', '0Q8B$&%#', '$B8&@#%Q'].map(s => [...s].map(ci));
+  const NR = RAMP.length;
+  const DIGITS = {};
+  ['-2', '-1', '1', '2'].forEach(s => { DIGITS[s] = [...s].map(ci); });
+
+  const LEVELS = 16;
+  const PAL = [];
+  const pal = (r, g, b) => { PAL.push([r, g, b]); return PAL.length - 1; };
+  const P_CURVE = pal(255, 58, 92);
+  const P_FILL = pal(230, 34, 66);
+  const P_EDGE = pal(255, 150, 172);
+  const P_GLINT = pal(255, 236, 242);
+  const P_AXIS = pal(120, 128, 146);
+
+  const NCOLOR = PAL.length * LEVELS;
+  const COLSTR = new Array(NCOLOR);
+  PAL.forEach(([r, g, b], p) => {
+    for (let l = 0; l < LEVELS; l++) {
+      // Top levels overshoot 1 and wash toward white, so the highlight reads as glossy.
+      const m = 0.3 + 1.05 * l / (LEVELS - 1), w = Math.max(0, m - 1) * 160;
+      const lift = v => Math.min(255, v * m + w) | 0;
+      COLSTR[p * LEVELS + l] = `rgb(${lift(r)},${lift(g)},${lift(b)})`;
+    }
+  });
+  const STAR_COLS = [];
+  for (let l = 0; l < 8; l++) STAR_COLS.push(`rgba(195,200,222,${(0.05 + 0.45 * l / 7).toFixed(3)})`);
+
+  // ---------- Canvas, grid, layout ----------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const hudEl = document.getElementById('hud');
+  const hintEl = document.getElementById('hint');
+  const eqEl = document.getElementById('eq');
+  const kEl = document.getElementById('kval');
+
+  let W = 0, H = 0, fs = 10, cw = 6, ch = 11, cols = 0, rows = 0;
+  let U = 100, ox = 0, oy = 0, XR = 2.4;
+  let cellFont = '', bgGrad = null, sparkHalo = null;
+  let stampA, cchar, ccol, touched, order, nT = 0, stamp = 0;
+  let hitP, hitCh, inside, dist, hgt, hgt2, shadeA;
+  const counts = new Uint32Array(NCOLOR);
+  let stars = null, sparks = null;
+  let needResize = true, dirty = true;
+
+  function resize() {
+    needResize = false;
+    W = canvas.clientWidth || innerWidth;
+    H = canvas.clientHeight || innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    // Equation size first: it reserves the space under the plot.
+    const eqFs = clamp(Math.min(W * 0.045, H * 0.032), 15, 27);
+    const TOP = 50, BOT = eqFs * 2.75 + (W < 640 ? 54 : 40);
+    XR = W < 640 ? 1.88 : 2.45;
+    U = Math.max(30, Math.min((W - 20) / (2 * XR), (H - TOP - BOT) / (YT - YB)));
+    ox = W / 2;
+    oy = TOP + Math.max(0, (H - TOP - BOT - (YT - YB) * U) / 2) + YT * U;
+    eqEl.style.fontSize = eqFs.toFixed(1) + 'px';
+    const eqTop = Math.round(oy - YB * U - eqFs * 0.25);
+    eqEl.style.top = eqTop + 'px';
+
+    fs = clamp(Math.round(U / 11.5), 7, 14);
+    cellFont = `${fs}px ${MONO}`;
+    ctx.font = cellFont;
+    cw = ctx.measureText('M').width || fs * 0.6;
+    ch = fs * 1.1;
+    cols = Math.ceil(W / cw);
+    rows = Math.ceil(H / ch);
+    const n = cols * rows;
+    stampA = new Uint32Array(n); cchar = new Uint8Array(n); ccol = new Uint16Array(n);
+    touched = new Int32Array(n); order = new Int32Array(n); stamp = 0;
+    hitP = new Uint8Array(n); hitCh = new Uint8Array(n);
+    inside = new Uint8Array(n); dist = new Float32Array(n);
+    hgt = new Float32Array(n); hgt2 = new Float32Array(n); shadeA = new Float32Array(n);
+
+    bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, '#020204');
+    bgGrad.addColorStop(1, '#060508');
+    sparkHalo = sprite(Math.max(8, cw * 3), 215, 220, 255);
+
+    // Dim star dots: [x, y, char, phase, speed].
+    const r2 = mulberry32(7);
+    const nStars = Math.round(cols * rows * 0.012);
+    stars = new Float32Array(nStars * 5);
+    for (let i = 0; i < nStars; i++) {
+      const o = i * 5;
+      stars[o] = ((r2() * cols) | 0) * cw; stars[o + 1] = ((r2() * rows) | 0) * ch;
+      stars[o + 2] = r2() < 0.82 ? 0 : 1; stars[o + 3] = r2() * TAU; stars[o + 4] = 0.4 + r2() * 1.8;
+    }
+    // 4-point sparkles around (not on) the heart: [x, y, period, phase, ray length].
+    const ns = clamp(Math.round(W * H / 52000), 7, 20);
+    sparks = new Float32Array(ns * 5);
+    for (let i = 0, tries = 0; i < ns && tries < 900; tries++) {
+      const x = r2() * W, y = 44 + r2() * (H - 120);
+      if (y > eqTop - 24 && y < eqTop + eqFs * 2.9) continue;   // keep the equation clear
+      const ex = (x - ox) / (1.95 * U), ey = (y - (oy - 0.4 * U)) / (2.1 * U);
+      if (ex * ex + ey * ey < 1) continue;
+      const o = i * 5;
+      sparks[o] = Math.floor(x / cw) * cw; sparks[o + 1] = Math.floor(y / ch) * ch;
+      sparks[o + 2] = 2.4 + r2() * 3.2; sparks[o + 3] = r2() * 10; sparks[o + 4] = 4 + r2() * 8;
+      i++;
+    }
+    dirty = true;
+  }
+
+  function sprite(R, r, g, b) {
+    const c = document.createElement('canvas');
+    c.width = c.height = Math.ceil(R * 2);
+    const x = c.getContext('2d'), gr = x.createRadialGradient(R, R, 0, R, R, R);
+    gr.addColorStop(0, 'rgba(255,255,255,0.95)');
+    gr.addColorStop(0.18, `rgba(${r},${g},${b},0.8)`);
+    gr.addColorStop(0.5, `rgba(${r},${g},${b},0.2)`);
+    gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
+    x.fillStyle = gr; x.fillRect(0, 0, c.width, c.height);
+    return c;
+  }
+
+  // ---------- Scene state ----------
+  let t = T_START, skyT = 0, k = K_MIN, scale = 1, fill = 0, letters = 0;
+  let dragK = -1;                  // >= 0 while the pointer is scrubbing k
+  let tapT = -99, beatSeed = 0, beatT = -99;
+  const pops = [];                 // sparkles on the heart: {x, y, born, len}
+  const parts = [];                // tap burst particles: {x, y, vx, vy, born, life, c, w}
+
+  const kRise = u => K_MIN + (K_MAX - K_MIN) * (1 - Math.cos(Math.PI * clamp(u, 0, 1))) / 2;
+  const tForK = kk => T.RISE + T.RISE_DUR * Math.acos(clamp(1 - 2 * (kk - K_MIN) / (K_MAX - K_MIN), -1, 1)) / Math.PI;
+
+  function kAt(s) {
+    if (s < T.COLLAPSE) return kRise((s - T.RISE) / T.RISE_DUR);
+    const u = clamp((s - T.COLLAPSE) / T.COLLAPSE_DUR, 0, 1);
+    return K_MIN + (K_MAX - K_MIN) * (1 + Math.cos(Math.PI * u)) / 2;
+  }
+  const bump = (x, c, w) => { const d = (x - c) / w; return Math.exp(-d * d); };
+  // Heartbeat strength envelope: on once the heart is whole, off as it collapses.
+  const beatOn = s => smooth((s - T.FULL + 0.2) / 0.8) * (1 - smooth((s - T.COLLAPSE) / 0.4));
+  function pulseAt(s) {
+    const p = (((s - T.FULL) % PULSE_PER) + PULSE_PER) % PULSE_PER / PULSE_PER;
+    return bump(p, 0.07, 0.045) + 0.55 * bump(p, 0.24, 0.05);
+  }
+
+  function sceneParams() {
+    k = dragK >= 0 ? dragK : kAt(t);
+    const tapDt = skyT - tapT;
+    const tapE = tapDt < 0 ? 0 : tapDt < 0.07 ? tapDt / 0.07 : Math.exp(-(tapDt - 0.07) / 0.16);
+    const auto = dragK >= 0 ? 0 : beatOn(t) * pulseAt(t);
+    scale = 1 + PULSE_A * auto + (reduced ? 0 : 0.06) * tapE;
+    fill = smooth((k - 20) / 62);
+  }
+
+  // Math -> pixels, with the heartbeat scale about (0, CY).
+  const pxX = x => ox + x * U * scale;
+  const pxY = y => oy - (CY + (y - CY) * scale) * U;
+
+  // ---------- Cell buffer ----------
+  function put(c, cc, p, l) {
+    if (stampA[c] !== stamp) { stampA[c] = stamp; touched[nT++] = c; }
+    cchar[c] = cc; ccol[c] = p * LEVELS + (l < 0 ? 0 : l > 15 ? 15 : l | 0);
+  }
+
+  function buildAxes() {
+    const ry = Math.floor(oy / ch), cx = Math.floor(ox / cw);
+    const cL = Math.max(0, Math.floor((ox - XR * U) / cw)), cR = Math.min(cols - 1, Math.floor((ox + XR * U) / cw));
+    for (let c = cL; c <= cR; c++) if ((c - cx) % 2 === 0) put(ry * cols + c, C_DASH, P_AXIS, 5);
+    if (cR < cols) put(ry * cols + cR, C_GT, P_AXIS, 7);
+    const rT = Math.max(0, Math.floor((oy - YT * U) / ch)), rB = Math.min(rows - 1, Math.floor((oy - YB * U) / ch));
+    for (let r = rT + 1; r <= rB; r++) if (r !== ry) put(r * cols + cx, C_BAR, P_AXIS, 4);
+    put(rT * cols + cx, C_UP, P_AXIS, 7);
+    for (const v of [-2, -1, 1, 2]) {
+      if (Math.abs(v) <= XR - 0.15) {
+        const c = Math.floor((ox + v * U) / cw);
+        put(ry * cols + c, C_PLUS, P_AXIS, 8);
+        const d = DIGITS[String(v)];
+        if (ry + 1 < rows) d.forEach((g, j) => put((ry + 1) * cols + c - (d.length - 1) + j, g, P_AXIS, 8));
+      }
+      if (v <= YT - 0.2 && v >= YB + 0.2) {
+        const r = Math.floor((oy - v * U) / ch);
+        put(r * cols + cx, C_PLUS, P_AXIS, 8);
+        const d = DIGITS[String(v)];
+        d.forEach((g, j) => put(r * cols + cx - 1 - d.length + j, g, P_AXIS, 8));
+      }
+    }
+  }
+
+  // Plot the curve itself: dense samples, each short segment marks the cells it crosses with
+  // a stroke glyph that follows its slope. Steep segments win over flat ones.
+  let hitList = null, nHit = 0;
+  function plotCurve() {
+    if (!hitList || hitList.length !== hitP.length) hitList = new Int32Array(hitP.length);
+    for (let i = 0; i < nHit; i++) hitP[hitList[i]] = 0;
+    nHit = 0;
+    const span = 2 * SQ3 * U * scale / cw;                       // heart width in cells
+    const N = Math.ceil(Math.max(span * 6, 0.55 * k * 18, 200));
+    const dx = 2 * SQ3 / N;
+    let xa = -SQ3, pa = pxX(xa), qa = pxY(curve(xa, k));
+    for (let i = 1; i <= N; i++) {
+      const xb = -SQ3 + i * dx, pb = pxX(xb), qb = pxY(curve(xb, k));
+      const col = Math.floor((pa + pb) * 0.5 / cw);
+      if (col >= 0 && col < cols) {
+        const s = ((qb - qa) / ch) / ((pb - pa) / cw), as = s < 0 ? -s : s;
+        let g, pr;
+        if (as > 2.2) { g = C_BAR; pr = 3; }
+        else if (as < 0.45) { const f = (qa + qb) * 0.5 / ch; g = f - Math.floor(f) > 0.6 ? C_UND : C_DASH; pr = 1; }
+        else { g = s < 0 ? C_SL : C_BS; pr = 2; }
+        let r0 = Math.floor(Math.min(qa, qb) / ch), r1 = Math.floor(Math.max(qa, qb) / ch);
+        if (r0 < 0) r0 = 0; if (r1 >= rows) r1 = rows - 1;
+        for (let r = r0; r <= r1; r++) {
+          const c = r * cols + col;
+          if (hitP[c] === 0) hitList[nHit++] = c;
+          if (pr >= hitP[c]) { hitP[c] = pr; hitCh[c] = g; }
+        }
+      }
+      pa = pb; qa = qb;
+    }
+  }
+
+  // Heart mask (the curve's envelope), its distance field, and a puffy shaded height field.
+  let bc0 = 0, bc1 = -1, br0 = 0, br1 = -1;
+  const LX = -0.5, LY = -0.62, LZ = 0.6, LN = Math.hypot(LX, LY, LZ);
+  const lx = LX / LN, ly = LY / LN, lz = LZ / LN;
+  const hn = Math.hypot(lx, ly, lz + 1), hx_ = lx / hn, hy_ = ly / hn, hz_ = (lz + 1) / hn;
+  function buildMask() {
+    bc0 = Math.max(1, Math.floor(pxX(-SQ3) / cw) - 1); bc1 = Math.min(cols - 2, Math.ceil(pxX(SQ3) / cw) + 1);
+    br0 = Math.max(1, Math.floor(pxY(2.35) / ch) - 1); br1 = Math.min(rows - 2, Math.ceil(pxY(-1.6) / ch) + 1);
+    const BIG = 1e9;
+    for (let r = br0 - 1; r <= br1 + 1; r++) {
+      const my = (oy - (r + 0.5) * ch) / U, hy = (my - CY) / scale + CY;
+      for (let c = bc0 - 1; c <= bc1 + 1; c++) {
+        const i = r * cols + c;
+        let inn = 0;
+        if (r >= br0 && r <= br1 && c >= bc0 && c <= bc1) {
+          const hx = ((c + 0.5) * cw - ox) / U / scale;
+          if (hx > -SQ3 && hx < SQ3) { const b = XB(hx), a = AMP(hx); inn = hy > b - a && hy < b + a ? 1 : 0; }
+        }
+        inside[i] = inn; dist[i] = inn ? BIG : 0;
+      }
+    }
+    // Two-pass chamfer distance in pixels.
+    const dd = Math.hypot(cw, ch);
+    for (let r = br0; r <= br1; r++) for (let c = bc0; c <= bc1; c++) {
+      const i = r * cols + c;
+      if (!inside[i]) continue;
+      let d = dist[i];
+      d = Math.min(d, dist[i - 1] + cw, dist[i - cols] + ch, dist[i - cols - 1] + dd, dist[i - cols + 1] + dd);
+      dist[i] = d;
+    }
+    for (let r = br1; r >= br0; r--) for (let c = bc1; c >= bc0; c--) {
+      const i = r * cols + c;
+      if (!inside[i]) continue;
+      let d = dist[i];
+      d = Math.min(d, dist[i + 1] + cw, dist[i + cols] + ch, dist[i + cols + 1] + dd, dist[i + cols - 1] + dd);
+      dist[i] = d;
+    }
+    // Rounded profile, then blurred twice so the chamfer steps do not show in the shading.
+    const R = 0.95 * U * scale;
+    for (let r = br0 - 1; r <= br1 + 1; r++) for (let c = bc0 - 1; c <= bc1 + 1; c++) {
+      const i = r * cols + c, u = Math.min(1, dist[i] / R);
+      hgt[i] = inside[i] ? R * Math.sqrt(1 - (1 - u) * (1 - u)) : 0;
+    }
+    for (let pass = 0; pass < 2; pass++) {
+      const A = pass ? hgt2 : hgt, B = pass ? hgt : hgt2;
+      for (let r = br0; r <= br1; r++) for (let c = bc0; c <= bc1; c++) {
+        const i = r * cols + c;
+        B[i] = (A[i] * 4 + A[i - 1] + A[i + 1] + A[i - cols] + A[i + cols]) / 8;
+      }
+    }
+    for (let r = br0; r <= br1; r++) {
+      const my = (oy - (r + 0.5) * ch) / U, hy = (my - CY) / scale + CY;
+      const vert = 0.66 + 0.34 * clamp((hy + 1.4) / 3.4, 0, 1);
+      for (let c = bc0; c <= bc1; c++) {
+        const i = r * cols + c;
+        if (!inside[i]) continue;
+        const gx = (hgt[i + 1] - hgt[i - 1]) / (2 * cw), gy = (hgt[i + cols] - hgt[i - cols]) / (2 * ch);
+        const nl = Math.hypot(gx, gy, 1), nx = -gx / nl, ny = -gy / nl, nz = 1 / nl;
+        const lam = Math.max(0, nx * lx + ny * ly + nz * lz);
+        const sp = Math.pow(Math.max(0, nx * hx_ + ny * hy_ + nz * hz_), 28);
+        const hx = ((c + 0.5) * cw - ox) / U / scale;
+        // A soft glossy spot on the upper-left lobe, as if lit from the top left.
+        const dxs = hx + 0.82, dys = hy - 1.62, spot = Math.exp(-(dxs * dxs * 1.6 + dys * dys * 2.4) / 0.2);
+        shadeA[i] = clamp((0.16 + 0.6 * lam + 0.5 * sp) * vert + 0.55 * spot, 0, 1);
+      }
+    }
+  }
+
+  function edgeChar(i) {
+    const gx = dist[i + 1] - dist[i - 1], gy = dist[i + cols] - dist[i - cols]; // points inward
+    const ax = gx < 0 ? -gx : gx, ay = gy < 0 ? -gy : gy;
+    if (ax > 2.2 * ay) return C_BAR;
+    if (ay > 2.2 * ax) return gy > 0 ? C_UND : C_DASH;
+    return gx * gy > 0 ? C_SL : C_BS;
+  }
+
+  function buildScene() {
+    stamp++; nT = 0;
+    buildAxes();
+    plotCurve();
+    buildMask();
+
+    // Glint: a diagonal band (top-left to bottom-right axis) sweeping left to right.
+    const gu = (t - T.GLINT) / T.GLINT_DUR;
+    const gOn = !reduced && dragK < 0 && gu > 0 && gu < 1;
+    const gc = -2.9 + 5.8 * gu;
+    // Ripple: each heartbeat re-rolls letters in a ring spreading out from the centre.
+    const rip = (skyT - beatT) * 4.5;   // ring radius, math units
+    const cx = ox, cy = pxY(CY + 0.4);
+    const thrA = fill * 1.6 - 0.4;
+    letters = 0;
+
+    for (let r = br0; r <= br1; r++) {
+      const my = (oy - (r + 0.5) * ch) / U, hy = (my - CY) / scale + CY;
+      for (let c = bc0; c <= bc1; c++) {
+        const i = r * cols + c;
+        if (!inside[i]) continue;
+        const sh = shadeA[i];
+        const converted = fill > 0 && hash(i, 7) < thrA + 0.4 * (sh - 0.45);
+        if (!converted) continue;
+        const edge = !inside[i - 1] || !inside[i + 1] || !inside[i - cols] || !inside[i + cols];
+        let g, p, l;
+        if (edge) { g = edgeChar(i); p = P_EDGE; l = 7 + 3 * sh; }
+        else {
+          const dpx = ((c + 0.5) * cw - cx) / U, dpy = ((r + 0.5) * ch - cy) / U;
+          const seed = beatSeed - (dpx * dpx + dpy * dpy < rip * rip ? 0 : 1);
+          const ramp = RAMP[Math.min(NR - 1, (sh * NR) | 0)];
+          g = ramp[(hash(i, seed) * ramp.length) | 0];
+          p = P_FILL; l = 4 + sh * 11.5;
+        }
+        if (gOn) {
+          const hx = ((c + 0.5) * cw - ox) / U / scale, gd = Math.abs(hx - 0.5 * (hy - CY) - gc);
+          if (gd < 0.2) {
+            const e = 1 - gd / 0.2;
+            if (e > 0.35) { p = P_GLINT; l = 6 + 9 * e; }
+            else l += 6 * e / 0.35;
+          }
+        }
+        put(i, g, p, l);
+        letters++;
+      }
+    }
+    // Strokes of the curve wherever the fill has not taken over yet.
+    for (let j = 0; j < nHit; j++) {
+      const i = hitList[j];
+      if (stampA[i] === stamp && (ccol[i] / LEVELS | 0) !== P_AXIS) continue;   // already a heart letter
+      if (fill > 0.7 && !inside[i] && hash(i, 3) < (fill - 0.7) / 0.28) continue; // stray peaks fade out
+      put(i, hitCh[i], P_CURVE, 12 - 5 * fill);
+      letters++;
+    }
+  }
+
+  // Bucket by colour so fillStyle changes once per colour, not once per cell.
+  function drawCells() {
+    counts.fill(0);
+    for (let i = 0; i < nT; i++) counts[ccol[touched[i]]]++;
+    let acc = 0;
+    for (let c = 0; c < NCOLOR; c++) { const n = counts[c]; counts[c] = acc; acc += n; }
+    for (let i = 0; i < nT; i++) { const c = touched[i]; order[counts[ccol[c]]++] = c; }
+    let cur = -1;
+    for (let i = 0; i < nT; i++) {
+      const c = order[i], cc = ccol[c];
+      if (cchar[c] === C_SPACE) continue;
+      if (cc !== cur) { cur = cc; ctx.fillStyle = COLSTR[cc]; }
+      const row = (c / cols) | 0;
+      ctx.fillText(CH[cchar[c]], (c - row * cols) * cw, row * ch);
+    }
+  }
+
+  // ---------- Sky, sparkles, pops, burst ----------
+  function drawSky() {
+    for (let o = 0; o < stars.length; o += 5) {
+      const tw = 0.5 + 0.5 * Math.sin(skyT * stars[o + 4] + stars[o + 3]);
+      ctx.fillStyle = STAR_COLS[(tw * 7.99) | 0];
+      ctx.fillText(stars[o + 2] ? '+' : '.', stars[o], stars[o + 1]);
+    }
+  }
+
+  // A 4-point star: '*' core, '-' and '|' rays and faint diagonals, plus a soft halo.
+  function star4(x, y, e, len, a) {
+    ctx.globalAlpha = (0.3 + 0.7 * e) * a;
+    ctx.fillText(e > 0.35 ? '*' : '+', x, y);
+    if (e < 0.02) return;
+    const nh = Math.round(len * e), nv = Math.round(nh * 0.6), nd = Math.round(nh * 0.25);
+    for (let j = 1; j <= nh; j++) {
+      ctx.globalAlpha = a * e * Math.pow(1 - j / (nh + 1), 1.3);
+      ctx.fillText('-', x + j * cw, y); ctx.fillText('-', x - j * cw, y);
+    }
+    for (let j = 1; j <= nv; j++) {
+      ctx.globalAlpha = a * e * Math.pow(1 - j / (nv + 1), 1.3);
+      ctx.fillText('|', x, y + j * ch); ctx.fillText('|', x, y - j * ch);
+    }
+    for (let j = 1; j <= nd; j++) {
+      ctx.globalAlpha = 0.35 * a * e * (1 - j / (nd + 1));
+      ctx.fillText('/', x + j * cw, y - j * ch); ctx.fillText('/', x - j * cw, y + j * ch);
+      ctx.fillText('\\', x - j * cw, y - j * ch); ctx.fillText('\\', x + j * cw, y + j * ch);
+    }
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = a * e * 0.8;
+    ctx.drawImage(sparkHalo, x + cw / 2 - sparkHalo.width / 2, y + ch / 2 - sparkHalo.height / 2);
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  const FLARE = 1.6;
+  function drawSparkles() {
+    ctx.fillStyle = '#e8edff';
+    for (let o = 0; o < sparks.length; o += 5) {
+      const cyc = (skyT + sparks[o + 3]) % sparks[o + 2];
+      const p = cyc / FLARE, e = p < 1 ? Math.pow(Math.sin(Math.PI * p), 2) : 0;
+      star4(sparks[o], sparks[o + 1], e, sparks[o + 4], 1);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // A random point inside the heart (math units), weighted toward the top half.
+  function heartPoint(rnd) {
+    for (let n = 0; n < 40; n++) {
+      const x = (rnd() * 2 - 1) * SQ3 * 0.92, b = XB(x), a = AMP(x) * 0.9;
+      const y = b - a + 2 * a * Math.sqrt(rnd());
+      if (y > b - a && y < b + a) return [x, y];
+    }
+    return [0, 0.8];
+  }
+
+  function drawPops() {
+    ctx.fillStyle = '#ffffff';
+    for (let i = pops.length - 1; i >= 0; i--) {
+      const q = pops[i], age = (skyT - q.born) / 0.9;
+      if (age >= 1) { pops.splice(i, 1); continue; }
+      const e = Math.pow(Math.sin(Math.PI * age), 2);
+      const x = Math.floor(pxX(q.x) / cw) * cw, y = Math.floor(pxY(q.y) / ch) * ch;
+      star4(x, y, e, q.len, 1);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  const PART_CH = ['*', '+', '.', '♥', '+', '*'];
+  function drawParts(dt) {
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const q = parts[i], age = (skyT - q.born) / q.life;
+      if (age >= 1) { parts.splice(i, 1); continue; }
+      q.x += q.vx * dt; q.y += q.vy * dt; q.vx *= Math.pow(0.12, dt); q.vy = q.vy * Math.pow(0.12, dt) + 26 * dt;
+      ctx.globalAlpha = (1 - age) * (1 - age);
+      ctx.fillStyle = q.w ? '#fff2f5' : '#ff6f8e';
+      ctx.fillText(q.c, q.x, q.y);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // Bloom: shrink the frame, remove the background with 'difference', blur, and add it back on top.
+  const glow = document.createElement('canvas'), gctx = glow.getContext('2d');
+  const GLOW_DIV = 5, GLOW_A = 0.95;
+  function drawGlow() {
+    const gw = Math.ceil(W / GLOW_DIV), gh = Math.ceil(H / GLOW_DIV);
+    if (glow.width !== gw || glow.height !== gh) { glow.width = gw; glow.height = gh; }
+    gctx.setTransform(1, 0, 0, 1, 0, 0);
+    gctx.globalCompositeOperation = 'copy';
+    gctx.filter = 'blur(2px)';
+    gctx.drawImage(canvas, 0, 0, gw, gh);
+    gctx.filter = 'none';
+    gctx.globalCompositeOperation = 'difference';
+    gctx.setTransform(gw / W, 0, 0, gh / H, 0, 0);
+    gctx.fillStyle = bgGrad;
+    gctx.fillRect(0, 0, W, H);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = GLOW_A;
+    ctx.drawImage(glow, 0, 0, W, H);
+    ctx.restore();
+  }
+
+  let lastDt = 0;
+  function render() {
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+    ctx.textBaseline = 'top';
+    ctx.font = cellFont;
+    drawSky();
+    drawSparkles();
+    sceneParams();
+    buildScene();
+    // The plot dims at the very start and end of each loop.
+    const fade = reduced || dragK >= 0 ? 1 : smooth(t / T.IN) * (1 - 0.65 * smooth((t - T.END + 0.7) / 0.7));
+    ctx.globalAlpha = fade;
+    drawCells();
+    ctx.globalAlpha = 1;
+    drawPops();
+    drawParts(lastDt);
+    drawGlow();
+    eqEl.style.opacity = (0.45 + 0.55 * fade).toFixed(3);
+    kEl.textContent = k.toFixed(2);
+  }
+
+  // ---------- Loop, HUD, controls ----------
+  let paused = false, last = performance.now();
+  let frames = 0, fpsT = last, fps = 0, hudT = 0;
+
+  function updateHud(now) {
+    const waves = k * SQ3 / Math.PI;           // full periods of sin(kx) across [-sqrt3, sqrt3]
+    const tail = paused ? 'paused' : `${fps} fps`;
+    const head = `k ${k.toFixed(2)}  waves ${waves.toFixed(1)}  `;
+    hudEl.textContent = W < 640 ? head + tail : head + `letters ${letters.toLocaleString('en-US')}  ` + tail;
+    hudT = now;
+  }
+
+  const prng = mulberry32(99);
+  function spawnPops(dt) {
+    if (reduced || dragK >= 0 || t < T.POPS || t > T.COLLAPSE - 0.3) return;
+    if (prng() < dt * 1.6) {
+      const [x, y] = heartPoint(prng);
+      pops.push({ x, y, born: skyT, len: 2 + prng() * 3 });
+      music('event', 'pop');
+    }
+  }
+
+  function frame(now) {
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); // no jumps after a hidden tab
+    last = now;
+    if (needResize) resize();
+    lastDt = paused ? 0 : dt;
+    if (!paused) {
+      const t1 = t;
+      skyT += dt;
+      if (dragK < 0) {
+        t += dt;
+        if (reduced) { if (t > T_HOLD_MAX) t = T_HOLD_MAX; }   // reduced motion: hold the heart, no loop
+        else if (t >= T.END) { t = 0; music('restart'); }
+      }
+      if (dragK < 0) soundCues(t1, t);
+      spawnPops(dt);
+    }
+    if (!paused || dirty) { render(); dirty = false; frames++; }
+    if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
+    if (now - hudT >= 250) updateHud(now);
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- Music (ascii-audio.js) ----------
+  const music = (fn, ...a) => window.AsciiAudio && AsciiAudio[fn](...a);
+  const crossed = (a, b, x) => a < x && x <= b;
+  function soundCues(a, b) {
+    if (!window.AsciiAudio || b < a) return;
+    if (crossed(a, b, T.RISE)) music('event', 'rise');
+    if (crossed(a, b, T.FULL)) music('event', 'full');
+    if (crossed(a, b, T.GLINT)) music('event', 'glint');
+    if (crossed(a, b, T.COLLAPSE)) music('event', 'collapse');
+    // Heartbeat thumps, in step with the visible pulse (lub at 7%, dub at 24% of the period).
+    if (beatOn(b) > 0.3 && !reduced) {
+      const ph = x => (x - T.FULL) / PULSE_PER;
+      if (Math.floor(ph(b) - 0.07) > Math.floor(ph(a) - 0.07)) { music('event', 'lub'); beatSeed++; beatT = skyT; }
+      if (Math.floor(ph(b) - 0.24) > Math.floor(ph(a) - 0.24)) music('event', 'dub');
+    }
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
+  function replay() {
+    t = reduced ? T_START : 0; dragK = -1; pops.length = 0; parts.length = 0;
+    paused = false; dirty = true; music('resume'); music('restart');
+  }
+  // Jump the timeline to where the rising k equals kk, so the animation carries on from there.
+  function setK(kk) {
+    kk = clamp(kk, K_MIN, K_MAX);
+    t = kk >= K_MAX - 0.01 && t >= T.FULL && t < T.COLLAPSE ? t : tForK(kk);
+    dirty = true;
+  }
+
+  // Tap: a strong heartbeat, a ring of letters re-rolled and a burst of sparkles.
+  function heartbeat(px, py) {
+    if (reduced) { togglePause(); return; }
+    tapT = skyT; beatSeed++; beatT = skyT;
+    const bx = px == null ? pxX(0) : px, by = py == null ? pxY(0.9) : py;
+    for (let i = 0; i < 34; i++) {
+      const a = Math.random() * TAU, v = (0.9 + Math.random() * 1.8) * U;
+      parts.push({ x: bx, y: by, vx: Math.cos(a) * v, vy: Math.sin(a) * v * 0.85 - 0.3 * U,
+        born: skyT, life: 0.8 + Math.random() * 0.9, c: PART_CH[(Math.random() * PART_CH.length) | 0], w: Math.random() < 0.4 });
+    }
+    if (fill > 0.6) for (let i = 0; i < 4; i++) {
+      const [x, y] = heartPoint(Math.random);
+      pops.push({ x, y, born: skyT + i * 0.08, len: 2 + Math.random() * 3 });
+    }
+    if (parts.length > 400) parts.splice(0, parts.length - 400);
+    music('event', 'tap');
+    dirty = true;
+  }
+
+  addEventListener('resize', () => { needResize = true; });
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return; // leave Cmd/Ctrl+R alone
+    if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
+    else if (e.key === 'r' || e.key === 'R') replay();
+    else if (e.key === 'Enter' || e.key === 'b' || e.key === 'B') heartbeat();
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      setK(k + (e.key === 'ArrowRight' ? 5 : -5));
+    }
+  });
+
+  // Drag left/right to set k (0 at the left of the heart, 100 at the right). A tap is a heartbeat;
+  // two quick taps replay.
+  let down = null, lastTap = 0;
+  const kFromX = x => {
+    const half = SQ3 * 1.05 * U;
+    return clamp((x - ox + half) / (2 * half), 0, 1) * K_MAX;
+  };
+  canvas.addEventListener('pointerdown', e => {
+    if (e.button > 0) return;
+    down = { x: e.clientX, y: e.clientY, id: e.pointerId, drag: false };
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (!down || e.pointerId !== down.id) return;
+    if (!down.drag && Math.abs(e.clientX - down.x) > 8) down.drag = true;
+    if (down.drag) { dragK = Math.max(K_MIN, kFromX(e.clientX)); dirty = true; }
+  });
+  const endPointer = (e, cancel) => {
+    if (!down || e.pointerId !== down.id) return;
+    const d = down; down = null;
+    if (d.drag) { const kk = dragK; dragK = -1; setK(kk); return; }
+    if (cancel) return;
+    const now = performance.now();
+    if (now - lastTap < 300) { lastTap = 0; replay(); return; }
+    lastTap = now;
+    heartbeat(e.clientX, e.clientY);
+  };
+  canvas.addEventListener('pointerup', e => endPointer(e, false));
+  canvas.addEventListener('pointercancel', e => endPointer(e, true));
+
+  // Hint language: ?lang= wins, then saved site preference, then browser.
+  let pref = null;
+  try { pref = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (!pref) { try { pref = localStorage.getItem('lang'); } catch (e) {} }
+  if (!pref) pref = navigator.language || 'en';
+  const zh = String(pref).toLowerCase().startsWith('zh');
+  document.documentElement.lang = zh ? 'zh-Hant' : 'en';
+  const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  hintEl.textContent = touch ? (zh ? '左右拖曳調整 k · 點一下心跳 · 雙擊重播' : 'drag ←→ to set k · tap for a heartbeat · double-tap to replay')
+                             : (zh ? '拖曳或 ←→ 調整 k · 點擊心跳 · 雙擊重播 · 空白鍵 暫停 · R 重播 · M 音樂'
+                                   : 'drag or ←→ to set k · click for a heartbeat · double-click replay · Space pause · R replay · M music');
+
+  // Score: an original, gentle love song in F major at 72 bpm. Six 4/4 bars last exactly one
+  // 20 s loop of the scene, so the page restarts the music on every loop. A music-box melody over
+  // rolling broken chords, a warm pad and bass; a soft heartbeat thump on each pulse.
+  if (window.AsciiAudio) AsciiAudio.init({
+    bpm: BPM, master: 0.85, reverb: 0.35, reverbTime: 3.2,
+    build(a) {
+      const N = AsciiAudio.notes, LOOP = 24;
+      const tune = N(
+        'A4:1.5 C5:.5 F5:1 E5:1 | E5:1.5 D5:.5 C5:2 | D5:1 F5:1 A5:1.5 G5:.5 | ' +
+        'F5:1 D5:1 Bb5:1.5 A5:.5 | G5:1 E5:1 C5:1 E5:1 | F5:3 r:1');
+      a.part(tune, (t, e) => a.musicBox(t, e.note, Math.max(1.2, e.sec * 1.6), { vel: 0.5, pan: 0.12 }), { length: LOOP });
+      // A soft counter-line an octave down on the second half of the loop.
+      const echo = N('r:12 D4:2 F4:2 | G4:2 Bb4:2 | A4:4');
+      a.part(echo, (t, e) => { if (e.note) a.celesta(t, e.note, e.sec * 1.2, { vel: 0.22, pan: -0.3 }); }, { length: LOOP });
+
+      const CH = {
+        F: 'F2 C3 F3 A3 C4', Am: 'A2 E3 A3 C4 E4', Dm: 'D2 A2 D3 F3 A3',
+        Bb: 'Bb1 F2 Bb2 D3 F3', Gm7: 'G2 D3 F3 Bb3 D4', C7: 'C2 G2 Bb2 E3 G3'
+      };
+      // Half-bar chords (2 beats each).
+      const PROG = 'F F Am Am Dm Dm Bb Bb Gm7 C7 F F'.split(' ').map(c => CH[c].split(' '));
+      const chordAt = beat => PROG[Math.floor((beat % LOOP) / 2)];
+      // Broken chords in 8ths, rising then falling; the last bar thins out.
+      const ARP = [1, 2, 3, 4, 3, 2, 1, 2];
+      a.every(0.5, (t, s) => {
+        const b = (s * 0.5) % LOOP, c = chordAt(b), i = s % 8;
+        if (b >= 21 && s % 2) return;
+        a.pluck(t, c[ARP[i]], a.beats(1.4), { vel: i % 4 === 0 ? 0.3 : 0.2, pan: -0.25 + ARP[i] * 0.1, type: 'triangle' });
+      });
+      a.every(2, (t, s) => {
+        const c = chordAt(s * 2);
+        a.bass(t, c[0], a.beats(1.8), { vel: 0.32 });
+        a.pad(t, [c[2], c[3], c[4]], a.beats(1.9), { vel: 0.26, attack: 0.7, release: 1.1, cutoff: 900 });
+      });
+
+      // Sound effects in sync with the animation.
+      const SP = AsciiAudio.scale('F6', 'pentatonic', 6);
+      a.on('rise', (a, d, t) => a.sweep(t, T.RISE_DUR, { from: 180, to: 2400, q: 2, vel: 0.1, bus: 'sfx', wet: 0.5 }));
+      a.on('full', (a, d, t) => a.chime(t, 'F6', 3, { vel: 0.26 }));
+      a.on('glint', (a, d, t) => { a.whoosh(t, { vel: 0.12 }); a.sparkle(t + 0.2, { count: 4, vel: 0.16, spread: 0.09, notes: SP }); });
+      a.on('pop', (a, d, t) => a.sparkle(t, { count: 2, vel: 0.12, spread: 0.06, notes: SP }), { gap: 0.3 });
+      a.on('lub', (a, d, t) => a.thud(t, { freq: 72, vel: 0.42 }));
+      a.on('dub', (a, d, t) => a.thud(t, { freq: 60, vel: 0.26 }));
+      a.on('tap', (a, d, t) => {
+        a.thud(t, { freq: 80, vel: 0.5 });
+        a.heart(t + 0.02, { note: 'A5', vel: 0.28 });
+        a.sparkle(t + 0.06, { count: 3, vel: 0.14, spread: 0.06, notes: SP });
+      }, { gap: 0.12 });
+      a.on('collapse', (a, d, t) => {
+        ['C6', 'A5', 'F5', 'C5'].forEach((n, i) => a.bell(t + i * 0.22, n, 2.4, { vel: 0.2 - i * 0.03, bus: 'sfx', wet: 0.6, pan: 0.3 - i * 0.2 }));
+      });
+    }
+  });
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

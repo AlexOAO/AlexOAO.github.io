@@ -1,0 +1,973 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ASCII Snowy Night Bridge | Alex Li (李翔緯)</title>
+  <meta name="description" content="A lonely snowy night by a stone bridge, drawn entirely with ASCII characters: street lamps that hum and flicker, their reflections shivering in the dark river, wind-blown snow, a single car crossing and lone footprints in the snow. Vanilla JS on a single canvas.">
+  <meta name="theme-color" content="#000000">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;600;800&display=swap">
+  <style>
+    :root {
+      --bg: #0b1120;
+      --sky: #000000;
+      --text: #e6edf6;
+      --muted: #a3b1c6;
+      --accent: #3b82f6;
+      --mono: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--sky);
+      color: var(--text);
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    canvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100svh;
+      display: block;
+      touch-action: none; /* dragging steers the wind; double-tap means pause */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: crosshair;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .back {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(59, 130, 246, 0.45);
+      background: rgba(59, 130, 246, 0.12);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .back:hover, .back:focus-visible {
+      background: rgba(59, 130, 246, 0.28);
+      border-color: var(--accent);
+      outline: none;
+    }
+    .hud, .hint {
+      position: fixed;
+      z-index: 1;
+      bottom: 12px;
+      color: var(--muted);
+      opacity: 0.75;
+      font: 11px/1.4 var(--mono);
+      white-space: pre;
+      pointer-events: none;
+      max-width: calc(100% - 24px);
+      overflow: hidden;
+    }
+    .hud { left: 12px; }
+    .hint {
+      right: 12px;
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    @media (max-width: 640px) {
+      .hud, .hint { font-size: 10px; }
+      .hint { bottom: 30px; } /* stack above the HUD on narrow screens */
+    }
+  </style>
+</head>
+<body>
+  <h1 class="sr-only">ASCII Snowy Night Bridge</h1>
+  <a class="back" href="./">← ASCII</a>
+  <canvas id="c" role="img" aria-label="Animated snowy night drawn with ASCII characters: a stone arch bridge over a dark river, street lamps glowing and flickering with shimmering reflections in the water, a snowy riverside path with a railing and lone footprints, and snow drifting in the wind"></canvas>
+  <div class="hud" id="hud" aria-hidden="true"></div>
+  <div class="hint" id="hint"></div>
+
+<script src="ascii-audio.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T_START = 0;                        // scene time at load (headless tests change this)
+  const TIME_SCALE = reduced ? 0.4 : 1;     // scene seconds per real second
+  const CYCLE = 24;                         // one loop of the night, in scene seconds
+  // Timeline inside a loop: a car crosses, a gust blows, the lamps go out one by one, dark, relight.
+  const TL = { CAR: 3.2, GUST: 6.2, GUST_END: 10.8, OUT: 19.3, DARK: 20.9, UP: 21.9 };
+  const CAR_DUR = 9.5;
+  const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+  // Integer hash -> 0..1, stable per (a, b).
+  const hash2 = (a, b) => {
+    let h = Math.imul(a | 0, 374761393) + Math.imul(b | 0, 668265263) | 0;
+    h = Math.imul(h ^ h >>> 13, 1274126177);
+    return ((h ^ h >>> 16) >>> 0) / 4294967296;
+  };
+
+  // ---------- Characters & greys ----------
+  const CH = [' '];
+  const ci = s => { let i = CH.indexOf(s); if (i < 0) { CH.push(s); i = CH.length - 1; } return i; };
+  const G = {};
+  for (const s of '.:;\'",`-_=~+*^/\\|#@%()1lio[]!') G[s] = ci(s);
+  const STONE = [G[':'], G['.'], G['1'], G[';'], G['l'], G['!'], G['i'], G[':']];
+
+  const LEVELS = 32;
+  const COLSTR = [];
+  for (let l = 0; l < LEVELS; l++) {
+    const v = Math.pow(l / (LEVELS - 1), 0.85) * 255;
+    COLSTR.push(`rgb(${(v * 0.95) | 0},${(v * 0.97) | 0},${Math.min(255, v + 4) | 0})`);
+  }
+
+  // Materials. RECV: how much lamp light each one picks up.
+  const M = { SKY: 0, BLDG: 1, WIN: 2, LPOST: 3, HEAD: 4, PARA: 5, FACE: 6, RING: 7, ARCH: 8,
+              WATER: 9, GROUND: 10, CURB: 11, RAIL: 12, BIG: 13 };
+  const RECV = [0.3, 0.75, 0.3, 0.7, 0, 0.85, 0.8, 0.8, 0.12, 0, 0.75, 0.8, 0.75, 0.6];
+  // Things in front of the deck: the car's lights never draw over these.
+  const FRONT = [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+
+  // ---------- Canvas, grid, layout ----------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const hudEl = document.getElementById('hud');
+  const hintEl = document.getElementById('hint');
+  const toneCv = document.createElement('canvas'), tctx = toneCv.getContext('2d');
+
+  let W = 0, H = 0, S = 1, fs = 9, cw = 5, ch = 10, cols = 0, rows = 0, cellFont = '';
+  let VPx = 0, VPy = 0, xBot = 0, curbM = 1;
+  let mat, g0, base, hsh, lampOf, light, stampA, fch, flv, touched, order, nT = 0, stamp = 0;
+  let LAMPS = [], ARCHES = [], waterTop = 0;
+  const counts = new Uint32Array(LEVELS);
+  let needResize = true, dirty = true;
+
+  const yT = x => H * (0.452 + 0.03 * x / VPx);           // top of the parapet
+  const yS = x => H * (0.635 + 0.02 * x / VPx);           // water line / arch springing
+  const yC = x => VPy + (VPx - x) * curbM;                // edge of the snowy path
+  const yR = x => 0.75 * H + (VPy - 0.75 * H) * x / VPx;  // railing top
+  const PARA_H = () => 0.024 * H;
+  const colOf = x => Math.floor(x / cw), rowOf = y => Math.floor(y / ch);
+
+  // A street lamp. kind: 'near' (on the bridge, swan-neck), 'far' (other side of the bridge), 'big' (on the path).
+  function makeLamp(kind, px, sz, hgt) {
+    const L = { kind, px, sz, I: 1, prevI: 1, userOff: false, userT: -99, ok: 0.5 + 0.5 * Math.random() };
+    if (kind === 'big') {
+      L.baseY = yC(px) + 0.035 * H;
+      L.hx = px; L.hw = 0.05 * S;
+      L.roofTop = 0.1 * H; L.bodyTop = 0.126 * H; L.bodyBot = 0.186 * H;
+      L.armY = L.bodyBot + 0.006 * H; L.postW = Math.max(cw, 0.013 * S);
+      L.sigma = 0.13 * S; L.gain = 0.62;
+    } else {
+      L.baseY = yT(px) + 0.006 * H;
+      L.armY = L.baseY - hgt;
+      L.hx = px - 0.03 * S * sz; L.hw = 0.021 * S * sz;
+      L.roofTop = L.armY + 0.004 * H; L.bodyTop = L.roofTop + 0.014 * H * sz; L.bodyBot = L.bodyTop + 0.028 * H * sz;
+      L.postW = cw * 0.9;
+      L.sigma = (kind === 'near' ? 0.08 : 0.045) * S; L.gain = kind === 'near' ? 0.55 : 0.36;
+    }
+    L.hy = (L.bodyTop + L.bodyBot) / 2;
+    // Integer cell ranges, so even a one-cell lamp head always shows.
+    L.rb0 = rowOf(L.bodyTop); L.rb1 = Math.max(L.rb0, rowOf(L.bodyBot));
+    L.rr0 = Math.min(L.rb0 - 1, rowOf(L.roofTop));
+    L.cb0 = colOf(L.hx - L.hw / 2); L.cb1 = Math.max(L.cb0, colOf(L.hx + L.hw / 2));
+    L.cp0 = colOf(px - L.postW / 2); L.cp1 = Math.max(L.cp0, colOf(px + L.postW / 2 - 0.01));
+    L.ra = rowOf(L.armY); L.rp1 = rowOf(L.baseY);
+    return L;
+  }
+
+  // Which glyph (if any) a lamp puts in cell (c, r): [glyph, material].
+  function lampCell(L, c, r) {
+    if (r >= L.rb0 && r <= L.rb1 && c >= L.cb0 && c <= L.cb1) {
+      const edge = r === L.rb0 || r === L.rb1 || c === L.cb0 || c === L.cb1;
+      return [edge ? G['#'] : G['@'], M.HEAD];
+    }
+    if (r >= L.rr0 && r < L.rb0) {
+      const k = (r - L.rr0 + 1) / (L.rb0 - L.rr0 + 1);
+      const mid = (L.cb0 + L.cb1) / 2, half = (L.cb1 - L.cb0) / 2 * k + 0.3;
+      if (Math.abs(c - mid) <= half) return [Math.abs(c - mid) < 0.6 ? G['^'] : c < mid ? G['/'] : G['\\'], M.HEAD];
+    }
+    if (L.kind !== 'big' && r === L.ra && ((c >= L.cb0 && c <= L.cp1) || (c >= L.cp1 && c <= L.cb0)))
+      return [c >= L.cp0 ? G['.'] : G['_'], M.LPOST];
+    if (r > L.ra && r <= L.rp1 && c >= L.cp0 && c <= L.cp1)
+      return [G['|'], L.kind === 'big' ? M.BIG : M.LPOST];
+    if (L.kind === 'big' && r === L.rb1 + 1 && c >= L.cb0 + 1 && c <= L.cb1 - 1) return [G['='], M.BIG];
+    return null;
+  }
+
+  function resize() {
+    needResize = false;
+    W = canvas.clientWidth || innerWidth;
+    H = canvas.clientHeight || innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    fs = clamp(Math.round(Math.min(W, H * 1.2) / 130), 7, 10);
+    cellFont = `${fs}px ${MONO}`;
+    ctx.font = cellFont;
+    cw = ctx.measureText('M').width || fs * 0.6;
+    ch = fs * 1.1;
+    cols = Math.ceil(W / cw);
+    rows = Math.ceil(H / ch);
+    const n = cols * rows;
+    mat = new Uint8Array(n); g0 = new Uint8Array(n); base = new Float32Array(n); hsh = new Uint8Array(n);
+    lampOf = new Int8Array(n).fill(-1); light = new Float32Array(n);
+    stampA = new Uint32Array(n); fch = new Uint8Array(n); flv = new Uint8Array(n);
+    touched = new Int32Array(n); order = new Int32Array(n); stamp = 0;
+
+    // Layout: S is the horizontal unit, so phones keep the same composition squeezed sideways.
+    S = Math.min(H, W * 1.2);
+    VPx = W + 0.12 * S; VPy = 0.49 * H;                      // vanishing point of the path and railing
+    xBot = Math.max(0.12 * W, VPx - S);
+    curbM = (H - VPy) / (VPx - xBot);
+    waterTop = yS(0);
+
+    const a = 0.165 * S, b = 0.105 * H, P = 0.42 * S, x0 = VPx - 0.5 * S;
+    ARCHES = [];
+    for (let x = x0; x > -a; x -= P) ARCHES.push(x);
+    for (let x = x0 + P; x - a < W; x += P) ARCHES.push(x);
+
+    LAMPS = [];
+    const far = [], near = [];
+    for (let k = -1; ; k++) {
+      const xn = x0 + 0.07 * S - k * 0.34 * S;
+      if (xn < -0.03 * S) break;
+      if (xn > W - 0.13 * S) continue;
+      near.push(xn);
+      far.push([xn + 0.09 * S, 0.55, 0.105 * H]);
+      if (k % 2 === 0) far.push([xn - 0.16 * S, 0.48, 0.09 * H]);
+    }
+    far.forEach(([x, sz, h]) => { if (x > -0.01 * S && x < W - 0.13 * S) LAMPS.push(makeLamp('far', x, sz, h)); });
+    near.forEach(x => LAMPS.push(makeLamp('near', x, 1, 0.2 * H)));
+    LAMPS.push(makeLamp('big', VPx - 0.19 * S, 1, 0));
+    LAMPS.forEach((L, k) => { L.k = k; });
+
+    // Background buildings beyond the river.
+    const br = mulberry32(7), BLD = [];
+    for (let x = -0.05 * S; x < W + 0.05 * S;) {
+      const w = (0.07 + 0.15 * br()) * S;
+      BLD.push([x, x + w, H * (0.2 + 0.17 * br()), (br() * 1e6) | 0]);
+      x += w + (br() < 0.3 ? 0.03 * S : 0);
+    }
+    // Railing posts, spaced in perspective toward the vanishing point.
+    const POSTS = [];
+    for (let i = -4; i < 30; i++) {
+      const d = 0.74 * S * Math.pow(0.68, i);
+      if (d < 0.03 * S) break;
+      const x = VPx - d;
+      if (x > -cw && x < W + cw) POSTS.push([colOf(x), d > 0.5 * S ? 2 : 1, x]);
+    }
+    // Lone footprints in the snow, walking away toward the bridge.
+    const FEET = [];
+    const fx0 = xBot + 0.55 * (W - xBot), fy0 = H * 1.02;
+    for (let i = 0; i < 60; i++) {
+      const p = 1 - Math.pow(0.93, i);           // fraction of the way to the vanishing point
+      const x = fx0 + (VPx - 0.1 * S - fx0) * p, y = fy0 + (VPy + 0.04 * H - fy0) * p;
+      const sc = 1 - p, side = i % 2 ? 1 : -1;
+      if (sc < 0.12) break;
+      FEET.push([x + side * 0.011 * S * sc, y + side * 0.004 * H * sc, Math.max(0.6, 1.4 * sc)]);
+    }
+
+    const ring = 1.6 * ch / b;
+    for (let r = 0; r < rows; r++) {
+      const y = (r + 0.5) * ch;
+      for (let c = 0; c < cols; c++) {
+        const x = (c + 0.5) * cw, i = r * cols + c, h = (hash2(c, r) * 256) | 0;
+        hsh[i] = h;
+        // Sky: black with a faint haze of dots, a little city glow near the horizon.
+        let m = M.SKY, g = h < 26 ? G['.'] : 0, bb = 0.05 + 0.04 * (h / 26);
+        let lamp = -1;
+        // Buildings: dim brick courses and a few lit windows.
+        for (const [bx0, bx1, top, seed] of BLD) {
+          if (x < bx0 || x >= bx1 || y < top) continue;
+          const lc = c - colOf(bx0), lr = r - rowOf(top);
+          m = M.BLDG; bb = 0.06;
+          if (lr === 0) { g = G['_']; bb = 0.11; }
+          else if (lr % 2) g = (lc + ((lr >> 1) % 2) * 2) % 4 === 0 ? G['|'] : (h < 40 ? G['.'] : 0);
+          else g = h < 110 ? G['_'] : 0;
+          const wr = lr - 2, wc = lc - 1;
+          if (wr >= 0 && wc >= 0 && wr % 4 < 2 && wc % 5 < 2) {
+            const lit = hash2(seed + (wc / 5 | 0), wr / 4 | 0);
+            if (lit < 0.16) { m = M.WIN; g = G['#']; bb = 0.16 + lit; }
+            else if (lit < 0.4) { g = 0; }
+          }
+          break;
+        }
+        // Lamps: far ones first, near ones over them.
+        for (let k = 0; k < LAMPS.length; k++) {
+          const L = LAMPS[k];
+          if (L.kind === 'big') continue;
+          const q = lampCell(L, c, r);
+          if (q) { [g, m] = q; lamp = k; bb = m === M.HEAD ? 0 : 0.26; }
+        }
+        // Bridge: parapet, stone facade, arch rings, dark arches.
+        const top = yT(x), wl = yS(x);
+        if (y >= top && y < wl) {
+          lamp = -1;
+          const pr = r - rowOf(top), ph = Math.max(2, Math.round(PARA_H() / ch));
+          if (pr === 0) { m = M.PARA; g = h < 200 ? G['='] : G['.']; bb = 0.34; }
+          else if (pr < ph) { m = M.PARA; g = c % 3 === 0 ? G['|'] : (h < 110 ? G[':'] : 0); bb = 0.17; }
+          else if (pr === ph) { m = M.PARA; g = G['-']; bb = 0.2; }
+          else {
+            m = M.FACE; g = h < 70 ? STONE[h & 7] : 0; bb = 0.1 + (h & 3) * 0.012;
+            for (const ax of ARCHES) {
+              const dx = (x - ax) / a, dy = (wl - y) / b, e = Math.sqrt(dx * dx + dy * dy);
+              if (e < 1) { m = M.ARCH; g = h < 6 ? G['.'] : 0; bb = 0.03; break; }
+              if (e < 1 + ring) {
+                m = M.RING; bb = 0.2;
+                g = Math.abs(dx) < 0.35 ? G['_'] : dx < 0 ? (Math.abs(dx) > 0.85 ? G['|'] : G['/']) : (Math.abs(dx) > 0.85 ? G['|'] : G['\\']);
+                break;
+              }
+            }
+          }
+        }
+        // River.
+        if (y >= wl) { m = M.WATER; g = 0; bb = 0; lamp = -1; }
+        // Snowy path in front, with a brighter lip along its edge.
+        const yc = yC(x);
+        if (y >= yc) {
+          lamp = -1;
+          if (y - yc < ch * 0.9) { m = M.CURB; g = h < 120 ? G['_'] : G['.']; bb = 0.3; }
+          else {
+            m = M.GROUND;
+            g = h < 16 ? G['.'] : h < 22 ? G[':'] : h < 24 ? G['*'] : h < 25 ? G['\''] : 0;
+            bb = 0.17 + 0.06 * (h & 3);
+            for (const [fx, fy, rad] of FEET) {
+              const ddx = (x - fx) / (cw * rad), ddy = (y - fy) / (ch * rad * 0.6);
+              if (ddx * ddx + ddy * ddy < 1) { g = h < 90 ? G['.'] : 0; bb = 0.07; break; }
+            }
+          }
+        }
+        // Railing along the path: posts down to the edge, one rail on top.
+        const yr = yR(x);
+        if (r === rowOf(yr)) { m = M.RAIL; g = h < 236 ? G['-'] : G['_']; bb = 0.42; lamp = -1; }
+        else if (y > yr) {
+          for (const [pc, pw, px] of POSTS) {
+            if (c >= pc && c < pc + pw && y < yC(px)) { m = M.RAIL; g = G['|']; bb = 0.3; lamp = -1; break; }
+          }
+        }
+        // The big lamp on the path, in front of everything.
+        const BL = LAMPS[LAMPS.length - 1], q = lampCell(BL, c, r);
+        if (q) { [g, m] = q; lamp = LAMPS.length - 1; bb = m === M.HEAD ? 0 : 0.22; }
+
+        mat[i] = m; g0[i] = g; base[i] = bb; lampOf[i] = lamp;
+      }
+    }
+
+    // Per-lamp light maps (sparse): a soft glow around the head plus a pool where it shines down.
+    LAMPS.forEach(L => {
+      const cells = [], wts = [];
+      const R = L.sigma * 3, s2 = 2 * L.sigma * L.sigma;
+      const poolY = L.kind === 'big' ? L.baseY : yT(L.px), prx = (L.kind === 'big' ? 0.3 : L.kind === 'near' ? 0.1 : 0.06) * S,
+            pry = (L.kind === 'big' ? 0.07 : 0.025) * H, pg = L.kind === 'big' ? 0.42 : 0.3;
+      const c0 = Math.max(0, colOf(Math.min(L.hx - R, L.px - prx * 2))), c1 = Math.min(cols - 1, colOf(Math.max(L.hx + R, L.px + prx * 2)));
+      const r0 = Math.max(0, rowOf(L.hy - R)), r1 = Math.min(rows - 1, rowOf(Math.max(L.hy + R, poolY + pry * 2)));
+      for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+        const x = (c + 0.5) * cw, y = (r + 0.5) * ch, dx = x - L.hx, dy = y - L.hy;
+        let w = Math.exp(-(dx * dx + dy * dy) / s2) * L.gain;
+        const px = (x - L.px) / prx, py = (y - poolY) / pry;
+        const m = mat[r * cols + c];
+        if ((L.kind === 'big' ? m === M.GROUND || m === M.CURB || m === M.RAIL : m === M.PARA || m === M.FACE)) w += Math.exp(-px * px - py * py) * pg;
+        if (w > 0.012) { cells.push(r * cols + c); wts.push(w); }
+      }
+      L.cells = Int32Array.from(cells); L.wts = Float32Array.from(wts);
+    });
+
+    drawTone(a, b, ring, BLD, POSTS, FEET);
+
+    initSnow();
+    dirty = true;
+  }
+
+  // Tone underlay, drawn once per resize: the scene's shapes as soft greys under the letters,
+  // so the snow, stone and rail read as surfaces and the letters as their texture.
+  function drawTone(a, b, ring, BLD, POSTS, FEET) {
+    toneCv.width = Math.ceil(W); toneCv.height = Math.ceil(H);
+    const g = tctx, grey = v => { const c = Math.pow(v, 0.9) * 255; return `rgb(${(c * 0.95) | 0},${(c * 0.97) | 0},${Math.min(255, c + 3) | 0})`; };
+    const poly = pts => { g.beginPath(); pts.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.closePath(); g.fill(); };
+    const line = (x0, y0, x1, y1, w, v) => { g.strokeStyle = grey(v); g.lineWidth = w; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); };
+    const sky = g.createLinearGradient(0, 0, 0, yT(0));
+    sky.addColorStop(0, grey(0.006)); sky.addColorStop(1, grey(0.04));
+    g.fillStyle = sky; g.fillRect(0, 0, W, H);
+    g.fillStyle = grey(0.03);
+    BLD.forEach(([x0, x1, top]) => g.fillRect(x0, top, x1 - x0, H * 0.7 - top));
+    LAMPS.forEach(L => {
+      if (L.kind === 'big') return;
+      line(L.px, L.armY, L.px, L.baseY, Math.max(1.5, cw * 0.5 * L.sz), 0.12);
+      line(L.px, L.armY, L.hx, L.armY, Math.max(1, cw * 0.35 * L.sz), 0.12);
+    });
+    // Bridge body, parapet band and the snow along its top.
+    g.fillStyle = grey(0.08); poly([[0, yT(0)], [W, yT(W)], [W, yS(W)], [0, yS(0)]]);
+    const ph = PARA_H();
+    g.fillStyle = grey(0.14); poly([[0, yT(0)], [W, yT(W)], [W, yT(W) + ph], [0, yT(0) + ph]]);
+    line(0, yT(0) + ch * 0.3, W, yT(W) + ch * 0.3, ch * 0.6, 0.26);
+    g.fillStyle = grey(0.004);
+    ARCHES.forEach(ax => {
+      g.beginPath(); g.ellipse(ax, yS(ax), a, b, 0, Math.PI, 2 * Math.PI); g.closePath(); g.fill();
+      g.strokeStyle = grey(0.12); g.lineWidth = ring * b * 0.8;
+      g.beginPath(); g.ellipse(ax, yS(ax), a * (1 + ring * 0.45), b * (1 + ring * 0.45), 0, Math.PI, 2 * Math.PI); g.stroke();
+    });
+    // River.
+    g.fillStyle = '#000'; poly([[0, yS(0)], [W, yS(W)], [W, H], [0, H]]);
+    // Snowy path: brighter toward the viewer, with a lit lip along the edge and lone footprints.
+    const gr = g.createLinearGradient(xBot, VPy, W, H);
+    gr.addColorStop(0, grey(0.11)); gr.addColorStop(1, grey(0.2));
+    g.fillStyle = gr; poly([[xBot, H], [VPx, VPy], [VPx, H]]);
+    line(xBot, H, VPx, VPy, ch * 0.8, 0.27);
+    g.fillStyle = grey(0.05);
+    FEET.forEach(([x, y, rad]) => { g.beginPath(); g.ellipse(x, y, cw * rad * 0.9, ch * rad * 0.4, -0.5, 0, 6.283); g.fill(); });
+    // Railing: posts and the top rail.
+    POSTS.forEach(([pc, pw, px]) => line(px, yR(px), px, yC(px), Math.max(1.5, cw * 0.55 * pw), 0.17));
+    line(0, yR(0), VPx, VPy, Math.max(2, ch * 0.45), 0.23);
+    // The big lamp.
+    const L = LAMPS[LAMPS.length - 1];
+    line(L.px, L.armY, L.px, L.baseY, L.postW, 0.15);
+    g.fillStyle = grey(0.3); g.fillRect(L.hx - L.hw / 2, L.bodyTop, L.hw, L.bodyBot - L.bodyTop);
+  }
+
+  // ---------- Snow ----------
+  let NF = 0, FX, FY, FZ, FP, FL;
+  function initSnow() {
+    NF = Math.round(clamp(cols * rows * 0.07, 500, 2600) * (reduced ? 0.5 : 1));
+    FX = new Float32Array(NF); FY = new Float32Array(NF); FZ = new Float32Array(NF); FP = new Float32Array(NF); FL = new Float32Array(NF);
+    for (let i = 0; i < NF; i++) { respawn(i); FY[i] = Math.random() * FL[i]; }
+  }
+  function respawn(i) {
+    const z = Math.pow(Math.random(), 1.6);   // most flakes far away and small
+    FZ[i] = z; FP[i] = Math.random() * 6.283;
+    FX[i] = Math.random() * (W + 20) - 10;
+    FY[i] = -Math.random() * 0.08 * H - ch;
+    FL[i] = H * (0.42 + 0.62 * z) + (Math.random() - 0.5) * 0.12 * H;   // where it lands
+  }
+
+  // Rings on the water where flakes land.
+  const RX = [], RY = [], RA = [];
+
+  // ---------- Scene state ----------
+  let t = T_START, env = 1, wind = -1.1, userWind = 0, userWindT = 0;
+  let carT0 = -99, carX = 0, carY = 0, carOn = false, lampsOn = 0;
+
+  function cycleOf(tt) { return Math.floor(tt / CYCLE); }
+  function tcOf(tt) { return ((tt % CYCLE) + CYCLE) % CYCLE; }
+
+  function envAt(tc) {
+    if (reduced) return 1;
+    if (tc < TL.OUT) return 1;
+    if (tc < TL.DARK) return 1 - 0.88 * smooth((tc - TL.OUT) / (TL.DARK - TL.OUT));
+    if (tc < TL.UP) return 0.12;
+    return 0.12 + 0.88 * smooth((tc - TL.UP) / (CYCLE - TL.UP));
+  }
+  function gustAt(tc) {
+    if (reduced || tc < TL.GUST || tc > TL.GUST_END) return 0;
+    const p = (tc - TL.GUST) / (TL.GUST_END - TL.GUST);
+    return Math.pow(Math.sin(Math.PI * p), 2) * (1 + 0.25 * Math.sin(p * 19));
+  }
+  // A failing bulb: mostly on, sometimes dim, sometimes out, changing ~14 times a second.
+  const flick = (k, tt) => { const v = hash2(k * 97 + 13, Math.floor(tt * 14)); return v > 0.5 ? 1 : v > 0.25 ? 0.4 : 0.05; };
+
+  function lampI(L, tt) {
+    const k = L.k, tc = tcOf(tt), cy = cycleOf(tt);
+    let I = 1;
+    if (!reduced) {
+      // The night goes dark: lamps go out one by one, then relight one by one.
+      const rk = hash2(k, 5), offT = TL.OUT + 0.2 + 1.3 * rk, onT = TL.UP + 0.15 + 1.6 * hash2(k, 9);
+      if (tc >= offT && tc < onT) I = 0;
+      else if ((tc >= offT - 0.55 && tc < offT) || (tc >= onT && tc < onT + 0.5)) I = flick(k, tt);
+      // Random flickers, different every loop, and one tired lamp that dies for a while.
+      const r = mulberry32(cy * 7919 + k * 31 + 1);
+      if (r() < 0.5) { const s = 1 + r() * 15, d = 0.3 + r() * 1.1; if (tc >= s && tc < s + d) I = Math.min(I, flick(k, tt)); }
+      const dk = Math.floor(mulberry32(cy * 131 + 7)() * Math.max(1, LAMPS.length - 1));
+      if (k === dk && tc >= 11 && tc < 14.8) I = Math.min(I, flick(k + 50, tt * 0.6) > 0.9 ? 0.5 : 0.05);
+      I *= 0.95 + 0.05 * Math.sin(tt * 9 + k * 2.1);   // a faint hum
+    }
+    // Tapping a lamp switches it off / on with a sputter.
+    const since = tt - L.userT;
+    if (since >= 0 && since < 0.6) I = Math.min(I, flick(k + 200, tt));
+    else if (L.userOff) I = Math.min(I, 0.03);
+    return I;
+  }
+
+  // ---------- Frame cells ----------
+  function put(cell, g, b) {
+    let l = (b * (LEVELS - 1) + 0.5) | 0;
+    if (l < 2) return;
+    if (l > LEVELS - 1) l = LEVELS - 1;
+    if (stampA[cell] !== stamp) { stampA[cell] = stamp; touched[nT++] = cell; }
+    fch[cell] = g; flv[cell] = l;
+  }
+
+  function buildFrame(dt) {
+    stamp++; nT = 0;
+    const tc = tcOf(t);
+    light.fill(0);
+    lampsOn = 0;
+    for (const L of LAMPS) {
+      L.prevI = L.I; L.I = lampI(L, t);
+      if (L.I > 0.5) lampsOn++;
+      const I = L.I;
+      if (I < 0.01) continue;
+      const cs = L.cells, ws = L.wts;
+      for (let j = 0; j < cs.length; j++) light[cs[j]] += ws[j] * I;
+    }
+    // The car: headlight glow and its beam ahead (it drives right to left).
+    const cp = (t - carT0) / CAR_DUR;
+    carOn = cp >= 0 && cp < 1;
+    if (carOn) {
+      carX = W + 0.12 * S - (W + 0.3 * S) * cp;
+      carY = yT(carX) - 0.006 * H;
+      const fade = smooth(cp * 8) * smooth((1 - cp) * 8);
+      const bx = carX - 0.12 * S, sx = 0.12 * S, sy = 0.05 * H;
+      const c0 = Math.max(0, colOf(bx - 2.5 * sx)), c1 = Math.min(cols - 1, colOf(carX + 0.06 * S));
+      const r0 = Math.max(0, rowOf(carY - 2.5 * sy)), r1 = Math.min(rows - 1, rowOf(carY + 2.5 * sy));
+      for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+        const x = (c + 0.5) * cw, y = (r + 0.5) * ch;
+        const u = (x - bx) / sx, v = (y - carY) / sy, u2 = (x - carX) / (0.025 * S), v2 = (y - carY) / (0.025 * S);
+        light[r * cols + c] += (Math.exp(-u * u - v * v) * 0.45 + Math.exp(-u2 * u2 - v2 * v2) * 0.6) * fade;
+      }
+    }
+
+    // Static scene: base tone (dims with the night) plus lamp light.
+    const n = cols * rows;
+    for (let i = 0; i < n; i++) {
+      const m = mat[i], g = g0[i], Li = light[i];
+      if (m === M.HEAD) {
+        const I = LAMPS[lampOf[i]].I;
+        put(i, g, (g === G['@'] || g === G['#'] ? 0.22 + 0.85 * I : 0.18 + 0.6 * I));
+        continue;
+      }
+      if (m === M.WATER) continue;
+      const b = base[i] * env + Li * RECV[m];
+      if (m === M.GROUND) {
+        const h = hsh[i];
+        if (g) {
+          let bb = b;
+          if (g === G['*']) bb += 0.25 * Math.max(0, Math.sin(t * 2.3 + h)) * (0.4 + Li);   // sparkles
+          put(i, g, bb);
+        } else if (Li > 0.15 && h < 30 + Li * 90) put(i, h & 1 ? G['.'] : G[':'], b * 0.85);
+        continue;
+      }
+      if (g) put(i, g, b);
+      else if (Li * RECV[m] > 0.1 && hsh[i] < 70 + Li * 60) put(i, G['.'], b * 0.8);   // haze around lamps
+    }
+
+    // Water: faint ripples, then lamp reflections shivering in long dashed columns.
+    const rw0 = rowOf(waterTop);
+    for (let r = rw0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const i = r * cols + c;
+        if (mat[i] !== M.WATER) continue;
+        const v = Math.sin(c * 0.42 + r * 1.9 - t * 1.3) + Math.sin(c * 0.13 - r * 0.7 + t * 0.8);
+        if (v > 1.55) put(i, G['~'], (0.07 + 0.05 * (v - 1.55)) * env);
+      }
+    }
+    const tq = Math.floor(t * 5);
+    const reflect = (x0, I, sz, k) => {
+      const ws = yS(x0), r0 = Math.max(rw0, rowOf(ws));
+      for (let r = r0; r < rows; r++) {
+        const y = (r + 0.5) * ch, dd = (y - ws) / (0.35 * H);
+        const fall = Math.exp(-dd * 0.55) * I * sz * 1.25;
+        if (fall < 0.05) break;
+        const wob = (Math.sin(r * 0.55 + t * 1.7 + k * 1.3) * 0.6 + Math.sin(r * 0.23 - t * 0.9 + k) * 0.4) * (0.006 + 0.016 * dd) * S;
+        const hw = (0.011 + 0.018 * dd) * S * (0.5 + 0.5 * sz), cx = x0 + wob;
+        const strip = 0.5 + 0.5 * Math.sin(r * 1.7 + t * 2.6 + k * 2);
+        const ca = Math.max(0, colOf(cx - hw)), cb = Math.min(cols - 1, colOf(cx + hw));
+        for (let c = ca; c <= cb; c++) {
+          const i = r * cols + c;
+          if (mat[i] !== M.WATER) continue;
+          if (hash2(c * 7 + r, tq + k) < 0.14) continue;
+          const bb = fall * (1 - Math.abs((c + 0.5) * cw - cx) / (hw + cw)) * (0.35 + 0.75 * strip);
+          if (bb > 0.1) put(i, bb > 0.45 ? G['='] : G['-'], Math.min(1, bb * 1.2));
+        }
+      }
+    };
+    LAMPS.forEach(L => { if (L.kind !== 'big' && L.I > 0.02) reflect(L.hx, L.I, L.kind === 'near' ? 1 : 0.6, L.k); });
+    if (carOn) reflect(carX, smooth(cp * 8) * smooth((1 - cp) * 8) * 0.9, 0.8, 40);
+
+    // Rings where flakes touch the water.
+    for (let j = RX.length - 1; j >= 0; j--) {
+      RA[j] += dt;
+      if (RA[j] > 1.3) { RX.splice(j, 1); RY.splice(j, 1); RA.splice(j, 1); continue; }
+      const rx = 0.006 * S + RA[j] * 0.035 * S, ry = rx * 0.28, bb = 0.32 * (1 - RA[j] / 1.3) * (0.5 + 0.5 * env);
+      for (let q = 0; q < 12; q++) {
+        const an = q / 12 * 6.283, x = RX[j] + Math.cos(an) * rx, y = RY[j] + Math.sin(an) * ry;
+        const c = colOf(x), r = rowOf(y);
+        if (c < 0 || c >= cols || r < 0 || r >= rows) continue;
+        const i = r * cols + c;
+        if (mat[i] !== M.WATER) continue;
+        const cs = Math.cos(an);
+        put(i, cs > 0.8 ? G[')'] : cs < -0.8 ? G['('] : G['-'], bb);
+      }
+    }
+
+    // The car's lights peek over the parapet.
+    if (carOn) {
+      const fade = smooth(cp * 8) * smooth((1 - cp) * 8);
+      const c = colOf(carX), r = rowOf(carY);
+      const spot = (cc, rr, g, b) => {
+        if (cc < 0 || cc >= cols || rr < 0 || rr >= rows) return;
+        const i = rr * cols + cc;
+        if (!FRONT[mat[i]]) put(i, g, b);
+      };
+      spot(c, r, G['@'], fade); spot(c - 1, r, G['='], 0.7 * fade); spot(c + 1, r, G['#'], 0.6 * fade);
+      const tail = colOf(carX + 0.055 * S);
+      for (let cc = c + 2; cc < tail; cc++) spot(cc, r, G['_'], 0.2 * fade);
+      spot(tail, r, G['o'], 0.45 * fade);
+    }
+
+    // Snow, last: in front of everything, catching the lamp light as it passes.
+    const windPx = wind * 0.08 * S, fallK = reduced ? 0.6 : 1;
+    const hz = 0.11 * H;
+    for (let i = 0; i < NF; i++) {
+      const z = FZ[i];
+      const vy = H * (0.035 + 0.13 * Math.pow(z, 1.3)) * fallK;
+      const vx = windPx * (0.35 + 0.65 * z) + Math.sin(t * (0.8 + z) + FP[i]) * 0.014 * S * (1.2 - z);
+      FX[i] += vx * dt; FY[i] += vy * dt;
+      if (FX[i] < -10) FX[i] += W + 20; else if (FX[i] > W + 10) FX[i] -= W + 20;
+      if (FY[i] > FL[i]) {
+        const c = colOf(FX[i]), r = rowOf(FY[i]);
+        if (z > 0.35 && RX.length < 40 && c >= 0 && c < cols && r >= 0 && r < rows && mat[r * cols + c] === M.WATER && Math.random() < 0.35) {
+          RX.push(FX[i]); RY.push(FY[i]); RA.push(0);
+        }
+        respawn(i);
+        continue;
+      }
+      const c = colOf(FX[i]), r = rowOf(FY[i]);
+      if (c < 0 || c >= cols || r < 0 || r >= rows) continue;
+      const cell = r * cols + c;
+      const spd = Math.hypot(vx, vy);
+      let g;
+      if (spd > hz * (1.6 - z) && z > 0.3) {
+        const ratio = vx / vy;
+        g = Math.abs(ratio) > 1.7 ? G['-'] : ratio < -0.3 ? G['/'] : ratio > 0.3 ? G['\\'] : G['|'];
+      } else if (z < 0.28) g = G['.'];
+      else { const q = (FP[i] * 40) | 0; g = q % 3 === 0 ? G['*'] : q % 3 === 1 ? G['+'] : G['.']; }
+      let b = (0.16 + 0.55 * z) * (0.45 + 0.55 * env) + light[cell] * (0.45 + 0.8 * z);
+      if (g === G['+']) b *= 0.8 + 0.2 * Math.sin(t * 4 + FP[i] * 9);
+      put(cell, g, b);
+    }
+  }
+
+  // Bucket by grey level so fillStyle changes once per level, not once per cell.
+  function drawCells() {
+    counts.fill(0);
+    for (let i = 0; i < nT; i++) counts[flv[touched[i]]]++;
+    let acc = 0;
+    for (let c = 0; c < LEVELS; c++) { const k = counts[c]; counts[c] = acc; acc += k; }
+    for (let i = 0; i < nT; i++) { const c = touched[i]; order[counts[flv[c]]++] = c; }
+    let cur = -1;
+    for (let i = 0; i < nT; i++) {
+      const c = order[i], l = flv[c];
+      if (l !== cur) { cur = l; ctx.fillStyle = COLSTR[l]; }
+      const row = (c / cols) | 0;
+      ctx.fillText(CH[fch[c]], (c - row * cols) * cw, row * ch);
+    }
+  }
+
+  function radial(x, y, R, a, sy = 1) {
+    if (a < 0.005) return;
+    ctx.save();
+    ctx.translate(x, y); ctx.scale(1, sy);
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, R);
+    g.addColorStop(0, `rgba(232,236,245,${a})`);
+    g.addColorStop(0.3, `rgba(220,226,240,${a * 0.35})`);
+    g.addColorStop(1, 'rgba(210,218,235,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(-R, -R, 2 * R, 2 * R);
+    ctx.restore();
+  }
+
+  // Soft halos around the lamp heads, light pools, the car's headlight.
+  function drawHalos() {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (const L of LAMPS) {
+      const I = L.I;
+      // The glass itself glows.
+      if (I > 0.02) {
+        ctx.fillStyle = `rgba(236,240,248,${0.36 * I})`;
+        ctx.fillRect(L.cb0 * cw, L.rb0 * ch, (L.cb1 - L.cb0 + 1) * cw, (L.rb1 - L.rb0 + 1) * ch);
+      }
+      if (L.kind === 'big') {
+        radial(L.hx, L.hy, 0.17 * S, 0.5 * I);
+        radial(L.px, L.baseY, 0.36 * S, 0.2 * I, 0.22);
+      } else {
+        radial(L.hx, L.hy, (L.kind === 'near' ? 0.085 : 0.05) * S, (L.kind === 'near' ? 0.5 : 0.36) * I);
+        radial(L.px, yT(L.px), 0.1 * S * L.sz, 0.07 * I, 0.3);
+      }
+    }
+    if (carOn) {
+      const cp = (t - carT0) / CAR_DUR, fade = smooth(cp * 8) * smooth((1 - cp) * 8);
+      radial(carX, carY, 0.09 * S, 0.9 * fade);
+      radial(carX - 0.13 * S, carY + 0.004 * H, 0.16 * S, 0.14 * fade, 0.28);
+    }
+    ctx.restore();
+  }
+
+  // Bloom: shrink the frame, blur, and add it back on top.
+  const glow = document.createElement('canvas'), gctx = glow.getContext('2d');
+  const GLOW_DIV = 5, GLOW_A = 0.55;
+  function drawGlow() {
+    const gw = Math.ceil(W / GLOW_DIV), gh = Math.ceil(H / GLOW_DIV);
+    if (glow.width !== gw || glow.height !== gh) { glow.width = gw; glow.height = gh; }
+    gctx.globalCompositeOperation = 'copy';
+    gctx.filter = 'blur(2px)';
+    gctx.drawImage(canvas, 0, 0, gw, gh);
+    gctx.filter = 'none';
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = GLOW_A;
+    ctx.drawImage(glow, 0, 0, W, H);
+    ctx.restore();
+  }
+
+  let vignette = null, vigW = 0, vigH = 0;
+  function drawVignette() {
+    if (!vignette || vigW !== W || vigH !== H) {
+      vigW = W; vigH = H;
+      vignette = ctx.createRadialGradient(W * 0.55, H * 0.45, Math.min(W, H) * 0.3, W * 0.55, H * 0.45, Math.hypot(W, H) * 0.62);
+      vignette.addColorStop(0, 'rgba(0,0,0,0)');
+      vignette.addColorStop(1, 'rgba(0,0,0,0.55)');
+    }
+    ctx.fillStyle = vignette;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  function render(dt) {
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, W, H);
+    // Tone underlay: the snow, stone and rail as soft greys under the letters.
+    ctx.save();
+    ctx.globalAlpha = env;
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(toneCv, 0, 0, W, H);
+    ctx.restore();
+    buildFrame(dt);
+    drawHalos();
+    ctx.textBaseline = 'top';
+    ctx.font = cellFont;
+    drawCells();
+    drawGlow();
+    drawVignette();
+  }
+
+  // ---------- Loop, HUD, controls ----------
+  let paused = false, last = performance.now();
+  let frames = 0, fpsT = last, fps = 0, hudT = 0;
+
+  function updateHud() {
+    const tail = paused ? 'paused' : `${fps} fps`;
+    hudEl.textContent = W < 640 ? `lamps ${lampsOn}/${LAMPS.length}  flakes ${NF}  ${tail}`
+      : `lamps ${lampsOn}/${LAMPS.length}  flakes ${NF}  wind ${wind.toFixed(1)}  rings ${RX.length}  letters ${nT.toLocaleString('en-US')}  ${tail}`;
+    hudT = performance.now();
+  }
+
+  function startCar() { if (!carOn) { carT0 = t; carOn = true; music('event', 'car'); } }
+
+  function step(dt) {
+    const prevTc = tcOf(t);
+    t += dt;
+    const tc = tcOf(t);
+    const crossed = x => (prevTc < x && tc >= x) || (prevTc > tc && x <= tc); // also across the loop seam
+    env = envAt(tc);
+    if (!reduced && crossed(TL.CAR)) startCar();
+    if (!reduced && crossed(TL.GUST)) music('event', 'gust');
+    if (!reduced && crossed(TL.OUT)) music('event', 'dark');
+    if (userWindT > 0) { userWindT -= dt; if (userWindT <= 0) userWind = 0; }
+    const target = -1.1 - 5.5 * gustAt(tc) * (reduced ? 0 : 1) + userWind;
+    wind += (target - wind) * Math.min(1, dt * 1.6);
+  }
+
+  function soundCues() {
+    if (!window.AsciiAudio) return;
+    for (const L of LAMPS) {
+      if (L.prevI > 0.6 && L.I < 0.3) music('event', 'flick', { x: L.hx / W });
+      else if (L.prevI < 0.3 && L.I > 0.6 && env > 0.3 && env < 0.99) music('event', 'lampOn', { k: L.k, x: L.hx / W });
+    }
+  }
+
+  function frame(now) {
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); // no jumps after a hidden tab
+    last = now;
+    if (needResize) resize();
+    const sdt = paused ? 0 : dt * TIME_SCALE;
+    if (!paused) step(sdt);
+    if (!paused || dirty) { render(sdt); dirty = false; frames++; }
+    if (!paused) soundCues();
+    if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
+    if (now - hudT >= 250) updateHud();
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- Sound (ascii-audio.js) ----------
+  const music = (fn, ...a) => window.AsciiAudio && AsciiAudio[fn](...a);
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(); music(paused ? 'pause' : 'resume'); }
+  // Replay: back to the start of the night, every lamp on, no car.
+  function replay() {
+    t = T_START; carT0 = -99; carOn = false; RX.length = RY.length = RA.length = 0;
+    LAMPS.forEach(L => { L.userOff = false; L.userT = -99; });
+    syncState();
+    paused = false; dirty = true; music('resume'); music('restart');
+  }
+
+  // Tap a lamp: it sputters off (or back on). Tap anywhere else: a car crosses the bridge.
+  function tapAt(x, y) {
+    let best = null, bd = Math.max(0.07 * S, 26);
+    for (const L of LAMPS) {
+      const d = Math.hypot(x - L.hx, y - L.hy);
+      if (d < bd) { bd = d; best = L; }
+    }
+    if (best) {
+      best.userOff = !best.userOff; best.userT = t;
+      music('event', best.userOff ? 'flick' : 'lampOn', { k: best.k, x: best.hx / W });
+    } else startCar();
+    dirty = true;
+  }
+
+  addEventListener('resize', () => { needResize = true; });
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return; // leave Cmd/Ctrl+R alone
+    if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
+    else if (e.key === 'r' || e.key === 'R') replay();
+  });
+  // The pointer steers the wind: left of centre blows left, right of centre blows right.
+  const steer = (x, hold) => { userWind = (x / W - 0.5) * 2 * 4.2; userWindT = hold; };
+  let downX = 0, downY = 0, downAt = 0, dragging = false;
+  canvas.addEventListener('pointermove', e => {
+    if (e.pointerType === 'mouse' || dragging) steer(e.clientX, e.pointerType === 'mouse' ? 4 : 2.5);
+  });
+  canvas.addEventListener('pointerleave', () => { userWindT = Math.min(userWindT, 0.5); });
+  canvas.addEventListener('pointerdown', e => {
+    downX = e.clientX; downY = e.clientY; downAt = performance.now(); dragging = true;
+  });
+  // Single tap = lamp / car (decided after 280 ms), two quick taps = pause.
+  let tapTimer = 0;
+  canvas.addEventListener('pointerup', e => {
+    dragging = false;
+    if (e.button > 0) return;
+    if (Math.hypot(e.clientX - downX, e.clientY - downY) > 12) return; // that was a drag
+    const x = e.clientX, y = e.clientY;
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; togglePause(); }
+    else tapTimer = setTimeout(() => { tapTimer = 0; tapAt(x, y); }, 280);
+  });
+  canvas.addEventListener('pointercancel', () => { dragging = false; });
+
+  // Hint language: ?lang= wins, then saved site preference, then browser.
+  let pref = null;
+  try { pref = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (!pref) { try { pref = localStorage.getItem('lang'); } catch (e) {} }
+  if (!pref) pref = navigator.language || 'en';
+  const zh = String(pref).toLowerCase().startsWith('zh');
+  document.documentElement.lang = zh ? 'zh-Hant' : 'en';
+  // Touch screens have no keyboard, and the full hint would not fit on a phone.
+  const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  hintEl.textContent = touch ? (zh ? '拖曳吹動風雪 · 點路燈或來一輛車 · 雙擊暫停' : 'drag: wind · tap: lamp or car · double-tap: pause')
+                             : (zh ? '移動滑鼠 吹動風雪 · 點路燈 / 點夜色來一輛車 · 空白鍵 暫停 · R 重播 · M 音樂'
+                                   : 'move: wind · click a lamp / the night for a car · Space pause · R replay · M music');
+
+  // Score: an original, sparse piano piece in A minor at 60 bpm, two 24-beat phrases (one per
+  // night loop), a soft felt-piano voice made of a filtered pluck and a celesta. Under it, an
+  // endless wind that rises with the gusts and with the pointer; sound effects for the car on
+  // the wet bridge, a sputtering lamp, lamps relighting, and the night going dark.
+  if (window.AsciiAudio) AsciiAudio.init({
+    bpm: 60, master: 1, reverb: 0.45, reverbTime: 5,
+    build(a) {
+      const c = a.ctx, N = AsciiAudio.notes, LOOP = 48;
+      // Soft noise (one-pole filtered white), 4 s, looped, for the wind.
+      const len = c.sampleRate * 4, buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
+      let b0 = 0;
+      for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; b0 = 0.96 * b0 + 0.04 * w; d[i] = b0 * 3 + w * 0.08; }
+      function layer(type, f, q, pan, wet) {
+        const src = c.createBufferSource(), fl = c.createBiquadFilter(), g = c.createGain();
+        src.buffer = buf; src.loop = true;
+        fl.type = type; fl.frequency.value = f; fl.Q.value = q; g.gain.value = 0;
+        src.connect(fl); fl.connect(g); g.connect(a._out({ bus: 'sfx', pan }, wet));
+        src.start(a.time(0), Math.random() * 3.5);
+        return { fl, g };
+      }
+      const low = layer('bandpass', 380, 0.8, -0.3, 0.45), high = layer('bandpass', 1200, 2.4, 0.35, 0.6);
+      const lfo = c.createOscillator(), lg = c.createGain();
+      lfo.frequency.value = 0.09; lg.gain.value = 350;
+      lfo.connect(lg); lg.connect(high.fl.frequency); lfo.start(a.time(0));
+      a.every(0.25, (tt, k) => {
+        const w = clamp((Math.abs(wind) - 0.8) / 5.5, 0, 1);
+        low.g.gain.setTargetAtTime(0.03 + 0.012 * Math.sin(k * 0.05) + 0.09 * w, tt, 0.7);
+        low.fl.frequency.setTargetAtTime(300 + 600 * w, tt, 0.7);
+        high.g.gain.setTargetAtTime(0.004 + 0.03 * w * w, tt, 0.9);
+      });
+
+      // Felt piano: a pluck that closes quickly plus a quiet celesta for the ring.
+      const piano = (tt, note, dur, vel, pan) => {
+        a.pluck(tt, note, dur, { type: 'triangle', vel, pan, wet: 0.5 });
+        a.celesta(tt + 0.004, note, dur, { vel: vel * 0.7, pan, wet: 0.6 });
+      };
+      // Right hand: two phrases, a falling line that never quite settles.
+      const RH = N('r:2 E5:2 D5:1 C5:1 | C5:3 A4:3 | r:1 G4:1 C5:2 E5:2 | D5:4 B4:2 | ' +
+                   'r:2 A5:2 G5:1 E5:1 | F5:3 E5:1 D5:2 | C5:2 B4:1 A4:1 G#4:2 | A4:4 r:2');
+      a.part(RH, (tt, e) => piano(tt, e.note, Math.max(2.4, e.sec * 2.2), 1, 0.12), { length: LOOP });
+      // Left hand: one broken chord per 6 beats, four notes, very soft.
+      const CHORDS = [['A2', 'E3', 'C4', 'E3'], ['F2', 'C3', 'A3', 'C3'], ['C3', 'G3', 'E4', 'G3'], ['E2', 'B2', 'G3', 'B2'],
+                      ['A2', 'E3', 'C4', 'E3'], ['D2', 'A2', 'F3', 'A2'], ['E2', 'B2', 'G#3', 'B2'], ['A2', 'E3', 'A3', 'E3']];
+      const LV = [0.9, 0.5, 0.58, 0.4];
+      a.every(1.5, (tt, s) => {
+        const seg = Math.floor(s / 4) % 8, k = s % 4;
+        piano(tt, CHORDS[seg][k], k ? 2.6 : 4, LV[k], -0.25);
+      });
+
+      // Sound effects in sync with the picture.
+      a.on('car', (a, d, t) => {
+        a.noise(t, { dur: 9, filter: 'lowpass', freq: 320, freqEnd: 800, q: 0.6, attack: 4.5, vel: 0.26, wet: 0.35, bus: 'sfx', pan: 0.25 });
+        a.noise(t + 0.6, { dur: 8, filter: 'bandpass', freq: 2400, freqEnd: 1500, q: 0.9, attack: 4, vel: 0.06, wet: 0.45, bus: 'sfx', pan: -0.1 });
+      }, { gap: 3 });
+      a.on('flick', (a, d, t) => {
+        const pan = (d.x || 0.5) * 1.2 - 0.6;
+        a.noise(t, { dur: 0.04, filter: 'bandpass', freq: 3600, q: 4, vel: 0.08, wet: 0.15, bus: 'sfx', pan });
+        a.noise(t, { dur: 0.14, filter: 'lowpass', freq: 160, q: 8, vel: 0.14, wet: 0.08, bus: 'sfx', pan });
+      }, { gap: 0.15 });
+      const BELLS = ['E6', 'A5', 'C6', 'B5', 'G5', 'D6', 'E5', 'A6', 'C6', 'E6'];
+      a.on('lampOn', (a, d, t) => a.bell(t, BELLS[(d.k || 0) % BELLS.length], 2.5,
+        { vel: 0.1, wet: 0.7, bus: 'sfx', pan: (d.x || 0.5) * 1.2 - 0.6 }), { gap: 0.12 });
+      a.on('dark', (a, d, t) => a.sweep(t, 2.5, { from: 1800, to: 250, q: 1, attack: 0.6, vel: 0.08, bus: 'sfx', wet: 0.6 }));
+      a.on('gust', (a, d, t) => a.noise(t, { dur: 5, filter: 'bandpass', freq: 500, freqEnd: 1400, q: 1.3, attack: 2,
+        vel: 0.16, wet: 0.45, bus: 'sfx', pan: -0.3 }), { gap: 3 });
+    }
+  });
+
+  // Starting mid-loop (or a replay) picks up the night where it is: the car already on the bridge, the gust blowing.
+  function syncState() {
+    const tc = tcOf(t);
+    if (!reduced && tc >= TL.CAR && tc < TL.CAR + CAR_DUR) carT0 = t - (tc - TL.CAR);
+    env = envAt(tc);
+    wind = -1.1 - (reduced ? 0 : 5.5 * gustAt(tc));
+  }
+  syncState();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ASCII Santa's Sleigh | Alex Li (李翔緯)</title>
+  <meta name="description" content="Santa's sleigh flies across a moonlit night drawn entirely with ASCII characters: galloping reindeer, glowing gold runners, a glittering trail, falling presents, fireworks and a waxing moon over the mountains. Tap for fireworks. Vanilla JS on a single canvas.">
+  <meta name="theme-color" content="#03050c">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;600;800&display=swap">
+  <style>
+    :root {
+      --bg: #0b1120;
+      --sky: #03050c;
+      --text: #e6edf6;
+      --muted: #a3b1c6;
+      --accent: #3b82f6;
+      --mono: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--sky);
+      color: var(--text);
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    canvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100svh;
+      display: block;
+      touch-action: none; /* dragging steers the sleigh; double-tap means restart */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .back {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(59, 130, 246, 0.45);
+      background: rgba(59, 130, 246, 0.12);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .back:hover, .back:focus-visible {
+      background: rgba(59, 130, 246, 0.28);
+      border-color: var(--accent);
+      outline: none;
+    }
+    .hud, .hint {
+      position: fixed;
+      z-index: 1;
+      bottom: 12px;
+      color: var(--muted);
+      opacity: 0.75;
+      font: 11px/1.4 var(--mono);
+      white-space: pre;
+      pointer-events: none;
+      max-width: calc(100% - 24px);
+      overflow: hidden;
+    }
+    .hud { left: 12px; }
+    .hint {
+      right: 12px;
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    @media (max-width: 640px) {
+      .hud, .hint { font-size: 10px; }
+      .hint { bottom: 30px; } /* stack above the HUD on narrow screens */
+    }
+  </style>
+</head>
+<body>
+  <h1 class="sr-only">ASCII Santa's Sleigh</h1>
+  <a class="back" href="./">← ASCII</a>
+  <canvas id="c" role="img" aria-label="Animated night sky drawn with ASCII characters: Santa's sleigh pulled by galloping reindeer flies past a waxing moon over the mountains, dropping presents and leaving a glittering trail while fireworks burst"></canvas>
+  <div class="hud" id="hud" aria-hidden="true"></div>
+  <div class="hint" id="hint"></div>
+
+<script src="ascii-audio.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T_START = 0;                       // scene time at load (headless tests change this)
+  const TIME_SCALE = reduced ? 0.6 : 1;
+  const MOTION = reduced ? 0.35 : 1;       // bob, bank and gallop amplitudes
+  const PART = reduced ? 0.5 : 1;          // particle counts
+  const LOOP = 24;                         // seconds of one fly-past
+
+  // ---------- Timeline (seconds within the loop) ----------
+  const T = {
+    APPEAR: 0.4, ARRIVE: 3.6,              // the sleigh flies in from far away
+    DEER: [3.6, 3.0], DEER_DUR: 2.2,       // [lead, wheel]: the one nearer the sleigh arrives first
+    GIFTS: [7.0, 8.4, 9.8, 11.2, 12.6],
+    // [launch time, x across the screen, burst height from the top]
+    FW: [[9.2, 0.18, 0.2], [10.6, 0.8, 0.15], [11.8, 0.34, 0.11], [12.9, 0.88, 0.26], [14.1, 0.1, 0.13], [15.3, 0.62, 0.09]],
+    MSG: 13.8, LETTER: 0.13,
+    EXIT: 17.2, EXIT_DUR: 3.0,
+    MSG_OUT: 21.4
+  };
+  const TAU = Math.PI * 2;
+  const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const easeOut = p => 1 - (1 - p) * (1 - p) * (1 - p);
+  const easeInOut = p => p * p * (3 - 2 * p);
+
+  // ---------- Characters, palette, materials ----------
+  const CH = [];
+  const ci = s => { let i = CH.indexOf(s); if (i < 0) { CH.push(s); i = CH.length - 1; } return i; };
+  const C_DOT = ci('.'), C_COL = ci(':'), C_PLUS = ci('+'), C_STAR = ci('*'), C_DASH = ci('-'), C_EQ = ci('='),
+        C_BAR = ci('|'), C_SL = ci('/'), C_BS = ci('\\'), C_US = ci('_'), C_HAT = ci('^'), C_HASH = ci('#'),
+        C_o = ci('o'), C_AT = ci('@'), C_V = ci('v'), C_TIL = ci('~');
+
+  const LEVELS = 16;
+  const PAL = [];
+  const pal = (r, g, b) => { PAL.push([r, g, b]); return PAL.length - 1; };
+
+  // A material: palette entry, a brightness ramp of glyphs and the level range it uses.
+  const MATS = [];
+  function mat(rgb, ramp, lo = 3, hi = 14) {
+    MATS.push({ p: pal(...rgb), ramp: [...ramp].map(ci), lo, hi });
+    return MATS.length - 1;
+  }
+  const M_RED = mat([226, 36, 46], '*###@', 4, 13);
+  const M_RED_D = mat([150, 22, 34], '*##', 4, 11);
+  const M_SUIT = mat([222, 40, 50], '*##@@', 4, 13);
+  const M_FUR = mat([238, 240, 246], 'oO@@', 6, 14);
+  const M_SKIN = mat([246, 168, 128], 'oO@', 6, 11);
+  const M_ROSE = mat([255, 128, 128], 'o@', 8, 13);
+  const M_EYE = mat([40, 22, 24], 'o', 6, 6);
+  const M_BELT = mat([70, 52, 58], '=#', 8, 11);
+  const M_GOLD = mat([255, 204, 64], 'o*@', 9, 15);
+  const M_GOLD_D = mat([214, 150, 40], 'o*@', 6, 11);
+  const M_SACK = mat([176, 112, 62], '*##@', 4, 12);
+  const M_GIFT_G = mat([46, 196, 96], '##@', 5, 13);
+  const M_GIFT_B = mat([80, 138, 245], '##@', 5, 13);
+  const M_GIFT_P = mat([240, 112, 196], '##@', 5, 13);
+  const M_BROWN = mat([200, 120, 58], '*##@@', 4, 13);
+  const M_BROWN_D = mat([128, 72, 36], '*##', 4, 11);
+  const M_TAN = mat([240, 206, 160], 'oO@', 5, 13);
+  const M_ANTLER = mat([240, 228, 198], '+', 8, 14);
+  const M_ANTLER_D = mat([170, 150, 120], '+', 6, 10);
+  const M_NOSE = mat([255, 44, 44], '@', 13, 15);
+  const M_NOSE_D = mat([70, 40, 30], 'o', 8, 8);
+  const M_HOOF = mat([90, 64, 50], '#', 8, 9);
+  const M_REIN = mat([230, 48, 58], '-', 8, 13);
+
+  // Sky, moon, mountains and particles.
+  const P_STAR = pal(214, 224, 255);
+  const P_MOON = pal(250, 244, 216);
+  const P_MTN = [pal(44, 54, 92), pal(62, 76, 122), pal(88, 104, 156)];
+  const P_SNOW = pal(206, 216, 240);
+  const P_TRAIL = [pal(255, 214, 96), pal(255, 240, 180), pal(255, 255, 255), pal(255, 176, 70)];
+  const P_FW = [pal(255, 72, 72), pal(84, 240, 124), pal(255, 212, 90), pal(110, 172, 255),
+                pal(255, 124, 220), pal(255, 255, 255), pal(110, 240, 240)];
+  const NCOLOR = PAL.length * LEVELS;
+  const COLSTR = new Array(NCOLOR);
+  PAL.forEach(([r, g, b], p) => {
+    for (let l = 0; l < LEVELS; l++) {
+      // Top levels overshoot 1 and wash toward white, so lit characters read as glowing.
+      const m = 0.3 + 1.05 * l / (LEVELS - 1), w = Math.max(0, m - 1) * 160;
+      const lift = v => Math.min(255, v * m + w) | 0;
+      COLSTR[p * LEVELS + l] = `rgb(${lift(r)},${lift(g)},${lift(b)})`;
+    }
+  });
+
+  // ---------- Sprites (local units, facing right, y down) ----------
+  // Sleigh: origin at the middle of the tub.
+  const HULL = [-50, -34, -42, -36, -37, -30, -36, -18, -10, -14, 16, -14, 30, -18, 38, -26, 44, -28, 48, -24,
+                46, -14, 40, -2, 30, 8, 16, 13, -30, 13, -42, 8, -48, -2, -52, -18];
+  const LIP = [-36, -18, -10, -14, 16, -14, 30, -18, 28, -13, 16, -10, -10, -10, -35, -13];
+  const RIM = [-52, -18, -50, -34, -42, -36, -37, -30, -36, -18, -10, -14, 16, -14, 30, -18, 38, -26, 44, -28, 48, -24];
+  const BACK_SCROLL = [-50, -34, -53, -37, -51, -41, -46, -41, -44, -38];
+  const FRONT_SCROLL = [48, -24, 52, -27, 51, -32, 46, -32, 45, -29, 48, -28];
+  const STRIPE = [];
+  for (let x = -44; x <= 36; x += 4) STRIPE.push(x, 1 + 2.2 * Math.sin(x * 0.22) + (x > 20 ? -(x - 20) * 0.25 : 0));
+  const RAIL = [-54, 26, -42, 25, 30, 25, 44, 23, 52, 18, 55, 11, 53, 5, 48, 4, 46, 8, 49, 11];
+  const FAR = [7, -5];
+  const RAIL_FAR = RAIL.map((v, i) => v + FAR[i & 1]);
+  const STRUTS = [-34, -12, 10, 30];
+  const RUNGS = [-42, -22, -2, 18, 38];
+  const HAT = [-21, -52, -5, -52, -9, -60, -17, -65, -25, -66, -29, -62, -23, -57];
+  const BOX_G = [-48, -55, -39, -55, -39, -46, -48, -46];
+  const BOX_B = [-37, -53, -29, -53, -29, -45, -37, -45];
+  const BOX_P = [-44, -61, -38, -61, -38, -55, -44, -55];
+  const HAND = [9, -27];
+  const SACK_MOUTH = [-40, -50];
+
+  // Reindeer: origin at the middle of the body. Antler polylines and the harness point.
+  const ANTLER_NEAR = [[23, -23, 20, -30, 15, -36], [21, -28, 25, -34], [18, -33, 20, -39], [16, -35, 11, -38]];
+  const ANTLER_FAR = [[26, -23, 25, -31, 22, -38], [25, -29, 30, -33], [23.5, -34, 27, -39]];
+  const HARNESS = [9, -2], COLLAR = [16, -8];
+
+  // Ensemble: where each reindeer flies, in sleigh units, and its relative size.
+  const DEER_AT = { one: [[98, -12, 0.95]], two: [[170, -12, 0.86], [108, -6, 0.92]] };
+  const TILT = -0.1;
+
+  // ---------- Canvas, grid, layout ----------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const hudEl = document.getElementById('hud');
+  const hintEl = document.getElementById('hint');
+
+  let W = 0, H = 0, fs = 9, cw = 5, ch = 10, cols = 0, rows = 0;
+  let cellFont = '', msgFont = '', msgFs = 12, msgCw = 7, bgGrad = null;
+  let stampA, cchar, ccol, touched, order, nT = 0, stamp = 0;
+  const counts = new Uint32Array(NCOLOR);
+  let S = 3, OCX = 0, OCY = 0, deerAt = DEER_AT.one, moonX = 0, moonY = 0, moonR = 30;
+  let skyStars = [], ridge = [null, null, null];
+  let needResize = true, dirty = true;
+
+  function resize() {
+    needResize = false;
+    W = canvas.clientWidth || innerWidth;
+    H = canvas.clientHeight || innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    fs = clamp(Math.round(Math.min(W, H) / 112), 5, 10);
+    cellFont = `${fs}px ${MONO}`;
+    ctx.font = cellFont;
+    cw = ctx.measureText('M').width || fs * 0.6;
+    ch = fs * 1.02;
+    cols = Math.ceil(W / cw);
+    rows = Math.ceil(H / ch);
+    const n = cols * rows;
+    stampA = new Uint32Array(n); cchar = new Uint8Array(n); ccol = new Uint16Array(n);
+    touched = new Int32Array(n); order = new Int32Array(n); stamp = 0;
+    for (let l = 0; l < 3; l++) ridge[l] = new Int16Array(cols);
+
+    // Ensemble size: one reindeer on tall screens, two on wide ones. Fit its tilted bounding box.
+    deerAt = W > H * 1.05 ? DEER_AT.two : DEER_AT.one;
+    const xr = Math.max(...deerAt.map(d => d[0] + 40 * d[2]));
+    const box = [[-56, -66], [xr, -66], [-56, 30], [xr, 30]];
+    for (const d of deerAt) box.push([d[0] + 26 * d[2], d[1] - 42 * d[2]]);
+    const c0 = Math.cos(TILT), s0 = Math.sin(TILT);
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    for (const [x, y] of box) {
+      const X = x * c0 - y * s0, Y = x * s0 + y * c0;
+      x0 = Math.min(x0, X); x1 = Math.max(x1, X); y0 = Math.min(y0, Y); y1 = Math.max(y1, Y);
+    }
+    S = Math.max(0.5, Math.min(W * 0.94 / (x1 - x0), H * 0.48 / (y1 - y0)));
+    OCX = W * 0.5 - (x0 + x1) / 2 * S;
+    OCY = H * 0.42 - (y0 + y1) / 2 * S;
+
+    moonR = Math.max(16, Math.min(W, H) * 0.075);
+    moonX = W > H ? W * 0.64 : W * 0.6;
+    moonY = Math.max(moonR + 44, H * 0.13);
+
+    msgFs = Math.max(9, Math.min(fs * 1.9, (W - 32) / (20 * 0.62)));
+    msgFont = `700 ${msgFs.toFixed(1)}px ${MONO}`;
+    ctx.font = msgFont;
+    msgCw = ctx.measureText('M').width;
+
+    bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, '#02040b');
+    bgGrad.addColorStop(1, '#0a1124');
+
+    const r = mulberry32(1225);
+    const nStars = Math.round(n * 0.014);
+    skyStars = [];
+    for (let i = 0; i < nStars; i++) {
+      const q = r();
+      skyStars.push({ c: (r() * cols) | 0, r: (r() * rows * 0.8) | 0, ph: r() * TAU, sp: 0.6 + r() * 2.4,
+                      g: q < 0.75 ? C_DOT : q < 0.95 ? C_PLUS : C_STAR, b: 0.35 + 0.65 * r() });
+    }
+    dirty = true;
+  }
+
+  // ---------- Cell buffer ----------
+  function setCell(c, chr, col) {
+    if (stampA[c] !== stamp) { stampA[c] = stamp; touched[nT++] = c; }
+    cchar[c] = chr; ccol[c] = col;
+  }
+  function plotP(c, r, chr, p, lvl) {
+    if (c < 0 || r < 0 || c >= cols || r >= rows) return;
+    setCell(r * cols + c, chr, p * LEVELS + clamp(lvl | 0, 0, 15));
+  }
+  // Material plot: b is brightness 0..1; `glyph` overrides the ramp (used for line directions).
+  function plotM(c, r, m, b, glyph) {
+    if (c < 0 || r < 0 || c >= cols || r >= rows) return;
+    const M = MATS[m];
+    b = b < 0 ? 0 : b > 1 ? 1 : b;
+    const g = glyph >= 0 ? glyph : M.ramp[Math.min(M.ramp.length - 1, (b * M.ramp.length) | 0)];
+    setCell(r * cols + c, g, M.p * LEVELS + Math.round(M.lo + b * (M.hi - M.lo)));
+  }
+
+  // ---------- Sprite rasteriser: local units -> screen via offset, scale, rotation ----------
+  let XO = 0, YO = 0, XS = 1, XC = 1, XN = 0;
+  function xf(ox, oy, s, r) { XO = ox; YO = oy; XS = s; XC = Math.cos(r); XN = Math.sin(r); }
+  const sxOf = (x, y) => XO + XS * (x * XC - y * XN);
+  const syOf = (x, y) => YO + XS * (x * XN + y * XC);
+
+  // Visit every cell whose centre falls in a local bounding box; fn(lx, ly, c, r) returns a hit.
+  function scan(x0, y0, x1, y1, fn) {
+    let a = 1e9, b = -1e9, c = 1e9, d = -1e9;
+    for (let k = 0; k < 4; k++) {
+      const x = k & 1 ? x1 : x0, y = k & 2 ? y1 : y0, sx = sxOf(x, y), sy = syOf(x, y);
+      if (sx < a) a = sx; if (sx > b) b = sx; if (sy < c) c = sy; if (sy > d) d = sy;
+    }
+    const C0 = Math.max(0, Math.floor(a / cw)), C1 = Math.min(cols - 1, Math.floor(b / cw));
+    const R0 = Math.max(0, Math.floor(c / ch)), R1 = Math.min(rows - 1, Math.floor(d / ch));
+    const inv = 1 / XS;
+    let hits = 0;
+    for (let r = R0; r <= R1; r++) {
+      const py = (r + 0.5) * ch - YO;
+      for (let cc = C0; cc <= C1; cc++) {
+        const px = (cc + 0.5) * cw - XO;
+        if (fn((px * XC + py * XN) * inv, (-px * XN + py * XC) * inv, cc, r)) hits++;
+      }
+    }
+    return hits;
+  }
+  function dot(x, y, m, b = 0.8, glyph = -1) {
+    plotM(Math.floor(sxOf(x, y) / cw), Math.floor(syOf(x, y) / ch), m, b, glyph);
+  }
+  // Filled ellipse, shaded as a lit dome (light from the upper left). Tiny ones still leave one cell.
+  function ell(cx, cy, rx, ry, a, m, lift = 0) {
+    const ca = Math.cos(a), sa = Math.sin(a), R = Math.max(rx, ry);
+    const hit = scan(cx - R, cy - R, cx + R, cy + R, (lx, ly, c, r) => {
+      const dx = lx - cx, dy = ly - cy, u = (dx * ca + dy * sa) / rx, v = (-dx * sa + dy * ca) / ry, d = u * u + v * v;
+      if (d > 1) return false;
+      plotM(c, r, m, 0.78 + lift + 0.2 * (-0.5 * u - 0.65 * v) - 0.3 * d * d);
+      return true;
+    });
+    if (!hit) dot(cx, cy, m, 0.8 + lift);
+  }
+  function inPoly(P, x, y) {
+    let inside = false;
+    for (let i = 0, j = P.length - 2; i < P.length; j = i, i += 2) {
+      const yi = P[i + 1], yj = P[j + 1];
+      if ((yi > y) !== (yj > y) && x < (P[j] - P[i]) * (y - yi) / (yj - yi) + P[i]) inside = !inside;
+    }
+    return inside;
+  }
+  function poly(P, m, shade) {
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    for (let i = 0; i < P.length; i += 2) {
+      x0 = Math.min(x0, P[i]); x1 = Math.max(x1, P[i]); y0 = Math.min(y0, P[i + 1]); y1 = Math.max(y1, P[i + 1]);
+    }
+    const hit = scan(x0, y0, x1, y1, (lx, ly, c, r) => {
+      if (!inPoly(P, lx, ly)) return false;
+      plotM(c, r, m, shade ? shade(lx, ly) : 0.75);
+      return true;
+    });
+    if (!hit) dot((x0 + x1) / 2, (y0 + y1) / 2, m);
+  }
+  // Glyph for a screen-space direction.
+  // Gold ('=') lines use beads on their curves instead of slashes, which read as clutter there.
+  function dirGlyph(dx, dy, flat) {
+    const ax = Math.abs(dx), ay = Math.abs(dy);
+    if (ay < 0.42 * ax) return flat;
+    if (ax < 0.42 * ay) return C_BAR;
+    if (flat === C_EQ) return C_o;
+    return dx * dy > 0 ? C_BS : C_SL;
+  }
+  // Thick polyline, stamped along its length in screen space so it never breaks up.
+  // flat >= 0: draw with direction glyphs ('-' / '|' and so on, `flat` for horizontal); -1: material ramp.
+  function line(P, w, m, flat = -1, bMul = 1) {
+    const rad = w * XS, step = Math.min(cw, ch) * 0.45;
+    for (let i = 0; i + 3 < P.length; i += 2) {
+      const ax = sxOf(P[i], P[i + 1]), ay = syOf(P[i], P[i + 1]);
+      const bx = sxOf(P[i + 2], P[i + 3]), by = syOf(P[i + 2], P[i + 3]);
+      const dx = bx - ax, dy = by - ay, len = Math.hypot(dx, dy);
+      const g = flat >= 0 ? dirGlyph(dx, dy, flat) : -1;
+      const n = Math.max(1, Math.ceil(len / step));
+      for (let k = 0; k <= n; k++) {
+        const x = ax + dx * k / n, y = ay + dy * k / n;
+        if (rad < cw * 0.75) { plotM(Math.floor(x / cw), Math.floor(y / ch), m, 0.85 * bMul, g); continue; }
+        const c0 = Math.floor((x - rad) / cw), c1 = Math.floor((x + rad) / cw);
+        const r0 = Math.floor((y - rad) / ch), r1 = Math.floor((y + rad) / ch);
+        for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+          const d = Math.hypot((c + 0.5) * cw - x, (r + 0.5) * ch - y);
+          if (d <= rad || (c === Math.floor(x / cw) && r === Math.floor(y / ch))) plotM(c, r, m, (1 - 0.3 * d / rad) * bMul, g);
+        }
+      }
+    }
+  }
+
+  // ---------- Sleigh and Santa ----------
+  const hullShade = (x, y) => 0.92 - 0.42 * clamp((y + 30) / 44, 0, 1) - (x < -40 ? 0.06 : 0);
+  function drawSleigh(ox, oy, s, r, tt) {
+    xf(ox, oy, s, r);
+    // Far runner and the rungs joining it to the near one (mostly hidden under the tub).
+    line(RAIL_FAR, 1.1, M_GOLD_D, C_EQ);
+    for (const x of RUNGS) line([x, 25, x + FAR[0], 25 + FAR[1]], 0.8, M_GOLD_D, C_EQ);
+    // Sack of presents behind Santa.
+    ell(-38, -40, 11, 11.5, 0, M_SACK);
+    poly(BOX_G, M_GIFT_G, (x, y) => 0.9 - (y + 55) * 0.03);
+    poly(BOX_B, M_GIFT_B, (x, y) => 0.9 - (y + 53) * 0.03);
+    poly(BOX_P, M_GIFT_P, (x, y) => 0.9 - (y + 61) * 0.04);
+    line([-43.5, -55, -43.5, -46], 0.7, M_GOLD, C_EQ);
+    line([-33, -53, -33, -45], 0.7, M_GOLD, C_EQ);
+    line([-41, -61, -41, -55], 0.6, M_GOLD, C_EQ);
+    ell(-38, -50.5, 6, 2.2, 0, M_SACK, -0.1);
+    // Santa: coat, belt, head, beard, hat.
+    ell(-18, -27, 12.5, 13, 0, M_SUIT);
+    scan(-31, -22, -5, -17, (lx, ly, c, rr) => {
+      const dx = (lx + 18) / 12.5, dy = (ly + 27) / 13;
+      if (dx * dx + dy * dy > 1 || ly < -21.5 || ly > -17.5) return false;
+      plotM(c, rr, lx > -11 && lx < -6 ? M_GOLD : M_BELT, 0.7);
+      return true;
+    });
+    ell(-13, -46, 8, 8, 0, M_SKIN, 0.05);
+    ell(-12.5, -35, 8.5, 8.5, 0, M_FUR);
+    ell(-13, -28.5, 5.5, 5, 0, M_FUR, -0.05);
+    ell(-8, -42, 4.6, 1.8, 0.1, M_FUR, 0.1);
+    dot(-5.5, -45, M_ROSE, 0.9);
+    // Blink now and then.
+    const blink = ((tt * 0.37) % 1) < 0.04;
+    dot(-9, -48, blink ? M_SKIN : M_EYE, 0.5, blink ? C_DASH : -1);
+    poly(HAT, M_SUIT, (x, y) => 0.85 + (y + 52) * 0.02 - (x + 15) * 0.008);
+    line([-22, -52.5, -4, -52.5], 1.6, M_FUR);
+    ell(-29.5, -62, 3.8, 3.8, 0, M_FUR, 0.05);
+    // Tub, inner lip, gold trim and the near runner.
+    poly(HULL, M_RED, hullShade);
+    poly(LIP, M_RED_D, (x, y) => 0.55 + (y + 18) * 0.03);
+    line(RIM, 1.2, M_GOLD, C_EQ);
+    line(BACK_SCROLL, 0.9, M_GOLD, C_EQ);
+    line(FRONT_SCROLL, 0.9, M_GOLD, C_EQ);
+    line(STRIPE, 0.9, M_GOLD, -1, 0.9);
+    for (const x of STRUTS) line([x, 12, x + 1.5, 25], 0.9, M_GOLD, C_EQ);
+    line(RAIL, 1.5, M_GOLD, C_EQ);
+    // Arm reaching forward to the reins.
+    line([-19, -33, -6, -25.5], 3.8, M_SUIT);
+    line([-6, -25.5, 4, -27], 3.2, M_SUIT);
+    line([3.5, -27, 5.5, -27.2], 2.6, M_FUR);
+    ell(8.5, -27, 3, 2.8, 0, M_FUR, 0.05);
+  }
+
+  // ---------- Reindeer ----------
+  function leg(hx, hy, a1, a2, near) {
+    const kx = hx + 7.5 * Math.sin(a1), ky = hy + 7.5 * Math.cos(a1);
+    const fx = kx + 8 * Math.sin(a2), fy = ky + 8 * Math.cos(a2);
+    const m = near ? M_BROWN : M_BROWN_D;
+    line([hx, hy, kx, ky], 3, m);
+    line([kx, ky, fx, fy], 1.8, m);
+    dot(fx + 0.6 * Math.sin(a2), fy + 0.6 * Math.cos(a2), M_HOOF, 0.8);
+  }
+  function legs(ph, near) {
+    const o = near ? 0 : 0.45, A = MOTION;
+    // Flying gallop: front legs tuck forward with the hooves folded back, hind legs reach back.
+    leg(near ? 11 : 13, 4, 0.6 + 0.55 * A * Math.sin(ph + o), 0.6 + 0.55 * A * Math.sin(ph + o) - 1.0 - 0.6 * A * Math.sin(ph + o + 0.9), near);
+    const h1 = -0.6 + 0.6 * A * Math.sin(ph + o + 2.2);
+    leg(near ? -13 : -11, 3, h1, h1 - 0.3 - 0.45 * A * Math.sin(ph + o + 3), near);
+  }
+  // Returns the screen positions of the harness (reins attach) and collar (traces to the deer ahead).
+  function drawDeer(ox, oy, s, r, ph, lead, tt) {
+    xf(ox, oy, s, r);
+    legs(ph, false);
+    for (const p of ANTLER_FAR) line(p, 0.7, M_ANTLER_D, C_DASH);
+    ell(-19.5, -4.5, 3.2, 2.2, -0.5, M_TAN, 0.1);           // tail
+    ell(-11, -0.5, 8.5, 7.5, 0, M_BROWN);                  // rump
+    ell(0, 0, 17, 8, 0, M_BROWN);                          // body
+    ell(10.5, 0, 8, 8, 0, M_BROWN);                        // chest
+    ell(1, 5.5, 12, 2.6, 0, M_TAN, -0.1);                  // belly
+    line([13, -3, 21.5, -15], 4, M_BROWN);                 // neck
+    ell(26, -18, 6.8, 4.8, 0.35, M_BROWN, 0.05);           // head
+    ell(31.5, -15.5, 4.2, 3.2, 0.2, M_TAN);                // muzzle
+    if (lead) ell(35.3, -15.3, 2.2, 2.2, 0, M_NOSE, 0.2);
+    else dot(35, -15.3, M_NOSE_D, 0.8);
+    dot(25.2, -20.3, M_EYE, 0.5);
+    ell(20.5, -21, 3.2, 1.4, -0.5, M_BROWN_D, 0.1);        // ear
+    for (const p of ANTLER_NEAR) line(p, 0.8, M_ANTLER, C_DASH);
+    // Harness: red straps with gold bells.
+    line([10, -7.5, 8, 7.5], 1.3, M_REIN);
+    line([-4, -8, -4, 8], 1.3, M_REIN);
+    line([16, -8.5, 19.5, -4], 1.1, M_REIN);
+    const bell = (Math.sin(tt * 9 + ph) > 0.2) ? 1 : 0.7;
+    dot(8.8, 4, M_GOLD, bell, C_o); dot(10, -4, M_GOLD, bell, C_o); dot(-4, -2, M_GOLD, 0.8, C_o);
+    legs(ph, true);
+    return { hx: sxOf(...HARNESS), hy: syOf(...HARNESS), cx: sxOf(...COLLAR), cy: syOf(...COLLAR),
+             nx: sxOf(35.3, -15.3), ny: syOf(35.3, -15.3), lead };
+  }
+
+  // Reins: a slightly sagging curve between two screen points, drawn with direction glyphs.
+  function rein(ax, ay, bx, by, sag) {
+    const n = Math.max(2, Math.ceil(Math.hypot(bx - ax, by - ay) / (Math.min(cw, ch) * 0.45)));
+    let px = ax, py = ay;
+    for (let k = 1; k <= n; k++) {
+      const u = k / n, x = ax + (bx - ax) * u, y = ay + (by - ay) * u + sag * 4 * u * (1 - u);
+      plotM(Math.floor(x / cw), Math.floor(y / ch), M_REIN, 0.75, dirGlyph(x - px, y - py, C_DASH));
+      px = x; py = y;
+    }
+  }
+
+  // ---------- Particles: trail glitter, firework sparks, landing sparkles ----------
+  const MAXP = 4000;
+  const PX = new Float32Array(MAXP), PY = new Float32Array(MAXP), VX = new Float32Array(MAXP), VY = new Float32Array(MAXP),
+        AGE = new Float32Array(MAXP), LIFE = new Float32Array(MAXP), PC = new Uint16Array(MAXP), PK = new Uint8Array(MAXP),
+        PPH = new Float32Array(MAXP);
+  let nP = 0;
+  function spawn(x, y, vx, vy, life, p, kind) {
+    if (nP >= MAXP) return;
+    PX[nP] = x; PY[nP] = y; VX[nP] = vx; VY[nP] = vy; AGE[nP] = 0; LIFE[nP] = life;
+    PC[nP] = p; PK[nP] = kind; PPH[nP] = Math.random() * TAU; nP++;
+  }
+  const K_TRAIL = 0, K_SPARK = 1, K_EMBER = 2;
+  function updateParticles(dt) {
+    const g = H * 0.1, dragS = Math.exp(-1.7 * dt), dragT = Math.exp(-0.9 * dt);
+    for (let i = 0; i < nP; i++) {
+      AGE[i] += dt;
+      if (AGE[i] >= LIFE[i]) {
+        nP--;
+        PX[i] = PX[nP]; PY[i] = PY[nP]; VX[i] = VX[nP]; VY[i] = VY[nP]; AGE[i] = AGE[nP]; LIFE[i] = LIFE[nP];
+        PC[i] = PC[nP]; PK[i] = PK[nP]; PPH[i] = PPH[nP]; i--; continue;
+      }
+      if (PK[i] === K_TRAIL) { VX[i] *= dragT; VY[i] = VY[i] * dragT + g * 0.08 * dt; }
+      else { VX[i] *= dragS; VY[i] = VY[i] * dragS + g * dt; }
+      PX[i] += VX[i] * dt; PY[i] += VY[i] * dt;
+    }
+  }
+  function drawParticles() {
+    for (let i = 0; i < nP; i++) {
+      const f = AGE[i] / LIFE[i], k = PK[i];
+      const tw = 0.6 + 0.4 * Math.sin(AGE[i] * (k === K_TRAIL ? 14 : 22) + PPH[i]);
+      const g = f < 0.25 ? C_STAR : f < 0.6 ? C_PLUS : C_DOT;
+      const lvl = 3 + 12 * (1 - f * f) * tw;
+      // Firework sparks drag a short dim streak behind them.
+      if (k === K_SPARK && f < 0.6) plotP(Math.floor((PX[i] - VX[i] * 0.06) / cw), Math.floor((PY[i] - VY[i] * 0.06) / ch), C_DOT, PC[i], lvl * 0.6);
+      plotP(Math.floor(PX[i] / cw), Math.floor(PY[i] / ch), g, PC[i], lvl);
+    }
+  }
+
+  // Fireworks: a rocket climbs with a spark trail, then bursts into two colours.
+  const ROCKET_G = 0.9; // rocket deceleration, in screen heights per second squared
+  let rockets = [], flashes = [];
+  function launch(x, ty, user) {
+    if (rockets.length > 8) return;
+    const vy = -Math.sqrt(2 * H * ROCKET_G * Math.max(40, H + 10 - ty)) * 1.05;
+    rockets.push({ x, y: H + 6, vx: (Math.random() - 0.5) * W * 0.02, vy, ty, user });
+    music('event', 'launch', { x: x / W });
+  }
+  function burst(x, y) {
+    const n = Math.round((120 + Math.random() * 50) * PART);
+    const v0 = Math.min(W, H) * (0.3 + Math.random() * 0.08);
+    const c1 = P_FW[(Math.random() * P_FW.length) | 0], c2 = P_FW[(Math.random() * P_FW.length) | 0];
+    for (let i = 0; i < n; i++) {
+      const a = i / n * TAU + Math.random() * 0.2, v = v0 * (i % 2 ? 0.88 + 0.12 * Math.random() : 0.2 + 0.65 * Math.sqrt(Math.random()));
+      spawn(x, y, Math.cos(a) * v, Math.sin(a) * v, 1.3 + Math.random() * 0.9, i & 1 ? c1 : c2, K_SPARK);
+    }
+    if (!reduced) flashes.push({ x, y, age: 0, rgb: PAL[c1] });
+    music('event', 'boom', { x: x / W });
+  }
+  function updateRockets(dt) {
+    const g = H * ROCKET_G;
+    for (let i = rockets.length - 1; i >= 0; i--) {
+      const k = rockets[i];
+      k.vy += g * dt; k.x += k.vx * dt; k.y += k.vy * dt;
+      if (Math.random() < 0.8) spawn(k.x, k.y + 4, (Math.random() - 0.5) * 12, 20, 0.5 + Math.random() * 0.3, P_TRAIL[0], K_EMBER);
+      if (k.y <= k.ty || k.vy >= 0) { burst(k.x, k.y); rockets.splice(i, 1); }
+    }
+    for (let i = flashes.length - 1; i >= 0; i--) if ((flashes[i].age += dt) > 0.4) flashes.splice(i, 1);
+  }
+  function drawRockets() {
+    for (const k of rockets) {
+      const c = Math.floor(k.x / cw), r = Math.floor(k.y / ch);
+      plotP(c, r, C_HAT, P_FW[5], 15);
+      plotP(c, r + 1, C_BAR, P_TRAIL[0], 11);
+      plotP(c, r + 2, C_BAR, P_TRAIL[3], 7);
+    }
+  }
+  function drawFlashes() {
+    if (!flashes.length) return;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (const f of flashes) {
+      const p = f.age / 0.4, R = Math.min(W, H) * (0.08 + 0.18 * p), a = 0.35 * (1 - p) * (1 - p);
+      const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, R);
+      g.addColorStop(0, `rgba(255,255,255,${a.toFixed(3)})`);
+      g.addColorStop(0.3, `rgba(${f.rgb[0]},${f.rgb[1]},${f.rgb[2]},${(a * 0.5).toFixed(3)})`);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(f.x - R, f.y - R, R * 2, R * 2);
+    }
+    ctx.restore();
+  }
+
+  // Presents dropped from the sack, tumbling down to the mountains.
+  let gifts = [], presents = 0;
+  const GIFT_COLS = [[M_GIFT_G, M_GOLD], [M_GIFT_B, M_REIN], [M_RED, M_GOLD], [M_GIFT_P, M_FUR], [M_GOLD, M_RED]];
+  function dropGift(i) {
+    if (!pose.vis) return;
+    xf(pose.x, pose.y, pose.s, pose.r);
+    const x = sxOf(...SACK_MOUTH), y = syOf(...SACK_MOUTH);
+    gifts.push({ x, y, vx: -W * 0.07 - Math.random() * W * 0.03, vy: -H * 0.32, cols: GIFT_COLS[i % GIFT_COLS.length], age: 0 });
+    for (let k = 0; k < 10 * PART; k++) {
+      const a = -Math.PI * Math.random(), v = H * (0.04 + Math.random() * 0.06);
+      spawn(x, y, Math.cos(a) * v, Math.sin(a) * v, 0.5 + Math.random() * 0.5, P_TRAIL[k % 3], K_SPARK);
+    }
+    presents++;
+    music('event', 'gift', { i });
+  }
+  function updateGifts(dt) {
+    for (let i = gifts.length - 1; i >= 0; i--) {
+      const g = gifts[i];
+      g.age += dt; g.vy += H * 0.6 * dt; g.x += g.vx * dt; g.y += g.vy * dt;
+      const c = clamp(Math.floor(g.x / cw), 0, cols - 1);
+      if (g.y / ch >= ridge[1][c] + 1 || g.x < -40) {
+        for (let k = 0; k < 14 * PART; k++) {
+          const a = Math.PI + Math.random() * Math.PI, v = H * (0.05 + Math.random() * 0.08);
+          spawn(g.x, g.y, Math.cos(a) * v, Math.sin(a) * v, 0.6 + Math.random() * 0.6, P_TRAIL[(k % 3)], K_SPARK);
+        }
+        if (g.x > 0) music('event', 'land');
+        gifts.splice(i, 1);
+      }
+    }
+  }
+  function drawGifts() {
+    const gw = Math.max(2, Math.round(7 * S / cw)), gh = Math.max(2, Math.round(6 * S / ch));
+    for (const g of gifts) {
+      const c0 = Math.floor(g.x / cw) - (gw >> 1), r0 = Math.floor(g.y / ch) - (gh >> 1);
+      const wob = Math.sin(g.age * 9) > 0 ? 0 : 1;
+      for (let r = 0; r < gh; r++) for (let c = 0; c < gw; c++) {
+        const rib = c === (gw >> 1) || r === (gh >> 1);
+        plotM(c0 + c + (r === 0 ? wob : 0), r0 + r, rib ? g.cols[1] : g.cols[0], rib ? 0.9 : 0.8 - r * 0.08, rib ? C_PLUS : C_HASH);
+      }
+      plotM(c0 + (gw >> 1), r0 - 1, g.cols[1], 1, C_V);
+    }
+  }
+
+  // ---------- Sky: stars, glints, moon, mountains ----------
+  let glints = [];
+  function drawStars() {
+    for (let i = 0; i < skyStars.length; i++) {
+      const s = skyStars[i];
+      const tw = 0.5 + 0.5 * Math.sin(skyT * s.sp + s.ph);
+      plotP(s.c, s.r, s.g, P_STAR, 2 + 9 * s.b * (0.35 + 0.65 * tw));
+    }
+    for (let i = glints.length - 1; i >= 0; i--) {
+      const g = glints[i], p = g.age / 0.8;
+      if (p >= 1) { glints.splice(i, 1); continue; }
+      const a = Math.sin(Math.PI * p), L = Math.round(a * g.len);
+      plotP(g.c, g.r, C_STAR, P_STAR, 15);
+      for (let k = 1; k <= L; k++) {
+        const lv = 15 * a * (1 - k / (L + 1));
+        plotP(g.c + k, g.r, C_DASH, P_STAR, lv); plotP(g.c - k, g.r, C_DASH, P_STAR, lv);
+        if (k <= (L + 1) >> 1) { plotP(g.c, g.r + k, C_BAR, P_STAR, lv); plotP(g.c, g.r - k, C_BAR, P_STAR, lv); }
+      }
+    }
+  }
+
+  // Moon phase: a crescent that waxes to full, holds, then shrinks back so the loop is seamless.
+  function moonK(tau) {
+    const CRES = 0.5, FULL = -1.08;
+    if (tau < 0.5) return CRES;
+    if (tau < 6.5) return lerp(CRES, FULL, easeInOut((tau - 0.5) / 6));
+    if (tau < 18) return FULL;
+    if (tau < 23.5) return lerp(FULL, CRES, easeInOut((tau - 18) / 5.5));
+    return CRES;
+  }
+  // Fixed maria (dark patches) on the moon's face: [u, v, radius, depth].
+  const MARIA = [[-0.25, -0.3, 0.32, 0.3], [0.2, -0.1, 0.22, 0.25], [-0.05, 0.35, 0.28, 0.22], [0.42, 0.38, 0.14, 0.3], [-0.5, 0.15, 0.16, 0.25]];
+  const MOON_RAMP = [C_DOT, C_COL, C_PLUS, C_STAR, C_o, C_AT];
+  let moonLit = 0;
+  function drawMoon(k) {
+    const c0 = Math.floor((moonX - moonR) / cw), c1 = Math.floor((moonX + moonR) / cw);
+    const r0 = Math.floor((moonY - moonR) / ch), r1 = Math.floor((moonY + moonR) / ch);
+    let lit = 0, all = 0;
+    for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+      const u = ((c + 0.5) * cw - moonX) / moonR, v = ((r + 0.5) * ch - moonY) / moonR, d = u * u + v * v;
+      if (d > 1) continue;
+      all++;
+      const edge = k * Math.sqrt(1 - v * v);
+      const s = clamp((u - edge) * 5, 0, 1);
+      let m = 1;
+      for (const [mu, mv, mr, md] of MARIA) { const q = ((u - mu) ** 2 + (v - mv) ** 2) / (mr * mr); if (q < 1) m -= md * (1 - q); }
+      const z = Math.sqrt(1 - d), b = s * (0.55 + 0.45 * z) * m;
+      if (b < 0.08) { plotP(c, r, C_DOT, P_MOON, 2); continue; }       // faint earthshine
+      lit++;
+      plotP(c, r, MOON_RAMP[Math.min(5, (b * 6) | 0)], P_MOON, 4 + 11 * b);
+    }
+    moonLit = all ? lit / all : 0;
+  }
+  function drawMoonGlow() {
+    const R = moonR * 3.2, a = 0.05 + 0.12 * moonLit;
+    const g = ctx.createRadialGradient(moonX, moonY, moonR * 0.6, moonX, moonY, R);
+    g.addColorStop(0, `rgba(250,240,200,${a.toFixed(3)})`);
+    g.addColorStop(1, 'rgba(250,240,200,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(moonX - R, moonY - R, R * 2, R * 2);
+  }
+
+  // Mountains: three ranges of pointed peaks scrolling at different speeds (we are flying right).
+  const tri = v => 1 - 2 * Math.abs(v - Math.floor(v) - 0.5);
+  const MTN = [
+    { base: 0.86, amp: 0.2, f: [1.3, 2.9, 6.1], w: [0.6, 0.28, 0.12], ph: [0.2, 0.7, 0.1], speed: 0.012 },
+    { base: 0.92, amp: 0.15, f: [1.9, 3.7, 7.3], w: [0.6, 0.28, 0.12], ph: [0.65, 0.15, 0.4], speed: 0.03 },
+    { base: 0.99, amp: 0.1, f: [2.7, 5.3, 9.1], w: [0.62, 0.26, 0.12], ph: [0.35, 0.5, 0.8], speed: 0.06 }
+  ];
+  let mtnScroll = 0;
+  function computeRidges() {
+    for (let l = 0; l < 3; l++) {
+      const L = MTN[l], R = ridge[l], off = mtnScroll * L.speed;
+      for (let c = 0; c < cols; c++) {
+        const u = (c + 0.5) * cw / Math.max(H * 0.9, W * 0.45) + off / H;
+        let h = 0;
+        for (let k = 0; k < 3; k++) h += L.w[k] * tri(u * L.f[k] + L.ph[k]);
+        R[c] = Math.round((H * L.base - Math.min(H, W * 1.5) * L.amp * h) / ch);
+      }
+    }
+  }
+  function drawMountains(l) {
+    const R = ridge[l], p = P_MTN[l];
+    for (let c = 0; c < cols; c++) {
+      const top = R[c];
+      for (let r = Math.max(0, top); r < rows; r++) {
+        const depth = r - top;
+        let g, lv;
+        if (depth === 0) {
+          const dl = c > 0 ? R[c - 1] - top : 0, dr = c < cols - 1 ? R[c + 1] - top : 0;
+          g = dl > 0 && dr > 0 ? C_HAT : dl > 0 ? C_SL : dr > 0 ? C_BS : C_DASH;
+          if (g === C_HAT) { plotP(c, r, g, P_SNOW, 8 + 2 * l); continue; }
+          lv = 13;
+        } else {
+          g = (c + r * 2 + l) % 4 === 0 ? C_COL : C_DOT;
+          lv = Math.max(2, 11 - depth * 0.9);
+        }
+        plotP(c, r, g, p, lv);
+      }
+    }
+  }
+
+  // ---------- Scene state & pose ----------
+  let t = T_START, skyT = 0, tau = ((T_START % LOOP) + LOOP) % LOOP, nud = 0, ptrY = null;
+  const pose = { x: 0, y: 0, s: 1, r: 0, vis: false, deer: [] };
+
+  function computePose() {
+    const bobT = skyT * TAU * 0.45;
+    let s = S, x = OCX, y = OCY + nud + S * 3.5 * MOTION * Math.sin(bobT);
+    const target = ptrY == null ? 0 : clamp((ptrY - (OCY + S * -10)) * 0.6, -H * 0.2, H * 0.2);
+    let r = TILT + 0.03 * MOTION * Math.sin(bobT + 1) + clamp((target - nud) / H * 1.3, -0.16, 0.16) * MOTION;
+    // Approach from the distance.
+    const pa = clamp((tau - T.APPEAR) / (T.ARRIVE - T.APPEAR), 0, 1), ea = easeOut(pa);
+    s *= 0.06 + 0.94 * ea;
+    x = lerp(W * 0.34, x, easeInOut(pa));
+    y = lerp(H * 0.3, y, easeOut(pa));
+    r += (1 - ea) * 0.25;
+    // Exit to the upper right.
+    const q = clamp((tau - T.EXIT) / T.EXIT_DUR, 0, 1);
+    x += W * 1.6 * Math.pow(q, 2.2);
+    y -= H * 0.5 * Math.pow(q, 1.7);
+    s *= 1 + 0.3 * q;
+    r -= 0.16 * q;
+    pose.x = x; pose.y = y; pose.s = s; pose.r = r;
+    pose.vis = tau >= T.APPEAR && q < 1;
+    // Reindeer: placed in the ensemble, sweeping in from the right on their cue.
+    pose.deer.length = 0;
+    const cr = Math.cos(r), sr = Math.sin(r);
+    deerAt.forEach((d, i) => {
+      const tx = x + s * (d[0] * cr - d[1] * sr), ty = y + s * (d[0] * sr + d[1] * cr);
+      const p = clamp((tau - T.DEER[i]) / T.DEER_DUR, 0, 1), e = easeOut(p);
+      const ph = skyT * TAU * (reduced ? 1.1 : 1.8) + i * 1.9;
+      pose.deer.push({
+        x: tx + (1 - e) * W * 0.6, y: ty - (1 - e) * H * 0.25 - s * 1.8 * MOTION * Math.sin(ph + 0.6) * d[2],
+        s: s * d[2] * (0.35 + 0.65 * e), r: r + 0.05 * MOTION * Math.sin(ph) - (1 - e) * 0.2,
+        ph, lead: i === 0, vis: p > 0 && pose.vis
+      });
+    });
+  }
+
+  function emitTrail(dt) {
+    if (!pose.vis) return;
+    const q = clamp((tau - T.EXIT) / T.EXIT_DUR, 0, 1);
+    const rate = (110 + 200 * q) * PART * clamp(pose.s / S, 0.25, 1.3);
+    let n = rate * dt;
+    xf(pose.x, pose.y, pose.s, pose.r);
+    const sp = H * 0.05;
+    while (n > 0) {
+      if (n < 1 && Math.random() > n) break;
+      n--;
+      const u = Math.random(), lx = u < 0.55 ? -54 + Math.random() * 6 : -50 + Math.random() * 80, ly = 25 + (Math.random() - 0.5) * 3;
+      const far = Math.random() < 0.3;
+      const x = sxOf(lx + (far ? FAR[0] : 0), ly + (far ? FAR[1] : 0)), y = syOf(lx, ly + (far ? FAR[1] : 0));
+      const life = q > 0 ? 2.2 + Math.random() * 2 : 1 + Math.random() * 1.4;
+      spawn(x, y, -sp * (0.5 + Math.random()) * (q > 0 ? 0.3 : 1), sp * (Math.random() - 0.3) * 0.6, life,
+            P_TRAIL[(Math.random() * P_TRAIL.length) | 0], K_TRAIL);
+    }
+  }
+
+  // ---------- Message ----------
+  const YEAR = new Date().getFullYear();
+  const MSG = `MERRY CHRISTMAS ${YEAR}`;
+  const LETTERS = MSG.replace(/ /g, '').length;
+  const MSG_COLS = ['#ef4444', '#fbbf24', '#22c55e'];
+  function drawMessage() {
+    if (tau < T.MSG) return;
+    const n = Math.min(LETTERS, Math.floor((tau - T.MSG) / T.LETTER) + 1);
+    const fade = 1 - clamp((tau - T.MSG_OUT) / 1.6, 0, 1);
+    if (fade <= 0) return;
+    ctx.font = msgFont;
+    ctx.textBaseline = 'middle';
+    const x0 = W / 2 - MSG.length * msgCw / 2, y = H - (W < 640 ? 62 : 46) - msgFs;
+    const shift = Math.floor(skyT * 1.5);
+    let li = 0;
+    for (let i = 0; i < MSG.length && li < n; i++) {
+      const c = MSG[i];
+      if (c === ' ') continue;
+      const age = tau - (T.MSG + li * T.LETTER);
+      ctx.globalAlpha = fade * (0.8 + 0.2 * Math.sin(skyT * 3 + li * 1.7));
+      ctx.fillStyle = age < 0.15 ? '#ffffff' : MSG_COLS[(li + shift) % 3];
+      ctx.fillText(c, x0 + i * msgCw, y);
+      li++;
+    }
+    ctx.globalAlpha = 1;
+    ctx.textBaseline = 'top';
+  }
+
+  // Bloom: shrink the frame, remove the background with 'difference', blur, and add it back on top.
+  const glow = document.createElement('canvas'), gctx = glow.getContext('2d');
+  const GLOW_DIV = 5, GLOW_A = 0.8;
+  function drawGlow() {
+    const gw = Math.ceil(W / GLOW_DIV), gh = Math.ceil(H / GLOW_DIV);
+    if (glow.width !== gw || glow.height !== gh) { glow.width = gw; glow.height = gh; }
+    gctx.setTransform(1, 0, 0, 1, 0, 0);
+    gctx.globalCompositeOperation = 'copy';
+    gctx.filter = 'blur(2px)';
+    gctx.drawImage(canvas, 0, 0, gw, gh);
+    gctx.filter = 'none';
+    gctx.globalCompositeOperation = 'difference';
+    gctx.setTransform(gw / W, 0, 0, gh / H, 0, 0);
+    gctx.fillStyle = bgGrad;
+    gctx.fillRect(0, 0, W, H);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = GLOW_A;
+    ctx.drawImage(glow, 0, 0, W, H);
+    ctx.restore();
+  }
+
+  // Bucket by colour so fillStyle changes once per colour, not once per cell.
+  function drawCells() {
+    counts.fill(0);
+    for (let i = 0; i < nT; i++) counts[ccol[touched[i]]]++;
+    let acc = 0;
+    for (let c = 0; c < NCOLOR; c++) { const n = counts[c]; counts[c] = acc; acc += n; }
+    for (let i = 0; i < nT; i++) { const c = touched[i]; order[counts[ccol[c]]++] = c; }
+    let cur = -1;
+    for (let i = 0; i < nT; i++) {
+      const c = order[i], cc = ccol[c];
+      if (cc !== cur) { cur = cc; ctx.fillStyle = COLSTR[cc]; }
+      const row = (c / cols) | 0;
+      ctx.fillText(CH[cchar[c]], (c - row * cols) * cw, row * ch);
+    }
+  }
+
+  let noses = [];
+  function render() {
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+    drawMoonGlow();
+    ctx.textBaseline = 'top';
+    ctx.font = cellFont;
+    stamp++; nT = 0;
+
+    drawStars();
+    drawMoon(moonK(tau));
+    drawMountains(0);
+    drawRockets();
+    drawMountains(1);
+    drawGifts();
+    drawMountains(2);
+    drawParticles();
+
+    noses = [];
+    if (pose.vis) {
+      drawSleigh(pose.x, pose.y, pose.s, pose.r, skyT);
+      xf(pose.x, pose.y, pose.s, pose.r);
+      const hx = sxOf(...HAND), hy = syOf(...HAND);
+      // Draw the lead reindeer first (farther away), then the one nearer the sleigh.
+      const D = pose.deer, wheel = D[D.length - 1];
+      const info = [];
+      for (let i = 0; i < D.length; i++) {
+        const d = D[i];
+        if (!d.vis) { info.push(null); continue; }
+        xf(d.x, d.y, d.s, d.r);
+        info.push({ hx: sxOf(...HARNESS), hy: syOf(...HARNESS), cx: sxOf(...COLLAR), cy: syOf(...COLLAR) });
+      }
+      if (wheel.vis) {
+        const w = info[D.length - 1], sag = pose.s * 3;
+        rein(hx, hy, w.hx, w.hy, sag);
+        rein(hx, hy + pose.s * 1.5, w.hx - pose.s * 1.5, w.hy + pose.s * 2, sag * 1.2);
+        if (D.length > 1 && D[0].vis) rein(w.cx, w.cy, info[0].hx, info[0].hy, sag * 0.6);
+      }
+      for (let i = 0; i < D.length; i++) {
+        const d = D[i];
+        if (!d.vis) continue;
+        const r = drawDeer(d.x, d.y, d.s, d.r, d.ph, d.lead, skyT);
+        if (d.lead) noses.push([r.nx, r.ny, d.s]);
+      }
+    }
+    drawCells();
+    drawFlashes();
+    drawGlow();
+    // Rudolph's nose glows.
+    if (noses.length) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      for (const [x, y, s] of noses) {
+        const R = Math.max(8, s * 9), a = 0.35 + 0.15 * Math.sin(skyT * 5);
+        const g = ctx.createRadialGradient(x, y, 0, x, y, R);
+        g.addColorStop(0, `rgba(255,70,60,${a.toFixed(3)})`);
+        g.addColorStop(1, 'rgba(255,40,40,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(x - R, y - R, R * 2, R * 2);
+      }
+      ctx.restore();
+    }
+    drawMessage();
+  }
+
+  // ---------- Update ----------
+  const crossed = (a, b, x) => b >= a ? a < x && x <= b : x > a || x <= b; // handles the loop wrap
+  let glintT = 0;
+  function update(dt) {
+    const prev = tau;
+    t += dt; skyT += dt;
+    tau = ((t % LOOP) + LOOP) % LOOP;
+    if (tau < prev) { presents = 0; gifts = []; }
+    mtnScroll += dt * H * 1.5;
+    computeRidges();
+    const target = ptrY == null ? 0 : clamp((ptrY - (OCY + S * -10)) * 0.6, -H * 0.2, H * 0.2);
+    nud += (target - nud) * Math.min(1, dt * 2.2);
+    computePose();
+
+    if (crossed(prev, tau, T.APPEAR)) music('event', 'appear');
+    T.DEER.forEach((d, i) => { if (i < deerAt.length && crossed(prev, tau, d + T.DEER_DUR * 0.55)) music('event', 'deer', { i }); });
+    T.GIFTS.forEach((g, i) => { if (crossed(prev, tau, g)) dropGift(i); });
+    T.FW.forEach(([ft, fx, fy]) => { if (crossed(prev, tau, ft)) launch(W * fx, H * fy, false); });
+    if (crossed(prev, tau, T.EXIT)) music('event', 'exit');
+    for (let i = 0; i < LETTERS; i++) if (crossed(prev, tau, T.MSG + i * T.LETTER)) music('event', 'letter', { last: i === LETTERS - 1 });
+
+    emitTrail(dt);
+    updateParticles(dt);
+    updateRockets(dt);
+    updateGifts(dt);
+    glintT -= dt;
+    if (glintT <= 0 && skyStars.length) {
+      glintT = (reduced ? 2.5 : 0.9) + Math.random() * 1.2;
+      const s = skyStars[(Math.random() * skyStars.length) | 0];
+      glints.push({ c: s.c, r: s.r, age: 0, len: 2 + ((Math.random() * 3) | 0) });
+    }
+    for (const g of glints) g.age += dt;
+  }
+
+  // ---------- Loop, HUD, controls ----------
+  let paused = false, last = performance.now();
+  let frames = 0, fpsT = last, fps = 0, hudT = 0;
+
+  function updateHud(now) {
+    const alt = Math.max(0, Math.round(900 + (H * 0.6 - pose.y) / H * 1400));
+    const tail = paused ? 'paused' : `${fps} fps`;
+    const head = `altitude ${alt.toLocaleString('en-US')} m  presents ${presents}  sparkles ${nP}  `;
+    // Narrow screens drop the letter count so nothing is clipped.
+    hudEl.textContent = W < 640 ? head + tail : head + `letters ${nT.toLocaleString('en-US')}  ${tail}`;
+    hudT = now;
+  }
+
+  function frame(now) {
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); // no jumps after a hidden tab
+    last = now;
+    if (needResize) { resize(); computeRidges(); computePose(); }
+    if (!paused) update(dt * TIME_SCALE);
+    if (!paused || dirty) { render(); dirty = false; frames++; }
+    if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
+    if (now - hudT >= 250) updateHud(now);
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- Sound (ascii-audio.js) ----------
+  function music(fn, ...a) { return window.AsciiAudio && AsciiAudio[fn](...a); }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
+  function replay() {
+    t = T_START; tau = ((t % LOOP) + LOOP) % LOOP; presents = 0; nP = 0;
+    gifts = []; rockets = []; flashes = []; glints = [];
+    paused = false; dirty = true; computePose();
+    music('resume'); music('restart');
+  }
+  function randomFirework() { launch(W * (0.1 + 0.8 * Math.random()), H * (0.08 + 0.25 * Math.random()), true); }
+
+  addEventListener('resize', () => { needResize = true; });
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return; // leave Cmd/Ctrl+R alone
+    if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
+    else if (e.key === 'r' || e.key === 'R') replay();
+    else if (e.key === 'f' || e.key === 'F') { if (paused) togglePause(); randomFirework(); }
+    else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      const base = ptrY == null ? OCY - S * 10 : ptrY;
+      ptrY = clamp(base + (e.key === 'ArrowUp' ? -1 : 1) * H * 0.08, 0, H);
+    }
+  });
+  // Pointer: moving the mouse (or dragging a finger) steers the sleigh up and down.
+  // A tap launches a firework at that spot; a second tap within 280 ms restarts instead.
+  let downX = 0, downY = 0, dragged = false, tapTimer = 0;
+  canvas.addEventListener('pointerdown', e => { downX = e.clientX; downY = e.clientY; dragged = false; });
+  canvas.addEventListener('pointermove', e => {
+    if (e.pointerType === 'mouse' || e.buttons) ptrY = e.clientY;
+    if (e.buttons && Math.hypot(e.clientX - downX, e.clientY - downY) > 14) dragged = true;
+  });
+  canvas.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') ptrY = null; });
+  canvas.addEventListener('pointercancel', () => { ptrY = null; });
+  canvas.addEventListener('pointerup', e => {
+    if (e.button > 0) return;
+    if (e.pointerType !== 'mouse') ptrY = null;
+    if (dragged) return;
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; replay(); return; }
+    tapTimer = setTimeout(() => { tapTimer = 0; }, 280);
+    if (paused) togglePause();
+    launch(e.clientX, Math.min(e.clientY, H * 0.62), true);
+  });
+
+  // Hint language: ?lang= wins, then saved site preference, then browser.
+  let pref = null;
+  try { pref = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (!pref) { try { pref = localStorage.getItem('lang'); } catch (e) {} }
+  if (!pref) pref = navigator.language || 'en';
+  const zh = String(pref).toLowerCase().startsWith('zh');
+  document.documentElement.lang = zh ? 'zh-Hant' : 'en';
+  // Touch screens have no keyboard, and the full hint would not fit on a phone.
+  const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  hintEl.textContent = touch ? (zh ? '點擊放煙火 · 拖曳調整高度 · 雙擊重新開始' : 'tap for fireworks · drag to steer · double-tap to restart')
+                             : (zh ? '點擊放煙火 · 移動滑鼠調整高度 · 空白鍵暫停 · R 重新開始 · M 音樂'
+                                   : 'click for fireworks · move to steer · Space pause · R restart · M music');
+
+  // Score: "Jingle Bells" (James Lord Pierpont, 1857, public domain) on music box after an original
+  // 4-bar intro. Oom-pah bass and celesta, sleigh bells on the eighths. 120 bpm, 80-beat loop.
+  if (window.AsciiAudio) AsciiAudio.init({
+    bpm: 120, master: 0.78, reverb: 0.25, reverbTime: 2.2,
+    build(a) {
+      const N = AsciiAudio.notes, LOOP_B = 80, INTRO = 16;
+      const V1 = 'E5:1 E5 E5:2 | E5:1 E5 E5:2 | E5:1 G5 C5:1.5 D5:.5 | E5:4 | ';
+      const tune = N(
+        'G5:.5 E5 C5 E5 G5 C6 B5 G5 | A5:.5 E5 C5 E5 A5:1 G5 | F5:.5 A5 C6 A5 F5:1 E5 | D5:.5 G5 B5 D6 G5:2 | ' + // intro (original)
+        V1 + 'F5:1 F5 F5:1.5 F5:.5 | F5:1 E5 E5 E5:.5 E5 | E5:1 D5 D5 E5 | D5:2 G5 | ' +
+        V1 + 'F5:1 F5 F5 F5 | F5 E5 E5 E5:.5 E5 | G5:1 G5 F5 D5 | C5:4');
+      a.part(tune, (t, e) => {
+        a.musicBox(t, e.note, Math.max(0.6, e.sec * 1.8), { vel: 0.6, pan: 0.05 });
+        if (e.beat >= INTRO && e.beats >= 1) a.bell(t, AsciiAudio.transpose(e.note, 12), 1.2, { vel: 0.08, wet: 0.4 });
+      }, { length: LOOP_B });
+
+      const CH = { C: ['C', 'E', 'G'], Am: ['A', 'C', 'E'], F: ['F', 'A', 'C'], G7: ['G', 'B', 'D'], D7: ['D', 'F#', 'A'] };
+      const PROG = 'C Am F G7 C C C C F C D7 G7 C C C C F C G7 C'.split(' ');
+      const chordAt = beat => CH[PROG[Math.floor((beat % LOOP_B) / 4)]];
+      // Oom-pah: bass on 1 and 3 (root, then fifth), celesta chord on 2 and 4.
+      a.every(1, (t, s) => {
+        const c = chordAt(s), b = s % 4;
+        if (b === 0 || b === 2) a.bass(t, c[b === 0 ? 0 : 2] + '2', a.beats(0.9), { vel: 0.42 });
+        else c.forEach((n, i) => a.celesta(t + i * 0.008, n + '4', a.beats(0.7), { vel: 0.13, pan: (i - 1) * 0.3 }));
+      });
+      // Sleigh bells after the intro, accent on the beat.
+      a.every(0.5, (t, s) => {
+        const b = (s * 0.5) % LOOP_B;
+        if (b >= INTRO) a.jingle(t, s % 2 ? 0.16 : 0.3, { pan: -0.2 });
+      });
+
+      // Sound effects in sync with the animation.
+      a.on('appear', (a, d, t) => a.sparkle(t, { count: 4, vel: 0.22 }));
+      a.on('deer', (a, d, t) => { for (let i = 0; i < 4; i++) a.jingle(t + i * 0.06, 0.4, { pan: 0.4 }); a.chime(t + 0.05, d.i ? 'E6' : 'G6', 2, { vel: 0.22 }); });
+      a.on('gift', (a, d, t) => { a.pop(t, { freq: 420 + d.i * 50, vel: 0.3 }); a.ding(t + 0.04, ['C6', 'E6', 'G6', 'A6', 'C7'][d.i % 5], { vel: 0.22 }); });
+      a.on('land', (a, d, t) => a.sparkle(t, { count: 2, vel: 0.14 }), { gap: 0.2 });
+      a.on('launch', (a, d, t) => a.sweep(t, 0.9, { from: 350, to: 2600, vel: 0.14, pan: d.x * 1.4 - 0.7 }), { gap: 0.1 });
+      a.on('boom', (a, d, t) => { a.boom(t, { vel: 0.35, pan: d.x * 1.4 - 0.7 }); a.sparkle(t + 0.25, { count: 5, vel: 0.13, spread: 0.07 }); }, { gap: 0.12 });
+      a.on('exit', (a, d, t) => { a.whoosh(t, { dur: 1.6, vel: 0.35 }); a.chime(t + 0.3, 'C6', 3, { vel: 0.3 }); });
+      a.on('letter', (a, d, t) => a.tick(t, { vel: 0.22, bell: d.last, note: 'C7' }));
+    }
+  });
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

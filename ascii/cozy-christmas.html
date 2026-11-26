@@ -1,0 +1,1368 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ASCII Cozy Christmas Room | Alex Li (李翔緯)</title>
+  <meta name="description" content="A warm wood-panelled living room on Christmas night, drawn entirely with coloured ASCII characters: a crackling fire, a twinkling tree, string lights, an old CRT TV flipping channels, a blinking 12:00 VCR clock, snow falling past the window and a sleeping orange cat. Tap the TV, the tree, the fire or the cat. Vanilla JS on a single canvas.">
+  <meta name="theme-color" content="#140b07">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;600;800&display=swap">
+  <style>
+    :root {
+      --bg: #140b07;
+      --sky: #140b07;
+      --text: #f6ede2;
+      --muted: #cdb39a;
+      --accent: #f59e42;
+      --mono: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--sky);
+      color: var(--text);
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    canvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100svh;
+      display: block;
+      touch-action: manipulation; /* no double-tap zoom: double-tap means replay */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .back {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(245, 158, 66, 0.45);
+      background: rgba(245, 158, 66, 0.12);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .back:hover, .back:focus-visible {
+      background: rgba(245, 158, 66, 0.28);
+      border-color: var(--accent);
+      outline: none;
+    }
+    .hud, .hint {
+      position: fixed;
+      z-index: 1;
+      bottom: 12px;
+      color: var(--muted);
+      opacity: 0.75;
+      font: 11px/1.4 var(--mono);
+      white-space: pre;
+      pointer-events: none;
+      max-width: calc(100% - 24px);
+      overflow: hidden;
+    }
+    .hud { left: 12px; }
+    .hint {
+      right: 12px;
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    @media (max-width: 640px) {
+      .hud, .hint { font-size: 10px; }
+      .hint { bottom: 30px; } /* stack above the HUD on narrow screens */
+    }
+  </style>
+</head>
+<body>
+  <h1 class="sr-only">ASCII Cozy Christmas Room</h1>
+  <a class="back" href="./">← ASCII</a>
+  <canvas id="c" role="img" aria-label="Animated ASCII drawing of a cozy living room on Christmas night: a crackling fireplace with stockings, a twinkling Christmas tree with presents, string lights, an old TV changing channels, a VCR clock blinking 12:00, snow falling outside the window and an orange cat asleep on the rug"></canvas>
+  <div class="hud" id="hud" aria-hidden="true"></div>
+  <div class="hint" id="hint"></div>
+
+<script src="ascii-audio.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  // ---------- Timeline (seconds of scene time) ----------
+  // The room starts dark: the fire catches, the string lights come on left to right,
+  // the tree lights climb, the star flares, then the TV clicks on and the clock starts blinking.
+  const T = { FIRE: 0.3, FIRE_DUR: 2.2, DARK: 2.6, STRING: 1.2, TREE: 2.4, STAR: 3.4, TV: 4.0, CLOCK: 4.4, DONE: 5 };
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
+  const TAU = Math.PI * 2;
+
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const smooth = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function hash(a, b) {
+    let h = (Math.imul(a | 0, 374761393) + Math.imul(b | 0, 668265263)) | 0;
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+  }
+  function inTri(px, py, ax, ay, bx, by, cx, cy) {
+    const d1 = (px - bx) * (ay - by) - (ax - bx) * (py - by);
+    const d2 = (px - cx) * (by - cy) - (bx - cx) * (py - cy);
+    const d3 = (px - ax) * (cy - ay) - (cx - ax) * (py - ay);
+    return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0));
+  }
+  function segDist(px, py, ax, ay, bx, by) {
+    const dx = bx - ax, dy = by - ay;
+    const u = clamp(((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy), 0, 1);
+    return Math.hypot(px - ax - u * dx, py - ay - u * dy);
+  }
+
+  // ---------- Scene space ----------
+  // The room is designed in a fixed 864 x 985 "scene" box (x 8..872, y 60..1045). It is fitted to the
+  // screen and every character cell samples the scene at its centre. Walls, floor and string lights
+  // carry on past the box so wide and tall screens are filled.
+  const SX0 = 8, SY0 = 60, SW = 864, SH = 985;
+  const FLOOR_Y = 760;
+
+  // ---------- Lights: colour modes and patterns ----------
+  const MODES = [
+    { en: 'classic', zh: '經典', pat: 'twinkle',
+      cols: [[255, 70, 60], [70, 225, 90], [80, 140, 255], [255, 205, 60], [255, 140, 40], [205, 95, 255]] },
+    { en: 'candy cane', zh: '紅綠', pat: 'alternate', cols: [[255, 55, 50], [60, 235, 85]] },
+    { en: 'icicle', zh: '冰晶', pat: 'sparkle', cols: [[235, 242, 255], [95, 155, 255], [140, 220, 255]] },
+    { en: 'sugarplum', zh: '糖梅', pat: 'chase', cols: [[195, 95, 255], [60, 230, 225], [255, 120, 205]] },
+    { en: 'candlelight', zh: '燭光', pat: 'breathe', cols: [[255, 214, 130], [255, 172, 70]] },
+    { en: 'rainbow', zh: '彩虹', pat: 'wave',
+      cols: [[255, 60, 60], [255, 150, 40], [255, 230, 60], [70, 230, 90], [70, 160, 255], [190, 90, 255]] }
+  ];
+  let mode = 0, prevMode = 0, modeT = -10, lastModeTap = -100;
+
+  // Light list: kind 0 string bulb, 1 tree, 2 mantel garland, 3 wreath.
+  // Fixed lights (tree, garland, wreath) are seeded; string bulbs are rebuilt on resize to span the screen.
+  const fixedLights = [];
+  (function buildFixedLights() {
+    const r = mulberry32(1225);
+    let n = 0;
+    while (n < 96) {
+      const y = 200 + 452 * Math.sqrt(r());
+      const w = treeHalf(y);
+      if (w <= 0) continue;
+      const x = 160 + (r() * 2 - 1) * w * 0.92;
+      fixedLights.push({ k: 1, x, y, o: (y - 185) / 24 + (x - 160) / 26, ph: r() * TAU, f: 1.5 + 2.5 * r(), c: (r() * 60) | 0, on: 0 });
+      n++;
+    }
+    for (let x = 586, i = 0; x < 868; x += 21, i++)
+      fixedLights.push({ k: 2, x, y: 466 + 4 * Math.sin(x * 0.11), o: i, ph: r() * TAU, f: 1.5 + 2 * r(), c: i, on: 0 });
+    for (let i = 0; i < 14; i++) {
+      const a = i / 14 * TAU + 0.2;
+      fixedLights.push({ k: 3, x: 718 + Math.cos(a) * 49, y: 300 + Math.sin(a) * 49, o: i, ph: r() * TAU, f: 1.5 + 2 * r(), c: i * 2 + 1, on: 0 });
+    }
+  })();
+  let lights = fixedLights.slice();
+
+  function treeHalf(y) {
+    const ty = (y - 185) / 505;
+    if (ty < 0 || ty > 1) return -1;
+    const f = (ty * 6) % 1;
+    return (8 + ty * 128) * (0.7 + 0.3 * Math.pow(f, 0.6));
+  }
+  const wireY = x => { const q = ((((x - 8) % 116) + 116) % 116) / 58 - 1; return 74 + 15 * (1 - q * q); };
+
+  // ---------- Presents (front to back) ----------
+  const GIFTS = [
+    { x0: 255, y0: 726, x1: 340, y1: 806, box: [196, 146, 62], rib: [176, 36, 40], rx: 297, ry: 764, bow: 1 },
+    { x0: 170, y0: 720, x1: 227, y1: 806, box: [200, 186, 176], rib: [186, 40, 44], rx: 198, ry: 760, stripes: 1 },
+    { x0: 74, y0: 712, x1: 176, y1: 801, box: [40, 58, 118], rib: [168, 172, 196], rx: 124, ry: 756, bow: 1 },
+    { x0: 222, y0: 680, x1: 318, y1: 762, box: [40, 96, 50], rib: [204, 42, 42], rx: 270, ry: 720, bow: 1 },
+    { x0: 10, y0: 660, x1: 96, y1: 762, box: [138, 30, 36], rib: [200, 150, 66], rx: 52, ry: 708 }
+  ];
+  const ORNAMENTS = [];
+  (function () {
+    const r = mulberry32(77), C = [[190, 34, 40], [214, 164, 62], [196, 200, 214], [190, 34, 40], [60, 110, 200]];
+    let n = 0;
+    while (n < 16) {
+      const y = 230 + 430 * r(), w = treeHalf(y);
+      if (w < 20) continue;
+      ORNAMENTS.push({ x: 160 + (r() * 2 - 1) * w * 0.7, y, c: C[n % C.length] });
+      n++;
+    }
+  })();
+
+  // ---------- TV programmes ----------
+  const CHANNELS = 6;
+  const BARS = [[200, 200, 200], [210, 200, 40], [40, 200, 200], [40, 190, 50], [200, 40, 200], [200, 40, 40], [40, 50, 200]];
+  // Bitmap digits (3 x 5) for the VCR clock.
+  const GLYPH = {
+    '1': [' # ', '## ', ' # ', ' # ', '###'], '2': ['## ', '  #', ' # ', '#  ', '###'],
+    '0': ['###', '# #', '# #', '# #', '###'], '8': ['###', '# #', '###', '# #', '###'], ':': [' ', '#', ' ', '#', ' ']
+  };
+  const CLOCK_MAP = (() => {
+    const on = [], ghost = [];
+    for (let y = 0; y < 5; y++) { on.push(''); ghost.push(''); }
+    ['1', ' ', '2', ' ', ':', ' ', '0', ' ', '0'].forEach((c, i) => {
+      for (let y = 0; y < 5; y++) {
+        if (c === ' ') { on[y] += ' '; ghost[y] += ' '; continue; }
+        on[y] += GLYPH[c][y];
+        ghost[y] += (c === ':' ? GLYPH[':'] : GLYPH['8'])[y];
+      }
+    });
+    return { on, ghost, w: on[0].length };
+  })();
+
+  // ---------- Canvas, grid, layout ----------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const hudEl = document.getElementById('hud');
+  const hintEl = document.getElementById('hint');
+  const stat = document.createElement('canvas'), sctx = stat.getContext('2d');
+  const glowA = document.createElement('canvas'), gA = glowA.getContext('2d');
+  const glowB = document.createElement('canvas'), gB = glowB.getContext('2d');
+  const glowC = document.createElement('canvas'), gC = glowC.getContext('2d');
+
+  let W = 0, H = 0, dpr = 1, fs = 8, cw = 5, ch = 8, cols = 0, rows = 0, font = '';
+  let coreX = 0, coreY = 0, coreW = 1, coreH = 1, K = 1; // K = scene units per screen px
+  let HX = 3, HY = 5; // half a cell, in scene units (thin features use at least this)
+  let lightMap = null, flakeBuf = null;
+  let dynIdx = null, dynX = null, dynY = null, nDyn = 0;
+  let fire = null, fireNext = null, fw = 0, fh = 0, fc0 = 0, fr0 = 0;
+  let scr = { c0: 0, r0: 0 }, clk = { c0: 0, r0: 0, nc: 0, nr: 0, bitmap: false };
+  let needResize = true, dirty = true;
+  let vignette = null;
+
+  const pxX = sx => coreX + (sx - SX0) / K;
+  const pxY = sy => coreY + (sy - SY0) / K;
+  const firstCol = sx => Math.ceil(pxX(sx) / cw - 0.5);
+  const lastCol = sx => Math.floor(pxX(sx) / cw - 0.5);
+  const firstRow = sy => Math.ceil(pxY(sy) / ch - 0.5);
+  const lastRow = sy => Math.floor(pxY(sy) / ch - 0.5);
+  const cellOf = (sx, sy) => {
+    const c = Math.floor(pxX(sx) / cw), r = Math.floor(pxY(sy) / ch);
+    return c < 0 || r < 0 || c >= cols || r >= rows ? -1 : r * cols + c;
+  };
+
+  function resize() {
+    needResize = false;
+    W = canvas.clientWidth || innerWidth;
+    H = canvas.clientHeight || innerHeight;
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    stat.width = canvas.width; stat.height = canvas.height;
+
+    // Fit the scene box; portrait phones crop a sliver off each side so the room is bigger.
+    const A = SW / SH, portrait = W / H < 0.75;
+    coreW = Math.min(W * (portrait ? 1.1 : 1), (H - (portrait ? 0 : 8)) * A * (portrait ? 1 : 0.985));
+    coreH = coreW / A;
+    coreX = (W - coreW) / 2;
+    coreY = portrait ? Math.max(0, (H - coreH) * 0.3) : (H - coreH) / 2;
+    K = SW / coreW;
+
+    fs = clamp(Math.min(coreH / 104, coreW / (84 * 0.6)), 5.5, 14);
+    font = `700 ${fs.toFixed(2)}px ${MONO}`;
+    ctx.font = font;
+    cw = ctx.measureText('M').width || fs * 0.6;
+    ch = fs * 1.02;
+    cols = Math.ceil(W / cw);
+    rows = Math.ceil(H / ch);
+    HX = cw * K * 0.55; HY = ch * K * 0.55;
+    const n = cols * rows;
+    lightMap = new Int16Array(n);
+    flakeBuf = new Uint8Array(n);
+
+    // String bulbs across the whole visible width.
+    const xs = SX0 + (0 - coreX) * K, xe = SX0 + (W - coreX) * K;
+    const strings = [];
+    let i = 0;
+    for (let x = 8 + 19.33 + Math.floor((xs - 8) / 38.67) * 38.67; x < xe + 20; x += 38.67, i++)
+      strings.push({ k: 0, x, y: wireY(x) + 10, o: i, ph: hash(i, 3) * TAU, f: 1.5 + 2.5 * hash(i, 5), c: (i * 5 + (i >> 1)), on: 0 });
+    const x0 = strings.length ? strings[0].x : 0, x1 = strings.length ? strings[strings.length - 1].x : 1;
+    strings.forEach(s => { s.on = T.STRING + 1.0 * (s.x - x0) / Math.max(1, x1 - x0); });
+    lights = strings.concat(fixedLights);
+    lights.forEach(L => {
+      if (L.k === 1) L.on = T.TREE + 0.9 * (1 - (L.y - 185) / 505) + 0.1 * hash(L.x | 0, L.y | 0);
+      else if (L.k === 2) L.on = T.TREE + 0.05 * L.o;
+      else if (L.k === 3) L.on = T.TREE + 0.4 + 0.05 * L.o;
+      const c = cellOf(L.x, L.y);
+      L.cell = -1;
+      if (c >= 0 && !lightMap[c]) { lightMap[c] = lights.indexOf(L) + 1; L.cell = c; }
+      if (L.k === 0 && c >= 0 && c + cols < n) lightMap[c + cols] = lightMap[c];
+    });
+
+    // Fire grid aligned to the cells of the firebox opening.
+    fc0 = firstCol(658); fr0 = firstRow(556);
+    fw = Math.max(4, lastCol(797) - fc0 + 1); fh = Math.max(4, lastRow(748) - fr0 + 1);
+    fire = new Float32Array(fw * fh); fireNext = new Float32Array(fw * fh);
+    for (let i = 0; i < fh * 2; i++) stepFire(); // a resize must not put the fire out
+    scr = { c0: firstCol(368), r0: firstRow(528) };
+    clk.c0 = firstCol(414); clk.r0 = firstRow(654);
+    clk.nc = lastCol(527) - clk.c0 + 1; clk.nr = lastRow(700) - clk.r0 + 1;
+    clk.bitmap = clk.nc >= CLOCK_MAP.w + 2 && clk.nr >= 5;
+
+    // Glow buffers.
+    glowA.width = Math.ceil(W / 4); glowA.height = Math.ceil(H / 4);
+    glowB.width = glowA.width; glowB.height = glowA.height;
+    glowC.width = Math.ceil(W / 14); glowC.height = Math.ceil(H / 14);
+
+    const cx = pxX(440), cy = pxY(560);
+    vignette = ctx.createRadialGradient(cx, cy, coreH * 0.25, cx, cy, Math.max(W, H) * 0.85);
+    vignette.addColorStop(0, 'rgba(0,0,0,0)');
+    vignette.addColorStop(0.6, 'rgba(8,3,1,0.18)');
+    vignette.addColorStop(1, 'rgba(8,3,1,0.7)');
+
+    bake();
+    dirty = true;
+  }
+
+  // ---------- Colours ----------
+  const COL = new Array(32768);
+  const colKey = (r, g, b) => ((clamp(r, 0, 255) >> 3) << 10) | ((clamp(g, 0, 255) >> 3) << 5) | (clamp(b, 0, 255) >> 3);
+  function colStr(k) {
+    let s = COL[k];
+    if (!s) s = COL[k] = `rgb(${((k >> 10) & 31) * 8.23 | 0},${((k >> 5) & 31) * 8.23 | 0},${(k & 31) * 8.23 | 0})`;
+    return s;
+  }
+
+  // ---------- Per-cell shading ----------
+  // shade() writes into these registers: colour, character, emission (for the bloom), dynamic flag.
+  let OB = false, oR = 0, oG = 0, oB = 0; // optional separate backing colour
+  let R = 0, G = 0, B = 0, C = ' ', E = 0, DY = 0, HH = 0, CI = 0, BAKE = false;
+  const set = (r, g, b, c) => { R = r; G = g; B = b; C = c; };
+  const pick = s => s[(HH * s.length) | 0];
+  const DENSE = '#%&@8', MID = '%#=*+', SOFT = ':;=+*';
+  function amb(x, y) {
+    const dx = x - 727, dy = (y - 650) * 1.2;
+    let a = 0.78 + 0.6 * Math.exp(-(dx * dx + dy * dy) / (2 * 240 * 240));
+    a += 0.18 * Math.exp(-((x - 160) ** 2 + (y - 430) ** 2) / (2 * 140 * 140));
+    a += 0.14 * Math.exp(-((x - 440) ** 2 + (y - 520) ** 2) / (2 * 130 * 130));
+    if (y < 140) a *= 0.7 + 0.3 * clamp((y - 20) / 120, 0, 1);
+    return a;
+  }
+  function lit(r, g, b, c, x, y, k = 1) { const a = amb(x, y) * k; set(r * a, g * a, b * a, c); }
+
+  // Scene state read by shade().
+  let t = 0, skyT = 0, breath = 0, stretchP = 0, eyesOpen = false, yawn = false, tailFlick = 0, earTw = 0;
+  let channel = 0, chT = -10, tvSwitchT = -10, flame = 0, fireBoost = 0, gust = 0;
+
+  function shade(x, y, ci) {
+    C = ' '; E = 0; DY = 0; OB = false; CI = ci; HH = hash(ci, 17);
+    // Single-cell lights.
+    const li = lightMap[ci];
+    if (li) { if (BAKE) { DY = 1; return; } lightShade(lights[li - 1]); return; }
+
+    // Sleeping cat (dynamic box: cat + the rug under it).
+    if (x > 440 && x < 820 && y > 750 && y < 912) {
+      if (BAKE) { DY = 1; return; }
+      if (catShade(x, y)) return;
+    }
+    if (rug(x, y)) return;
+    // Presents and tree.
+    for (let i = 0; i < GIFTS.length; i++) if (gift(GIFTS[i], x, y)) return;
+    if (x > 118 && x < 206 && y > 118 && y < 206 && star(x, y)) return;
+    if (tree(x, y)) return;
+    // TV, antenna, cabinet.
+    if (tv(x, y)) return;
+    if (cabinet(x, y)) return;
+    // Fireplace and mantel things.
+    if (fireplace(x, y)) return;
+    if (candles(x, y)) return;
+    if (wreath(x, y)) return;
+    // Window and curtains.
+    if (curtains(x, y)) return;
+    if (windowShade(x, y)) return;
+    // String-light wire, then the room shell.
+    if (wire(x, y)) return;
+    if (y >= FLOOR_Y) floor(x, y); else wall(x, y);
+  }
+
+  // ----- lights -----
+  function lightRGB(L, m, tt) {
+    const M = MODES[m], n = M.cols.length;
+    const mod = (v, m) => ((Math.floor(v) % m) + m) % m;
+    let ci = mod(L.k === 0 ? L.o : L.c, n);
+    if (M.pat === 'alternate') ci = mod(L.o, 2);
+    if (M.pat === 'wave') ci = mod(L.o + tt * 4, n);
+    let b;
+    switch (M.pat) {
+      case 'twinkle': { const s = 0.5 + 0.5 * Math.sin(tt * L.f + L.ph); b = 0.3 + 0.7 * s * s; break; }
+      case 'alternate': b = ((Math.floor(tt * 1.4) + Math.floor(L.o)) & 1) ? 1 : 0.2; break;
+      case 'sparkle': { const s = Math.sin(tt * L.f * 2.1 + L.ph); b = 0.42 + 0.12 * Math.sin(tt * 1.3 + L.ph) + (s > 0.9 ? 0.55 : 0); break; }
+      case 'chase': { const s = Math.max(0, Math.cos(L.o * 0.9 - tt * 5)); b = 0.18 + 0.82 * s * s * s; break; }
+      case 'breathe': b = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(tt * 1.4 - L.o * 0.12)); break;
+      default: b = 0.95;
+    }
+    if (reduced) b = 0.55 + 0.45 * b;
+    return [M.cols[ci], b];
+  }
+  function lightShade(L) {
+    const a = t - L.on;
+    if (a < 0) { // not on yet: a dark, unlit bulb
+      if (L.k === 0) set(70, 60, 48, 'o'); else if (L.k === 1) set(40, 70, 40, '.'); else set(60, 70, 50, '.');
+      return;
+    }
+    // Mode change: lights pick up the new mode in a quick sweep.
+    const sweep = clamp((t - modeT) * 2.2 - (L.k === 0 ? (L.x - 8) / 900 : (L.k === 1 ? (1 - (L.y - 185) / 505) : 0.5)) * 0.8, 0, 1);
+    const m = sweep < 0.5 ? prevMode : mode;
+    let [c, b] = lightRGB(L, m, t);
+    if (sweep > 0.35 && sweep < 0.65) b *= 0.3;
+    if (a < 0.18) b = 1.3; // switch-on flash
+    const k = 0.25 + 0.85 * b;
+    set(c[0] * k + (b > 1 ? 60 : 0), c[1] * k + (b > 1 ? 60 : 0), c[2] * k + (b > 1 ? 60 : 0),
+      L.k === 0 ? (b > 0.55 ? '@' : 'o') : (b > 0.6 ? '*' : b > 0.35 ? '+' : '.'));
+    E = (L.k === 0 ? 1 : 0.9) * clamp(b, 0, 1.2);
+  }
+
+  // ----- cat -----
+  // The cat is drawn 1.2x around a point under its belly, with a dark outline so it reads at low resolution.
+  const CAT_S = 1.3, CAT_AX = 660, CAT_AY = 886;
+  function catShade(x0, y0) {
+    const x = CAT_AX + (x0 - CAT_AX) / CAT_S, y = CAT_AY + (y0 - CAT_AY) / CAT_S;
+    if (catCore(x, y)) return true;
+    if (catHit(x, y, Math.max(HX * 1.7, HY * 1.1) / CAT_S)) { set(40, 16, 8, '#'); return true; }
+    return false;
+  }
+  function catGeom() {
+    const st = stretchP, br = breath;
+    return {
+      hx: 592 - 26 * st, hy: 842 - 1.2 * br - 8 * st,
+      bx: 668 - 4 * st, by: 858 - 1.6 * br + 1.5 * st, brx: 72 + 10 * st, bry: 23 + 2.4 * br - 3 * st
+    };
+  }
+  function catHit(x, y, p) {
+    const { hx, hy, bx, by, brx, bry } = catGeom(), st = stretchP;
+    if (((x - hx) / (23 + p)) ** 2 + ((y - hy) / (20 + p)) ** 2 < 1) return true;
+    if (((x - bx) / (brx + p)) ** 2 + ((y - by) / (bry + p)) ** 2 < 1 && y < 884 + p) return true;
+    if (inTri(x, y, hx - 17 - earTw, hy - 31 - p * 1.6, hx - 23 - p, hy - 10, hx - 4 + p, hy - 16)) return true;
+    if (inTri(x, y, hx + 14, hy - 31 - p * 1.6, hx + 3 - p, hy - 16, hx + 22 + p, hy - 10)) return true;
+    const tip = 606 + 10 * st;
+    if (x > tip - p && x < 748) {
+      let ty = 880 - Math.max(0, x - 712) * 0.5;
+      if (x < 650) ty -= tailFlick * (650 - x) / 44 * 12;
+      if (Math.abs(y - ty) < Math.max(4.4, HY / CAT_S) + p) return true;
+    }
+    if (st > 0.05 && x > hx - 16 - 44 * st - p && x < hx + 6 && y > 867 - p && y < 880 + p) return true;
+    return false;
+  }
+  function catCore(x, y) {
+    const st = stretchP, br = breath;
+    const hx = 592 - 26 * st, hy = 842 - 1.2 * br - 8 * st;
+    const bx = 668 - 4 * st, by = 858 - 1.6 * br + 1.5 * st, brx = 72 + 10 * st, bry = 23 + 2.4 * br - 3 * st;
+    // Face.
+    const fx = x - hx, fy = y - hy;
+    const inHead = (fx / 23) ** 2 + (fy / 20) ** 2 < 1;
+    const earL = inTri(x, y, hx - 17 - earTw, hy - 31, hx - 23, hy - 10, hx - 4, hy - 16);
+    const earR = inTri(x, y, hx + 14, hy - 31, hx + 3, hy - 16, hx + 22, hy - 10);
+    if (inHead || earL || earR) {
+      if (!inHead) {
+        const inner = earL ? inTri(x, y, hx - 16 - earTw, hy - 26, hx - 19, hy - 14, hx - 8, hy - 16)
+                           : inTri(x, y, hx + 13, hy - 26, hx + 6, hy - 16, hx + 18, hy - 14);
+        if (inner) lit(235, 140, 125, ':', x, y); else lit(214, 112, 44, pick(DENSE), x, y);
+        return true;
+      }
+      for (const ex of [-9, 8]) {
+        if (Math.abs(fx - ex) < 4 && Math.abs(fy - 1) < Math.max(2.6, HY * 0.9)) {
+          if (eyesOpen) { set(150, 220, 90, Math.abs(fx - ex) < 2 ? '@' : 'o'); E = 0.25; }
+          else lit(60, 26, 12, ex < 0 ? '~' : '-', x, y);
+          return true;
+        }
+      }
+      if (yawn && (fx / 5) ** 2 + ((fy - 12) / 4) ** 2 < 1) { lit(120, 30, 30, 'O', x, y); return true; }
+      if ((fx / 3) ** 2 + ((fy - 7.5) / Math.max(2.4, HY * 0.9)) ** 2 < 1) { lit(235, 130, 130, 'v', x, y); return true; }
+      if ((fx / 11) ** 2 + ((fy - 10) / 6.5) ** 2 < 1) { lit(246, 196, 146, pick(MID), x, y); return true; }
+      if (fy < -8 && Math.abs(Math.abs(fx) - 3) < Math.max(1.6, HX * 0.5)) { lit(150, 66, 22, '|', x, y); return true; }
+      const k = 0.85 + 0.25 * (fx / 23);
+      lit(240 * k, 136 * k, 56 * k, pick(DENSE), x, y);
+      return true;
+    }
+    // Front paws reaching out during a stretch.
+    if (st > 0.05) {
+      const px0 = hx - 16 - 44 * st;
+      if (x > px0 && x < hx + 6 && y > 867 && y < 880) {
+        if (x < px0 + 9) lit(246, 210, 170, '%', x, y); else lit(222, 122, 50, '=', x, y);
+        return true;
+      }
+    }
+    // Tail curled along the front, tip flicking.
+    const tip = 606 + 10 * st;
+    if (x > tip && x < 748) {
+      let ty = 880 - Math.max(0, x - 712) * 0.5;
+      if (x < 650) ty -= tailFlick * (650 - x) / 44 * 12;
+      if (Math.abs(y - ty) < Math.max(4.4, HY / CAT_S)) {
+        const ring = Math.floor((x - tip) / 11) % 2 === 1;
+        if (x < tip + 7) lit(244, 190, 130, '%', x, y);
+        else lit(ring ? 160 : 228, ring ? 72 : 124, ring ? 22 : 50, pick(DENSE), x, y);
+        return true;
+      }
+    }
+    // Body loaf.
+    const ex = (x - bx) / brx, ey = (y - by) / bry;
+    if (ex * ex + ey * ey < 1 && y < 884) {
+      const top = 1 - (ey + 1) / 2;
+      let k = 0.68 + 0.5 * top;
+      if (Math.sin((x - bx) * 0.36) > 0.5 && ey < 0.55) k *= 0.7;
+      lit(242 * k, 136 * k, 54 * k, pick(DENSE), x, y);
+      return true;
+    }
+    return false;
+  }
+
+  // ----- rug -----
+  function rug(x, y) {
+    const ex = (x - 478) / 280, ey = (y - 900) / 82, r = Math.sqrt(ex * ex + ey * ey);
+    if (r >= 1) return false;
+    const th = Math.atan2(ey, ex);
+    let c, ch2 = pick(DENSE);
+    if (r > 0.93) { c = Math.floor(th * 22) % 2 ? [214, 184, 148] : [178, 146, 112]; ch2 = '%'; }
+    else if (r > 0.86) c = [112, 30, 28];
+    else if (r > 0.5) {
+      const motif = Math.abs(((th * 8 / TAU) % 1 + 1) % 1 - 0.5) < 0.09 && Math.abs(r - 0.68) < 0.07;
+      c = motif ? [210, 156, 70] : [168, 46, 38];
+      if (motif) ch2 = '*';
+    }
+    else if (r > 0.44) c = [204, 172, 132];
+    else if (r > 0.38) c = [190, 136, 60];
+    else c = [30, 36, 74];
+    // Shadow under the cat.
+    const sx = (x - (672 - 6 * stretchP)) / 116, sy = (y - 884) / 17;
+    const k = sx * sx + sy * sy < 1 ? 0.5 : 1;
+    lit(c[0] * k, c[1] * k, c[2] * k, ch2, x, y);
+    return true;
+  }
+
+  // ----- presents -----
+  function gift(g, x, y) {
+    if (g.bow) {
+      for (const s of [-1, 1]) {
+        const ex = (x - (g.rx + s * 9)) / 9, ey = (y - (g.y0 - 6)) / 6;
+        if (ex * ex + ey * ey < 1 && ex * ex + ey * ey > 0.2) { lit(g.rib[0] * 1.1, g.rib[1] * 1.1, g.rib[2] * 1.1, 'o', x, y); return true; }
+      }
+    }
+    if (x < g.x0 || x > g.x1 || y < g.y0 || y > g.y1) return false;
+    if (Math.abs(x - g.rx) < Math.max(4.5, HX)) { lit(...g.rib, '|', x, y); return true; }
+    if (Math.abs(y - g.ry) < Math.max(4, HY)) { lit(...g.rib, '=', x, y); return true; }
+    let k = y < g.y0 + 9 ? 1.25 : 1;
+    if (x > g.x1 - 6) k *= 0.7;
+    if (g.stripes && ((x + y) / 9 | 0) % 2) { lit(186 * k, 40 * k, 44 * k, '#', x, y); return true; }
+    lit(g.box[0] * k, g.box[1] * k, g.box[2] * k, y < g.y0 + 9 ? '=' : pick(DENSE), x, y);
+    return true;
+  }
+
+  // ----- tree -----
+  function star(x, y) {
+    const dx = x - 161, dy = y - 162, r = Math.hypot(dx, dy);
+    const a = ((Math.atan2(dx, -dy) % (TAU / 5)) + TAU / 5) % (TAU / 5);
+    const lim = 12 + 18 * Math.abs(a - TAU / 10) / (TAU / 10);
+    const on = clamp((t - T.STAR) / 0.3, 0, 1);
+    if (r > lim + 0.5) return false;
+    if (BAKE) { DY = 1; return true; }
+    const pulse = 0.85 + 0.15 * Math.sin(skyT * 2.4), core = r < 9;
+    const k = on ? pulse * (t - T.STAR < 0.5 ? 1.3 : 1) : 0.35;
+    set(255 * k, (core ? 240 : 205) * k, (core ? 150 : 60) * k, core ? '@' : r < lim * 0.6 ? '#' : '*');
+    E = on ? 0.9 * pulse : 0;
+    return true;
+  }
+  function tree(x, y) {
+    if (y >= 688 && y < 712 && Math.abs(x - 160) < 11) { lit(96, 58, 32, '|', x, y); return true; }
+    const w = treeHalf(y);
+    if (w <= 0) return false;
+    const dx = x - 160;
+    if (Math.abs(dx) > w + (HH - 0.5) * 7) return false;
+    for (let i = 0; i < ORNAMENTS.length; i++) {
+      const o = ORNAMENTS[i], d = Math.hypot(x - o.x, (y - o.y) * 1.1);
+      if (d < 6.5) {
+        const hi = x < o.x && y < o.y;
+        lit(o.c[0] * (hi ? 1.3 : 1), o.c[1] * (hi ? 1.3 : 1), o.c[2] * (hi ? 1.3 : 1), hi ? '@' : 'O', x, y);
+        return true;
+      }
+    }
+    const g = ((y - 185) + dx * 0.5) / 64 % 1;
+    if (Math.abs(g - 0.5) * 64 < HY * 0.9) { lit(196, 150, 70, '~', x, y); return true; }
+    const s = dx / w, tierF = ((y - 185) / 505 * 6) % 1;
+    const k = (0.6 + 0.3 * s + 0.35 * tierF) * (0.8 + 0.4 * hash(ci2(x), ci2(y)));
+    lit(30 * k, 92 * k, 44 * k, HH < 0.3 ? '^' : pick(DENSE), x, y);
+    return true;
+  }
+  const ci2 = v => (v / 9) | 0;
+
+  // ----- TV + antenna -----
+  function tv(x, y) {
+    // Antenna.
+    if (y < 515 && y > 386) {
+      if (Math.hypot(x - 440, (y - 514) * 1.4) < 12) { lit(70, 66, 64, '@', x, y); return true; }
+      if (Math.hypot(x - 391, y - 391) < 4.5 || Math.hypot(x - 489, y - 391) < 4.5) { lit(200, 200, 205, 'o', x, y); return true; }
+      if (segDist(x, y, 434, 508, 392, 392) < Math.max(2.6, HX)) { lit(175, 175, 185, '\\', x, y); return true; }
+      if (segDist(x, y, 446, 508, 488, 392) < Math.max(2.6, HX)) { lit(175, 175, 185, '/', x, y); return true; }
+    }
+    if (x < 352 || x > 529 || y < 512 || y > 642) return false;
+    if (y > 636) { if (x < 368 || x > 512) { lit(50, 44, 40, '#', x, y); return true; } return false; }
+    // Screen.
+    const sx = (x - 366) / 134, sy = (y - 526) / 94;
+    if (sx >= 0 && sx <= 1 && sy >= 0 && sy <= 1) {
+      const rx = Math.max(0, Math.abs(sx - 0.5) * 134 - 57), ry = Math.max(0, Math.abs(sy - 0.5) * 94 - 37);
+      if (rx * rx + ry * ry < 100) {
+        if (BAKE) { DY = 1; return true; }
+        screen(sx, sy);
+        return true;
+      }
+      lit(32, 30, 32, '#', x, y);
+      return true;
+    }
+    // Knobs, speaker, power light.
+    if (Math.hypot(x - 516, y - 548) < 6 || Math.hypot(x - 516, y - 574) < 6) { lit(60, 54, 50, '@', x, y); return true; }
+    if (x > 507 && x < 525 && y > 592 && y < 624) { lit(90, 82, 74, (y | 0) % 6 < 3 ? '=' : '-', x, y); return true; }
+    if (Math.hypot(x - 490, y - 628) < 3) { set(80, 255, 120, '*'); E = 0.6; return true; }
+    const k = y < 520 ? 1.25 : x > 520 || y > 628 ? 0.72 : 1;
+    lit(152 * k, 140 * k, 124 * k, pick(MID), x, y);
+    return true;
+  }
+
+  function screen(sx, sy) {
+    const row = ((CI / cols) | 0), col = CI % cols;
+    const a = t - T.TV;
+    if (a < 0) { set(26, 30, 30, HH < 0.15 ? '.' : ' '); if (sx > 0.62 && sy < 0.3 && HH < 0.4) set(60, 66, 70, '/'); return; }
+    // CRT turn-on: a bright line opens into the picture.
+    if (a < 0.4) {
+      const open = smooth(a / 0.4) * 0.5;
+      if (Math.abs(sy - 0.5) > open + 0.02) { set(20, 22, 22, ' '); return; }
+      set(235, 245, 255, '='); E = 0.7; return;
+    }
+    let r, g, b, c = '#';
+    const sw = t - tvSwitchT;
+    if (sw < 0.35 || channel === 5) {
+      const v = hash(CI, (skyT * 30) | 0);
+      r = g = b = 40 + 200 * v * v; c = v > 0.6 ? '#' : v > 0.3 ? '+' : ':';
+    } else {
+      switch (channel) {
+        case 0: { // sunny hill
+          const hill = 0.64 - 0.1 * Math.cos((sx - 0.5) * 3.2);
+          const sun = Math.hypot((sx - 0.5) * 1.42, sy - 0.32);
+          if (sy > hill) { const top = sy - hill < 0.06; r = top ? 120 : 56; g = top ? 220 : 176; b = top ? 90 : 66; c = top ? '=' : '#'; }
+          else if (sun < 0.14) { r = 255; g = 226; b = 110; c = '@'; }
+          else { const band = row % 2; r = band ? 120 : 175; g = band ? 192 : 222; b = band ? 236 : 245; c = band ? '=' : '#'; }
+          break;
+        }
+        case 1: { // snowy night with a little house
+          const ground = sy > 0.78 - 0.04 * Math.sin(sx * 7);
+          r = 22; g = 32; b = 80; c = ':';
+          if (ground) { r = 215; g = 225; b = 250; c = '#'; }
+          else if (sx > 0.22 && sx < 0.42 && sy > 0.58) { r = 70; g = 40; b = 50; c = '#'; if (sx > 0.29 && sx < 0.35 && sy > 0.64 && sy < 0.72) { r = 255; g = 210; b = 90; c = '@'; } }
+          else if (inTri(sx, sy, 0.18, 0.6, 0.46, 0.6, 0.32, 0.44)) { r = 230; g = 236; b = 252; c = '%'; }
+          const fx = Math.floor(sx * 16), fy = (sy + skyT * (0.12 + 0.05 * hash(fx, 9))) * 9 + hash(fx, 4) * 9;
+          if (!ground && (fy % 1) < 0.16 && hash(fx, Math.floor(fy)) < 0.5) { r = g = b = 245; c = '*'; }
+          break;
+        }
+        case 2: { // purple, a glowing tree
+          const tr = inTri(sx, sy, 0.72, 0.1, 0.52, 0.86, 0.92, 0.86);
+          if (tr) { r = 236; g = 214; b = 255; c = '^'; }
+          else if (sx > 0.68 && sx < 0.76 && sy > 0.86) { r = 70; g = 40; b = 60; c = '#'; }
+          else if (sx < 0.45 && row % 2) { r = 130; g = 70; b = 180; c = '='; }
+          else { r = 84; g = 36; b = 132; c = '#'; }
+          break;
+        }
+        case 3: { // red and yellow stripes with a white box
+          const band = ((row - scr.r0) >> 1) % 2;
+          r = band ? 255 : 220; g = band ? 200 : 50; b = band ? 70 : 40; c = band ? '=' : '#';
+          if (Math.abs(sx - 0.5) < 0.07 && Math.abs(sy - 0.5) < 0.12) { r = 255; g = 250; b = 240; c = '@'; }
+          break;
+        }
+        default: { // colour bars
+          if (sy < 0.72) { const q = BARS[Math.min(6, Math.floor(sx * 7))]; r = q[0]; g = q[1]; b = q[2]; c = '#'; }
+          else { const q = Math.floor(sx * 5) % 2; r = g = b = q ? 30 : 220; c = q ? ':' : '#'; }
+        }
+      }
+      // Channel number in the corner.
+      if (sw < 2.2 && row === scr.r0 + 1) {
+        const s = 'CH' + (channel + 1), i = col - scr.c0 - 1;
+        if (i >= 0 && i < s.length) { set(90, 255, 120, s[i]); E = 0.6; return; }
+      }
+    }
+    // Scanlines and a slow rolling bar.
+    let k = row % 2 ? 0.82 : 1;
+    if (!reduced && Math.abs((((sy - skyT * 0.25) % 1) + 1) % 1 - 0.5) < 0.06) k *= 1.18;
+    set(r * k, g * k, b * k, c);
+    E = 0.4;
+  }
+
+  // ----- cabinet + VCR -----
+  function cabinet(x, y) {
+    if (x < 334 || x > 549 || y < 638 || y > 758) return false;
+    if (y < 648) { lit(130, 82, 48, '=', x, y); return true; }
+    if (x > 348 && x < 536 && y > 650 && y < 745) {
+      // Clock display.
+      if (x > 410 && x < 531 && y > 650 && y < 704) {
+        if (BAKE) { DY = 1; return true; }
+        clock();
+        return true;
+      }
+      if (x > 356 && x < 404 && y > 664 && y < 676) { lit(10, 10, 10, '=', x, y); return true; }
+      if (y > 712 && y < 738) {
+        const i = Math.floor((x - 352) / 18), u = (x - 352) - i * 18;
+        if (i >= 0 && i < 10 && u > 2 && u < 14) {
+          const P = [[196, 122, 112], [176, 62, 52], [200, 124, 62], [72, 84, 128], [178, 146, 112],
+            [92, 136, 72], [176, 62, 62], [196, 112, 124], [206, 116, 62], [176, 62, 52]][i];
+          lit(...P, y < 718 ? '=' : '#', x, y);
+          return true;
+        }
+      }
+      lit(28, 24, 24, HH < 0.4 ? '.' : ' ', x, y);
+      return true;
+    }
+    const k = x > 541 ? 0.7 : 1;
+    lit(64 * k, 38 * k, 24 * k, pick(DENSE), x, y);
+    return true;
+  }
+  function clock() {
+    const row = ((CI / cols) | 0), col = CI % cols;
+    const blink = t >= T.CLOCK && (((t - T.CLOCK) % 1.2) < 0.7 || reduced);
+    set(14, 22, 14, ' ');
+    if (clk.bitmap) {
+      const gx = col - clk.c0 - Math.floor((clk.nc - CLOCK_MAP.w) / 2), gy = row - clk.r0 - Math.floor((clk.nr - 5) / 2);
+      if (gx >= 0 && gx < CLOCK_MAP.w && gy >= 0 && gy < 5) {
+        if (blink && CLOCK_MAP.on[gy][gx] === '#') { set(70, 240, 100, '#'); E = 0.8; }
+        else if (CLOCK_MAP.ghost[gy][gx] === '#') set(22, 56, 28, '.');
+      }
+    } else {
+      const s = '12:00', gx = col - clk.c0 - Math.floor((clk.nc - 5) / 2), gy = row - clk.r0 - Math.floor((clk.nr - 1) / 2);
+      if (gy === 0 && gx >= 0 && gx < 5) {
+        if (blink) { set(70, 240, 100, s[gx]); E = 0.8; } else set(24, 60, 30, s[gx] === ':' ? ':' : '8');
+      }
+    }
+  }
+
+  // ----- fireplace -----
+  function archTop(x) { const d = (x - 727) / 72; return 600 - Math.sqrt(Math.max(0, 1 - d * d)) * 44; }
+  function fireplace(x, y) {
+    // Stockings.
+    const SC = [[625, [222, 36, 46]], [702, [44, 140, 66]], [780, [222, 36, 46]]];
+    for (const [cx, col] of SC) {
+      if (x > cx - 16 && x < cx + 14 && y > 474 && y < 491) { lit(232, 226, 214, '%', x, y); return true; }
+      const leg = x > cx - 12 && x < cx + 10 && y >= 491 && y < 536;
+      const foot = ((x - cx - 6) / 19) ** 2 + ((y - 538) / 11) ** 2 < 1 && y > 528;
+      if (leg || foot) {
+        if (col[1] > 100 && ((CI / cols) | 0) % 2) { lit(232, 226, 214, '=', x, y); return true; }
+        lit(...col, pick(DENSE), x, y);
+        return true;
+      }
+    }
+    // Mantel garland.
+    if (x > 576 && x < 874 && y > 456 && y < 474 + 3 * Math.sin(x * 0.2) + (HH - 0.5) * 4) {
+      const k = 0.8 + 0.4 * HH;
+      lit(36 * k, 92 * k, 44 * k, HH < 0.25 ? '*' : pick(DENSE), x, y);
+      return true;
+    }
+    if (x > 570 && x < 880 && y >= 436 && y <= 457) {
+      lit(y < 442 ? 160 : 108, y < 442 ? 100 : 64, y < 442 ? 58 : 36, '=', x, y);
+      return true;
+    }
+    // Hearth.
+    if (x > 563 && x < 880 && y >= 750 && y < 794) {
+      const top = y < 759, seam = ((x - 563) % 62) < HX * 1.6;
+      if (seam) { lit(70, 56, 50, ':', x, y); return true; }
+      lit(top ? 160 : 112, top ? 134 : 90, top ? 112 : 78, top ? '=' : pick(MID), x, y);
+      return true;
+    }
+    if (x < 592 || x > 870 || y < 457 || y >= 750) return false;
+    // Firebox opening (dynamic).
+    if (x > 658 && x < 797 && y > archTop(x) && y < 750) {
+      if (BAKE) { DY = 1; return true; }
+      fireCell(x, y);
+      return true;
+    }
+    // Arch of upright bricks around the opening.
+    const inArch = x > 648 && x < 807 && y > archTop(x) - 10;
+    const crow = (CI / cols) | 0, ccol = CI % cols, course = crow >> 1, bc = ccol + (course % 2) * 3;
+    if (inArch) { lit(170, 74, 50, ccol % 2 ? '#' : '|', x, y); return true; }
+    if (bc % 6 === 0) { lit(74, 50, 42, ':', x, y); return true; }
+    const k = 0.74 + 0.45 * hash(Math.floor(bc / 6), course);
+    lit(128 * k, 50 * k, 38 * k, crow % 2 ? '=' : pick(DENSE), x, y);
+    return true;
+  }
+  function fireCell(x, y) {
+    const row = ((CI / cols) | 0), col = CI % cols;
+    // Logs and grate in front of the flames.
+    if (y > 742) { lit(48, 46, 44, '=', x, y); return; }
+    const log1 = Math.abs(y - 734) < 7 && x > 676 && x < 762, log2 = Math.abs(y - 724 + (x - 740) * 0.12) < 6 && x > 704 && x < 786;
+    if (log1 || log2) {
+      const end = log1 ? (x < 683 || x > 755) : (x < 711 || x > 779);
+      if (end) { set(255, 120 + 60 * flame, 40, '@'); E = 0.7 * flame; return; }
+      set(92, 52, 28, pick('=#%')); return;
+    }
+    const fx = col - fc0, fy = row - fr0;
+    const h = fx >= 0 && fx < fw && fy >= 0 && fy < fh ? fire[fy * fw + fx] : 0;
+    if (h < 0.1) {
+      // Soot-dark back wall faintly lit by the flames.
+      const k = 0.5 + 0.8 * flame;
+      set(34 * k, 16 * k, 12 * k, ((y - 600) % 15 < 2) ? '-' : (HH < 0.5 ? ':' : ' '));
+      return;
+    }
+    let r, g, b;
+    if (h < 0.3) { const u = (h - 0.1) / 0.2; r = 90 + 120 * u; g = 14 + 30 * u; b = 6; }
+    else if (h < 0.55) { const u = (h - 0.3) / 0.25; r = 210 + 45 * u; g = 44 + 76 * u; b = 8 + 12 * u; }
+    else if (h < 0.85) { const u = (h - 0.55) / 0.3; r = 255; g = 120 + 85 * u; b = 20 + 30 * u; }
+    else { const u = clamp((h - 0.85) / 0.35, 0, 1); r = 255; g = 205 + 40 * u; b = 50 + 110 * u; }
+    set(r, g, b, h < 0.2 ? '.' : h < 0.32 ? ':' : h < 0.45 ? '*' : h < 0.62 ? '%' : h < 0.8 ? '#' : '@');
+    E = clamp(h * 1.1, 0, 1);
+  }
+  function candles(x, y) {
+    for (const cx of [601, 846]) {
+      if (Math.abs(x - cx) > 12 || y < 354 || y > 437) continue;
+      if (y > 430) { lit(150, 110, 60, '=', x, y); return true; }
+      if (y > 388 && Math.abs(x - cx) < 6.5) { lit(232 - (x > cx + 2 ? 50 : 0), 212 - (x > cx + 2 ? 50 : 0), 166 - (x > cx + 2 ? 40 : 0), '#', x, y); return true; }
+      if (y > 381 && y <= 388 && Math.abs(x - cx) < 1.5) { lit(40, 30, 20, '|', x, y); return true; }
+      if (y < 384) {
+        if (BAKE) { DY = 1; return true; }
+        const sway = reduced ? 0 : 1.6 * Math.sin(skyT * 7 + cx) + 0.8 * Math.sin(skyT * 13.1 + cx);
+        const hgt = 15 + (reduced ? 0 : 2 * Math.sin(skyT * 9 + cx * 0.3));
+        const dx = x - cx - sway * (384 - y) / hgt, dy = (384 - y) / hgt;
+        if (dy > 0 && dy < 1 && Math.abs(dx) < 4.6 * Math.sin(Math.PI * Math.pow(dy, 0.7))) {
+          const hot = dy < 0.45 && Math.abs(dx) < 2;
+          set(255, hot ? 245 : 190, hot ? 170 : 70, hot ? '@' : dy > 0.7 ? '\'' : '^');
+          E = 0.95;
+          return true;
+        }
+        return false;
+      }
+    }
+    return false;
+  }
+  function wreath(x, y) {
+    // Bow and ribbon tails.
+    if ((((x - 703) / 16) ** 2 + ((y - 352) / 10) ** 2 < 1) || (((x - 733) / 16) ** 2 + ((y - 352) / 10) ** 2 < 1) ||
+        Math.hypot(x - 718, y - 354) < 6.5 || segDist(x, y, 713, 358, 700, 408) < 4 || segDist(x, y, 723, 358, 738, 408) < 4) {
+      lit(184, 30, 38, pick(DENSE), x, y);
+      return true;
+    }
+    const d = Math.hypot(x - 718, y - 300);
+    if (d > 66 + (HH - 0.5) * 6 || d < 33) return false;
+    if (HH < 0.07) { lit(220, 40, 40, 'o', x, y); return true; }
+    const k = 0.7 + 0.5 * HH;
+    lit(34 * k, 90 * k, 42 * k, pick(DENSE), x, y);
+    return true;
+  }
+
+  // ----- window -----
+  function curtains(x, y) {
+    if (y > 126 && y < 138 && x > 276 && x < 606) { lit(70, 44, 26, x < 286 || x > 596 ? '@' : '=', x, y); return true; }
+    const left = x > 290 && x < 352, right = x > 527 && x < 592;
+    if (!(left || right) || y < 138 || y > 528) return false;
+    if (y > 346 && y < 362) { lit(196, 146, 62, '=', x, y); return true; }
+    const k = 0.5 + 0.5 * (0.5 + 0.5 * Math.cos((x - 290) * TAU / 19));
+    lit(156 * k + 20, 24 * k + 6, 30 * k + 8, k > 0.8 ? '#' : k > 0.6 ? '%' : '|', x, y);
+    return true;
+  }
+  function windowShade(x, y) {
+    if (x < 318 || x > 566 || y < 158 || y > 505) return false;
+    if (y > 488) { if (x > 318 && x < 566) { lit(160, 108, 64, y < 493 ? '=' : '#', x, y); return true; } }
+    if (x < 330 || x > 553) return false;
+    const glass = x > 342 && x < 541 && y > 170 && y < 488;
+    if (!glass) { lit(126, 82, 50, pick(MID), x, y); return true; }
+    const mv = Math.abs(x - 441.5) < Math.max(4.5, HX), mh = Math.abs(y - 328) < Math.max(5, HY);
+    if (mv || mh) { lit(132, 88, 54, mv ? '|' : '=', x, y); return true; }
+    if (BAKE) { DY = 1; return true; }
+    outside(x, y);
+    return true;
+  }
+  function outside(x, y) {
+    const fl = flakeBuf[CI];
+    if (fl) { OB = true; oR = 20 + 10 * (y - 170) / 300; oG = 28 + 14 * (y - 170) / 300; oB = 60 + 30 * (y - 170) / 300; }
+    sky(x, y);
+    if (fl) { set(250, 252, 255, fl > 1 ? '*' : '.'); E = 0.15; }
+  }
+  function sky(x, y) {
+    // Moon.
+    const md = Math.hypot(x - 505, y - 226);
+    if (md < 24) { set(244, 244, 226, md < 18 ? '@' : '#'); E = 0.8; return; }
+    // House.
+    if (inTri(x, y, 344, 382, 418, 382, 381, 350)) { set(228, 234, 250, '%'); return; }
+    if (x > 397 && x < 406 && y > 350 && y < 372) { set(60, 44, 50, '#'); return; }
+    if (x > 352 && x < 410 && y >= 382 && y < 420) {
+      if (x > 362 && x < 378 && y > 390 && y < 404) { set(255, 206, 92, '@'); E = 0.7; return; }
+      if (x > 388 && x < 399 && y > 400) { set(34, 22, 26, '#'); return; }
+      set(58, 46, 66, pick(DENSE)); return;
+    }
+    // Pines.
+    for (const [px, top, base] of [[478, 352, 448], [520, 372, 450]]) {
+      if (y > top && y < base) {
+        const w = (y - top) * 0.36 * (0.75 + 0.25 * (((y - top) / 16) % 1));
+        if (Math.abs(x - px) < w) { set(HH < 0.18 ? 210 : 24, HH < 0.18 ? 222 : 50, HH < 0.18 ? 240 : 58, HH < 0.18 ? '*' : '^'); return; }
+      }
+    }
+    // Snowy ground, brightest near the sill.
+    const yg = 438 + 10 * Math.sin(x * 0.03) + 6 * Math.sin(x * 0.071 + 1);
+    if (y > yg) {
+      const u = clamp((y - yg) / 40, 0, 1);
+      set(170 + 85 * u, 186 + 66 * u, 230 + 25 * u, u > 0.6 ? '#' : '%');
+      E = 0.12 * u;
+      return;
+    }
+    // Night sky with a moon halo and a few twinkling stars.
+    const v = clamp((y - 170) / 270, 0, 1);
+    let r = 12 + 34 * v, g = 18 + 46 * v, b = 48 + 82 * v;
+    if (md < 52) { const h = 1 - (md - 24) / 28; r += 40 * h; g += 44 * h; b += 50 * h; }
+    if (HH < 0.035) { const tw = 0.5 + 0.5 * Math.sin(skyT * 2 + HH * 900); OB = true; oR = r * BGK; oG = g * BGK; oB = b * BGK; set(150 + 100 * tw, 160 + 90 * tw, 210 + 40 * tw, '.'); return; }
+    set(r, g, b, HH < 0.5 ? ':' : HH < 0.8 ? '-' : ' ');
+  }
+
+  // ----- shell -----
+  function wire(x, y) {
+    const wy = wireY(x);
+    if (Math.abs(y - wy) < Math.max(2.4, HY)) { lit(34, 52, 36, Math.abs(((x - 8) % 116 + 116) % 116 - 58) < 14 ? '_' : (((x - 8) % 116 + 116) % 116 < 58 ? '\\' : '/'), x, y); return true; }
+    const j = Math.round((x - 8 - 19.33) / 38.67), bx = 8 + 19.33 + j * 38.67;
+    if (Math.abs(x - bx) < Math.max(2.6, HX) && y > wy && y < wy + 7) { lit(30, 56, 34, '|', x, y); return true; }
+    return false;
+  }
+  function wall(x, y) {
+    if (y < 72 && y > 50) { lit(54, 32, 20, '=', x, y); return; }
+    if (y > 588 && y < 600) { lit(118, 72, 42, '=', x, y); return; }
+    if (y > 744) { lit(48, 28, 18, '_', x, y); return; }
+    const low = y > 600, col = CI % cols + (low ? 2 : 0), P = low ? 6 : 5;
+    const p = Math.floor(col / P);
+    if (col % P === 0) { lit(32, 18, 12, '|', x, y); return; }
+    const tone = (0.82 + 0.3 * hash(p, low ? 2 : 1)) * (low ? 0.86 : 1) * (y < 50 ? 0.7 : 1);
+    const grain = 0.88 + 0.24 * HH;
+    lit(96 * tone * grain, 56 * tone * grain, 32 * tone * grain, HH < 0.12 ? ':' : pick(DENSE), x, y);
+  }
+  function floor(x, y) {
+    const d = Math.max(20, y - 300), s = (x - 440) / d * 12;
+    const bi = Math.floor(s), u = s - bi;
+    if (u < 12 / d * HX * 1.6) { lit(30, 16, 10, x < 440 ? '/' : '\\', x, y); return; }
+    const z = 30000 / d + hash(bi, 11) * 7;
+    if ((z % 7) < 30000 / (d * d) * HY * 1.8) { lit(34, 18, 11, '-', x, y); return; }
+    const tone = 0.8 + 0.35 * hash(bi, Math.floor(z / 7));
+    lit(84 * tone, 48 * tone, 28 * tone, HH < 0.2 ? '=' : pick(DENSE), x, y);
+  }
+
+  // ---------- Bake the static layer ----------
+  function bake() {
+    sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    sctx.fillStyle = '#140b07';
+    sctx.fillRect(0, 0, W, H);
+    sctx.font = font;
+    sctx.textBaseline = 'top';
+    const list = [], n = cols * rows, fg = new Int32Array(n).fill(-1), bg = new Int32Array(n).fill(-1), chs = new Array(n);
+    BAKE = true;
+    for (let r = 0; r < rows; r++) {
+      const y = SY0 + ((r + 0.5) * ch - coreY) * K;
+      for (let c = 0; c < cols; c++) {
+        const x = SX0 + ((c + 0.5) * cw - coreX) * K, i = r * cols + c;
+        shade(x, y, i);
+        if (DY) { list.push(i); continue; }
+        bg[i] = OB ? colKey(oR, oG, oB) : colKey(R * BGK, G * BGK, B * BGK);
+        if (C !== ' ') { fg[i] = colKey(R, G, B); chs[i] = C; }
+      }
+    }
+    BAKE = false;
+    // Pass 1: each cell gets a dim backing tile of its own colour (reads like pixel art); pass 2: the glyphs.
+    let cur = -1;
+    for (let i = 0; i < n; i++) {
+      if (bg[i] < 0) continue;
+      if (bg[i] !== cur) { cur = bg[i]; sctx.fillStyle = colStr(cur); }
+      const r = (i / cols) | 0;
+      sctx.fillRect((i - r * cols) * cw, r * ch, cw + 0.6, ch + 0.6);
+    }
+    cur = -1;
+    for (let i = 0; i < n; i++) {
+      if (fg[i] < 0) continue;
+      if (fg[i] !== cur) { cur = fg[i]; sctx.fillStyle = colStr(cur); }
+      const r = (i / cols) | 0;
+      sctx.fillText(chs[i], (i - r * cols) * cw, r * ch);
+    }
+    nDyn = list.length;
+    dynIdx = Int32Array.from(list);
+    dynX = new Float32Array(nDyn); dynY = new Float32Array(nDyn);
+    for (let j = 0; j < nDyn; j++) {
+      const i = dynIdx[j], r = (i / cols) | 0, c = i - r * cols;
+      dynX[j] = SX0 + ((c + 0.5) * cw - coreX) * K;
+      dynY[j] = SY0 + ((r + 0.5) * ch - coreY) * K;
+    }
+    dKey = new Uint16Array(nDyn); dBg = new Uint16Array(nDyn); dChar = new Array(nDyn); dE = new Float32Array(nDyn); dOrder = new Int32Array(nDyn);
+  }
+  let dKey, dBg, dChar, dE, dOrder;
+  const BGK = 0.4;
+  const counts = new Uint32Array(32768);
+
+  // ---------- Simulation ----------
+  const FLAKES = 90;
+  const flakes = [];
+  const fr = mulberry32(31);
+  for (let i = 0; i < FLAKES; i++)
+    flakes.push({ x: 342 + fr() * 199, y: 170 + fr() * 318, vy: 22 + 26 * fr(), ph: fr() * TAU, amp: 6 + 10 * fr(), big: fr() < 0.35 });
+
+  let fireAcc = 0, nextFlick = 4, flickT = -10, nextEar = 6, earT = -10, stretchT = -100, lastChannelAuto = 0;
+  const STRETCH_LEN = 3.6;
+
+  function stepFire() {
+    const rnd = Math.random;
+    const src = smooth((t - T.FIRE) / T.FIRE_DUR) * (1 + 0.45 * fireBoost);
+    const decay = 2 / (1.3 * fh) * (reduced ? 0.95 : 1) / (1 + 0.35 * fireBoost);
+    for (let x = 0; x < fw; x++) {
+      const u = (x + 0.5) / fw * 2 - 1, shape = Math.max(0, 1 - Math.pow(Math.abs(u) * 1.15, 3));
+      fire[(fh - 1) * fw + x] = src * shape * (0.55 + 0.65 * rnd());
+    }
+    const wind = reduced ? 0 : Math.sin(skyT * 0.7) * 0.35;
+    for (let y = 0; y < fh - 1; y++) {
+      for (let x = 0; x < fw; x++) {
+        const sx = clamp(Math.round(x + (rnd() * 2 - 1) * 0.9 + wind * (rnd() - 0.3)), 0, fw - 1);
+        const v = fire[(y + 1) * fw + sx] - rnd() * decay;
+        fireNext[y * fw + x] = v > 0 ? v : 0;
+      }
+    }
+    for (let x = 0; x < fw; x++) fireNext[(fh - 1) * fw + x] = fire[(fh - 1) * fw + x];
+    // Sparks.
+    if (!reduced && rnd() < 0.15 + 0.5 * fireBoost) fireNext[(((fh * (0.2 + 0.4 * rnd())) | 0) * fw) + ((fw * (0.25 + 0.5 * rnd())) | 0)] = 0.75;
+    const tmp = fire; fire = fireNext; fireNext = tmp;
+    let s = 0;
+    for (let i = 0; i < fire.length; i++) s += fire[i];
+    const f = s / fire.length * 2.6;
+    flame = clamp(flame * 0.6 + f * 0.4, 0, 1.2);
+  }
+
+  function step(dt) {
+    t += dt; skyT += dt;
+    breath = 0.5 - 0.5 * Math.cos(TAU * (reduced ? 0.2 : 0.26) * t);
+    fireAcc += dt;
+    while (fireAcc > 1 / 30) { fireAcc -= 1 / 30; stepFire(); }
+    fireBoost = Math.max(0, fireBoost - dt * 0.4);
+    gust = Math.max(0, gust - dt * 0.45);
+    // Cat: stretch, occasional tail flick and ear twitch.
+    const a = t - stretchT;
+    stretchP = a >= 0 && a < STRETCH_LEN ? smooth(a / 0.9) * (1 - smooth((a - 2.3) / 1.2)) : 0;
+    eyesOpen = a > 0.7 && a < 2.9 && !(a > 1.9 && a < 2.02);
+    yawn = a > 0.95 && a < 1.75;
+    if (t > nextFlick) { flickT = t; nextFlick = t + (reduced ? 9 : 4) + Math.random() * 5; }
+    const fa = t - flickT;
+    tailFlick = fa < 1.4 ? Math.sin(fa / 1.4 * Math.PI) * (0.6 + 0.4 * Math.sin(fa * 11)) : 0;
+    if (t > nextEar) { earT = t; nextEar = t + 6 + Math.random() * 7; }
+    earTw = t - earT < 0.35 ? 3 * Math.sin((t - earT) * 40) : 0;
+    // TV flips on its own every few seconds (not with reduced motion).
+    if (!reduced && t > T.TV + 1 && t - lastChannelAuto > 5.5 && t - chT > 5.5) changeChannel(true);
+    // Lights cycle their mode every so often unless someone just picked one.
+    if (!reduced && t > T.DONE && t - modeT > 10 && t - lastModeTap > 20) setMode(mode + 1);
+    // Snow outside.
+    const sp = (reduced ? 0.5 : 1) * (1 + 2 * gust), wind = 28 * gust;
+    for (const f of flakes) {
+      f.y += f.vy * sp * dt;
+      f.x += (Math.cos(skyT * 0.9 + f.ph) * f.amp + wind) * dt;
+      if (f.y > 490) { f.y = 168; f.x = 342 + Math.random() * 199; }
+      if (f.x > 541) f.x -= 199; else if (f.x < 342) f.x += 199;
+    }
+  }
+
+  function changeChannel(auto) {
+    if (t < T.TV + 0.4) return;
+    channel = (channel + 1) % CHANNELS;
+    tvSwitchT = t; chT = t;
+    if (auto) lastChannelAuto = t;
+    music('event', 'channel');
+  }
+  function setMode(m) { prevMode = mode; mode = ((m % MODES.length) + MODES.length) % MODES.length; modeT = t; }
+
+  // ---------- Render ----------
+  function render() {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+    ctx.drawImage(stat, 0, 0);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    // Snow flakes into the cell buffer.
+    const marked = [];
+    for (const f of flakes) { const c = cellOf(f.x, f.y); if (c >= 0) { flakeBuf[c] = f.big ? 2 : 1; marked.push(c); } }
+
+    // Dynamic cells, bucketed by colour.
+    counts.fill(0);
+    let n = 0;
+    for (let j = 0; j < nDyn; j++) {
+      shade(dynX[j], dynY[j], dynIdx[j]);
+      dBg[j] = OB ? colKey(oR, oG, oB) : colKey(R * BGK, G * BGK, B * BGK);
+      counts[dBg[j]]++;
+      if (C === ' ') { dKey[j] = 0; dChar[j] = null; dE[j] = 0; continue; }
+      const k = colKey(R, G, B);
+      dKey[j] = k; dChar[j] = C; dE[j] = E;
+      n++;
+    }
+    // Backing tiles, bucketed by colour.
+    let acc0 = 0;
+    for (let k = 0; k < 32768; k++) { const m = counts[k]; counts[k] = acc0; acc0 += m; }
+    for (let j = 0; j < nDyn; j++) dOrder[counts[dBg[j]]++] = j;
+    let cb = -1;
+    for (let q = 0; q < nDyn; q++) {
+      const j = dOrder[q], k = dBg[j], i = dynIdx[j], r = (i / cols) | 0;
+      if (k !== cb) { cb = k; ctx.fillStyle = colStr(k); }
+      ctx.fillRect((i - r * cols) * cw, r * ch, cw + 0.6, ch + 0.6);
+    }
+    counts.fill(0);
+    for (let j = 0; j < nDyn; j++) if (dChar[j]) counts[dKey[j]]++;
+    for (const c of marked) flakeBuf[c] = 0;
+    let acc = 0;
+    for (let k = 0; k < 32768; k++) { const m = counts[k]; counts[k] = acc; acc += m; }
+    for (let j = 0; j < nDyn; j++) if (dChar[j]) dOrder[counts[dKey[j]]++] = j;
+    ctx.font = font;
+    ctx.textBaseline = 'top';
+    let cur = -1;
+    for (let q = 0; q < n; q++) {
+      const j = dOrder[q], k = dKey[j], i = dynIdx[j], r = (i / cols) | 0;
+      if (k !== cur) { cur = k; ctx.fillStyle = colStr(k); }
+      ctx.fillText(dChar[j], (i - r * cols) * cw, r * ch);
+    }
+
+    // Intro darkness: the room is lit by the fire as it catches.
+    const dark = reduced ? 0 : 0.82 * (1 - smooth((t - 0.2) / T.DARK));
+    if (dark > 0.002) { ctx.fillStyle = `rgba(6,3,2,${dark.toFixed(3)})`; ctx.fillRect(0, 0, W, H); }
+
+    // Warm firelight washing over the room, and the TV's cool flicker.
+    ctx.globalCompositeOperation = 'lighter';
+    const fx = pxX(727), fy = pxY(690), fr = 470 / K;
+    const fl = flame * (0.85 + (reduced ? 0 : 0.15 * Math.sin(skyT * 17) * Math.sin(skyT * 5.3)));
+    let g = ctx.createRadialGradient(fx, fy, 0, fx, fy, fr);
+    g.addColorStop(0, `rgba(255,120,40,${(0.2 * fl).toFixed(3)})`);
+    g.addColorStop(0.35, `rgba(255,96,30,${(0.08 * fl).toFixed(3)})`);
+    g.addColorStop(1, 'rgba(255,80,20,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(fx - fr, fy - fr, fr * 2, fr * 2);
+    if (t > T.TV) {
+      const tx = pxX(433), ty = pxY(575), tr = 190 / K;
+      g = ctx.createRadialGradient(tx, ty, 0, tx, ty, tr);
+      const tc = channel === 0 ? '120,190,255' : channel === 2 ? '170,90,255' : channel === 3 ? '255,120,60' : '170,190,220';
+      g.addColorStop(0, `rgba(${tc},0.08)`);
+      g.addColorStop(1, `rgba(${tc},0)`);
+      ctx.fillStyle = g;
+      ctx.fillRect(tx - tr, ty - tr, tr * 2, tr * 2);
+    }
+
+    // Bloom: emissive cells drawn small, blurred, and added back.
+    drawGlow();
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = vignette;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  function drawGlow() {
+    const aw = glowA.width, ah = glowA.height, cw4 = cw / 4 + 0.4, ch4 = ch / 4 + 0.4;
+    const cw14 = cw / 14 + 0.3, ch14 = ch / 14 + 0.3;
+    gA.setTransform(1, 0, 0, 1, 0, 0); gA.globalCompositeOperation = 'source-over'; gA.globalAlpha = 1;
+    gA.clearRect(0, 0, aw, ah);
+    gC.setTransform(1, 0, 0, 1, 0, 0); gC.globalAlpha = 1;
+    gC.clearRect(0, 0, glowC.width, glowC.height);
+    gA.globalCompositeOperation = 'lighter'; gC.globalCompositeOperation = 'lighter';
+    let cur = -1;
+    for (let j = 0; j < nDyn; j++) {
+      const e = dE[j];
+      if (e < 0.05) continue;
+      const k = dKey[j], i = dynIdx[j], r = (i / cols) | 0, c = i - r * cols;
+      if (k !== cur) { cur = k; gA.fillStyle = gC.fillStyle = colStr(k); }
+      gA.globalAlpha = Math.min(1, e);
+      gA.fillRect(c * cw / 4, r * ch / 4, cw4, ch4);
+      gC.globalAlpha = Math.min(1, e) * 0.5;
+      gC.fillRect(c * cw / 14, r * ch / 14, cw14, ch14);
+    }
+    gB.setTransform(1, 0, 0, 1, 0, 0);
+    gB.globalCompositeOperation = 'copy';
+    gB.filter = 'blur(1.5px)';
+    gB.drawImage(glowA, 0, 0);
+    gB.filter = 'none';
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 0.75;
+    ctx.drawImage(glowB, 0, 0, W, H);
+    ctx.globalAlpha = 0.9;
+    ctx.drawImage(glowC, 0, 0, W, H);
+    ctx.restore();
+  }
+
+  // ---------- Loop, HUD, controls ----------
+  let paused = false, last = performance.now();
+  let frames = 0, fpsT = last, fps = 0, hudT = 0;
+
+  function updateHud(now) {
+    let nl = 0;
+    for (const L of lights) if (L.cell >= 0 && t >= L.on) nl++;
+    const tail = paused ? 'paused' : `${fps} fps`;
+    const M = MODES[mode];
+    const head = `lights ${nl}  flame ${flame.toFixed(2)}  flakes ${FLAKES}  `;
+    hudEl.textContent = W < 640 ? head + tail : head + `ch ${channel + 1}  ${zh ? M.zh : M.en}  ${tail}`;
+    hudT = now;
+  }
+
+  function frame(now) {
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); // no jumps after a hidden tab
+    last = now;
+    if (needResize) resize();
+    if (!paused) { const t1 = t; step(dt); soundCues(t1, t); }
+    if (!paused || dirty) { render(); dirty = false; frames++; }
+    if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
+    if (now - hudT >= 250) updateHud(now);
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- Music (ascii-audio.js) ----------
+  const music = (fn, ...a) => window.AsciiAudio && AsciiAudio[fn](...a);
+  // Fire a sound cue on the frame where the scene clock crosses an animation event.
+  const crossed = (a, b, x) => a < x && x <= b;
+  function soundCues(a, b) {
+    if (!window.AsciiAudio) return;
+    let nb = 0;
+    for (const L of lights) if (L.cell >= 0 && crossed(a, b, L.on)) nb++;
+    if (nb) music('event', 'bulb', { n: nb });
+    if (crossed(a, b, T.STAR)) music('event', 'star');
+    if (crossed(a, b, T.TV)) music('event', 'tvOn');
+    if (crossed(a, b, stretchT + 0.25)) music('event', 'stretch');
+  }
+
+  function resetState() {
+    t = reduced ? T.DONE : 0; skyT = 0;
+    channel = 0; chT = -10; tvSwitchT = -10; lastChannelAuto = 0;
+    mode = prevMode = 0; modeT = 0; lastModeTap = -100;
+    stretchT = -100; fireBoost = 0; gust = 0; flame = reduced ? 0.8 : 0;
+    nextFlick = t + 4; nextEar = t + 6;
+    if (fire) fire.fill(0);
+    if (reduced && fire) for (let i = 0; i < 40; i++) stepFire();
+  }
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
+  function replay() { resetState(); paused = false; dirty = true; music('resume'); music('restart'); }
+
+  // Tap targets in scene space.
+  function tap(px, py) {
+    if (paused) { togglePause(); return; }
+    const x = SX0 + (px - coreX) * K, y = SY0 + (py - coreY) * K;
+    if (x > 440 && x < 820 && y > 750 && y < 912) {
+      if (t - stretchT > STRETCH_LEN) stretchT = t;
+    } else if (x > 345 && x < 535 && y > 380 && y < 645) {
+      changeChannel(false);
+    } else if (x > 0 && x < 345 && y > 115 && y < 810) {
+      setMode(mode + 1); lastModeTap = t; music('event', 'pattern');
+    } else if (x > 560 && x < 880 && y > 455 && y < 795) {
+      fireBoost = 1; music('event', 'stoke');
+    } else if (x > 330 && x < 553 && y > 158 && y < 505) {
+      gust = 1; music('event', 'gust');
+    } else togglePause();
+  }
+
+  addEventListener('resize', () => { needResize = true; });
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return; // leave Cmd/Ctrl+R alone
+    if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
+    else if (e.key === 'r' || e.key === 'R') replay();
+  });
+  // Single tap = poke something / pause (decided after 280 ms), two quick taps = replay.
+  let tapTimer = 0;
+  canvas.addEventListener('pointerup', e => {
+    if (e.button > 0) return;
+    const r = canvas.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; replay(); }
+    else tapTimer = setTimeout(() => { tapTimer = 0; tap(x, y); }, 280);
+  });
+
+  // Hint language: ?lang= wins, then saved site preference, then browser.
+  let pref = null;
+  try { pref = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (!pref) { try { pref = localStorage.getItem('lang'); } catch (e) {} }
+  if (!pref) pref = navigator.language || 'en';
+  const zh = String(pref).toLowerCase().startsWith('zh');
+  document.documentElement.lang = zh ? 'zh-Hant' : 'en';
+  // Touch screens have no keyboard, and the full hint would not fit on a phone.
+  const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  hintEl.textContent = touch ? (zh ? '點電視、樹、爐火或貓 · 點牆暫停 · 雙擊重播' : 'tap the TV, tree, fire or cat · tap wall to pause')
+                             : (zh ? '點電視轉台、點樹換燈、點爐火、點貓 · 空白鍵 暫停 · R 重播 · M 音樂'
+                                   : 'click the TV, tree, fire or cat · Space pause · R replay · M music · double-click to replay');
+
+  // Score: "Silent Night" (Franz Xaver Gruber, 1818, public domain) on music box, in 6/8 written as
+  // 3 beats a bar, with a lilting celesta accompaniment, a warm pad, a soft bass and fire crackle.
+  // 26 bars (78 beats): the carol plus two quiet bars before it loops.
+  if (window.AsciiAudio) AsciiAudio.init({
+    bpm: 76, master: 0.78, reverb: 0.42, reverbTime: 3.6,
+    build(a) {
+      const N = AsciiAudio.notes, LOOP = 78, up = n => AsciiAudio.transpose(n, 12);
+      const tune = N(
+        'G4:1.5 A4:.5 G4:1 E4:3 | G4:1.5 A4:.5 G4:1 E4:3 | D5:2 D5:1 B4:3 | C5:2 C5:1 G4:3 | ' +
+        'A4:2 A4:1 C5:1.5 B4:.5 A4:1 | G4:1.5 A4:.5 G4:1 E4:3 | A4:2 A4:1 C5:1.5 B4:.5 A4:1 | G4:1.5 A4:.5 G4:1 E4:3 | ' +
+        'D5:2 D5:1 F5:1.5 D5:.5 B4:1 | C5:3 E5:3 | C5:1 G4 E4 G4:1.5 F4:.5 D4:1 | C4:6 | r:6');
+      a.part(tune, (t, e) => a.musicBox(t, up(e.note), Math.max(1.2, e.sec * 1.8), { vel: 0.55 }), { length: LOOP });
+
+      const CH = { C: ['C', 'E', 'G'], F: ['F', 'A', 'C'], G7: ['G', 'B', 'F'], Am: ['A', 'C', 'E'] };
+      const PROG = 'C C C C G7 G7 C C F F C C F F C C G7 G7 C C C G7 C C F C'.split(' ');
+      const chordAt = beat => CH[PROG[Math.floor((beat % LOOP) / 3)]];
+      a.every(3, (t, s) => {
+        const c = chordAt(s * 3);
+        a.pad(t, [c[0] + '3', c[1] + '3', c[2] + '4'], a.beats(2.6), { vel: 0.24, attack: 0.9, release: 1.6, cutoff: 700 });
+        a.bass(t, c[0] + '2', a.beats(2.4), { vel: 0.22 });
+      });
+      // Celesta in eighths: root, fifth, third, fifth, third, fifth.
+      const ARP = [0, 2, 1, 2, 1, 2];
+      a.every(0.5, (t, s) => {
+        const c = chordAt(s * 0.5), i = s % 6;
+        a.celesta(t, c[ARP[i]] + (ARP[i] === 0 ? '3' : '4'), a.beats(1.2), { vel: i === 0 ? 0.16 : 0.1, pan: i % 2 ? 0.3 : -0.3 });
+      });
+      // Fire crackle: sparse tiny noise pops.
+      a.every(0.25, (t) => {
+        if (Math.random() > 0.22) return;
+        const d = Math.random();
+        a.noise(t + Math.random() * 0.06, { dur: 0.012 + 0.03 * d, filter: 'bandpass', freq: 1400 + 3600 * Math.random(), q: 0.9,
+          vel: 0.06 + 0.12 * Math.random(), wet: 0.06, pan: 0.45 });
+      });
+
+      // Sound effects in sync with the animation.
+      const SP = AsciiAudio.scale('C6', 'pentatonic', 10);
+      a.on('bulb', (a, d, t) => a.sparkle(t, { count: 1, vel: 0.12, notes: SP }), { gap: 0.07 });
+      a.on('star', (a, d, t) => a.chime(t, 'G5', 3, { vel: 0.34 }));
+      a.on('tvOn', (a, d, t) => {
+        a.tick(t, { vel: 0.4 });
+        a.noise(t + 0.02, { dur: 0.5, filter: 'highpass', freq: 7000, vel: 0.12, bus: 'sfx', wet: 0.1 });
+      });
+      a.on('channel', (a, d, t) => {
+        a.tick(t, { vel: 0.35 });
+        a.noise(t + 0.01, { dur: 0.3, filter: 'bandpass', freq: 3200, q: 0.5, vel: 0.14, bus: 'sfx', wet: 0.05 });
+      }, { gap: 0.15 });
+      a.on('pattern', (a, d, t) => a.sparkle(t, { count: 4, vel: 0.2, notes: SP }), { gap: 0.2 });
+      a.on('stoke', (a, d, t) => {
+        a.whoosh(t, { dur: 0.6, vel: 0.35, freq: 200, freqEnd: 900 });
+        for (let i = 0; i < 6; i++) a.noise(t + 0.1 + Math.random() * 0.6, { dur: 0.02, filter: 'bandpass', freq: 2500, q: 0.8, vel: 0.3, bus: 'sfx', wet: 0.05 });
+      }, { gap: 0.3 });
+      a.on('gust', (a, d, t) => a.sweep(t, 1.4, { from: 400, to: 2200, vel: 0.16, bus: 'sfx' }), { gap: 0.5 });
+      // A sleepy "mew" (pitch-bent triangle) and a soft purr (low noise pulses).
+      a.on('stretch', (a, d, t) => {
+        const c = a.ctx, g = c.createGain(), lp = c.createBiquadFilter(), o = c.createOscillator();
+        lp.type = 'lowpass'; lp.frequency.value = 2200;
+        o.type = 'triangle';
+        o.frequency.setValueAtTime(560, t);
+        o.frequency.exponentialRampToValueAtTime(880, t + 0.16);
+        o.frequency.exponentialRampToValueAtTime(520, t + 0.5);
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.09, t + 0.05);
+        g.gain.setTargetAtTime(0, t + 0.35, 0.08);
+        o.connect(lp); lp.connect(g); g.connect(a._out({ bus: 'sfx', pan: 0.25 }, 0.3));
+        o.start(t); o.stop(t + 0.9);
+        for (let i = 0; i < 18; i++)
+          a.noise(t + 0.9 + i * 0.075, { dur: 0.06, filter: 'lowpass', freq: 160, vel: 0.35 * Math.sin(Math.PI * (i + 1) / 19), bus: 'sfx', wet: 0.05, pan: 0.25 });
+      }, { gap: 2 });
+    }
+  });
+
+  resetState();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

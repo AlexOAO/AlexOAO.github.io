@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ASCII Aurora | Alex Li (李翔緯)</title>
+  <meta name="description" content="The northern lights drawn entirely with ASCII characters: cyan and green ribbons fold and ripple across a starry sky, rays flicker up into violet, and a frozen lake mirrors it all between drifting ice floes. Vanilla JS on a single canvas.">
+  <meta name="theme-color" content="#060b1d">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;600;800&display=swap">
+  <style>
+    :root {
+      --bg: #0b1120;
+      --sky: #060b1d;
+      --text: #e6edf6;
+      --muted: #a3b1c6;
+      --accent: #2dd4bf;
+      --mono: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--sky);
+      color: var(--text);
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    canvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100svh;
+      display: block;
+      touch-action: none; /* dragging bends the aurora, so no scrolling or zooming on the canvas */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: crosshair;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .back {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(45, 212, 191, 0.45);
+      background: rgba(45, 212, 191, 0.12);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .back:hover, .back:focus-visible {
+      background: rgba(45, 212, 191, 0.28);
+      border-color: var(--accent);
+      outline: none;
+    }
+    .hud, .hint {
+      position: fixed;
+      z-index: 1;
+      bottom: 12px;
+      color: var(--muted);
+      opacity: 0.75;
+      font: 11px/1.4 var(--mono);
+      white-space: pre;
+      pointer-events: none;
+      max-width: calc(100% - 24px);
+      overflow: hidden;
+    }
+    .hud { left: 12px; }
+    .hint {
+      right: 12px;
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    @media (max-width: 640px) {
+      .hud, .hint { font-size: 10px; }
+      .hint { bottom: 30px; } /* stack above the HUD on narrow screens */
+    }
+  </style>
+</head>
+<body>
+  <h1 class="sr-only">ASCII Aurora</h1>
+  <a class="back" href="./">← ASCII</a>
+  <canvas id="c" role="img" aria-label="Animated northern lights drawn with ASCII characters: cyan and green aurora ribbons with rays rising into violet ripple over a starry sky, above a dark treeline and a frozen lake with ice floes that mirrors the glow"></canvas>
+  <div class="hud" id="hud" aria-hidden="true"></div>
+  <div class="hint" id="hint"></div>
+
+<script src="ascii-audio.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T_START = 0;                       // scene time at load (headless tests change this)
+  const TIME_SCALE = reduced ? 0.35 : 1;   // scene seconds per real second
+  const CYCLE = 26;                        // faint -> storm -> faint, in scene seconds
+  const HORIZON = 0.6;                     // the lake starts at 60% of the screen height
+  const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const smooth = v => { v = clamp(v, 0, 1); return v * v * (3 - 2 * v); };
+
+  // ---------- Value noise ----------
+  const rng = mulberry32(60317);
+  const PERM = new Uint8Array(512), GRAD = new Float32Array(256);
+  for (let i = 0; i < 256; i++) { PERM[i] = i; GRAD[i] = rng(); }
+  for (let i = 255; i > 0; i--) { const j = (rng() * (i + 1)) | 0, s = PERM[i]; PERM[i] = PERM[j]; PERM[j] = s; }
+  for (let i = 0; i < 256; i++) PERM[i + 256] = PERM[i];
+  function vnoise(x, y) {
+    const xi = Math.floor(x), yi = Math.floor(y);
+    const xf = x - xi, yf = y - yi, X = xi & 255, Y = yi & 255;
+    const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+    const a = GRAD[PERM[PERM[X] + Y]], b = GRAD[PERM[PERM[X + 1] + Y]];
+    const c = GRAD[PERM[PERM[X] + Y + 1]], d = GRAD[PERM[PERM[X + 1] + Y + 1]];
+    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+  }
+
+  // ---------- Aurora ribbons ----------
+  // Lower edge height as a fraction of the sky (0 = top, 1 = horizon): base + two travelling
+  // waves + a fold term whose |sin| makes sharp kinks (fold > 0 points down, < 0 points up).
+  const RIBBONS = [
+    { base: 0.38, a1: 0.10, f1: 0.75, w1: 0.10, a2: 0.035, f2: 1.9, w2: -0.19, fold: 0.16, f3: 0.55, w3: 0.07, ray: 0.36, gain: 0.85, dir: 1 },
+    { base: 0.64, a1: 0.08, f1: 1.0, w1: -0.08, a2: 0.03, f2: 2.5, w2: 0.15, fold: -0.13, f3: 0.7, w3: -0.06, ray: 0.3, gain: 1.0, dir: -1 },
+    { base: 0.88, a1: 0.035, f1: 1.3, w1: 0.12, a2: 0.015, f2: 3.1, w2: -0.13, fold: 0.05, f3: 0.9, w3: 0.09, ray: 0.17, gain: 0.85, dir: 1 }
+  ];
+  const NR = RIBBONS.length;
+  const hotU = new Float32Array(NR);
+  RIBBONS.forEach(R => { R.p1 = rng() * 6.283; R.p2 = rng() * 6.283; R.p3 = rng() * 6.283; R.p4 = rng() * 6.283; R.p5 = rng() * 6.283; });
+
+  // ---------- Characters & colours ----------
+  const CH = [''];
+  const ci = s => { let i = CH.indexOf(s); if (i < 0) { CH.push(s); i = CH.length - 1; } return i; };
+  const C_RAY = [...'.:;i!|1lI|'].map(ci);       // aurora curtains, dim -> bright, all vertical
+  const C_EDGE_SUB = [ci('¯'), ci('-'), ci('_')], C_EDGE_DN = ci('\\'), C_EDGE_UP = ci('/');
+  const C_REFL = [...':!|1'].map(ci);
+  const C_ICE = [...'~-=~,~-'].map(ci), C_ICE_EDGE = [ci('~'), ci('-'), ci('.')];
+  const C_DOT = ci('.'), C_COMMA = ci(',');
+  const C_STAR = [ci('.'), ci('+'), ci('*'), ci('+')];
+  const C_TREE = [...'#%&M#'].map(ci), C_TIP = [ci('^'), ci('A'), ci('^')], C_TREEV = [ci('v'), ci('V'), ci('Y')];
+  const C_HILL = ci(':');
+  const C_MET = [ci('*'), ci('='), ci('-'), ci('-'), ci('.')];
+
+  const LEVELS = 16;
+  const PAL = [];
+  const pal = (r, g, b) => { PAL.push([r, g, b]); return PAL.length - 1; };
+  // Aurora hue along the curtain: cyan-white edge -> aqua -> green -> teal -> blue -> violet top.
+  const HUE_STOPS = [[0, [150, 250, 255]], [0.12, [70, 238, 225]], [0.35, [60, 240, 150]],
+                     [0.75, [45, 200, 145]], [1.1, [70, 120, 230]], [1.6, [165, 90, 240]]];
+  const NH = 12, HMAX = 1.6;
+  const hueRGB = h => {
+    for (let i = 1; i < HUE_STOPS.length; i++) {
+      const [h1, c1] = HUE_STOPS[i];
+      if (h <= h1) {
+        const [h0, c0] = HUE_STOPS[i - 1], u = (h - h0) / (h1 - h0);
+        return c0.map((v, j) => v + (c1[j] - v) * u);
+      }
+    }
+    return HUE_STOPS[HUE_STOPS.length - 1][1];
+  };
+  const HUE_RGB = [];
+  for (let i = 0; i < NH; i++) HUE_RGB.push(hueRGB(i / (NH - 1) * HMAX));
+  const P_AUR = HUE_RGB.map(c => pal(c[0], c[1], c[2]));
+  const P_STAR = pal(225, 232, 255);
+  const P_DOT = pal(95, 125, 200);
+  const P_ICE = pal(180, 205, 250);
+  const P_WATER = pal(85, 110, 175);
+  const P_TREE = pal(42, 55, 88);
+  const P_MET = pal(235, 245, 255);
+  const NCOLOR = PAL.length * LEVELS;
+  const COLSTR = new Array(NCOLOR);
+  PAL.forEach(([r, g, b], p) => {
+    for (let l = 0; l < LEVELS; l++) {
+      // Top levels overshoot 1 and wash toward white, so the brightest folds read as glowing.
+      const m = 0.25 + 1.05 * l / (LEVELS - 1), w = Math.max(0, m - 1) * 170;
+      const lift = v => Math.min(255, v * m + w) | 0;
+      COLSTR[p * LEVELS + l] = `rgb(${lift(r)},${lift(g)},${lift(b)})`;
+    }
+  });
+  const hueBin = h => { const i = (h / HMAX * (NH - 1) + 0.5) | 0; return i < 0 ? 0 : i >= NH ? NH - 1 : i; };
+
+  // ---------- Canvas, grid, layout ----------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const hudEl = document.getElementById('hud');
+  const hintEl = document.getElementById('hint');
+  const baseCan = document.createElement('canvas'), bctx = baseCan.getContext('2d');
+  const auroCan = document.createElement('canvas'), actx = auroCan.getContext('2d');
+  const glowCan = document.createElement('canvas'), gctx = glowCan.getContext('2d');
+
+  let W = 0, H = 0, fs = 9, cw = 5, ch = 10, cols = 0, rows = 0, hz = 0, uS = 1;
+  let cellFont = '';
+  let V, HH, EF, EA, listed, cchar, ccol, order, touched, nT = 0, EY, HASH, treeTop, hillTop, reflDepth;
+  let baseImg, auroImg;
+  let starCell, starC, starPh, starSp, starB, nStars = 0;
+  const counts = new Uint32Array(NCOLOR);
+  let needResize = true, dirty = true;
+
+  function resize() {
+    needResize = false;
+    W = canvas.clientWidth || innerWidth;
+    H = canvas.clientHeight || innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    fs = clamp(Math.round(Math.min(W, H * 1.2) / 125), 7, 11);
+    cellFont = `${fs}px ${MONO}`;
+    ctx.font = cellFont;
+    cw = ctx.measureText('M').width || fs * 0.6;
+    ch = fs * 1.15;
+    cols = Math.ceil(W / cw);
+    rows = Math.ceil(H / ch);
+    hz = Math.round(rows * HORIZON);
+    uS = Math.max(W, H * 0.75);   // horizontal scale of the aurora: a phone sees a slice of the sky
+    const n = cols * rows;
+    V = new Float32Array(n); HH = new Float32Array(n); EF = new Uint8Array(n);
+    cchar = new Uint8Array(n); ccol = new Uint16Array(n); listed = new Uint8Array(n);
+    order = new Int32Array(n); touched = new Int32Array(n);
+    EY = new Float32Array(NR * cols); EA = new Float32Array(NR * cols);
+    HASH = new Uint8Array(n);
+    const r = mulberry32(99);
+    for (let i = 0; i < n; i++) HASH[i] = (r() * 256) | 0;
+
+    // Far shore: a low ridge with clusters of spruce, every tree a little triangle.
+    treeTop = new Float32Array(cols); hillTop = new Float32Array(cols); reflDepth = new Float32Array(cols);
+    const rowsPx = 1 / ch;
+    for (let c = 0; c < cols; c++) {
+      const x = c * cw;
+      const hill = (H * 0.012 + H * 0.014 * vnoise(x / 180 + 3, 7.5)) * rowsPx;
+      const grove = smooth((vnoise(x / 110 + 11, 1.5) - 0.3) / 0.12);
+      const per = 4 + ((vnoise(x / 30, 9) * 3) | 0);           // tree width in columns
+      const ph = (c + ((vnoise(c / 9, 4) * 7) | 0)) % per;
+      const tri = 1 - Math.abs(ph - (per - 1) / 2) / (per / 2);
+      const tall = (H * 0.026 + H * 0.03 * vnoise(c / 5 + 50, 2)) * rowsPx;
+      hillTop[c] = hz - hill;
+      treeTop[c] = hz - hill - grove * tall * (0.25 + 0.75 * tri);
+      reflDepth[c] = (hz - treeTop[c]) * 0.85;
+    }
+
+    // Stars in the sky above the shore, seeded so the layout is stable.
+    const r2 = mulberry32(7);
+    nStars = Math.round(cols * hz * 0.011);
+    starCell = new Int32Array(nStars); starC = new Uint8Array(nStars);
+    starPh = new Float32Array(nStars); starSp = new Float32Array(nStars); starB = new Float32Array(nStars);
+    for (let i = 0; i < nStars; i++) {
+      const c = (r2() * cols) | 0, rr = (Math.pow(r2(), 1.25) * (hz - 3)) | 0;
+      starCell[i] = rr * cols + c;
+      const big = r2();
+      starC[i] = big < 0.55 ? 0 : big < 0.8 ? 1 : big < 0.93 ? 2 : 3;
+      starB[i] = starC[i] ? 0.55 + 0.45 * r2() : 0.3 + 0.4 * r2();
+      starPh[i] = r2() * 6.283; starSp[i] = 0.6 + r2() * 2.2;
+    }
+
+    baseCan.width = auroCan.width = glowCan.width = cols;
+    baseCan.height = auroCan.height = glowCan.height = rows;
+    baseImg = bctx.createImageData(cols, rows);
+    auroImg = actx.createImageData(cols, rows);
+    dirty = true;
+  }
+
+  // ---------- Scene state ----------
+  let t = T_START, intensity = 0, surge = 0, kp = 0, letters = 0, meteorsSeen = 0;
+  const ptr = { x: 0, y: 0, on: false, inf: 0, down: false, sx: 0, sy: 0, st: 0 };
+  const meteors = [];
+  let nextMeteor = T_START + 4 + rng() * 6;
+
+  function cycleIntensity(tt) {
+    if (reduced) return 0.62;
+    const ph = ((tt % CYCLE) + CYCLE) % CYCLE / CYCLE;
+    // Slow rise, a bright storm a little past the middle, then a long fade back to a faint glow.
+    const env = Math.pow(Math.sin(Math.PI * Math.pow(ph, 0.85)), 1.6);
+    return 0.16 + 0.84 * env + 0.05 * Math.sin(tt * 1.3) * env;
+  }
+
+  // Sky field: per column, per ribbon, then per cell. V = brightness, HH = brightness-weighted hue.
+  function buildAurora() {
+    V.fill(0); HH.fill(0); EF.fill(0);
+    const I = intensity, sky = hz, storm = smooth((I - 0.62) / 0.35);
+    const pxC = ptr.x / cw, pyR = ptr.y / ch, pInf = ptr.inf;
+    for (let k = 0; k < NR; k++) {
+      const R = RIBBONS[k];
+      const Ik = I * R.gain * (0.78 + 0.22 * Math.sin(t * 0.31 + k * 2.1));
+      if (Ik < 0.01) continue;
+      const base = R.base + 0.035 * Math.sin(t * 0.07 + k * 1.7);
+      const amp = 0.7 + 0.5 * I;
+      const edgeRows = 0.7 + 0.9 * I;
+      const lenBase = R.ray * (0.35 + 0.8 * I);
+      hotU[k] = 0.32 * Math.sin(t * 0.045 + k * 2.4);
+      // Column pass: edge height, fold brightness, ray strength and length.
+      for (let c = 0; c < cols; c++) {
+        const u = ((c + 0.5) * cw - W / 2) / uS;
+        let y = base
+          + amp * R.a1 * Math.sin(6.283 * R.f1 * u + R.w1 * t * 6.283 * 0.25 + R.p1)
+          + amp * R.a2 * Math.sin(6.283 * R.f2 * u + R.w2 * t * 6.283 * 0.25 + R.p2)
+          + amp * R.fold * (0.45 - Math.abs(Math.sin(3.1416 * R.f3 * u * 2 + R.w3 * t * 6.283 * 0.25 + R.p3)));
+        let ey = y * sky;
+        if (pInf > 0.001) {
+          // The pointer pulls the nearest stretch of ribbon toward itself.
+          const dx = (c - pxC) * cw / (uS * 0.13), dy = (pyR - ey) / (sky * 0.3);
+          const g = Math.exp(-dx * dx) * Math.exp(-dy * dy) * pInf;
+          ey += (pyR - ey) * 0.55 * g;
+        }
+        EY[k * cols + c] = ey;
+      }
+      for (let c = 0; c < cols; c++) {
+        const u = ((c + 0.5) * cw - W / 2) / uS, ey = EY[k * cols + c];
+        // Bright folds travelling along the ribbon, plus a slow patchiness.
+        const fold = 0.5 + 0.5 * Math.sin(u * 9.5 - R.dir * t * 0.9 + R.p4 + 0.6 * Math.sin(u * 3.1 + t * 0.2));
+        const patch = 0.4 + 0.6 * Math.pow(0.5 + 0.5 * Math.sin(u * 2.3 + R.dir * t * 0.17 + R.p5), 1.5);
+        let B = 0.18 + 1.25 * fold * fold * patch;
+        // Rays: sharp vertical streaks that drift sideways and flicker.
+        const r1 = 0.5 + 0.5 * Math.sin(u * 150 + 2.2 * Math.sin(u * 13 + t * 0.5) + R.dir * t * 0.9 + R.p1);
+        const r2 = 0.5 + 0.5 * Math.sin(u * 310 - R.dir * t * 1.7 + R.p2);
+        const fl = vnoise(u * 120 + k * 31, t * 2.6);
+        let ray = (r1 * r1 * r1 * 0.6 + r2 * r2 * r2 * r2 * 0.4) * (0.4 + 1.2 * fl);
+        // During the storm one stretch of each ribbon flares into a bright curtain.
+        const dh = (u - hotU[k]) / 0.24;
+        let Bk = B * (1 - 0.35 * storm + 1.5 * storm * Math.exp(-dh * dh));
+        if (pInf > 0.001) {
+          const dx = (c - pxC) * cw / (uS * 0.13), dy = (pyR - ey) / (sky * 0.3);
+          const g = Math.exp(-dx * dx) * Math.exp(-dy * dy) * pInf;
+          Bk += 0.6 * g; ray += 0.4 * g;
+        }
+        const L = lenBase * (0.55 + 0.7 * ray) * sky;       // ray length in rows
+        const amp2 = Ik * Bk;
+        const rayW = 0.4 + 0.8 * ray;
+        // The lower edge as a line of letters: sub-row strokes where it is flat, slashes where steep.
+        const eL = EY[k * cols + Math.max(0, c - 1)], eR = EY[k * cols + Math.min(cols - 1, c + 1)];
+        EA[k * cols + c] = amp2;
+        if (amp2 > 0.16) {
+          const a = (eL + ey) / 2, b = (eR + ey) / 2, lo = Math.min(a, b), hi = Math.max(a, b);
+          const r0 = Math.floor(lo), r1 = Math.floor(hi);
+          if (r0 === r1) {
+            const re = Math.floor(ey), f = ey - re;
+            if (re >= 0 && re < sky) EF[re * cols + c] = C_EDGE_SUB[f < 0.34 ? 0 : f < 0.67 ? 1 : 2];
+          } else {
+            const sc = eR > eL ? C_EDGE_DN : C_EDGE_UP;
+            for (let r = Math.max(0, r0); r <= r1 && r < sky; r++) EF[r * cols + c] = sc;
+          }
+        }
+        const rTop = Math.max(0, Math.floor(ey - L * 3.2)), rBot = Math.min(sky - 1, Math.ceil(ey + 3));
+        for (let r = rTop; r <= rBot; r++) {
+          const h = ey - (r + 0.5);            // rows above the lower edge
+          let v, hue;
+          if (h >= 0) {
+            const edge = Math.exp(-h / edgeRows);
+            const body = Math.exp(-h / L) * (1 - Math.exp(-h / (edgeRows * 1.6)));
+            const e = 1.6 * edge, b = 0.8 * rayW * body;
+            v = amp2 * (e + b);
+            hue = h / L;
+          } else {
+            v = amp2 * 0.7 * Math.exp(h / (0.5 + 0.4 * I));   // a short blue glow under the edge
+            hue = 1.1;
+          }
+          if (v < 0.004) continue;
+          const i = r * cols + c;
+          V[i] += v; HH[i] += v * (hue > HMAX ? HMAX : hue);
+        }
+      }
+    }
+  }
+
+  function addMeteor(x, y, fast) {
+    // Head away from the nearer side edge, slanting down.
+    const ang = 0.2 + 0.3 * rng(), dir = x < W / 2 ? 1 : -1;
+    const sp = (fast ? 1.25 : 1) * Math.max(W, H) * (0.32 + 0.18 * rng());
+    meteors.push({ x, y, vx: Math.cos(ang) * sp * dir, vy: Math.sin(ang) * sp, life: 0, dur: 1.1 + 0.6 * rng() });
+    meteorsSeen++;
+    music('event', 'meteor', { pan: clamp((x / W) * 2 - 1, -1, 1) });
+  }
+
+  // ---------- Compose the grid ----------
+  function put(i, c, col) {
+    if (!listed[i]) { listed[i] = 1; touched[nT++] = i; }
+    cchar[i] = c; ccol[i] = col;
+  }
+
+  function buildScene(dt) {
+    buildAurora();
+    cchar.fill(0); listed.fill(0); nT = 0;
+    const data = baseImg.data, adata = auroImg.data, sky = hz;
+    const twk = t * 1;
+    // Sky: gradient, aurora, dot grid, stars.
+    for (let r = 0; r < sky; r++) {
+      const g = r / sky;
+      const br = 7 + 10 * g, bg = 12 + 22 * g, bb = 32 + 46 * g;
+      for (let c = 0; c < cols; c++) {
+        const i = r * cols + c, v = V[i], p = i * 4;
+        let R = br, G = bg, B = bb, aR = 0, aG = 0, aB = 0;
+        if (v > 0.004) {
+          const hb = hueBin(HH[i] / v), col = HUE_RGB[hb], vv = v > 1.4 ? 1.4 : v;
+          aR = col[0] * vv; aG = col[1] * vv; aB = col[2] * vv;
+          R += aR * 0.42; G += aG * 0.42; B += aB * 0.42;
+          if (v > 0.07 && r < treeTop[c]) {
+            const ef = EF[i];
+            const lvl = clamp((2 + v * 13) | 0, 0, 15);
+            if (ef) put(i, ef, P_AUR[0] * LEVELS + Math.min(15, lvl + 2));
+            else {
+              const hs = HASH[i];
+              // Thin the dim fringe so the curtains dissolve into scattered glyphs.
+              if (v > 0.2 || hs < v * 1100) {
+                const ri = clamp((v * 7 + (hs & 3) * 0.4) | 0, 0, C_RAY.length - 1);
+                put(i, C_RAY[ri], P_AUR[hb] * LEVELS + lvl);
+              }
+            }
+          }
+        }
+        if (!cchar[i] && (r & 1) === 0 && (c & 1) === 0 && HASH[i] < 120 && r < treeTop[c] - 1) {
+          put(i, C_DOT, P_DOT * LEVELS + 1 + (HASH[i] & 1));
+        }
+        data[p] = R; data[p + 1] = G; data[p + 2] = B; data[p + 3] = 255;
+        adata[p] = aR; adata[p + 1] = aG; adata[p + 2] = aB; adata[p + 3] = 255;
+      }
+    }
+    for (let s = 0; s < nStars; s++) {
+      const i = starCell[s], c = i % cols, r = (i / cols) | 0;
+      if (r >= treeTop[c] - 1) continue;
+      const v = V[i];
+      if (v > 0.55) continue;                     // swallowed by a bright curtain
+      const tw = 0.5 + 0.5 * Math.sin(twk * starSp[s] + starPh[s]);
+      const b = starB[s] * (0.45 + 0.55 * tw) * (1 - v * 1.3);
+      if (b < 0.08) continue;
+      put(i, C_STAR[starC[s]], P_STAR * LEVELS + clamp((b * 15) | 0, 1, 15));
+    }
+
+    // Far shore: ridge and trees in silhouette.
+    for (let c = 0; c < cols; c++) {
+      const top = treeTop[c], hill = hillTop[c];
+      for (let r = Math.max(0, Math.floor(top)); r < hz; r++) {
+        const i = r * cols + c, p = i * 4;
+        const inTree = r + 0.5 >= top;
+        if (!inTree) continue;
+        const isHill = r + 0.5 >= hill;
+        data[p] = 5; data[p + 1] = 8; data[p + 2] = 18;
+        adata[p] = adata[p + 1] = adata[p + 2] = 0;
+        cchar[i] = 0;
+        const hs = HASH[i];
+        if (r === Math.floor(top) && !isHill) put(i, C_TIP[hs % 3], P_TREE * LEVELS + 5);
+        else if (isHill) { if (hs < 70) put(i, C_HILL, P_TREE * LEVELS + 3); }
+        else put(i, C_TREE[hs % C_TREE.length], P_TREE * LEVELS + 3 + (hs & 1));
+      }
+    }
+    // Lake: mirrored aurora with ripples, drifting ice floes, the shore's reflection.
+    const waterRows = rows - hz;
+    const walk = t * 0.12;
+    for (let r = hz; r < rows; r++) {
+      const d = r - hz + 0.5;
+      const near = d / waterRows;
+      const yoff = (d + 0.6) * ch, Zw = uS * 0.8 / yoff;   // ground depth of this row
+      const ripA = 0.6 + 2.2 * near;
+      for (let c = 0; c < cols; c++) {
+        const i = r * cols + c, p = i * 4, hs = HASH[i];
+        // Shore reflection: dark band with inverted tree tips.
+        if (d < reflDepth[c]) {
+          data[p] = 6; data[p + 1] = 10; data[p + 2] = 22; data[p + 3] = 255;
+          adata[p] = adata[p + 1] = adata[p + 2] = 0; adata[p + 3] = 255;
+          const tipEnd = Math.floor(hz + reflDepth[c] - 0.5);
+          if (r === tipEnd && treeTop[c] < hillTop[c] - 0.5) put(i, C_TREEV[hs % 3], P_TREE * LEVELS + 3);
+          else if (hs < 90) put(i, hs & 1 ? C_TREE[0] : C_HILL, P_TREE * LEVELS + 2);
+          continue;
+        }
+        // Mirror: water at depth d shows the sky d rows above the horizon, shaken by ripples.
+        const wob = ripA * Math.sin(r * 0.85 - t * 2.1 + c * 0.045) + 0.7 * Math.sin(r * 2.7 + t * 3.3 + c * 0.13);
+        const sc = clamp(Math.round(c + wob), 0, cols - 1);
+        const sr = clamp(Math.round(hz - 1 - d * 0.95 + 0.6 * Math.sin(c * 0.3 + t * 1.7)), 0, hz - 1);
+        const si = sr * cols + sc;
+        const sv = V[si];
+        const shimmer = 0.75 + 0.25 * Math.sin(c * 0.21 + r * 1.3 - t * 2.6);
+        const rv = sv * (0.85 - 0.25 * near) * shimmer;
+        let aR = 0, aG = 0, aB = 0, hb = 0;
+        if (rv > 0.004) {
+          hb = hueBin(HH[si] / sv);
+          const col = HUE_RGB[hb], vv = rv > 1.2 ? 1.2 : rv;
+          aR = col[0] * vv; aG = col[1] * vv; aB = col[2] * vv;
+        }
+        // Ice floes: perspective value noise drifting slowly toward the viewer.
+        const Xw = ((c + 0.5) * cw - W / 2) / yoff;
+        const n = vnoise(Xw * 1.2 + 40, Zw * 0.6 - walk) * 0.66 + vnoise(Xw * 3.3 + 7, Zw * 1.6 - walk * 2.7) * 0.34;
+        const iceThr = 0.55 + 0.12 * (1 - smooth(d / 7));
+        const ice = n - iceThr;
+        let R = 9 + 6 * near, G = 15 + 10 * near, B = 36 + 18 * near;
+        if (ice > 0) {
+          const k = smooth(ice / 0.06) * (0.55 + 0.45 * smooth(d / 8));
+          R += 42 * k; G += 62 * k; B += 96 * k;
+          R += aR * 0.35; G += aG * 0.35; B += aB * 0.35;
+          const lvl = clamp((3 + 4 * k + rv * 10) | 0, 0, 15);
+          if (hs < 70 + 150 * k) {
+            const pp = rv > 0.22 ? P_AUR[hb] : P_ICE;
+            put(i, ice < 0.02 ? C_ICE_EDGE[hs % 3] : C_ICE[hs % C_ICE.length], pp * LEVELS + lvl);
+          }
+        } else {
+          R += aR * 0.6; G += aG * 0.6; B += aB * 0.6;
+          if (rv > 0.06 && hs < 60 + rv * 500) {
+            const ri = clamp((rv * 5 + (hs & 1)) | 0, 0, C_REFL.length - 1);
+            put(i, C_REFL[ri], P_AUR[hb] * LEVELS + clamp((2 + rv * 12) | 0, 0, 15));
+          } else if (hs < 22) put(i, hs & 1 ? C_DOT : C_COMMA, P_WATER * LEVELS + 2 + (hs & 3));
+        }
+        data[p] = R; data[p + 1] = G; data[p + 2] = B; data[p + 3] = 255;
+        adata[p] = aR * 0.6; adata[p + 1] = aG * 0.6; adata[p + 2] = aB * 0.6; adata[p + 3] = 255;
+      }
+    }
+
+    // Shooting stars: a bright head and a fading trail of letters.
+    for (let m = meteors.length - 1; m >= 0; m--) {
+      const M = meteors[m];
+      M.life += dt;
+      if (M.life > M.dur) { meteors.splice(m, 1); continue; }
+      const a = M.life / M.dur, fade = Math.sin(Math.PI * Math.min(1, a * 1.15));
+      const hx = M.x + M.vx * M.life, hy = M.y + M.vy * M.life;
+      const sp = Math.hypot(M.vx, M.vy), ux = M.vx / sp, uy = M.vy / sp;
+      const len = Math.min(M.life * sp, 0.2 * Math.max(W, H));
+      const steps = Math.ceil(len / cw);
+      const diag = Math.abs(uy) > 0.35 ? ((ux > 0) === (uy > 0) ? C_EDGE_DN : C_EDGE_UP) : 0;
+      for (let s = 0; s < steps; s++) {
+        const px = hx - ux * s * cw, py = hy - uy * s * cw;
+        const c = (px / cw) | 0, r = (py / ch) | 0;
+        if (c < 0 || c >= cols || r < 0 || r >= hz) continue;
+        if (r >= treeTop[c]) continue;
+        const i = r * cols + c, f = 1 - s / steps;
+        const lvl = clamp((fade * (4 + 12 * f * f)) | 0, 0, 15);
+        if (lvl < 2) continue;
+        const fy = py / ch - r;
+        const chi = s === 0 ? C_MET[0] : (diag && s < steps * 0.7) ? diag
+          : s < steps * 0.75 ? C_EDGE_SUB[fy < 0.34 ? 0 : fy < 0.67 ? 1 : 2] : C_MET[4];
+        put(i, chi, P_MET * LEVELS + lvl);
+      }
+      M.hx = hx; M.hy = hy; M.tx = hx - ux * len; M.ty = hy - uy * len; M.fade = fade;
+    }
+  }
+
+  // Bucket by colour so fillStyle changes once per colour, not once per cell.
+  function drawCells() {
+    let m = 0;
+    for (let i = 0; i < nT; i++) if (cchar[touched[i]]) touched[m++] = touched[i];
+    nT = m;
+    counts.fill(0);
+    for (let i = 0; i < nT; i++) counts[ccol[touched[i]]]++;
+    let acc = 0;
+    for (let c = 0; c < NCOLOR; c++) { const n = counts[c]; counts[c] = acc; acc += n; }
+    for (let i = 0; i < nT; i++) { const c = touched[i]; order[counts[ccol[c]]++] = c; }
+    let cur = -1;
+    for (let i = 0; i < nT; i++) {
+      const c = order[i], cc = ccol[c];
+      if (cc !== cur) { cur = cc; ctx.fillStyle = COLSTR[cc]; }
+      const row = (c / cols) | 0;
+      ctx.fillText(CH[cchar[c]], (c - row * cols) * cw, row * ch);
+    }
+    letters = nT;
+  }
+
+  // Luminous lower edges: smooth strokes through the ribbon curves, batched by brightness.
+  const NB = 6;
+  const edgePaths = [];
+  function drawEdges() {
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, 0, W, hz * ch); ctx.clip();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.lineCap = 'round';
+    for (let pass = 0; pass < 2; pass++) {
+      for (let b = 0; b < NB; b++) edgePaths[b] = new Path2D();
+      for (let k = 0; k < NR; k++) {
+        const o = k * cols;
+        for (let c = 0; c < cols - 1; c++) {
+          const a = (EA[o + c] + EA[o + c + 1]) * 0.5;
+          if (a < 0.06) continue;
+          const b = Math.min(NB - 1, (a * NB / 1.3) | 0);
+          edgePaths[b].moveTo((c + 0.5) * cw, EY[o + c] * ch);
+          edgePaths[b].lineTo((c + 1.5) * cw, EY[o + c + 1] * ch);
+        }
+      }
+      ctx.lineWidth = pass ? Math.max(1.2, ch * 0.16) : ch * 0.9;
+      for (let b = 0; b < NB; b++) {
+        const a = (b + 1) / NB;
+        ctx.strokeStyle = pass ? `rgba(170,250,255,${(0.65 * a).toFixed(3)})` : `rgba(60,220,235,${(0.22 * a).toFixed(3)})`;
+        ctx.stroke(edgePaths[b]);
+      }
+    }
+    // Shooting stars: a soft streak of light under their letters.
+    for (const M of meteors) {
+      if (M.hx === undefined) continue;
+      const g = ctx.createLinearGradient(M.tx, M.ty, M.hx, M.hy);
+      g.addColorStop(0, 'rgba(200,225,255,0)');
+      g.addColorStop(1, `rgba(235,245,255,${(0.75 * M.fade).toFixed(3)})`);
+      ctx.strokeStyle = g;
+      ctx.lineWidth = Math.max(1.2, ch * 0.18);
+      ctx.beginPath(); ctx.moveTo(M.tx, M.ty); ctx.lineTo(M.hx, M.hy); ctx.stroke();
+      const R = ch * 1.4, hg = ctx.createRadialGradient(M.hx, M.hy, 0, M.hx, M.hy, R);
+      hg.addColorStop(0, `rgba(225,240,255,${(0.5 * M.fade).toFixed(3)})`);
+      hg.addColorStop(1, 'rgba(225,240,255,0)');
+      ctx.fillStyle = hg;
+      ctx.fillRect(M.hx - R, M.hy - R, R * 2, R * 2);
+    }
+    ctx.restore();
+  }
+
+  function render(dt) {
+    buildScene(dt);
+    // Soft painted backdrop: the grid's colours, scaled up smoothly.
+    bctx.putImageData(baseImg, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.globalCompositeOperation = 'copy';
+    ctx.drawImage(baseCan, 0, 0, cols * cw, rows * ch);
+    ctx.globalCompositeOperation = 'source-over';
+    drawEdges();
+    ctx.textBaseline = 'top';
+    ctx.font = cellFont;
+    drawCells();
+    // Bloom: blur the aurora-only colours on the small grid canvas and add them on top.
+    actx.putImageData(auroImg, 0, 0);
+    gctx.globalCompositeOperation = 'copy';
+    gctx.filter = 'blur(2.5px)';
+    gctx.drawImage(auroCan, 0, 0);
+    gctx.filter = 'none';
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 0.55;
+    ctx.drawImage(glowCan, 0, 0, cols * cw, rows * ch);
+    ctx.restore();
+  }
+
+  // ---------- Loop, HUD, controls ----------
+  let paused = false, last = performance.now();
+  let frames = 0, fpsT = last, fps = 0, hudT = 0, prevPh = 0;
+
+  function updateHud(now) {
+    const tail = paused ? 'paused' : `${fps} fps`;
+    const head = `aurora ${Math.round(clamp(intensity, 0, 1) * 100)}%  kp ${kp}  `;
+    hudEl.textContent = W < 640 ? head + tail
+      : head + `meteors ${meteorsSeen}  letters ${letters.toLocaleString('en-US')}  ` + tail;
+    hudT = now;
+  }
+
+  function step(sdt) {
+    t += sdt;
+    surge *= Math.exp(-sdt / 3);
+    intensity = Math.min(1.45, cycleIntensity(t) + 0.7 * surge);
+    kp = Math.round(clamp(intensity, 0, 1) * 8 + 1);
+    ptr.inf += ((ptr.on ? 1 : 0) - ptr.inf) * Math.min(1, sdt * (ptr.on ? 3 : 1.2));
+    if (!reduced && t >= nextMeteor) {
+      addMeteor(W * (0.1 + 0.8 * rng()), hz * ch * (0.03 + 0.3 * rng()), false);
+      nextMeteor = t + 6 + rng() * 9;
+    }
+    const ph = ((t % CYCLE) + CYCLE) % CYCLE / CYCLE;
+    if (!reduced && prevPh < 0.55 && ph >= 0.55) music('event', 'storm');
+    prevPh = ph;
+  }
+
+  function frame(now) {
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); // no jumps after a hidden tab
+    last = now;
+    if (needResize) resize();
+    const sdt = paused ? 0 : dt * TIME_SCALE;
+    if (!paused) step(sdt);
+    if (!paused || dirty) { render(sdt); dirty = false; frames++; }
+    if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
+    if (now - hudT >= 250) updateHud(now);
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- Sound (ascii-audio.js) ----------
+  const music = (fn, ...a) => window.AsciiAudio && AsciiAudio[fn](...a);
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
+  function replay() {
+    t = T_START; surge = 0; meteors.length = 0; nextMeteor = T_START + 4; prevPh = 0;
+    paused = false; dirty = true; music('resume'); music('restart');
+  }
+  // A tap: the aurora surges, and a shooting star streaks from near the pointer.
+  function burst(x, y) {
+    surge = Math.min(1.2, surge + 0.75);
+    music('event', 'surge', { pan: clamp((x / W) * 2 - 1, -1, 1) });
+    const sy = Math.min(y, hz * ch * 0.6);
+    addMeteor(clamp(x + (rng() - 0.5) * W * 0.2, 0, W), Math.max(4, sy - H * 0.08), true);
+    if (paused) togglePause();
+  }
+
+  addEventListener('resize', () => { needResize = true; });
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return; // leave Cmd/Ctrl+R alone
+    if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
+    else if (e.key === 'r' || e.key === 'R') replay();
+    else if (e.key === 's' || e.key === 'S') burst(W * (0.2 + 0.6 * rng()), H * 0.2);
+  });
+  const setPtr = e => { const b = canvas.getBoundingClientRect(); ptr.x = e.clientX - b.left; ptr.y = e.clientY - b.top; };
+  canvas.addEventListener('pointerdown', e => {
+    if (e.button > 0) return;
+    setPtr(e); ptr.down = true; ptr.on = true; ptr.sx = ptr.x; ptr.sy = ptr.y; ptr.st = performance.now();
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  canvas.addEventListener('pointermove', e => {
+    setPtr(e);
+    if (e.pointerType === 'mouse' || ptr.down) ptr.on = ptr.y < hz * ch * 1.05; // only the sky bends
+  });
+  canvas.addEventListener('pointerup', e => {
+    if (!ptr.down) return;
+    ptr.down = false;
+    setPtr(e);
+    if (e.pointerType !== 'mouse') ptr.on = false;
+    const moved = Math.hypot(ptr.x - ptr.sx, ptr.y - ptr.sy);
+    if (moved < 12 && performance.now() - ptr.st < 450) burst(ptr.x, ptr.y);
+  });
+  canvas.addEventListener('pointercancel', () => { ptr.down = false; ptr.on = false; });
+  canvas.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') ptr.on = false; });
+
+  // Hint language: ?lang= wins, then saved site preference, then browser.
+  let pref = null;
+  try { pref = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (!pref) { try { pref = localStorage.getItem('lang'); } catch (e) {} }
+  if (!pref) pref = navigator.language || 'en';
+  const zh = String(pref).toLowerCase().startsWith('zh');
+  document.documentElement.lang = zh ? 'zh-Hant' : 'en';
+  // Touch screens have no keyboard, and the full hint would not fit on a phone.
+  const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  hintEl.textContent = touch ? (zh ? '拖曳拉動極光 · 點一下召喚流星' : 'drag to bend the aurora · tap for a shooting star')
+                             : (zh ? '移動滑鼠拉動極光 · 點擊 極光爆發 · 空白鍵 暫停 · R 重來 · M 音樂'
+                                   : 'move to bend the aurora · click for a surge · Space pause · R restart · M music');
+
+  // Score: an original, slow ambient piece in D lydian at 60 bpm. A soft drone, long pad chords
+  // whose filter opens as the aurora brightens, a sparse celesta line, and high glassy bells that
+  // shimmer more often during the storm. A shooting star whooshes and chimes; a surge sweeps up.
+  if (window.AsciiAudio) AsciiAudio.init({
+    bpm: 60, master: 1, reverb: 0.4, reverbTime: 5.5,
+    build(a) {
+      const c = a.ctx, F = AsciiAudio.freq, N = AsciiAudio.notes, LOOP = 32;
+      const I = () => clamp(intensity, 0, 1.2);
+
+      // Drone: D2 and A2 sines with a slow beat, on the sfx bus so a restart never cuts it.
+      const drone = c.createGain(), dlp = c.createBiquadFilter();
+      dlp.type = 'lowpass'; dlp.frequency.value = 380;
+      dlp.connect(drone); drone.connect(a._out({ bus: 'sfx' }, 0.35));
+      drone.gain.value = 0;
+      [['sine', F('D2'), 1], ['sine', F('D2') + 0.21, 0.7], ['sine', F('A2'), 0.4], ['triangle', F('D3'), 0.1]].forEach(([type, f, amp]) => {
+        const og = c.createGain(), osc = c.createOscillator();
+        og.gain.value = amp; og.connect(dlp);
+        osc.type = type; osc.frequency.value = f; osc.connect(og); osc.start(a.time(0));
+      });
+      // Air: a faint band of noise, like wind over the ice, swelling with the aurora.
+      const len = c.sampleRate * 3, buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      const src = c.createBufferSource(), bp = c.createBiquadFilter(), ag = c.createGain();
+      src.buffer = buf; src.loop = true; bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = 2.5;
+      ag.gain.value = 0;
+      src.connect(bp); bp.connect(ag); ag.connect(a._out({ bus: 'sfx', pan: 0.2 }, 0.7));
+      src.start(a.time(0));
+      a.every(1, (tt, k) => {
+        const v = I();
+        drone.gain.setTargetAtTime(0.09 + 0.05 * v, tt, 1.5);
+        ag.gain.setTargetAtTime(0.004 + 0.012 * v, tt, 1.2);
+        bp.frequency.setTargetAtTime(1400 + 1600 * v + 400 * Math.sin(k * 0.3), tt, 1);
+      });
+
+      // Pads, one chord per 8 beats: Dmaj9, Bm(add9), Gmaj7(#11), A6sus2.
+      const PROG = [['D3', 'A3', 'E4', 'F#4', 'C#5'], ['B2', 'F#3', 'C#4', 'D4'], ['G2', 'D3', 'F#3', 'C#4', 'A4'], ['A2', 'E3', 'B3', 'F#4']];
+      a.every(8, (tt, k) => a.pad(tt, PROG[k % 4], 7.5,
+        { vel: 0.45 + 0.15 * I(), attack: 3.5, release: 5, cutoff: 480 + 1500 * I(), wet: 0.7 }));
+
+      // Celesta: a sparse, original line with long rests.
+      const tune = N('r:4 F#5:3 E5:1 A5:4 r:4 | C#5:2 D5:2 E5:4 r:4 | ' +
+                     'r:4 A5:3 G#5:1 F#5:4 r:4 | E5:2 C#5:2 D5:8');
+      a.part(tune, (tt, e, a) => {
+        a.celesta(tt, e.note, 4, { vel: 0.38, wet: 0.75, pan: 0.2 });
+        a.bell(tt + 0.02, AsciiAudio.transpose(e.note, 12), 3, { vel: 0.06, wet: 0.9, pan: -0.25 });
+      }, { length: LOOP * 2 });
+
+      // Shimmer: glassy high bells, more of them the brighter the sky.
+      const SH = ['D6', 'E6', 'F#6', 'G#6', 'A6', 'C#7', 'E7'];
+      a.every(0.5, tt => {
+        if (Math.random() < 0.04 + 0.26 * I()) a.bell(tt + Math.random() * 0.2, SH[(Math.random() * SH.length) | 0], 3.5,
+          { vel: 0.05 + 0.06 * Math.random(), wet: 0.95, pan: Math.random() * 1.4 - 0.7 });
+      });
+
+      // Sound effects in sync with the sky.
+      a.on('meteor', (a, d, t) => {
+        a.whoosh(t, { dur: 1.1, freq: 1800, freqEnd: 500, vel: 0.22, wet: 0.5, pan: d.pan * 0.7 });
+        a.chime(t + 0.15, 'A6', 2.6, { vel: 0.16 });
+      }, { gap: 0.4 });
+      a.on('surge', (a, d, t) => {
+        a.sweep(t, 2.2, { from: 220, to: 4200, q: 3, vel: 0.2, wet: 0.7, bus: 'sfx', pan: d.pan * 0.5 });
+        a.sparkle(t + 0.3, { notes: SH, count: 4, vel: 0.18 });
+      }, { gap: 0.3 });
+      a.on('storm', (a, d, t) => {
+        a.bell(t, 'D5', 6, { vel: 0.14, wet: 1, bus: 'sfx' });
+        a.bell(t + 0.5, 'A5', 6, { vel: 0.1, wet: 1, bus: 'sfx' });
+        a.bell(t + 1.0, 'E6', 6, { vel: 0.08, wet: 1, bus: 'sfx' });
+      });
+    }
+  });
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
