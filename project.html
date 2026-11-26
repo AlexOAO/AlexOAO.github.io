@@ -184,7 +184,7 @@
       const root = document.getElementById('project');
       const pager = document.getElementById('pager');
 
-      Promise.all([getJSON(dataPath('about.json')), getJSON(dataPath('work.json')), getJSON(dataPath('projects.json')).catch(() => []), getJSON(dataPath('flows.json')).catch(() => ({})), getJSON(dataPath('roles.json')).catch(() => []), getJSON(dataPath('glance.json')).catch(() => ({})), getJSON(dataPath('models.json')).catch(() => ({})), getStory()]).then(([about, raw, repos, flows, roles, glances, models, story]) => {
+      Promise.all([getJSON(dataPath('about.json')), getJSON(dataPath('work.json')), getJSON(dataPath('projects.json')).catch(() => []), getJSON(dataPath('flows.json')).catch(() => ({})), getJSON(dataPath('roles.json')).catch(() => []), getJSON(dataPath('glance.json')).catch(() => ({})), getJSON(dataPath('models.json')).catch(() => ({})), getJSON(dataPath('diagrams.json')).catch(() => ({})), getStory()]).then(([about, raw, repos, flows, roles, glances, models, diagrams, story]) => {
         const view = stageView(about, raw, flows, Object.fromEntries(roles.map(r => [r.key, r]))) || workView(about, raw) || quantView(about, repos);
         document.getElementById('backLink').href = view ? view.back : 'index.html#experience';
         if (!view) {
@@ -217,7 +217,7 @@
         const link = (x, cls, label) => x ? `<a class="${cls}" href="${href(x)}">${cls === 'prev' ? '← ' : ''}${esc(label)}${colon()}${esc(x.name)}${cls === 'next' ? ' →' : ''}</a>` : '';
         pager.innerHTML = link(list[i - 1], 'prev', T(view.stage ? 'prevStage' : 'prev')) + link(list[i + 1], 'next', T(view.stage ? 'nextStage' : 'nextProj'));
         // Concept model (data/models.json): diagram nodes and buttons open a popup.
-        ConceptModel.mountSide(root, view.stage ? null : models[slug], { zoom: T('cmZoom'), kicker: T('cmKicker'), roleLabel: T('cmRole'), outcomeLabel: T('cmOutcome'), close: T('close') });
+        ConceptModel.mountSide(root, view.stage || !models[slug] ? null : { ...models[slug], diagram: diagrams[slug] }, { zoom: T('cmZoom'), kicker: T('cmKicker'), roleLabel: T('cmRole'), outcomeLabel: T('cmOutcome'), close: T('close') });
       }).catch(() => { root.innerHTML = `<p class="lead error">${esc(T('loadError'))}</p>`; });
     }
 

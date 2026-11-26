@@ -319,17 +319,11 @@ __GLANCE__
                       - { name: stage, label: "階段", widget: string }
                       - { name: duty, label: "職責", widget: string }
       - name: models
-        label: "專案頁的概念模型（models.json）"
+        label: "專案頁「這個專案的全貌」（models.json；圖的版面在 data/diagrams.json，不在後台編輯）"
         file: /data/models.json
         format: json
         fields:
 __MODELS__
-      - name: concepts
-        label: "部落格文章的概念架構圖（posts/concepts.json）"
-        file: /posts/concepts.json
-        format: json
-        fields:
-__CONCEPTS__
       - name: flows
         label: "AI SDLC 階段頁的角色分工圖（flows.json）"
         file: /data/flows.json
@@ -421,7 +415,9 @@ def model_fields():
             fields:
               - {{ name: type, label: "模型類型", widget: select, options: [{{ label: "管線（依序）", value: pipeline }}, {{ label: "層次（金字塔）", value: layers }}, {{ label: "冰山（水面上／下）", value: iceberg }}, {{ label: "2×2 矩陣", value: matrix }}, {{ label: "循環", value: cycle }}, {{ label: "核心與分支", value: hub }}, {{ label: "公式（A × B = C）", value: equation }}, {{ label: "對照（A vs B）", value: compare }}, {{ label: "漏斗", value: funnel }}] }}
               - {{ name: title, label: "模型名稱（14 字內）", widget: string }}
-              - {{ name: sub, label: "一句話說明這個模型", widget: string }}
+              - {{ name: sub, label: "一句話說明整個專案（痛點 → 做法 → 成果）", widget: string }}
+              - {{ name: role, label: "我的角色", widget: string, required: false }}
+              - {{ name: outcome, label: "成果", widget: string, required: false }}
               - {{ name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }}
               - name: axes
                 label: "矩陣的兩軸（只有 2×2 矩陣要填）"
@@ -451,7 +447,7 @@ def model_fields():
 
 
 def block():
-    body = FIXED.replace('__GLANCE__', glance_fields()).replace('__CONCEPTS__\n', concept_fields() + '\n').replace('__MODELS__\n', model_fields() + '\n').replace('- __LINK__', '- ' + LINK)
+    body = FIXED.replace('__GLANCE__', glance_fields()).replace('__MODELS__\n', model_fields() + '\n').replace('- __LINK__', '- ' + LINK)
     flows = '\n'.join(FLOW_STAGE.format(key=k, label=l) for k, l in STAGES)
     return BEGIN + '\n' + body.replace('__FLOWS__\n', flows + '\n') + END
 

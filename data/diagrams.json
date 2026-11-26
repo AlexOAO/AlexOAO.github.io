@@ -1,0 +1,5128 @@
+{
+  "guardrails-poc": {
+    "h": 455,
+    "zones": [
+      {
+        "x": 16,
+        "y": 200,
+        "w": 276,
+        "h": 160,
+        "tone": "amber"
+      },
+      {
+        "x": 308,
+        "y": 200,
+        "w": 276,
+        "h": 160,
+        "tone": "green"
+      }
+    ],
+    "nodes": [
+      {
+        "label": "金管會原則 2–5",
+        "x": 100,
+        "y": 50,
+        "w": 170,
+        "h": 44,
+        "shape": "pill",
+        "tone": "slate"
+      },
+      {
+        "item": 0,
+        "x": 290,
+        "y": 50,
+        "w": 150,
+        "h": 54,
+        "tone": "blue"
+      },
+      {
+        "item": 1,
+        "x": 490,
+        "y": 50,
+        "w": 150,
+        "h": 64,
+        "shape": "db",
+        "tone": "blue"
+      },
+      {
+        "item": 2,
+        "x": 300,
+        "y": 158,
+        "w": 150,
+        "h": 54,
+        "tone": "cyan"
+      },
+      {
+        "label": "R2 補規則",
+        "x": 85,
+        "y": 158,
+        "w": 124,
+        "h": 44,
+        "shape": "pill",
+        "tone": "cyan",
+        "size": 15
+      },
+      {
+        "label": "XecGuard",
+        "x": 154,
+        "y": 280,
+        "w": 170,
+        "h": 50,
+        "shape": "hex",
+        "tone": "amber",
+        "solid": true
+      },
+      {
+        "label": "內建防護",
+        "x": 446,
+        "y": 280,
+        "w": 170,
+        "h": 50,
+        "shape": "hex",
+        "tone": "green",
+        "solid": true
+      },
+      {
+        "item": 3,
+        "x": 300,
+        "y": 402,
+        "w": 170,
+        "h": 54,
+        "tone": "purple"
+      },
+      {
+        "item": 4,
+        "x": 500,
+        "y": 402,
+        "w": 150,
+        "h": 54,
+        "tone": "green",
+        "solid": true
+      }
+    ],
+    "edges": [
+      {
+        "from": 0,
+        "to": 1
+      },
+      {
+        "from": 1,
+        "to": 2
+      },
+      {
+        "from": 2,
+        "to": 3,
+        "label": "3,600 題 · 4:1"
+      },
+      {
+        "from": 3,
+        "to": 4,
+        "label": "沒擋住的",
+        "style": "two-way"
+      },
+      {
+        "from": 3,
+        "to": 5,
+        "bend": 0.25
+      },
+      {
+        "from": 3,
+        "to": 6,
+        "bend": -0.25
+      },
+      {
+        "from": 5,
+        "to": 7
+      },
+      {
+        "from": 6,
+        "to": 7
+      },
+      {
+        "from": 7,
+        "to": 8
+      }
+    ],
+    "notes": [
+      {
+        "x": 28,
+        "y": 222,
+        "text": "加買外掛",
+        "tone": "amber",
+        "size": 13,
+        "anchor": "start"
+      },
+      {
+        "x": 572,
+        "y": 222,
+        "text": "平台本來就有",
+        "tone": "green",
+        "size": 13,
+        "anchor": "end"
+      },
+      {
+        "x": 100,
+        "y": 324,
+        "text": "攻擊擋 98.3%",
+        "tone": "amber",
+        "size": 12
+      },
+      {
+        "x": 100,
+        "y": 342,
+        "text": "誤擋 20/30·+0.8 秒",
+        "tone": "amber",
+        "size": 12
+      },
+      {
+        "x": 500,
+        "y": 324,
+        "text": "同批攻擊全擋",
+        "tone": "green",
+        "size": 12
+      },
+      {
+        "x": 500,
+        "y": 342,
+        "text": "不必另外付費",
+        "tone": "green",
+        "size": 12
+      },
+      {
+        "x": 300,
+        "y": 443,
+        "text": "XecGuard 62.5／100",
+        "tone": "purple",
+        "size": 12
+      }
+    ]
+  },
+  "agentic-platform-eval": {
+    "h": 445,
+    "zones": [
+      {
+        "x": 14,
+        "y": 14,
+        "w": 572,
+        "h": 290,
+        "label": "採購前：實測",
+        "tone": "slate"
+      },
+      {
+        "x": 14,
+        "y": 318,
+        "w": 572,
+        "h": 113,
+        "label": "採購",
+        "tone": "green"
+      }
+    ],
+    "nodes": [
+      {
+        "item": 0,
+        "x": 85,
+        "y": 170,
+        "w": 130,
+        "h": 60,
+        "tone": "blue"
+      },
+      {
+        "item": 1,
+        "x": 245,
+        "y": 170,
+        "w": 130,
+        "h": 150,
+        "tone": "cyan"
+      },
+      {
+        "item": 2,
+        "x": 400,
+        "y": 170,
+        "w": 120,
+        "h": 104,
+        "tone": "amber"
+      },
+      {
+        "item": 3,
+        "x": 526,
+        "y": 170,
+        "w": 112,
+        "h": 70,
+        "tone": "red",
+        "solid": true
+      },
+      {
+        "item": 4,
+        "x": 300,
+        "y": 383,
+        "w": 200,
+        "h": 54,
+        "tone": "green",
+        "solid": true
+      }
+    ],
+    "edges": [
+      {
+        "from": 0,
+        "to": 1
+      },
+      {
+        "from": 1,
+        "to": 2
+      },
+      {
+        "from": 2,
+        "to": 3
+      },
+      {
+        "from": 1,
+        "to": 4,
+        "label": "9 大類 42 項",
+        "bend": 0.12
+      },
+      {
+        "from": 3,
+        "to": 4,
+        "bend": -0.12
+      }
+    ],
+    "notes": [
+      {
+        "x": 85,
+        "y": 116,
+        "text": "Agatha 26 項",
+        "tone": "blue",
+        "size": 12
+      },
+      {
+        "x": 85,
+        "y": 224,
+        "text": "Dify 34 項",
+        "tone": "blue",
+        "size": 12
+      },
+      {
+        "x": 528,
+        "y": 226,
+        "text": "+1 資安漏洞",
+        "tone": "red",
+        "size": 12
+      },
+      {
+        "x": 400,
+        "y": 72,
+        "text": "越往右越少",
+        "tone": "slate",
+        "size": 12
+      },
+      {
+        "x": 575,
+        "y": 385,
+        "text": "不是上線後才發現",
+        "tone": "green",
+        "size": 12,
+        "anchor": "end",
+        "max": 150
+      }
+    ]
+  },
+  "agent-cost-roi": {
+    "h": 450,
+    "zones": [
+      {
+        "x": 14,
+        "y": 14,
+        "w": 572,
+        "h": 130,
+        "label": "客戶旅程",
+        "tone": "sky"
+      }
+    ],
+    "nodes": [
+      {
+        "label": "貸款助理",
+        "x": 85,
+        "y": 100,
+        "w": 124,
+        "h": 50,
+        "shape": "hex",
+        "tone": "cyan",
+        "size": 16
+      },
+      {
+        "label": "智能徵審",
+        "x": 228,
+        "y": 100,
+        "w": 124,
+        "h": 50,
+        "shape": "hex",
+        "tone": "cyan",
+        "size": 16
+      },
+      {
+        "label": "客服助理",
+        "x": 372,
+        "y": 100,
+        "w": 124,
+        "h": 50,
+        "shape": "hex",
+        "tone": "cyan",
+        "size": 16
+      },
+      {
+        "label": "智富管家",
+        "x": 515,
+        "y": 100,
+        "w": 124,
+        "h": 50,
+        "shape": "hex",
+        "tone": "cyan",
+        "size": 16
+      },
+      {
+        "item": 0,
+        "x": 300,
+        "y": 200,
+        "w": 170,
+        "h": 50,
+        "tone": "purple",
+        "solid": true
+      },
+      {
+        "label": "業務量",
+        "x": 72,
+        "y": 300,
+        "w": 106,
+        "h": 50,
+        "shape": "circle",
+        "tone": "blue",
+        "size": 16
+      },
+      {
+        "label": "每件資源",
+        "x": 215,
+        "y": 300,
+        "w": 118,
+        "h": 50,
+        "shape": "circle",
+        "tone": "blue",
+        "size": 16
+      },
+      {
+        "label": "資源單價",
+        "x": 360,
+        "y": 300,
+        "w": 126,
+        "h": 50,
+        "shape": "circle",
+        "tone": "blue",
+        "size": 16
+      },
+      {
+        "item": 1,
+        "x": 512,
+        "y": 300,
+        "w": 128,
+        "h": 54,
+        "tone": "blue",
+        "solid": true
+      },
+      {
+        "item": 2,
+        "x": 300,
+        "y": 405,
+        "w": 190,
+        "h": 60,
+        "shape": "db",
+        "tone": "amber"
+      }
+    ],
+    "edges": [
+      {
+        "from": 0,
+        "to": 1
+      },
+      {
+        "from": 1,
+        "to": 2
+      },
+      {
+        "from": 2,
+        "to": 3
+      },
+      {
+        "from": 4,
+        "to": 0,
+        "style": "dashed"
+      },
+      {
+        "from": 4,
+        "to": 1,
+        "style": "dashed"
+      },
+      {
+        "from": 4,
+        "to": 2,
+        "style": "dashed"
+      },
+      {
+        "from": 4,
+        "to": 3,
+        "style": "dashed"
+      },
+      {
+        "from": 8,
+        "to": 9,
+        "label": "單件成本·ROI",
+        "bend": -0.1
+      }
+    ],
+    "notes": [
+      {
+        "x": 85,
+        "y": 60,
+        "text": "獲客",
+        "tone": "cyan",
+        "size": 13
+      },
+      {
+        "x": 228,
+        "y": 60,
+        "text": "交易",
+        "tone": "cyan",
+        "size": 13
+      },
+      {
+        "x": 372,
+        "y": 60,
+        "text": "服務",
+        "tone": "cyan",
+        "size": 13
+      },
+      {
+        "x": 515,
+        "y": 60,
+        "text": "經營",
+        "tone": "cyan",
+        "size": 13
+      },
+      {
+        "x": 143,
+        "y": 300,
+        "text": "×",
+        "tone": "slate",
+        "size": 22
+      },
+      {
+        "x": 288,
+        "y": 300,
+        "text": "×",
+        "tone": "slate",
+        "size": 22
+      },
+      {
+        "x": 434,
+        "y": 300,
+        "text": "=",
+        "tone": "slate",
+        "size": 22
+      },
+      {
+        "x": 200,
+        "y": 348,
+        "text": "效益也一樣：業務量 × 每件效益 × 價值單價",
+        "tone": "slate",
+        "size": 12,
+        "max": 300
+      },
+      {
+        "x": 105,
+        "y": 405,
+        "text": "業務比率",
+        "tone": "amber",
+        "size": 12
+      },
+      {
+        "x": 105,
+        "y": 423,
+        "text": "實現比率",
+        "tone": "amber",
+        "size": 12
+      },
+      {
+        "x": 500,
+        "y": 420,
+        "text": "業務量蒐集中",
+        "tone": "amber",
+        "size": 12
+      }
+    ]
+  },
+  "agent-loan-assistant": {
+    "h": 440,
+    "zones": [
+      {
+        "x": 14,
+        "y": 14,
+        "w": 572,
+        "h": 92,
+        "tone": "slate"
+      },
+      {
+        "x": 14,
+        "y": 116,
+        "w": 572,
+        "h": 180,
+        "tone": "blue"
+      },
+      {
+        "x": 200,
+        "y": 306,
+        "w": 386,
+        "h": 120,
+        "tone": "amber"
+      },
+      {
+        "x": 14,
+        "y": 306,
+        "w": 176,
+        "h": 120,
+        "label": "衡量",
+        "tone": "green"
+      }
+    ],
+    "nodes": [
+      {
+        "item": 0,
+        "x": 105,
+        "y": 60,
+        "w": 160,
+        "h": 50,
+        "tone": "cyan"
+      },
+      {
+        "item": 3,
+        "x": 105,
+        "y": 215,
+        "w": 160,
+        "h": 58,
+        "shape": "hex",
+        "tone": "red"
+      },
+      {
+        "item": 1,
+        "x": 310,
+        "y": 170,
+        "w": 150,
+        "h": 44,
+        "tone": "blue"
+      },
+      {
+        "item": 2,
+        "x": 310,
+        "y": 255,
+        "w": 170,
+        "h": 72,
+        "shape": "diamond",
+        "tone": "amber"
+      },
+      {
+        "item": 4,
+        "x": 500,
+        "y": 170,
+        "w": 140,
+        "h": 44,
+        "tone": "blue"
+      },
+      {
+        "label": "主管核價",
+        "x": 310,
+        "y": 378,
+        "w": 150,
+        "h": 50,
+        "shape": "person",
+        "tone": "amber",
+        "size": 16
+      },
+      {
+        "label": "智能徵審",
+        "x": 500,
+        "y": 378,
+        "w": 140,
+        "h": 50,
+        "tone": "slate",
+        "size": 16
+      },
+      {
+        "item": 5,
+        "x": 102,
+        "y": 378,
+        "w": 150,
+        "h": 50,
+        "tone": "green"
+      }
+    ],
+    "edges": [
+      {
+        "from": 0,
+        "to": 1,
+        "label": "先去識別"
+      },
+      {
+        "from": 1,
+        "to": 2
+      },
+      {
+        "from": 1,
+        "to": 3
+      },
+      {
+        "from": 2,
+        "to": 4
+      },
+      {
+        "from": 3,
+        "to": 5,
+        "label": "超出授權",
+        "style": "two-way"
+      },
+      {
+        "from": 4,
+        "to": 6,
+        "label": "案件包"
+      }
+    ],
+    "notes": [
+      {
+        "x": 574,
+        "y": 326,
+        "text": "交給人 · 下一段",
+        "tone": "amber",
+        "size": 13,
+        "anchor": "end"
+      },
+      {
+        "x": 574,
+        "y": 36,
+        "text": "客戶",
+        "tone": "slate",
+        "size": 13,
+        "anchor": "end"
+      },
+      {
+        "x": 574,
+        "y": 134,
+        "text": "雲端 · 貸款助理",
+        "tone": "blue",
+        "size": 13,
+        "anchor": "end"
+      },
+      {
+        "x": 400,
+        "y": 62,
+        "text": "不保證核准 · 利率由程式算",
+        "tone": "red",
+        "size": 12,
+        "max": 220
+      }
+    ]
+  },
+  "agent-credit-review": {
+    "h": 445,
+    "zones": [
+      {
+        "x": 150,
+        "y": 14,
+        "w": 150,
+        "h": 290,
+        "label": "地端",
+        "tone": "cyan"
+      },
+      {
+        "x": 310,
+        "y": 14,
+        "w": 150,
+        "h": 290,
+        "label": "雲端",
+        "tone": "purple"
+      }
+    ],
+    "nodes": [
+      {
+        "item": 0,
+        "x": 80,
+        "y": 130,
+        "w": 116,
+        "h": 62,
+        "shape": "doc",
+        "tone": "blue"
+      },
+      {
+        "item": 1,
+        "x": 225,
+        "y": 130,
+        "w": 124,
+        "h": 54,
+        "tone": "cyan"
+      },
+      {
+        "item": 2,
+        "x": 385,
+        "y": 130,
+        "w": 124,
+        "h": 54,
+        "tone": "purple"
+      },
+      {
+        "label": "信心<0.75",
+        "x": 530,
+        "y": 130,
+        "w": 110,
+        "h": 88,
+        "shape": "diamond",
+        "tone": "amber",
+        "size": 15
+      },
+      {
+        "item": 3,
+        "x": 528,
+        "y": 262,
+        "w": 110,
+        "h": 54,
+        "shape": "person",
+        "tone": "amber"
+      },
+      {
+        "item": 4,
+        "x": 305,
+        "y": 378,
+        "w": 220,
+        "h": 66,
+        "shape": "db",
+        "tone": "green"
+      }
+    ],
+    "edges": [
+      {
+        "from": 0,
+        "to": 1
+      },
+      {
+        "from": 1,
+        "to": 2
+      },
+      {
+        "from": 2,
+        "to": 3
+      },
+      {
+        "from": 3,
+        "to": 4,
+        "label": "是"
+      },
+      {
+        "from": 1,
+        "to": 5,
+        "label": "辨識段"
+      },
+      {
+        "from": 2,
+        "to": 5,
+        "label": "處理段"
+      }
+    ],
+    "notes": [
+      {
+        "x": 305,
+        "y": 72,
+        "text": "全部排在離峰批次跑",
+        "tone": "slate",
+        "size": 12,
+        "max": 280
+      },
+      {
+        "x": 80,
+        "y": 72,
+        "text": "← 貸款助理案件包",
+        "tone": "blue",
+        "size": 12
+      },
+      {
+        "x": 225,
+        "y": 190,
+        "text": "看不清就裁格重讀",
+        "tone": "cyan",
+        "size": 12,
+        "max": 130
+      },
+      {
+        "x": 528,
+        "y": 312,
+        "text": "欄位準確率 96.6%",
+        "tone": "green",
+        "size": 12
+      },
+      {
+        "x": 528,
+        "y": 330,
+        "text": "年收全對",
+        "tone": "green",
+        "size": 12
+      },
+      {
+        "x": 305,
+        "y": 428,
+        "text": "單件成本 → 三年基準",
+        "tone": "green",
+        "size": 12,
+        "max": 300
+      }
+    ]
+  },
+  "agent-customer-service": {
+    "h": 440,
+    "zones": [
+      {
+        "x": 14,
+        "y": 14,
+        "w": 430,
+        "h": 412,
+        "label": "行內機房",
+        "tone": "cyan"
+      },
+      {
+        "x": 456,
+        "y": 14,
+        "w": 130,
+        "h": 412,
+        "label": "行外",
+        "tone": "slate"
+      }
+    ],
+    "nodes": [
+      {
+        "item": 0,
+        "x": 100,
+        "y": 92,
+        "w": 140,
+        "h": 56,
+        "shape": "doc",
+        "tone": "slate"
+      },
+      {
+        "label": "客服人員",
+        "x": 330,
+        "y": 92,
+        "w": 140,
+        "h": 54,
+        "shape": "person",
+        "tone": "blue",
+        "size": 17
+      },
+      {
+        "label": "客戶",
+        "x": 521,
+        "y": 92,
+        "w": 110,
+        "h": 54,
+        "shape": "person",
+        "tone": "slate",
+        "size": 17
+      },
+      {
+        "item": 1,
+        "x": 100,
+        "y": 210,
+        "w": 140,
+        "h": 54,
+        "tone": "cyan"
+      },
+      {
+        "item": 2,
+        "x": 330,
+        "y": 210,
+        "w": 140,
+        "h": 54,
+        "tone": "blue"
+      },
+      {
+        "item": 3,
+        "x": 330,
+        "y": 318,
+        "w": 140,
+        "h": 54,
+        "tone": "amber"
+      },
+      {
+        "item": 5,
+        "x": 100,
+        "y": 318,
+        "w": 140,
+        "h": 54,
+        "tone": "green"
+      },
+      {
+        "item": 4,
+        "x": 458,
+        "y": 264,
+        "w": 92,
+        "h": 44,
+        "shape": "hex",
+        "tone": "cyan",
+        "solid": true
+      },
+      {
+        "label": "主管",
+        "x": 330,
+        "y": 400,
+        "w": 140,
+        "h": 48,
+        "shape": "person",
+        "tone": "amber",
+        "size": 17
+      },
+      {
+        "label": "雲端",
+        "x": 521,
+        "y": 380,
+        "w": 110,
+        "h": 60,
+        "shape": "cloud",
+        "tone": "red",
+        "size": 16
+      }
+    ],
+    "edges": [
+      {
+        "from": 2,
+        "to": 1,
+        "label": "通話",
+        "style": "two-way"
+      },
+      {
+        "from": 0,
+        "to": 3,
+        "label": "雙聲道"
+      },
+      {
+        "from": 3,
+        "to": 4,
+        "label": "依對話"
+      },
+      {
+        "from": 4,
+        "to": 1,
+        "label": "草稿"
+      },
+      {
+        "from": 3,
+        "to": 5,
+        "label": "掛電話後"
+      },
+      {
+        "from": 5,
+        "to": 8,
+        "label": "嚴重問題"
+      },
+      {
+        "from": 3,
+        "to": 6,
+        "label": "秒數",
+        "style": "dashed"
+      },
+      {
+        "from": 7,
+        "to": 9,
+        "label": "拒絕",
+        "style": "dashed"
+      }
+    ],
+    "notes": [
+      {
+        "x": 352,
+        "y": 150,
+        "text": "人唸給客戶聽",
+        "tone": "blue",
+        "size": 12,
+        "anchor": "start",
+        "max": 90
+      },
+      {
+        "x": 240,
+        "y": 374,
+        "text": "人確認才寫入",
+        "tone": "amber",
+        "size": 12,
+        "anchor": "end"
+      }
+    ]
+  },
+  "agent-wealth-assistant": {
+    "h": 450,
+    "zones": [
+      {
+        "x": 240,
+        "y": 14,
+        "w": 346,
+        "h": 422,
+        "tone": "slate"
+      }
+    ],
+    "nodes": [
+      {
+        "item": 0,
+        "x": 110,
+        "y": 55,
+        "w": 150,
+        "h": 50,
+        "tone": "blue"
+      },
+      {
+        "item": 1,
+        "x": 110,
+        "y": 160,
+        "w": 150,
+        "h": 50,
+        "tone": "blue"
+      },
+      {
+        "item": 5,
+        "x": 110,
+        "y": 300,
+        "w": 150,
+        "h": 50,
+        "tone": "green"
+      },
+      {
+        "label": "接手團隊上線",
+        "x": 110,
+        "y": 400,
+        "w": 150,
+        "h": 44,
+        "shape": "pill",
+        "tone": "slate",
+        "size": 15
+      },
+      {
+        "item": 2,
+        "x": 400,
+        "y": 52,
+        "w": 200,
+        "h": 46,
+        "tone": "purple",
+        "solid": true
+      },
+      {
+        "label": "① 輸入護欄",
+        "x": 370,
+        "y": 122,
+        "w": 170,
+        "h": 38,
+        "tone": "amber",
+        "size": 15
+      },
+      {
+        "label": "② 地端判斷意圖",
+        "x": 370,
+        "y": 180,
+        "w": 170,
+        "h": 38,
+        "tone": "slate",
+        "size": 15
+      },
+      {
+        "label": "③ FAQ",
+        "x": 305,
+        "y": 250,
+        "w": 96,
+        "h": 40,
+        "tone": "slate",
+        "size": 15
+      },
+      {
+        "item": 3,
+        "x": 430,
+        "y": 250,
+        "w": 130,
+        "h": 46,
+        "tone": "purple"
+      },
+      {
+        "label": "④ 輸出護欄",
+        "x": 370,
+        "y": 322,
+        "w": 170,
+        "h": 38,
+        "tone": "amber",
+        "size": 15
+      },
+      {
+        "label": "⑤ 只記遮蔽版",
+        "x": 370,
+        "y": 385,
+        "w": 170,
+        "h": 38,
+        "tone": "amber",
+        "size": 15
+      },
+      {
+        "item": 4,
+        "x": 538,
+        "y": 253,
+        "w": 60,
+        "h": 300,
+        "tone": "amber",
+        "solid": true
+      }
+    ],
+    "edges": [
+      {
+        "from": 0,
+        "to": 1
+      },
+      {
+        "from": 1,
+        "to": 2,
+        "style": "dashed"
+      },
+      {
+        "from": 2,
+        "to": 3
+      },
+      {
+        "from": 1,
+        "to": 4,
+        "label": "我做原型",
+        "bend": -0.15
+      },
+      {
+        "from": 4,
+        "to": 5
+      },
+      {
+        "from": 5,
+        "to": 6
+      },
+      {
+        "from": 6,
+        "to": 7
+      },
+      {
+        "from": 6,
+        "to": 8
+      },
+      {
+        "from": 7,
+        "to": 9
+      },
+      {
+        "from": 8,
+        "to": 9
+      },
+      {
+        "from": 9,
+        "to": 10
+      }
+    ],
+    "notes": [
+      {
+        "x": 548,
+        "y": 52,
+        "text": "118 頁",
+        "tone": "purple",
+        "size": 12,
+        "max": 70
+      }
+    ]
+  },
+  "ai-ops-platform": {
+    "h": 445,
+    "zones": [
+      {
+        "x": 14,
+        "y": 14,
+        "w": 120,
+        "h": 416,
+        "label": "四個 Agent",
+        "tone": "slate"
+      }
+    ],
+    "nodes": [
+      {
+        "label": "貸款助理",
+        "x": 74,
+        "y": 95,
+        "w": 104,
+        "h": 46,
+        "shape": "db",
+        "tone": "slate",
+        "size": 15
+      },
+      {
+        "label": "智能徵審",
+        "x": 74,
+        "y": 175,
+        "w": 104,
+        "h": 46,
+        "shape": "db",
+        "tone": "slate",
+        "size": 15
+      },
+      {
+        "label": "客服助理",
+        "x": 74,
+        "y": 255,
+        "w": 104,
+        "h": 46,
+        "shape": "db",
+        "tone": "slate",
+        "size": 15
+      },
+      {
+        "label": "智富管家",
+        "x": 74,
+        "y": 335,
+        "w": 104,
+        "h": 46,
+        "shape": "db",
+        "tone": "slate",
+        "size": 15
+      },
+      {
+        "item": 2,
+        "x": 192,
+        "y": 215,
+        "w": 84,
+        "h": 300,
+        "tone": "cyan"
+      },
+      {
+        "item": 0,
+        "x": 330,
+        "y": 215,
+        "w": 130,
+        "h": 110,
+        "tone": "purple",
+        "solid": true
+      },
+      {
+        "item": 4,
+        "x": 330,
+        "y": 70,
+        "w": 150,
+        "h": 50,
+        "tone": "amber"
+      },
+      {
+        "item": 3,
+        "x": 330,
+        "y": 365,
+        "w": 150,
+        "h": 50,
+        "tone": "cyan"
+      },
+      {
+        "label": "業務規劃書",
+        "x": 505,
+        "y": 55,
+        "w": 130,
+        "h": 50,
+        "shape": "doc",
+        "tone": "slate",
+        "size": 16
+      },
+      {
+        "item": 1,
+        "x": 505,
+        "y": 170,
+        "w": 140,
+        "h": 80,
+        "shape": "circle",
+        "tone": "blue"
+      },
+      {
+        "item": 5,
+        "x": 505,
+        "y": 290,
+        "w": 136,
+        "h": 50,
+        "tone": "amber"
+      },
+      {
+        "label": "需要檢討",
+        "x": 505,
+        "y": 392,
+        "w": 130,
+        "h": 44,
+        "shape": "pill",
+        "tone": "red",
+        "solid": true,
+        "size": 16
+      }
+    ],
+    "edges": [
+      {
+        "from": 0,
+        "to": 4
+      },
+      {
+        "from": 1,
+        "to": 4
+      },
+      {
+        "from": 2,
+        "to": 4
+      },
+      {
+        "from": 3,
+        "to": 4
+      },
+      {
+        "from": 4,
+        "to": 5
+      },
+      {
+        "from": 6,
+        "to": 5,
+        "label": "新台幣"
+      },
+      {
+        "from": 7,
+        "to": 5,
+        "label": "客戶 360",
+        "style": "two-way"
+      },
+      {
+        "from": 8,
+        "to": 9,
+        "label": "預期"
+      },
+      {
+        "from": 5,
+        "to": 9
+      },
+      {
+        "from": 9,
+        "to": 10,
+        "label": "3 個落差"
+      },
+      {
+        "from": 10,
+        "to": 11,
+        "label": "第 2 版後仍落後"
+      }
+    ],
+    "notes": [
+      {
+        "x": 192,
+        "y": 384,
+        "text": "唯讀出口",
+        "tone": "cyan",
+        "size": 12
+      },
+      {
+        "x": 192,
+        "y": 404,
+        "text": "每分鐘拉",
+        "tone": "cyan",
+        "size": 12,
+        "max": 110
+      }
+    ]
+  },
+  "agent-governance": {
+    "h": 430,
+    "zones": [
+      {
+        "x": 250,
+        "y": 103,
+        "w": 106,
+        "h": 44,
+        "tone": "green"
+      },
+      {
+        "x": 362,
+        "y": 103,
+        "w": 106,
+        "h": 44,
+        "tone": "green"
+      },
+      {
+        "x": 474,
+        "y": 103,
+        "w": 106,
+        "h": 44,
+        "tone": "green"
+      },
+      {
+        "x": 250,
+        "y": 153,
+        "w": 106,
+        "h": 44,
+        "tone": "red"
+      },
+      {
+        "x": 362,
+        "y": 153,
+        "w": 106,
+        "h": 44,
+        "tone": "red"
+      },
+      {
+        "x": 474,
+        "y": 153,
+        "w": 106,
+        "h": 44,
+        "tone": "red"
+      },
+      {
+        "x": 250,
+        "y": 203,
+        "w": 106,
+        "h": 44,
+        "tone": "red"
+      },
+      {
+        "x": 362,
+        "y": 203,
+        "w": 106,
+        "h": 44,
+        "tone": "red"
+      },
+      {
+        "x": 474,
+        "y": 203,
+        "w": 106,
+        "h": 44,
+        "tone": "red"
+      }
+    ],
+    "nodes": [
+      {
+        "item": 0,
+        "x": 85,
+        "y": 50,
+        "w": 130,
+        "h": 50,
+        "tone": "purple"
+      },
+      {
+        "item": 1,
+        "x": 85,
+        "y": 175,
+        "w": 130,
+        "h": 54,
+        "tone": "blue"
+      },
+      {
+        "label": "文件",
+        "x": 198,
+        "y": 125,
+        "w": 72,
+        "h": 40,
+        "tone": "slate",
+        "size": 15
+      },
+      {
+        "label": "產出",
+        "x": 198,
+        "y": 175,
+        "w": 72,
+        "h": 40,
+        "tone": "slate",
+        "size": 15
+      },
+      {
+        "label": "行為",
+        "x": 198,
+        "y": 225,
+        "w": 72,
+        "h": 40,
+        "tone": "slate",
+        "size": 15
+      },
+      {
+        "item": 2,
+        "x": 415,
+        "y": 42,
+        "w": 180,
+        "h": 40,
+        "shape": "pill",
+        "tone": "green",
+        "solid": true
+      },
+      {
+        "label": "風險評鑑",
+        "x": 75,
+        "y": 345,
+        "w": 110,
+        "h": 44,
+        "shape": "pill",
+        "tone": "slate",
+        "size": 15
+      },
+      {
+        "item": 3,
+        "x": 240,
+        "y": 345,
+        "w": 150,
+        "h": 56,
+        "shape": "hex",
+        "tone": "amber",
+        "solid": true
+      },
+      {
+        "label": "核准",
+        "x": 395,
+        "y": 345,
+        "w": 96,
+        "h": 44,
+        "shape": "pill",
+        "tone": "slate",
+        "size": 15
+      },
+      {
+        "item": 4,
+        "x": 525,
+        "y": 345,
+        "w": 110,
+        "h": 56,
+        "tone": "green"
+      }
+    ],
+    "edges": [
+      {
+        "from": 0,
+        "to": 1,
+        "label": "拆成"
+      },
+      {
+        "from": 0,
+        "to": 5,
+        "label": "× 3 個問題"
+      },
+      {
+        "from": 4,
+        "to": 7,
+        "label": "填滿"
+      },
+      {
+        "from": 6,
+        "to": 7
+      },
+      {
+        "from": 7,
+        "to": 8
+      },
+      {
+        "from": 8,
+        "to": 9
+      }
+    ],
+    "notes": [
+      {
+        "x": 303,
+        "y": 125,
+        "text": "✓ 有制度",
+        "tone": "green",
+        "size": 13
+      },
+      {
+        "x": 415,
+        "y": 125,
+        "text": "✓ 有制度",
+        "tone": "green",
+        "size": 13
+      },
+      {
+        "x": 527,
+        "y": 125,
+        "text": "✓ 有制度",
+        "tone": "green",
+        "size": 13
+      },
+      {
+        "x": 303,
+        "y": 175,
+        "text": "空白",
+        "tone": "red",
+        "size": 13
+      },
+      {
+        "x": 415,
+        "y": 175,
+        "text": "空白",
+        "tone": "red",
+        "size": 13
+      },
+      {
+        "x": 527,
+        "y": 175,
+        "text": "空白",
+        "tone": "red",
+        "size": 13
+      },
+      {
+        "x": 303,
+        "y": 225,
+        "text": "空白",
+        "tone": "red",
+        "size": 13
+      },
+      {
+        "x": 415,
+        "y": 225,
+        "text": "空白",
+        "tone": "red",
+        "size": 13
+      },
+      {
+        "x": 527,
+        "y": 225,
+        "text": "空白",
+        "tone": "red",
+        "size": 13
+      },
+      {
+        "x": 303,
+        "y": 88,
+        "text": "評估過？",
+        "tone": "slate",
+        "size": 13
+      },
+      {
+        "x": 415,
+        "y": 88,
+        "text": "有紀錄？",
+        "tone": "slate",
+        "size": 13
+      },
+      {
+        "x": 527,
+        "y": 88,
+        "text": "還在管？",
+        "tone": "slate",
+        "size": 13
+      },
+      {
+        "x": 300,
+        "y": 402,
+        "text": "嚴重錯誤零次才通過 · 沒報告不上正式環境",
+        "tone": "amber",
+        "size": 12,
+        "max": 420
+      },
+      {
+        "x": 420,
+        "y": 272,
+        "text": "盤點：現有制度只顧得到第一層",
+        "tone": "slate",
+        "size": 12,
+        "max": 330
+      }
+    ]
+  },
+  "finllm": {
+    "h": 420,
+    "zones": [
+      {
+        "x": 14,
+        "y": 14,
+        "w": 572,
+        "h": 110,
+        "label": "批次進度",
+        "tone": "slate"
+      }
+    ],
+    "nodes": [
+      {
+        "label": "2-1 清洗 ✓",
+        "x": 72,
+        "y": 82,
+        "w": 104,
+        "h": 40,
+        "tone": "green",
+        "solid": true,
+        "size": 14
+      },
+      {
+        "label": "4 評分 ✓",
+        "x": 186,
+        "y": 82,
+        "w": 104,
+        "h": 40,
+        "tone": "green",
+        "solid": true,
+        "size": 14
+      },
+      {
+        "label": "5 評分中",
+        "x": 300,
+        "y": 82,
+        "w": 104,
+        "h": 40,
+        "tone": "amber",
+        "size": 14
+      },
+      {
+        "label": "還有 9 批",
+        "x": 414,
+        "y": 82,
+        "w": 104,
+        "h": 40,
+        "tone": "slate",
+        "size": 14
+      },
+      {
+        "label": "2027/1 前",
+        "x": 528,
+        "y": 82,
+        "w": 100,
+        "h": 40,
+        "shape": "pill",
+        "tone": "red",
+        "size": 14
+      },
+      {
+        "item": 0,
+        "x": 95,
+        "y": 250,
+        "w": 130,
+        "h": 60,
+        "shape": "circle",
+        "tone": "blue"
+      },
+      {
+        "item": 1,
+        "x": 320,
+        "y": 185,
+        "w": 150,
+        "h": 54,
+        "tone": "cyan"
+      },
+      {
+        "item": 2,
+        "x": 320,
+        "y": 320,
+        "w": 150,
+        "h": 54,
+        "tone": "purple"
+      },
+      {
+        "item": 3,
+        "x": 520,
+        "y": 185,
+        "w": 120,
+        "h": 54,
+        "tone": "green",
+        "solid": true
+      },
+      {
+        "label": "整體評測→交付",
+        "x": 515,
+        "y": 320,
+        "w": 130,
+        "h": 46,
+        "tone": "slate",
+        "size": 15
+      }
+    ],
+    "edges": [
+      {
+        "from": 0,
+        "to": 1
+      },
+      {
+        "from": 1,
+        "to": 2
+      },
+      {
+        "from": 2,
+        "to": 3
+      },
+      {
+        "from": 3,
+        "to": 4
+      },
+      {
+        "from": 5,
+        "to": 6,
+        "label": "每週一批"
+      },
+      {
+        "from": 5,
+        "to": 7
+      },
+      {
+        "from": 6,
+        "to": 8,
+        "label": "沉澱"
+      },
+      {
+        "from": 8,
+        "to": 5,
+        "label": "套用到下一批",
+        "bend": -0.32,
+        "style": "dashed"
+      },
+      {
+        "from": 7,
+        "to": 9,
+        "style": "dashed"
+      }
+    ],
+    "notes": [
+      {
+        "x": 515,
+        "y": 362,
+        "text": "全部完成後",
+        "tone": "slate",
+        "size": 12
+      },
+      {
+        "x": 300,
+        "y": 395,
+        "text": "只能一題一題處理，沒有捷徑",
+        "tone": "slate",
+        "size": 12,
+        "max": 300
+      }
+    ]
+  },
+  "gemini-training": {
+    "h": 430,
+    "zones": [
+      {
+        "x": 14,
+        "y": 14,
+        "w": 170,
+        "h": 402,
+        "label": "只發工具",
+        "tone": "red"
+      },
+      {
+        "x": 196,
+        "y": 14,
+        "w": 390,
+        "h": 402,
+        "label": "這門課",
+        "tone": "green"
+      },
+      {
+        "x": 214,
+        "y": 134,
+        "w": 354,
+        "h": 52,
+        "tone": "amber"
+      }
+    ],
+    "nodes": [
+      {
+        "label": "Gemini 帳號",
+        "x": 99,
+        "y": 95,
+        "w": 130,
+        "h": 44,
+        "shape": "pill",
+        "tone": "slate",
+        "size": 15
+      },
+      {
+        "label": "員工",
+        "x": 99,
+        "y": 200,
+        "w": 120,
+        "h": 50,
+        "shape": "person",
+        "tone": "slate",
+        "size": 16
+      },
+      {
+        "item": 0,
+        "x": 310,
+        "y": 80,
+        "w": 140,
+        "h": 50,
+        "tone": "blue"
+      },
+      {
+        "label": "顧問",
+        "x": 500,
+        "y": 80,
+        "w": 120,
+        "h": 50,
+        "shape": "person",
+        "tone": "slate",
+        "size": 16
+      },
+      {
+        "label": "安全",
+        "x": 270,
+        "y": 160,
+        "w": 88,
+        "h": 34,
+        "shape": "pill",
+        "tone": "amber",
+        "size": 14
+      },
+      {
+        "label": "工具",
+        "x": 380,
+        "y": 160,
+        "w": 88,
+        "h": 34,
+        "shape": "pill",
+        "tone": "amber",
+        "size": 14
+      },
+      {
+        "label": "Prompt",
+        "x": 490,
+        "y": 160,
+        "w": 88,
+        "h": 34,
+        "shape": "pill",
+        "tone": "amber",
+        "size": 14
+      },
+      {
+        "item": 1,
+        "x": 300,
+        "y": 255,
+        "w": 130,
+        "h": 50,
+        "tone": "cyan"
+      },
+      {
+        "label": "各業務單位",
+        "x": 505,
+        "y": 255,
+        "w": 120,
+        "h": 50,
+        "shape": "person",
+        "tone": "slate",
+        "size": 15
+      },
+      {
+        "item": 2,
+        "x": 310,
+        "y": 360,
+        "w": 140,
+        "h": 50,
+        "tone": "blue",
+        "solid": true
+      },
+      {
+        "item": 3,
+        "x": 500,
+        "y": 360,
+        "w": 130,
+        "h": 50,
+        "tone": "green"
+      }
+    ],
+    "edges": [
+      {
+        "from": 0,
+        "to": 1
+      },
+      {
+        "from": 2,
+        "to": 5,
+        "style": "dashed"
+      },
+      {
+        "from": 3,
+        "to": 2,
+        "label": "確認",
+        "style": "two-way"
+      },
+      {
+        "from": 8,
+        "to": 7,
+        "label": "自己出題"
+      },
+      {
+        "from": 7,
+        "to": 9,
+        "label": "帶進課堂"
+      },
+      {
+        "from": 9,
+        "to": 10
+      },
+      {
+        "from": 1,
+        "to": 9,
+        "label": "來上課",
+        "style": "dashed"
+      }
+    ],
+    "notes": [
+      {
+        "x": 99,
+        "y": 262,
+        "text": "哪些工作能交給 AI？",
+        "tone": "red",
+        "size": 12,
+        "max": 140
+      },
+      {
+        "x": 99,
+        "y": 300,
+        "text": "怎樣用才安全？",
+        "tone": "red",
+        "size": 12,
+        "max": 140
+      },
+      {
+        "x": 212,
+        "y": 196,
+        "text": "三個主題",
+        "tone": "amber",
+        "size": 12,
+        "anchor": "start"
+      },
+      {
+        "x": 500,
+        "y": 400,
+        "text": "人數 · 應用情境數",
+        "tone": "green",
+        "size": 12
+      }
+    ]
+  },
+  "ai-ops-dashboard": {
+    "h": 440,
+    "zones": [
+      {
+        "x": 14,
+        "y": 14,
+        "w": 170,
+        "h": 200,
+        "label": "對內 · 員工",
+        "tone": "blue"
+      },
+      {
+        "x": 14,
+        "y": 226,
+        "w": 170,
+        "h": 200,
+        "label": "對外 · 客戶",
+        "tone": "purple"
+      },
+      {
+        "x": 228,
+        "y": 14,
+        "w": 150,
+        "h": 176,
+        "label": "有沒有在用",
+        "tone": "slate"
+      },
+      {
+        "x": 228,
+        "y": 202,
+        "w": 150,
+        "h": 224,
+        "label": "值不值得",
+        "tone": "amber"
+      }
+    ],
+    "nodes": [
+      {
+        "label": "Copilot",
+        "x": 99,
+        "y": 70,
+        "w": 130,
+        "h": 36,
+        "tone": "blue",
+        "size": 15
+      },
+      {
+        "label": "Gemini",
+        "x": 99,
+        "y": 122,
+        "w": 130,
+        "h": 36,
+        "tone": "blue",
+        "size": 15
+      },
+      {
+        "label": "艾拉小幫手",
+        "x": 99,
+        "y": 174,
+        "w": 130,
+        "h": 36,
+        "tone": "blue",
+        "size": 15
+      },
+      {
+        "label": "四個 Agent",
+        "x": 99,
+        "y": 282,
+        "w": 130,
+        "h": 36,
+        "tone": "purple",
+        "size": 15
+      },
+      {
+        "label": "成本模型",
+        "x": 99,
+        "y": 334,
+        "w": 130,
+        "h": 36,
+        "tone": "purple",
+        "size": 15
+      },
+      {
+        "label": "護欄 PoC",
+        "x": 94,
+        "y": 386,
+        "w": 120,
+        "h": 36,
+        "tone": "purple",
+        "size": 15
+      },
+      {
+        "item": 0,
+        "x": 303,
+        "y": 82,
+        "w": 120,
+        "h": 42,
+        "tone": "cyan"
+      },
+      {
+        "item": 1,
+        "x": 303,
+        "y": 150,
+        "w": 120,
+        "h": 42,
+        "tone": "cyan"
+      },
+      {
+        "item": 2,
+        "x": 303,
+        "y": 262,
+        "w": 120,
+        "h": 42,
+        "tone": "amber"
+      },
+      {
+        "item": 3,
+        "x": 303,
+        "y": 326,
+        "w": 120,
+        "h": 42,
+        "tone": "amber"
+      },
+      {
+        "item": 4,
+        "x": 305,
+        "y": 390,
+        "w": 116,
+        "h": 42,
+        "tone": "amber"
+      },
+      {
+        "item": 5,
+        "x": 510,
+        "y": 245,
+        "w": 140,
+        "h": 60,
+        "tone": "green",
+        "solid": true
+      }
+    ],
+    "edges": [
+      {
+        "from": 0,
+        "to": 6,
+        "label": "771 套"
+      },
+      {
+        "from": 1,
+        "to": 6
+      },
+      {
+        "from": 2,
+        "to": 6
+      },
+      {
+        "from": 3,
+        "to": 8,
+        "label": "業務成果"
+      },
+      {
+        "from": 4,
+        "to": 9
+      },
+      {
+        "from": 5,
+        "to": 10,
+        "label": "漏放·誤擋"
+      },
+      {
+        "from": 6,
+        "to": 11,
+        "bend": -0.12
+      },
+      {
+        "from": 7,
+        "to": 11
+      },
+      {
+        "from": 8,
+        "to": 11
+      },
+      {
+        "from": 9,
+        "to": 11
+      },
+      {
+        "from": 10,
+        "to": 11,
+        "bend": 0.12
+      }
+    ],
+    "notes": [
+      {
+        "x": 510,
+        "y": 295,
+        "text": "先做對內版本",
+        "tone": "green",
+        "size": 12
+      }
+    ]
+  },
+  "a2ui-research": {
+    "h": 440,
+    "zones": [
+      {
+        "x": 14,
+        "y": 14,
+        "w": 572,
+        "h": 160,
+        "label": "原理：回畫面，不回程式碼",
+        "tone": "purple"
+      },
+      {
+        "x": 14,
+        "y": 190,
+        "w": 290,
+        "h": 236,
+        "tone": "amber"
+      }
+    ],
+    "nodes": [
+      {
+        "item": 0,
+        "x": 95,
+        "y": 105,
+        "w": 130,
+        "h": 54,
+        "tone": "purple",
+        "solid": true
+      },
+      {
+        "label": "JSON 資料",
+        "x": 250,
+        "y": 105,
+        "w": 110,
+        "h": 54,
+        "shape": "doc",
+        "tone": "slate",
+        "size": 15
+      },
+      {
+        "label": "核准元件",
+        "x": 400,
+        "y": 105,
+        "w": 120,
+        "h": 60,
+        "shape": "db",
+        "tone": "blue",
+        "size": 15
+      },
+      {
+        "label": "畫面",
+        "x": 530,
+        "y": 105,
+        "w": 88,
+        "h": 54,
+        "tone": "green",
+        "size": 16
+      },
+      {
+        "item": 1,
+        "x": 86,
+        "y": 290,
+        "w": 120,
+        "h": 54,
+        "tone": "green"
+      },
+      {
+        "item": 2,
+        "x": 232,
+        "y": 290,
+        "w": 120,
+        "h": 54,
+        "tone": "blue"
+      },
+      {
+        "item": 3,
+        "x": 385,
+        "y": 290,
+        "w": 130,
+        "h": 90,
+        "shape": "diamond",
+        "tone": "amber",
+        "solid": true
+      },
+      {
+        "item": 4,
+        "x": 522,
+        "y": 290,
+        "w": 112,
+        "h": 54,
+        "tone": "slate"
+      }
+    ],
+    "edges": [
+      {
+        "from": 0,
+        "to": 1
+      },
+      {
+        "from": 1,
+        "to": 2
+      },
+      {
+        "from": 2,
+        "to": 3
+      },
+      {
+        "from": 0,
+        "to": 4,
+        "label": "用在哪？"
+      },
+      {
+        "from": 4,
+        "to": 5
+      },
+      {
+        "from": 5,
+        "to": 6
+      },
+      {
+        "from": 6,
+        "to": 7
+      }
+    ],
+    "notes": [
+      {
+        "x": 160,
+        "y": 410,
+        "text": "▲ 現在在這：第 1–2 階段",
+        "tone": "amber",
+        "size": 13,
+        "max": 270
+      },
+      {
+        "x": 385,
+        "y": 350,
+        "text": "Checkpoint",
+        "tone": "amber",
+        "size": 12
+      },
+      {
+        "x": 250,
+        "y": 152,
+        "text": "AI 決定怎麼排",
+        "tone": "slate",
+        "size": 12
+      },
+      {
+        "x": 400,
+        "y": 152,
+        "text": "銀行決定能用哪些",
+        "tone": "blue",
+        "size": 12
+      },
+      {
+        "x": 86,
+        "y": 352,
+        "text": "資產總覽",
+        "tone": "green",
+        "size": 12
+      },
+      {
+        "x": 86,
+        "y": 370,
+        "text": "商品比較",
+        "tone": "green",
+        "size": 12
+      },
+      {
+        "x": 86,
+        "y": 388,
+        "text": "資料填寫",
+        "tone": "green",
+        "size": 12
+      },
+      {
+        "x": 232,
+        "y": 352,
+        "text": "環境·元件清單",
+        "tone": "blue",
+        "size": 12,
+        "max": 120
+      },
+      {
+        "x": 522,
+        "y": 346,
+        "text": "套護欄 · 不放下單鈕",
+        "tone": "red",
+        "size": 12,
+        "max": 120
+      }
+    ]
+  },
+  "webai-finance": {
+    "h": 430,
+    "zones": [
+      {
+        "x": 14,
+        "y": 276,
+        "w": 380,
+        "h": 140,
+        "label": "全集團開放",
+        "tone": "blue"
+      },
+      {
+        "x": 404,
+        "y": 276,
+        "w": 182,
+        "h": 140,
+        "label": "投信資料隔離",
+        "tone": "red"
+      }
+    ],
+    "nodes": [
+      {
+        "label": "券商報告",
+        "x": 72,
+        "y": 50,
+        "w": 104,
+        "h": 44,
+        "shape": "doc",
+        "tone": "slate",
+        "size": 15
+      },
+      {
+        "label": "總經資料",
+        "x": 72,
+        "y": 120,
+        "w": 104,
+        "h": 44,
+        "shape": "doc",
+        "tone": "slate",
+        "size": 15
+      },
+      {
+        "label": "新聞",
+        "x": 72,
+        "y": 190,
+        "w": 104,
+        "h": 44,
+        "shape": "doc",
+        "tone": "slate",
+        "size": 15
+      },
+      {
+        "item": 3,
+        "x": 232,
+        "y": 120,
+        "w": 130,
+        "h": 54,
+        "shape": "db",
+        "tone": "cyan"
+      },
+      {
+        "item": 4,
+        "x": 410,
+        "y": 120,
+        "w": 130,
+        "h": 54,
+        "shape": "hex",
+        "tone": "purple"
+      },
+      {
+        "item": 1,
+        "x": 530,
+        "y": 220,
+        "w": 110,
+        "h": 54,
+        "tone": "blue",
+        "solid": true
+      },
+      {
+        "label": "研究員",
+        "x": 90,
+        "y": 350,
+        "w": 124,
+        "h": 50,
+        "shape": "person",
+        "tone": "blue",
+        "size": 16
+      },
+      {
+        "item": 0,
+        "x": 268,
+        "y": 350,
+        "w": 124,
+        "h": 50,
+        "tone": "green"
+      },
+      {
+        "item": 2,
+        "x": 399,
+        "y": 340,
+        "w": 110,
+        "h": 70,
+        "shape": "diamond",
+        "tone": "amber",
+        "solid": true,
+        "size": 15
+      },
+      {
+        "label": "投信",
+        "x": 520,
+        "y": 360,
+        "w": 110,
+        "h": 54,
+        "shape": "person",
+        "tone": "red",
+        "size": 16
+      }
+    ],
+    "edges": [
+      {
+        "from": 0,
+        "to": 3
+      },
+      {
+        "from": 1,
+        "to": 3
+      },
+      {
+        "from": 2,
+        "to": 3
+      },
+      {
+        "from": 3,
+        "to": 4,
+        "label": "SFTP"
+      },
+      {
+        "from": 4,
+        "to": 5,
+        "label": "回答"
+      },
+      {
+        "from": 6,
+        "to": 7,
+        "label": "選"
+      },
+      {
+        "from": 7,
+        "to": 4,
+        "label": "問",
+        "bend": 0.12
+      }
+    ],
+    "notes": [
+      {
+        "x": 530,
+        "y": 264,
+        "text": "Kinance",
+        "tone": "blue",
+        "size": 12
+      },
+      {
+        "x": 410,
+        "y": 70,
+        "text": "一步步處理",
+        "tone": "purple",
+        "size": 12
+      }
+    ]
+  },
+  "ai-governance-review": {
+    "h": 440,
+    "zones": [
+      {
+        "x": 200,
+        "y": 14,
+        "w": 170,
+        "h": 270,
+        "label": "系統先做",
+        "tone": "purple"
+      },
+      {
+        "x": 14,
+        "y": 362,
+        "w": 572,
+        "h": 64,
+        "tone": "slate"
+      }
+    ],
+    "nodes": [
+      {
+        "label": "子公司",
+        "x": 92,
+        "y": 60,
+        "w": 150,
+        "h": 50,
+        "shape": "person",
+        "tone": "slate",
+        "size": 16
+      },
+      {
+        "label": "SharePoint",
+        "x": 90,
+        "y": 200,
+        "w": 130,
+        "h": 64,
+        "shape": "db",
+        "tone": "blue",
+        "size": 16
+      },
+      {
+        "item": 0,
+        "x": 285,
+        "y": 78,
+        "w": 140,
+        "h": 50,
+        "tone": "purple"
+      },
+      {
+        "item": 1,
+        "x": 285,
+        "y": 158,
+        "w": 140,
+        "h": 50,
+        "tone": "purple"
+      },
+      {
+        "item": 2,
+        "x": 285,
+        "y": 238,
+        "w": 140,
+        "h": 50,
+        "tone": "purple"
+      },
+      {
+        "label": "審查報告",
+        "x": 480,
+        "y": 175,
+        "w": 130,
+        "h": 60,
+        "shape": "doc",
+        "tone": "amber",
+        "size": 16
+      },
+      {
+        "label": "審查者",
+        "x": 480,
+        "y": 300,
+        "w": 130,
+        "h": 50,
+        "shape": "person",
+        "tone": "green",
+        "size": 16
+      },
+      {
+        "label": "Azure DevOps",
+        "x": 180,
+        "y": 394,
+        "w": 140,
+        "h": 38,
+        "shape": "pill",
+        "tone": "cyan",
+        "size": 14
+      },
+      {
+        "label": "Container Apps",
+        "x": 440,
+        "y": 394,
+        "w": 150,
+        "h": 38,
+        "shape": "pill",
+        "tone": "cyan",
+        "size": 14
+      }
+    ],
+    "edges": [
+      {
+        "from": 0,
+        "to": 1,
+        "label": "上傳報告"
+      },
+      {
+        "from": 1,
+        "to": 2
+      },
+      {
+        "from": 1,
+        "to": 3
+      },
+      {
+        "from": 1,
+        "to": 4
+      },
+      {
+        "from": 2,
+        "to": 5
+      },
+      {
+        "from": 3,
+        "to": 5
+      },
+      {
+        "from": 4,
+        "to": 5
+      },
+      {
+        "from": 5,
+        "to": 6,
+        "label": "附改善建議"
+      },
+      {
+        "from": 6,
+        "to": 1,
+        "label": "結果回同一處",
+        "style": "dashed",
+        "bend": -0.4
+      },
+      {
+        "from": 7,
+        "to": 8,
+        "label": "每次修改"
+      }
+    ],
+    "notes": [
+      {
+        "x": 26,
+        "y": 380,
+        "text": "CI/CD",
+        "tone": "cyan",
+        "size": 13,
+        "anchor": "start"
+      },
+      {
+        "x": 480,
+        "y": 122,
+        "text": "判定剩餘風險",
+        "tone": "amber",
+        "size": 12
+      },
+      {
+        "x": 480,
+        "y": 62,
+        "text": "以前：人一份份讀",
+        "tone": "red",
+        "size": 12
+      },
+      {
+        "x": 480,
+        "y": 80,
+        "text": "標準不一",
+        "tone": "red",
+        "size": 12
+      }
+    ]
+  },
+  "rag-support-bot": {
+    "h": 440,
+    "zones": [
+      {
+        "x": 12,
+        "y": 12,
+        "w": 576,
+        "h": 150,
+        "tone": "purple",
+        "label": "後台：建知識庫（文件改了只重做索引）"
+      },
+      {
+        "x": 12,
+        "y": 278,
+        "w": 576,
+        "h": 150,
+        "tone": "blue",
+        "label": "前台：會員用口語提問"
+      }
+    ],
+    "nodes": [
+      {
+        "x": 82,
+        "y": 95,
+        "shape": "person",
+        "tone": "slate",
+        "label": "管理者",
+        "w": 120,
+        "h": 54
+      },
+      {
+        "item": 0,
+        "x": 250,
+        "y": 95,
+        "shape": "doc",
+        "tone": "slate",
+        "w": 120,
+        "h": 54
+      },
+      {
+        "item": 1,
+        "x": 470,
+        "y": 95,
+        "shape": "hex",
+        "tone": "amber",
+        "solid": true,
+        "w": 170,
+        "h": 56
+      },
+      {
+        "item": 2,
+        "x": 300,
+        "y": 220,
+        "shape": "db",
+        "tone": "cyan",
+        "solid": true,
+        "w": 170,
+        "h": 70
+      },
+      {
+        "x": 82,
+        "y": 355,
+        "shape": "person",
+        "tone": "slate",
+        "label": "會員",
+        "w": 120,
+        "h": 54
+      },
+      {
+        "item": 3,
+        "x": 300,
+        "y": 355,
+        "tone": "blue",
+        "w": 130,
+        "h": 54
+      },
+      {
+        "item": 4,
+        "x": 500,
+        "y": 355,
+        "shape": "pill",
+        "tone": "green",
+        "solid": true,
+        "w": 140,
+        "h": 54
+      }
+    ],
+    "edges": [
+      {
+        "from": 0,
+        "to": 1
+      },
+      {
+        "from": 1,
+        "to": 2
+      },
+      {
+        "from": 2,
+        "to": 3,
+        "bend": -0.12,
+        "label": "embedding"
+      },
+      {
+        "from": 4,
+        "to": 5,
+        "label": "提問"
+      },
+      {
+        "from": 3,
+        "to": 5,
+        "style": "two-way",
+        "label": "相近段落"
+      },
+      {
+        "from": 5,
+        "to": 6,
+        "label": "LLM"
+      }
+    ],
+    "notes": [
+      {
+        "x": 455,
+        "y": 50,
+        "tone": "amber",
+        "text": "500 token 切段 60% → 語意切分 85%",
+        "size": 12,
+        "max": 250
+      },
+      {
+        "x": 110,
+        "y": 220,
+        "tone": "cyan",
+        "text": "自架 Qdrant：Docker 架在公司內，資料不外流",
+        "size": 12,
+        "max": 170
+      },
+      {
+        "x": 490,
+        "y": 220,
+        "tone": "slate",
+        "text": "知識庫與模型分開：不必重新訓練",
+        "size": 12,
+        "max": 170
+      },
+      {
+        "x": 500,
+        "y": 405,
+        "tone": "green",
+        "text": "約 2–3 秒回覆",
+        "size": 12
+      }
+    ]
+  },
+  "multi-agent-advisory": {
+    "h": 440,
+    "zones": [
+      {
+        "x": 12,
+        "y": 12,
+        "w": 160,
+        "h": 416,
+        "tone": "slate",
+        "label": "以前"
+      },
+      {
+        "x": 184,
+        "y": 12,
+        "w": 404,
+        "h": 416,
+        "tone": "blue",
+        "label": "我們做的：LangGraph"
+      }
+    ],
+    "nodes": [
+      {
+        "item": 0,
+        "x": 92,
+        "y": 180,
+        "shape": "circle",
+        "tone": "slate",
+        "w": 130,
+        "h": 100
+      },
+      {
+        "item": 1,
+        "x": 290,
+        "y": 72,
+        "shape": "pill",
+        "tone": "amber",
+        "solid": true,
+        "w": 170,
+        "h": 44
+      },
+      {
+        "x": 500,
+        "y": 72,
+        "shape": "db",
+        "tone": "cyan",
+        "label": "TEJ 數據",
+        "w": 130,
+        "h": 48
+      },
+      {
+        "x": 252,
+        "y": 165,
+        "tone": "blue",
+        "label": "技術分析",
+        "w": 118,
+        "h": 48
+      },
+      {
+        "x": 386,
+        "y": 165,
+        "tone": "blue",
+        "label": "新聞情緒",
+        "w": 118,
+        "h": 48
+      },
+      {
+        "x": 520,
+        "y": 165,
+        "tone": "blue",
+        "label": "基本面",
+        "w": 118,
+        "h": 48
+      },
+      {
+        "x": 386,
+        "y": 258,
+        "shape": "hex",
+        "tone": "purple",
+        "solid": true,
+        "label": "多空辯論",
+        "w": 220,
+        "h": 62
+      },
+      {
+        "x": 270,
+        "y": 355,
+        "shape": "person",
+        "tone": "purple",
+        "label": "交易員",
+        "w": 150,
+        "h": 50
+      },
+      {
+        "x": 495,
+        "y": 355,
+        "tone": "green",
+        "solid": true,
+        "label": "Zipline 回測",
+        "w": 150,
+        "h": 50
+      }
+    ],
+    "edges": [
+      {
+        "from": 2,
+        "to": 4
+      },
+      {
+        "from": 2,
+        "to": 5,
+        "label": "MCP"
+      },
+      {
+        "from": 2,
+        "to": 3,
+        "bend": 0.08
+      },
+      {
+        "from": 3,
+        "to": 6
+      },
+      {
+        "from": 4,
+        "to": 6
+      },
+      {
+        "from": 5,
+        "to": 6
+      },
+      {
+        "from": 6,
+        "to": 7
+      },
+      {
+        "from": 7,
+        "to": 8,
+        "label": "買/賣"
+      }
+    ],
+    "notes": [
+      {
+        "x": 92,
+        "y": 88,
+        "tone": "red",
+        "text": "?",
+        "size": 34
+      },
+      {
+        "x": 92,
+        "y": 270,
+        "tone": "slate",
+        "text": "顧不全技術面、新聞情緒、基本面",
+        "size": 12,
+        "max": 130
+      },
+      {
+        "x": 92,
+        "y": 335,
+        "tone": "red",
+        "text": "看不到推理，無法檢驗",
+        "size": 12,
+        "max": 130
+      },
+      {
+        "x": 495,
+        "y": 402,
+        "tone": "green",
+        "text": "台股歷史資料，模擬三年",
+        "size": 12,
+        "max": 180
+      }
+    ]
+  },
+  "asr-transcription": {
+    "h": 420,
+    "zones": [
+      {
+        "x": 12,
+        "y": 12,
+        "w": 576,
+        "h": 96,
+        "tone": "red",
+        "label": "以前"
+      },
+      {
+        "x": 12,
+        "y": 122,
+        "w": 576,
+        "h": 286,
+        "tone": "blue",
+        "label": "現在：整條流程自動跑"
+      }
+    ],
+    "nodes": [
+      {
+        "x": 120,
+        "y": 66,
+        "shape": "person",
+        "tone": "red",
+        "label": "研究員",
+        "w": 150,
+        "h": 48
+      },
+      {
+        "item": 0,
+        "x": 95,
+        "y": 195,
+        "shape": "doc",
+        "tone": "slate",
+        "w": 140,
+        "h": 54
+      },
+      {
+        "x": 95,
+        "y": 262,
+        "shape": "doc",
+        "tone": "slate",
+        "label": "第 2 場",
+        "w": 140,
+        "h": 44
+      },
+      {
+        "x": 95,
+        "y": 324,
+        "shape": "doc",
+        "tone": "slate",
+        "label": "第 N 場 …",
+        "w": 140,
+        "h": 44
+      },
+      {
+        "item": 2,
+        "x": 290,
+        "y": 172,
+        "shape": "pill",
+        "tone": "amber",
+        "solid": true,
+        "w": 170,
+        "h": 44
+      },
+      {
+        "item": 1,
+        "x": 290,
+        "y": 265,
+        "shape": "hex",
+        "tone": "cyan",
+        "solid": true,
+        "w": 150,
+        "h": 62
+      },
+      {
+        "x": 480,
+        "y": 175,
+        "shape": "doc",
+        "tone": "cyan",
+        "label": "逐字稿",
+        "w": 150,
+        "h": 44
+      },
+      {
+        "item": 3,
+        "x": 480,
+        "y": 265,
+        "tone": "green",
+        "w": 150,
+        "h": 54
+      },
+      {
+        "item": 4,
+        "x": 480,
+        "y": 355,
+        "tone": "green",
+        "solid": true,
+        "w": 170,
+        "h": 54
+      }
+    ],
+    "edges": [
+      {
+        "from": 1,
+        "to": 5
+      },
+      {
+        "from": 2,
+        "to": 5
+      },
+      {
+        "from": 3,
+        "to": 5
+      },
+      {
+        "from": 4,
+        "to": 5,
+        "style": "dashed"
+      },
+      {
+        "from": 5,
+        "to": 6
+      },
+      {
+        "from": 6,
+        "to": 7,
+        "label": "抓重點"
+      },
+      {
+        "from": 7,
+        "to": 8,
+        "label": "並排"
+      }
+    ],
+    "notes": [
+      {
+        "x": 390,
+        "y": 66,
+        "tone": "red",
+        "text": "一場一場邊聽邊打字，再整理重點",
+        "size": 13,
+        "max": 330
+      },
+      {
+        "x": 270,
+        "y": 380,
+        "tone": "slate",
+        "text": "下一步：量自動化前後各花多久",
+        "size": 12,
+        "max": 220
+      }
+    ]
+  },
+  "financial-statement-vlm": {
+    "h": 430,
+    "zones": [
+      {
+        "x": 12,
+        "y": 124,
+        "w": 282,
+        "h": 294,
+        "tone": "red",
+        "label": "只看字"
+      },
+      {
+        "x": 306,
+        "y": 124,
+        "w": 282,
+        "h": 294,
+        "tone": "green",
+        "label": "看懂版面"
+      }
+    ],
+    "nodes": [
+      {
+        "x": 300,
+        "y": 50,
+        "shape": "doc",
+        "tone": "slate",
+        "solid": true,
+        "label": "掃描財報頁（圖片）",
+        "w": 240,
+        "h": 56
+      },
+      {
+        "item": 0,
+        "x": 153,
+        "y": 190,
+        "tone": "red",
+        "w": 150,
+        "h": 50
+      },
+      {
+        "x": 153,
+        "y": 285,
+        "shape": "doc",
+        "tone": "slate",
+        "label": "一串文字",
+        "w": 170,
+        "h": 50
+      },
+      {
+        "item": 1,
+        "x": 447,
+        "y": 190,
+        "tone": "green",
+        "solid": true,
+        "w": 190,
+        "h": 50
+      },
+      {
+        "x": 447,
+        "y": 285,
+        "tone": "green",
+        "label": "科目 × 期間 → 數字",
+        "w": 230,
+        "h": 50,
+        "size": 16
+      },
+      {
+        "x": 447,
+        "y": 372,
+        "shape": "pill",
+        "tone": "blue",
+        "solid": true,
+        "label": "接進財報流程・已上線",
+        "w": 230,
+        "h": 46
+      }
+    ],
+    "edges": [
+      {
+        "from": 0,
+        "to": 1,
+        "bend": 0.1
+      },
+      {
+        "from": 0,
+        "to": 3,
+        "bend": -0.1,
+        "label": "送雲端 Gemini"
+      },
+      {
+        "from": 1,
+        "to": 2,
+        "label": "逐字辨識"
+      },
+      {
+        "from": 3,
+        "to": 4,
+        "label": "版面、表格、文字一起讀"
+      },
+      {
+        "from": 4,
+        "to": 5
+      }
+    ],
+    "notes": [
+      {
+        "x": 153,
+        "y": 360,
+        "tone": "red",
+        "text": "表格結構不見了：數字對不到科目和期間",
+        "size": 12,
+        "max": 240
+      }
+    ]
+  },
+  "moda-t-ambassador": {
+    "h": 440,
+    "zones": [
+      {
+        "x": 12,
+        "y": 128,
+        "w": 220,
+        "h": 196,
+        "tone": "amber",
+        "label": "地方"
+      },
+      {
+        "x": 368,
+        "y": 128,
+        "w": 220,
+        "h": 196,
+        "tone": "blue",
+        "label": "人才"
+      }
+    ],
+    "nodes": [
+      {
+        "x": 300,
+        "y": 52,
+        "tone": "purple",
+        "solid": true,
+        "label": "數位發展部",
+        "w": 240,
+        "h": 50
+      },
+      {
+        "x": 122,
+        "y": 185,
+        "shape": "person",
+        "tone": "amber",
+        "label": "偏鄉組織・中小企業",
+        "w": 196,
+        "h": 50,
+        "size": 15
+      },
+      {
+        "item": 0,
+        "x": 122,
+        "y": 270,
+        "tone": "amber",
+        "solid": true,
+        "w": 170,
+        "h": 54
+      },
+      {
+        "x": 478,
+        "y": 185,
+        "shape": "person",
+        "tone": "blue",
+        "label": "T 大使（第六屆）",
+        "w": 196,
+        "h": 50,
+        "size": 15
+      },
+      {
+        "item": 1,
+        "x": 478,
+        "y": 270,
+        "tone": "blue",
+        "solid": true,
+        "w": 170,
+        "h": 54
+      },
+      {
+        "x": 300,
+        "y": 392,
+        "shape": "pill",
+        "tone": "green",
+        "solid": true,
+        "label": "導入生成式 AI・智慧物聯",
+        "w": 280,
+        "h": 50
+      }
+    ],
+    "edges": [
+      {
+        "from": 0,
+        "to": 1,
+        "bend": 0.08
+      },
+      {
+        "from": 0,
+        "to": 3,
+        "bend": -0.08
+      },
+      {
+        "from": 2,
+        "to": 4,
+        "bend": -0.2,
+        "label": "實際問題"
+      },
+      {
+        "from": 4,
+        "to": 2,
+        "bend": -0.2,
+        "label": "一起研擬解方"
+      },
+      {
+        "from": 2,
+        "to": 5,
+        "bend": 0.1
+      },
+      {
+        "from": 4,
+        "to": 5,
+        "bend": -0.1
+      }
+    ],
+    "notes": [
+      {
+        "x": 95,
+        "y": 52,
+        "tone": "purple",
+        "text": "目標：數位平權＋補人才缺口",
+        "size": 12,
+        "max": 150
+      }
+    ]
+  },
+  "tmba-cta-taiex": {
+    "h": 440,
+    "zones": [],
+    "nodes": [
+      {
+        "item": 0,
+        "x": 95,
+        "y": 62,
+        "tone": "slate",
+        "w": 150,
+        "h": 50
+      },
+      {
+        "item": 1,
+        "x": 295,
+        "y": 62,
+        "shape": "hex",
+        "tone": "blue",
+        "solid": true,
+        "w": 180,
+        "h": 54
+      },
+      {
+        "x": 495,
+        "y": 62,
+        "shape": "diamond",
+        "tone": "amber",
+        "label": "跑兩次一樣？",
+        "w": 170,
+        "h": 84,
+        "size": 14
+      },
+      {
+        "item": 2,
+        "x": 330,
+        "y": 220,
+        "shape": "circle",
+        "tone": "purple",
+        "solid": true,
+        "w": 150,
+        "h": 90
+      },
+      {
+        "x": 510,
+        "y": 170,
+        "shape": "pill",
+        "tone": "purple",
+        "label": "報酬率",
+        "w": 120,
+        "h": 36,
+        "size": 14
+      },
+      {
+        "x": 525,
+        "y": 222,
+        "shape": "pill",
+        "tone": "purple",
+        "label": "夏普值",
+        "w": 120,
+        "h": 36,
+        "size": 14
+      },
+      {
+        "x": 510,
+        "y": 274,
+        "shape": "pill",
+        "tone": "purple",
+        "label": "最大回撤",
+        "w": 120,
+        "h": 36,
+        "size": 14
+      },
+      {
+        "item": 3,
+        "x": 110,
+        "y": 220,
+        "tone": "cyan",
+        "w": 150,
+        "h": 54
+      },
+      {
+        "x": 110,
+        "y": 384,
+        "tone": "slate",
+        "label": "2",
+        "w": 100,
+        "h": 56
+      },
+      {
+        "x": 220,
+        "y": 371,
+        "tone": "slate",
+        "label": "1",
+        "w": 100,
+        "h": 82
+      },
+      {
+        "item": 4,
+        "x": 330,
+        "y": 392,
+        "tone": "green",
+        "solid": true,
+        "w": 100,
+        "h": 40,
+        "size": 16
+      }
+    ],
+    "edges": [
+      {
+        "from": 0,
+        "to": 1
+      },
+      {
+        "from": 1,
+        "to": 2
+      },
+      {
+        "from": 2,
+        "to": 3,
+        "bend": -0.1,
+        "label": "是"
+      },
+      {
+        "from": 3,
+        "to": 4,
+        "style": "dashed"
+      },
+      {
+        "from": 3,
+        "to": 5,
+        "style": "dashed"
+      },
+      {
+        "from": 3,
+        "to": 6,
+        "style": "dashed"
+      },
+      {
+        "from": 3,
+        "to": 7,
+        "label": "調參"
+      },
+      {
+        "from": 7,
+        "to": 1,
+        "bend": 0.12,
+        "label": "再跑一次"
+      },
+      {
+        "from": 3,
+        "to": 10
+      }
+    ],
+    "notes": [
+      {
+        "x": 392,
+        "y": 392,
+        "tone": "green",
+        "anchor": "start",
+        "text": "第 3 名",
+        "size": 15
+      },
+      {
+        "x": 392,
+        "y": 420,
+        "tone": "slate",
+        "anchor": "start",
+        "text": "TMBA 第 26 屆程式交易部成果發表",
+        "size": 12,
+        "max": 200
+      },
+      {
+        "x": 505,
+        "y": 322,
+        "tone": "purple",
+        "text": "只看報酬，看不出風險",
+        "size": 12,
+        "max": 150
+      }
+    ]
+  },
+  "tmba-event-earnings-call": {
+    "h": 420,
+    "zones": [],
+    "nodes": [
+      {
+        "item": 1,
+        "x": 300,
+        "y": 82,
+        "shape": "cloud",
+        "tone": "purple",
+        "w": 220,
+        "h": 90
+      },
+      {
+        "x": 75,
+        "y": 215,
+        "shape": "pill",
+        "tone": "slate",
+        "label": "事件前",
+        "w": 110,
+        "h": 40,
+        "size": 15
+      },
+      {
+        "item": 0,
+        "x": 300,
+        "y": 215,
+        "shape": "diamond",
+        "tone": "amber",
+        "solid": true,
+        "w": 190,
+        "h": 90,
+        "size": 18
+      },
+      {
+        "x": 525,
+        "y": 215,
+        "shape": "pill",
+        "tone": "slate",
+        "label": "事件後",
+        "w": 110,
+        "h": 40,
+        "size": 15
+      },
+      {
+        "item": 2,
+        "x": 480,
+        "y": 350,
+        "tone": "blue",
+        "solid": true,
+        "w": 160,
+        "h": 54
+      },
+      {
+        "item": 3,
+        "x": 140,
+        "y": 350,
+        "shape": "db",
+        "tone": "green",
+        "w": 170,
+        "h": 54
+      }
+    ],
+    "edges": [
+      {
+        "from": 1,
+        "to": 2
+      },
+      {
+        "from": 2,
+        "to": 3
+      },
+      {
+        "from": 2,
+        "to": 0,
+        "style": "dashed",
+        "label": "釋出營運與展望"
+      },
+      {
+        "from": 2,
+        "to": 4,
+        "bend": 0.1,
+        "label": "能交易嗎？"
+      },
+      {
+        "from": 4,
+        "to": 5,
+        "label": "歷史資料模擬"
+      }
+    ],
+    "notes": [
+      {
+        "x": 300,
+        "y": 276,
+        "tone": "amber",
+        "text": "t = 0",
+        "size": 13
+      },
+      {
+        "x": 100,
+        "y": 82,
+        "tone": "purple",
+        "text": "問題：這個事件能不能變成交易訊號？",
+        "size": 12,
+        "max": 170
+      },
+      {
+        "x": 140,
+        "y": 398,
+        "tone": "green",
+        "text": "評估報酬與風險",
+        "size": 12
+      },
+      {
+        "x": 500,
+        "y": 82,
+        "tone": "blue",
+        "text": "以台股為標的",
+        "size": 12,
+        "max": 150
+      }
+    ]
+  },
+  "thesis-rag-panel": {
+    "h": 440,
+    "zones": [
+      {
+        "x": 230,
+        "y": 12,
+        "w": 358,
+        "h": 416,
+        "tone": "slate",
+        "label": "within R²：能解釋多少股價報酬"
+      }
+    ],
+    "nodes": [
+      {
+        "x": 110,
+        "y": 62,
+        "shape": "db",
+        "tone": "slate",
+        "label": "592 家 × 64 季",
+        "w": 180,
+        "h": 60
+      },
+      {
+        "item": 0,
+        "x": 110,
+        "y": 200,
+        "tone": "slate",
+        "w": 170,
+        "h": 54
+      },
+      {
+        "item": 1,
+        "x": 110,
+        "y": 330,
+        "shape": "hex",
+        "tone": "purple",
+        "solid": true,
+        "w": 170,
+        "h": 54
+      },
+      {
+        "x": 330,
+        "y": 377,
+        "tone": "slate",
+        "solid": true,
+        "label": "5.14%",
+        "w": 110,
+        "h": 26,
+        "size": 15
+      },
+      {
+        "x": 490,
+        "y": 235,
+        "tone": "green",
+        "solid": true,
+        "label": "63.73%",
+        "w": 110,
+        "h": 310,
+        "size": 22
+      }
+    ],
+    "edges": [
+      {
+        "from": 0,
+        "to": 1
+      },
+      {
+        "from": 1,
+        "to": 2,
+        "label": "RAG-LLM 讀財報"
+      },
+      {
+        "from": 2,
+        "to": 4,
+        "bend": -0.1
+      }
+    ],
+    "notes": [
+      {
+        "x": 110,
+        "y": 108,
+        "tone": "slate",
+        "text": "共 37,888 筆，2009Q3–2025Q2",
+        "size": 12,
+        "max": 200
+      },
+      {
+        "x": 330,
+        "y": 408,
+        "tone": "slate",
+        "text": "基準模型",
+        "size": 13
+      },
+      {
+        "x": 490,
+        "y": 408,
+        "tone": "green",
+        "text": "+ 6 個 LLM 評分",
+        "size": 13
+      },
+      {
+        "x": 335,
+        "y": 180,
+        "tone": "purple",
+        "text": "6 構面全部 1% 顯著",
+        "size": 12,
+        "max": 150
+      },
+      {
+        "x": 335,
+        "y": 230,
+        "tone": "purple",
+        "text": "試行信度 ICC 0.759",
+        "size": 12,
+        "max": 150
+      },
+      {
+        "x": 110,
+        "y": 395,
+        "tone": "purple",
+        "text": "101 個財務變數 → 6 構面評分",
+        "size": 12,
+        "max": 200
+      }
+    ]
+  },
+  "fubon-esg-portfolio": {
+    "h": 440,
+    "zones": [
+      {
+        "x": 12,
+        "y": 12,
+        "w": 425,
+        "h": 416,
+        "tone": "blue"
+      },
+      {
+        "x": 28,
+        "y": 108,
+        "w": 393,
+        "h": 304,
+        "tone": "cyan"
+      },
+      {
+        "x": 44,
+        "y": 184,
+        "w": 361,
+        "h": 212,
+        "tone": "green",
+        "label": "我們小組"
+      }
+    ],
+    "nodes": [
+      {
+        "item": 0,
+        "x": 225,
+        "y": 42,
+        "shape": "pill",
+        "tone": "blue",
+        "solid": true,
+        "w": 200,
+        "h": 40
+      },
+      {
+        "item": 3,
+        "x": 225,
+        "y": 134,
+        "shape": "pill",
+        "tone": "cyan",
+        "solid": true,
+        "w": 200,
+        "h": 36,
+        "size": 16
+      },
+      {
+        "item": 1,
+        "x": 130,
+        "y": 248,
+        "tone": "slate",
+        "w": 140,
+        "h": 54
+      },
+      {
+        "item": 2,
+        "x": 320,
+        "y": 248,
+        "shape": "hex",
+        "tone": "amber",
+        "solid": true,
+        "w": 140,
+        "h": 54
+      },
+      {
+        "x": 190,
+        "y": 350,
+        "tone": "green",
+        "solid": true,
+        "label": "投資組合",
+        "w": 170,
+        "h": 48
+      },
+      {
+        "item": 4,
+        "x": 516,
+        "y": 340,
+        "shape": "person",
+        "tone": "purple",
+        "w": 140,
+        "h": 60,
+        "size": 16
+      }
+    ],
+    "edges": [
+      {
+        "from": 2,
+        "to": 3
+      },
+      {
+        "from": 3,
+        "to": 4,
+        "label": "放進配置"
+      },
+      {
+        "from": 4,
+        "to": 5,
+        "bend": -0.35,
+        "label": "報告＋簡報"
+      },
+      {
+        "from": 5,
+        "to": 4,
+        "style": "dashed",
+        "bend": -0.35,
+        "label": "回饋"
+      }
+    ],
+    "notes": [
+      {
+        "x": 225,
+        "y": 80,
+        "tone": "blue",
+        "text": "富邦投信 × 5 所大學・第 7 年・113 名學員",
+        "size": 12,
+        "max": 380
+      },
+      {
+        "x": 225,
+        "y": 166,
+        "tone": "cyan",
+        "text": "3 個月：隨堂作業、小組報告",
+        "size": 12,
+        "max": 300
+      },
+      {
+        "x": 516,
+        "y": 150,
+        "tone": "amber",
+        "text": "ESG 用在選股，有沒有效益？",
+        "size": 12,
+        "max": 130
+      },
+      {
+        "x": 516,
+        "y": 250,
+        "tone": "blue",
+        "text": "臺科大第一屆學員",
+        "size": 12,
+        "max": 130
+      }
+    ]
+  },
+  "thesis-esg-capital-structure": {
+    "h": 420,
+    "zones": [
+      {
+        "x": 404,
+        "y": 20,
+        "w": 184,
+        "h": 310,
+        "tone": "slate",
+        "label": "資金從哪來"
+      }
+    ],
+    "nodes": [
+      {
+        "x": 100,
+        "y": 70,
+        "shape": "person",
+        "tone": "slate",
+        "label": "投資人",
+        "w": 140,
+        "h": 50
+      },
+      {
+        "item": 0,
+        "x": 100,
+        "y": 200,
+        "shape": "pill",
+        "tone": "amber",
+        "solid": true,
+        "w": 170,
+        "h": 60
+      },
+      {
+        "item": 1,
+        "x": 282,
+        "y": 200,
+        "shape": "hex",
+        "tone": "purple",
+        "w": 160,
+        "h": 70,
+        "size": 16
+      },
+      {
+        "item": 2,
+        "x": 496,
+        "y": 72,
+        "tone": "blue",
+        "solid": true,
+        "w": 160,
+        "h": 44
+      },
+      {
+        "x": 496,
+        "y": 167,
+        "tone": "red",
+        "label": "負債",
+        "w": 160,
+        "h": 100
+      },
+      {
+        "x": 496,
+        "y": 268,
+        "tone": "green",
+        "label": "股東資金",
+        "w": 160,
+        "h": 86
+      },
+      {
+        "item": 3,
+        "x": 282,
+        "y": 372,
+        "shape": "pill",
+        "tone": "green",
+        "solid": true,
+        "w": 220,
+        "h": 46
+      }
+    ],
+    "edges": [
+      {
+        "from": 0,
+        "to": 1,
+        "label": "用來評估公司"
+      },
+      {
+        "from": 1,
+        "to": 2
+      },
+      {
+        "from": 2,
+        "to": 4,
+        "style": "dashed"
+      },
+      {
+        "from": 2,
+        "to": 5,
+        "style": "dashed"
+      },
+      {
+        "from": 2,
+        "to": 6,
+        "label": "以台灣公司檢驗"
+      }
+    ],
+    "notes": [
+      {
+        "x": 282,
+        "y": 140,
+        "tone": "purple",
+        "text": "?",
+        "size": 30
+      },
+      {
+        "x": 496,
+        "y": 355,
+        "tone": "purple",
+        "text": "比例會不會變？",
+        "size": 12,
+        "max": 170
+      }
+    ]
+  },
+  "tunghai-english-ta": {
+    "h": 400,
+    "zones": [
+      {
+        "x": 30,
+        "y": 114,
+        "w": 540,
+        "h": 172,
+        "tone": "slate",
+        "label": "全英語核心課"
+      }
+    ],
+    "nodes": [
+      {
+        "x": 300,
+        "y": 50,
+        "shape": "person",
+        "tone": "cyan",
+        "label": "學生",
+        "w": 160,
+        "h": 50
+      },
+      {
+        "item": 0,
+        "x": 130,
+        "y": 214,
+        "tone": "blue",
+        "solid": true,
+        "w": 140,
+        "h": 120
+      },
+      {
+        "item": 1,
+        "x": 300,
+        "y": 214,
+        "tone": "purple",
+        "solid": true,
+        "w": 140,
+        "h": 120
+      },
+      {
+        "item": 2,
+        "x": 470,
+        "y": 214,
+        "tone": "green",
+        "solid": true,
+        "w": 140,
+        "h": 120
+      },
+      {
+        "x": 300,
+        "y": 322,
+        "tone": "amber",
+        "solid": true,
+        "label": "我：三門課的助教",
+        "w": 520,
+        "h": 44
+      }
+    ],
+    "edges": [
+      {
+        "from": 1,
+        "to": 0
+      },
+      {
+        "from": 2,
+        "to": 0
+      },
+      {
+        "from": 3,
+        "to": 0
+      }
+    ],
+    "notes": [
+      {
+        "x": 470,
+        "y": 50,
+        "tone": "cyan",
+        "text": "用英文學統計、經濟、財管",
+        "size": 12,
+        "max": 150
+      },
+      {
+        "x": 300,
+        "y": 370,
+        "tone": "amber",
+        "text": "東海大學 GMBA",
+        "size": 13
+      }
+    ]
+  },
+  "finjourney": {
+    "h": 440,
+    "zones": [
+      {
+        "x": 12,
+        "y": 12,
+        "w": 150,
+        "h": 416,
+        "tone": "slate",
+        "label": "網路"
+      },
+      {
+        "x": 174,
+        "y": 12,
+        "w": 270,
+        "h": 416,
+        "tone": "blue",
+        "label": "我的 Mac（不到兩週上線）"
+      },
+      {
+        "x": 456,
+        "y": 12,
+        "w": 132,
+        "h": 416,
+        "tone": "purple",
+        "label": "OpenAI"
+      }
+    ],
+    "nodes": [
+      {
+        "x": 87,
+        "y": 80,
+        "shape": "person",
+        "tone": "slate",
+        "label": "使用者",
+        "w": 126,
+        "h": 50
+      },
+      {
+        "x": 87,
+        "y": 200,
+        "shape": "pill",
+        "tone": "slate",
+        "label": "Cloudflare",
+        "w": 126,
+        "h": 50,
+        "size": 13
+      },
+      {
+        "x": 87,
+        "y": 345,
+        "shape": "person",
+        "tone": "slate",
+        "label": "管理者",
+        "w": 126,
+        "h": 50
+      },
+      {
+        "item": 0,
+        "x": 309,
+        "y": 80,
+        "tone": "blue",
+        "solid": true,
+        "w": 200,
+        "h": 54
+      },
+      {
+        "item": 2,
+        "x": 309,
+        "y": 200,
+        "shape": "db",
+        "tone": "cyan",
+        "solid": true,
+        "w": 200,
+        "h": 60
+      },
+      {
+        "item": 3,
+        "x": 309,
+        "y": 345,
+        "shape": "hex",
+        "tone": "amber",
+        "w": 180,
+        "h": 60
+      },
+      {
+        "item": 1,
+        "x": 522,
+        "y": 200,
+        "shape": "hex",
+        "tone": "purple",
+        "solid": true,
+        "w": 120,
+        "h": 60
+      }
+    ],
+    "edges": [
+      {
+        "from": 0,
+        "to": 1
+      },
+      {
+        "from": 1,
+        "to": 3,
+        "bend": -0.1,
+        "label": "Tunnel"
+      },
+      {
+        "from": 3,
+        "to": 4,
+        "style": "two-way",
+        "label": "API 算好才顯示"
+      },
+      {
+        "from": 4,
+        "to": 6,
+        "style": "two-way",
+        "label": "JSON"
+      },
+      {
+        "from": 5,
+        "to": 6,
+        "style": "dashed",
+        "bend": 0.1,
+        "label": "先同意"
+      },
+      {
+        "from": 2,
+        "to": 5,
+        "label": "Access"
+      }
+    ],
+    "notes": [
+      {
+        "x": 522,
+        "y": 120,
+        "tone": "purple",
+        "text": "AI 只提方案",
+        "size": 12,
+        "max": 110
+      },
+      {
+        "x": 522,
+        "y": 262,
+        "tone": "purple",
+        "text": "數字由系統算",
+        "size": 12,
+        "max": 110
+      },
+      {
+        "x": 309,
+        "y": 252,
+        "tone": "cyan",
+        "text": "656 個測試・每人一個 SQLite",
+        "size": 12,
+        "max": 240
+      },
+      {
+        "x": 309,
+        "y": 405,
+        "tone": "amber",
+        "text": "邀請碼註冊・每日備份留 14 天",
+        "size": 12,
+        "max": 250
+      },
+      {
+        "x": 87,
+        "y": 270,
+        "tone": "slate",
+        "text": "開放到網路",
+        "size": 12,
+        "max": 130
+      }
+    ]
+  },
+  "vibe-edge": {
+    "h": 440,
+    "zones": [
+      {
+        "x": 12,
+        "y": 12,
+        "w": 170,
+        "h": 416,
+        "tone": "purple",
+        "label": "AI 代理人"
+      },
+      {
+        "x": 200,
+        "y": 12,
+        "w": 200,
+        "h": 416,
+        "tone": "amber"
+      },
+      {
+        "x": 418,
+        "y": 12,
+        "w": 170,
+        "h": 416,
+        "tone": "green",
+        "label": "紙上交易"
+      }
+    ],
+    "nodes": [
+      {
+        "item": 0,
+        "x": 97,
+        "y": 110,
+        "tone": "purple",
+        "solid": true,
+        "w": 150,
+        "h": 60
+      },
+      {
+        "x": 97,
+        "y": 208,
+        "shape": "pill",
+        "tone": "purple",
+        "label": "版本 1",
+        "w": 120,
+        "h": 34,
+        "size": 14
+      },
+      {
+        "x": 97,
+        "y": 254,
+        "shape": "pill",
+        "tone": "purple",
+        "label": "版本 2",
+        "w": 120,
+        "h": 34,
+        "size": 14
+      },
+      {
+        "x": 97,
+        "y": 300,
+        "shape": "pill",
+        "tone": "purple",
+        "label": "版本 3 …",
+        "w": 120,
+        "h": 34,
+        "size": 14
+      },
+      {
+        "item": 5,
+        "x": 300,
+        "y": 52,
+        "tone": "red",
+        "solid": true,
+        "w": 180,
+        "h": 44
+      },
+      {
+        "item": 2,
+        "x": 300,
+        "y": 145,
+        "shape": "hex",
+        "tone": "amber",
+        "w": 170,
+        "h": 56
+      },
+      {
+        "item": 3,
+        "x": 300,
+        "y": 240,
+        "shape": "hex",
+        "tone": "amber",
+        "w": 170,
+        "h": 56
+      },
+      {
+        "item": 4,
+        "x": 300,
+        "y": 335,
+        "shape": "hex",
+        "tone": "amber",
+        "w": 170,
+        "h": 56
+      },
+      {
+        "item": 1,
+        "x": 503,
+        "y": 240,
+        "tone": "green",
+        "solid": true,
+        "w": 150,
+        "h": 60
+      }
+    ],
+    "edges": [
+      {
+        "from": 0,
+        "to": 5
+      },
+      {
+        "from": 0,
+        "to": 1,
+        "style": "dashed"
+      },
+      {
+        "from": 5,
+        "to": 6
+      },
+      {
+        "from": 6,
+        "to": 7
+      },
+      {
+        "from": 7,
+        "to": 8,
+        "bend": -0.12,
+        "label": "通過"
+      }
+    ],
+    "notes": [
+      {
+        "x": 97,
+        "y": 370,
+        "tone": "purple",
+        "text": "每次嘗試都記帳",
+        "size": 12,
+        "max": 150
+      },
+      {
+        "x": 300,
+        "y": 398,
+        "tone": "amber",
+        "text": "寫死在平台，代理人改不到",
+        "size": 12,
+        "max": 180
+      },
+      {
+        "x": 503,
+        "y": 130,
+        "tone": "green",
+        "text": "五層：原始資料到交易清單",
+        "size": 12,
+        "max": 150
+      },
+      {
+        "x": 503,
+        "y": 320,
+        "tone": "green",
+        "text": "0.6.0 版，3,749 測試全過",
+        "size": 12,
+        "max": 150
+      },
+      {
+        "x": 503,
+        "y": 362,
+        "tone": "slate",
+        "text": "尚無研究案入庫",
+        "size": 12,
+        "max": 150
+      }
+    ]
+  },
+  "fincli": {
+    "h": 440,
+    "zones": [],
+    "nodes": [
+      {
+        "item": 2,
+        "x": 300,
+        "y": 36,
+        "shape": "pill",
+        "tone": "cyan",
+        "solid": true,
+        "w": 170,
+        "h": 40
+      },
+      {
+        "x": 70,
+        "y": 92,
+        "tone": "cyan",
+        "label": "證交所",
+        "w": 100,
+        "h": 36,
+        "size": 15
+      },
+      {
+        "x": 185,
+        "y": 92,
+        "tone": "cyan",
+        "label": "櫃買中心",
+        "w": 100,
+        "h": 36,
+        "size": 15
+      },
+      {
+        "x": 300,
+        "y": 92,
+        "tone": "cyan",
+        "label": "MOPS",
+        "w": 100,
+        "h": 36,
+        "size": 15
+      },
+      {
+        "x": 415,
+        "y": 92,
+        "tone": "cyan",
+        "label": "TEJ",
+        "w": 100,
+        "h": 36,
+        "size": 15
+      },
+      {
+        "x": 530,
+        "y": 92,
+        "tone": "cyan",
+        "label": "期交所",
+        "w": 100,
+        "h": 36,
+        "size": 15
+      },
+      {
+        "item": 3,
+        "x": 300,
+        "y": 185,
+        "shape": "hex",
+        "tone": "blue",
+        "solid": true,
+        "w": 400,
+        "h": 56
+      },
+      {
+        "item": 4,
+        "x": 90,
+        "y": 282,
+        "shape": "circle",
+        "tone": "purple",
+        "solid": true,
+        "w": 130,
+        "h": 80
+      },
+      {
+        "item": 0,
+        "x": 300,
+        "y": 272,
+        "tone": "amber",
+        "solid": true,
+        "w": 130,
+        "h": 44
+      },
+      {
+        "item": 1,
+        "x": 520,
+        "y": 272,
+        "shape": "doc",
+        "tone": "slate",
+        "w": 130,
+        "h": 50
+      },
+      {
+        "x": 300,
+        "y": 368,
+        "shape": "db",
+        "tone": "cyan",
+        "label": "PostgreSQL",
+        "w": 150,
+        "h": 70,
+        "size": 16
+      },
+      {
+        "item": 5,
+        "x": 525,
+        "y": 378,
+        "tone": "green",
+        "solid": true,
+        "w": 120,
+        "h": 44
+      }
+    ],
+    "edges": [
+      {
+        "from": 1,
+        "to": 6
+      },
+      {
+        "from": 2,
+        "to": 6
+      },
+      {
+        "from": 3,
+        "to": 6
+      },
+      {
+        "from": 4,
+        "to": 6
+      },
+      {
+        "from": 5,
+        "to": 6
+      },
+      {
+        "from": 7,
+        "to": 6,
+        "style": "dashed",
+        "bend": -0.1
+      },
+      {
+        "from": 6,
+        "to": 8
+      },
+      {
+        "from": 9,
+        "to": 8,
+        "label": "yfinance"
+      },
+      {
+        "from": 8,
+        "to": 10
+      },
+      {
+        "from": 10,
+        "to": 11,
+        "label": "只讀"
+      }
+    ],
+    "notes": [
+      {
+        "x": 440,
+        "y": 228,
+        "tone": "blue",
+        "text": "新舊 141/141 逐列一致",
+        "size": 12,
+        "max": 200
+      },
+      {
+        "x": 95,
+        "y": 350,
+        "tone": "purple",
+        "text": "每天收盤後自動跑",
+        "size": 12,
+        "max": 170
+      },
+      {
+        "x": 95,
+        "y": 380,
+        "tone": "purple",
+        "text": "T86 未公布：每 20 分鐘重抓",
+        "size": 12,
+        "max": 170
+      },
+      {
+        "x": 95,
+        "y": 414,
+        "tone": "purple",
+        "text": "失敗等 5 分鐘再試，最多 3 次",
+        "size": 12,
+        "max": 150
+      },
+      {
+        "x": 300,
+        "y": 418,
+        "tone": "cyan",
+        "text": "26 張表・每週備份",
+        "size": 12,
+        "max": 170
+      }
+    ]
+  },
+  "openstrategy": {
+    "h": 450,
+    "zones": [],
+    "nodes": [
+      {
+        "item": 0,
+        "x": 300,
+        "y": 36,
+        "tone": "slate",
+        "solid": true,
+        "w": 240,
+        "h": 44
+      },
+      {
+        "item": 1,
+        "x": 180,
+        "y": 98,
+        "shape": "pill",
+        "tone": "slate",
+        "w": 170,
+        "h": 38
+      },
+      {
+        "x": 70,
+        "y": 145,
+        "tone": "slate",
+        "solid": false,
+        "label": "有無錄影",
+        "w": 100,
+        "h": 36,
+        "size": 13
+      },
+      {
+        "x": 180,
+        "y": 145,
+        "tone": "slate",
+        "solid": false,
+        "label": "週轉率",
+        "w": 100,
+        "h": 36,
+        "size": 13
+      },
+      {
+        "x": 290,
+        "y": 145,
+        "tone": "amber",
+        "solid": true,
+        "label": "前期報酬",
+        "w": 100,
+        "h": 36,
+        "size": 13
+      },
+      {
+        "x": 70,
+        "y": 191,
+        "tone": "slate",
+        "solid": false,
+        "label": "十大股東",
+        "w": 100,
+        "h": 36,
+        "size": 13
+      },
+      {
+        "x": 180,
+        "y": 191,
+        "tone": "amber",
+        "solid": true,
+        "label": "距上次",
+        "w": 100,
+        "h": 36,
+        "size": 13
+      },
+      {
+        "x": 290,
+        "y": 191,
+        "tone": "slate",
+        "solid": false,
+        "label": "散戶",
+        "w": 100,
+        "h": 36,
+        "size": 13
+      },
+      {
+        "x": 70,
+        "y": 237,
+        "tone": "amber",
+        "solid": true,
+        "label": "市值",
+        "w": 100,
+        "h": 36,
+        "size": 13
+      },
+      {
+        "x": 180,
+        "y": 237,
+        "tone": "amber",
+        "solid": true,
+        "label": "淨值市價比",
+        "w": 100,
+        "h": 36,
+        "size": 13
+      },
+      {
+        "x": 290,
+        "y": 237,
+        "tone": "slate",
+        "solid": false,
+        "label": "產業",
+        "w": 100,
+        "h": 36,
+        "size": 13
+      },
+      {
+        "item": 2,
+        "x": 470,
+        "y": 98,
+        "tone": "amber",
+        "solid": true,
+        "w": 150,
+        "h": 46
+      },
+      {
+        "item": 3,
+        "x": 470,
+        "y": 290,
+        "shape": "hex",
+        "tone": "purple",
+        "solid": true,
+        "w": 170,
+        "h": 54
+      },
+      {
+        "item": 4,
+        "x": 470,
+        "y": 405,
+        "tone": "red",
+        "w": 170,
+        "h": 54
+      },
+      {
+        "x": 180,
+        "y": 321,
+        "tone": "green",
+        "label": "訓練期 1.21 / 0.39",
+        "w": 250,
+        "h": 36,
+        "size": 14
+      },
+      {
+        "x": 180,
+        "y": 363,
+        "tone": "green",
+        "label": "全期間 1.37 / 0.82",
+        "w": 250,
+        "h": 36,
+        "size": 14
+      },
+      {
+        "x": 180,
+        "y": 405,
+        "tone": "red",
+        "solid": true,
+        "label": "2025 年 0.94 / 0.99",
+        "w": 250,
+        "h": 36,
+        "size": 14
+      }
+    ],
+    "edges": [
+      {
+        "from": 0,
+        "to": 1
+      },
+      {
+        "from": 1,
+        "to": 11,
+        "label": "OLS 迴歸"
+      },
+      {
+        "from": 11,
+        "to": 12,
+        "label": "Z 分數加權"
+      },
+      {
+        "from": 12,
+        "to": 13,
+        "label": "總分 > 0 才進場"
+      },
+      {
+        "from": 13,
+        "to": 16
+      }
+    ],
+    "notes": [
+      {
+        "x": 510,
+        "y": 36,
+        "tone": "slate",
+        "text": "事件窗 [-3, 3]，[-2, 2] 結果相同",
+        "size": 12,
+        "max": 150
+      },
+      {
+        "x": 180,
+        "y": 290,
+        "tone": "green",
+        "text": "夏普值：策略 / 大盤",
+        "size": 12,
+        "max": 240
+      }
+    ]
+  }
+}
