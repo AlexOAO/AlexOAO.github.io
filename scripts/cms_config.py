@@ -318,6 +318,12 @@ __GLANCE__
                     fields:
                       - { name: stage, label: "階段", widget: string }
                       - { name: duty, label: "職責", widget: string }
+      - name: models
+        label: "專案頁的概念模型（models.json）"
+        file: /data/models.json
+        format: json
+        fields:
+__MODELS__
       - name: concepts
         label: "部落格文章的概念架構圖（posts/concepts.json）"
         file: /posts/concepts.json
@@ -398,8 +404,56 @@ def concept_fields():
     return '\n'.join(out)
 
 
+def model_fields():
+    data = json.loads((ROOT / 'data/models.json').read_text(encoding='utf-8'))
+    titles = project_titles()
+    pt = '''widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}'''
+    out = []
+    for k in list(data) + [s for s in titles if s not in data]:
+        out.append(f"""          - name: {q(k)}
+            label: {q(titles.get(k, k) + '（' + k + '）')}
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - {{ name: type, label: "模型類型", widget: select, options: [{{ label: "管線（依序）", value: pipeline }}, {{ label: "層次（金字塔）", value: layers }}, {{ label: "冰山（水面上／下）", value: iceberg }}, {{ label: "2×2 矩陣", value: matrix }}, {{ label: "循環", value: cycle }}, {{ label: "核心與分支", value: hub }}, {{ label: "公式（A × B = C）", value: equation }}, {{ label: "對照（A vs B）", value: compare }}, {{ label: "漏斗", value: funnel }}] }}
+              - {{ name: title, label: "模型名稱（14 字內）", widget: string }}
+              - {{ name: sub, label: "一句話說明這個模型", widget: string }}
+              - {{ name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }}
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - {{ name: x, label: "橫軸", widget: string }}
+                  - {{ name: y, label: "縱軸", widget: string }}
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                {pt}
+              - name: result
+                label: "結果（只有公式要填）"
+                {pt}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{{{fields.name}}}}"
+                fields:
+                  - {{ name: name, label: "名稱（圖上顯示，8 字內）", widget: string }}
+                  - {{ name: desc, label: "一句說明（按鈕上顯示）", widget: string }}
+                  - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                  - {{ name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{{ label: "水面上", value: above }}, {{ label: "水面下", value: below }}] }}
+                  - {{ name: pos, label: "矩陣：位置", widget: select, required: false, options: [{{ label: "左上", value: tl }}, {{ label: "右上", value: tr }}, {{ label: "左下", value: bl }}, {{ label: "右下", value: br }}] }}""")
+    return '\n'.join(out)
+
+
 def block():
-    body = FIXED.replace('__GLANCE__', glance_fields()).replace('__CONCEPTS__\n', concept_fields() + '\n').replace('- __LINK__', '- ' + LINK)
+    body = FIXED.replace('__GLANCE__', glance_fields()).replace('__CONCEPTS__\n', concept_fields() + '\n').replace('__MODELS__\n', model_fields() + '\n').replace('- __LINK__', '- ' + LINK)
     flows = '\n'.join(FLOW_STAGE.format(key=k, label=l) for k, l in STAGES)
     return BEGIN + '\n' + body.replace('__FLOWS__\n', flows + '\n') + END
 

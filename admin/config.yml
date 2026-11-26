@@ -1023,6 +1023,1331 @@ collections:
                     fields:
                       - { name: stage, label: "階段", widget: string }
                       - { name: duty, label: "職責", widget: string }
+      - name: models
+        label: "專案頁的概念模型（models.json）"
+        file: /data/models.json
+        format: json
+        fields:
+          - name: "guardrails-poc"
+            label: "凱基銀行｜AI 安全護欄：Guardrails PoC（guardrails-poc）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "agentic-platform-eval"
+            label: "凱基銀行｜AI 代理平台：Platform PoC（agentic-platform-eval）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "agent-cost-roi"
+            label: "凱基銀行｜業務服務 AI：四大 Agent（agent-cost-roi）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "agent-loan-assistant"
+            label: "凱基銀行｜貸款助理：Sales Agent（agent-loan-assistant）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "agent-credit-review"
+            label: "凱基銀行｜智能徵審：Credit Agent（agent-credit-review）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "agent-customer-service"
+            label: "凱基銀行｜客服助理：Service Agent（agent-customer-service）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "agent-wealth-assistant"
+            label: "凱基銀行｜智富管家：App Agent（agent-wealth-assistant）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "ai-ops-platform"
+            label: "凱基銀行｜AI 營運平台：預期與實際（ai-ops-platform）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "agent-governance"
+            label: "凱基銀行｜AI 治理：Agent 上線檢測機制（agent-governance）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "finllm"
+            label: "凱基銀行｜AI 模型管理：金管會 FinLLM（finllm）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "gemini-training"
+            label: "凱基銀行｜AI 員工賦能：Gemini 教育訓練（gemini-training）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "ai-ops-dashboard"
+            label: "凱基銀行｜AI 營運成效：Dashboard（ai-ops-dashboard）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "a2ui-research"
+            label: "凱基銀行｜AI 技術：A2UI（a2ui-research）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "webai-finance"
+            label: "凱基金控｜AI 投研助手：Webai Finance（webai-finance）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "ai-governance-review"
+            label: "凱基金控｜AI 治理：自動審查系統（ai-governance-review）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "rag-support-bot"
+            label: "TEJ｜AI 智能客服：RAG 小t寶（rag-support-bot）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "multi-agent-advisory"
+            label: "TEJ｜AI 智能投顧：Multi-Agent（multi-agent-advisory）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "asr-transcription"
+            label: "TEJ｜AI 語音辨識：法說會逐字稿（asr-transcription）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "financial-statement-vlm"
+            label: "TEJ｜AI 圖像辨識：VLM 讀懂財報（financial-statement-vlm）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "moda-t-ambassador"
+            label: "數位部｜T 大使：企業導入 AI（moda-t-ambassador）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "tmba-cta-taiex"
+            label: "TMBA｜CTA 策略（tmba-cta-taiex）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "tmba-event-earnings-call"
+            label: "TMBA｜事件交易：法說會（tmba-event-earnings-call）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "thesis-rag-panel"
+            label: "臺科大｜碩士論文（thesis-rag-panel）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "fubon-esg-portfolio"
+            label: "臺科大｜富邦投信 ESG 投組（fubon-esg-portfolio）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "thesis-esg-capital-structure"
+            label: "東海 GMBA｜GMBA 論文（thesis-esg-capital-structure）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "tunghai-english-ta"
+            label: "東海 GMBA｜全英課程助教（tunghai-english-ta）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "finjourney"
+            label: "獨立開發｜AI 理財產品：FinJourney（finjourney）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "vibe-edge"
+            label: "Quant Lab｜Vibe-Edge（vibe-edge）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "fincli"
+            label: "Quant Lab｜FinCLI（fincli）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
+          - name: "openstrategy"
+            label: "Quant Lab｜OpenStrategy（openstrategy）"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "模型類型", widget: select, options: [{ label: "管線（依序）", value: pipeline }, { label: "層次（金字塔）", value: layers }, { label: "冰山（水面上／下）", value: iceberg }, { label: "2×2 矩陣", value: matrix }, { label: "循環", value: cycle }, { label: "核心與分支", value: hub }, { label: "公式（A × B = C）", value: equation }, { label: "對照（A vs B）", value: compare }, { label: "漏斗", value: funnel }] }
+              - { name: title, label: "模型名稱（14 字內）", widget: string }
+              - { name: sub, label: "一句話說明這個模型", widget: string }
+              - { name: op, label: "公式的運算符號（只有公式要填）", widget: select, required: false, options: ["×", "+"] }
+              - name: axes
+                label: "矩陣的兩軸（只有 2×2 矩陣要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: x, label: "橫軸", widget: string }
+                  - { name: y, label: "縱軸", widget: string }
+              - name: center
+                label: "核心（只有核心與分支要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: result
+                label: "結果（只有公式要填）"
+                widget: object
+                    required: false
+                    fields:
+                      - {{ name: name, label: "名稱", widget: string }}
+                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
+                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+              - name: items
+                label: "概念（圖上的每一格，點了會跳出視窗）"
+                label_singular: "概念"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: name, label: "名稱（圖上顯示，8 字內）", widget: string }
+                  - { name: desc, label: "一句說明（按鈕上顯示）", widget: string }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
+                  - { name: level, label: "冰山：水面上或下", widget: select, required: false, options: [{ label: "水面上", value: above }, { label: "水面下", value: below }] }
+                  - { name: pos, label: "矩陣：位置", widget: select, required: false, options: [{ label: "左上", value: tl }, { label: "右上", value: tr }, { label: "左下", value: bl }, { label: "右下", value: br }] }
       - name: concepts
         label: "部落格文章的概念架構圖（posts/concepts.json）"
         file: /posts/concepts.json

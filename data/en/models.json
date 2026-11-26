@@ -1,0 +1,1253 @@
+{
+  "guardrails-poc": {
+    "type": "compare",
+    "title": "Add-on guardrail vs built-in",
+    "sub": "Both defences side by side on the same attack prompts, to decide whether an add-on guardrail is worth buying.",
+    "items": [
+      {
+        "name": "Add-on guardrail",
+        "desc": "XecGuard: blocks a lot, over-blocks too",
+        "points": [
+          "Blocked 98.3% of red-team attack prompts, but wrongly blocked 20 of 30 normal questions",
+          "Added about 0.8 s per check and scored only 62.5/100 on the 9-dimension assessment",
+          "Custom policies helped: on 1,500 prompts, missed attacks fell from 10.2% to 2.2%"
+        ]
+      },
+      {
+        "name": "Built-in defence",
+        "desc": "Already blocked every attack prompt",
+        "points": [
+          "The platform's own defence already blocked every prompt in the same attack set",
+          "Adding another layer would not block more, but would wrongly block more normal questions",
+          "Recommendation: use the built-in defence for now, with no extra integration or licence fee"
+        ]
+      }
+    ]
+  },
+  "agentic-platform-eval": {
+    "type": "funnel",
+    "title": "Pre-purchase issue funnel",
+    "sub": "Hands-on tests before purchase, narrowed down to the issues that would block a launch, so we don't pick the wrong platform.",
+    "items": [
+      {
+        "name": "26 tests",
+        "desc": "Hands-on tests on Agatha",
+        "points": [
+          "Ran 26 hands-on tests on Agatha and rated every issue by severity",
+          "For the other candidate, Dify, designed 34 tests and wrote the PoC report"
+        ]
+      },
+      {
+        "name": "12 issues",
+        "desc": "Found before purchase, not after launch",
+        "points": [
+          "The 26 tests surfaced 12 issues, all found before purchase",
+          "Three severity levels: launch blocker, security issue, general issue"
+        ]
+      },
+      {
+        "name": "4 blockers",
+        "desc": "Would keep an Agent from launching",
+        "points": [
+          "4 of the 12 issues would keep an Agent from going live",
+          "One more was a security vulnerability"
+        ]
+      },
+      {
+        "name": "Selection basis",
+        "desc": "One scorecard, side by side",
+        "points": [
+          "Both platforms scored on the group's scorecard: 9 categories, 42 items",
+          "The PoC report and scorecards became the group's basis for choosing the platform"
+        ]
+      }
+    ]
+  },
+  "agent-cost-roi": {
+    "type": "equation",
+    "title": "Unit cost formula",
+    "sub": "The four Agents spend money in different ways; one formula breaks them down so they fit in one table.",
+    "items": [
+      {
+        "name": "Volume",
+        "desc": "Provided by business units",
+        "points": [
+          "Both cost and benefit start from business volume, so the two can be compared",
+          "Once data is in, each Agent gets a three-year baseline for volume, cost and benefit"
+        ]
+      },
+      {
+        "name": "Usage per case",
+        "desc": "Resources each case consumes",
+        "points": [
+          "Usage figures come from IT",
+          "Some run in the cloud, some on-premises; some bill per call, others per case"
+        ]
+      },
+      {
+        "name": "Unit price",
+        "desc": "Turns usage into money",
+        "points": [
+          "Cost = volume × resources per case × unit price of the resource",
+          "Benefit works the same way: volume × benefit per case × unit value"
+        ]
+      }
+    ],
+    "op": "×",
+    "result": {
+      "name": "Unit cost & ROI",
+      "desc": "All four Agents side by side",
+      "points": [
+        "Business ratio: work handled by AI ÷ total volume, i.e. is the AI actually doing the work?",
+        "Realisation ratio: actual ÷ baseline, i.e. did the original estimate come true?",
+        "Planned: a realisation ratio below threshold triggers a review of resources or scope"
+      ]
+    }
+  },
+  "agent-loan-assistant": {
+    "type": "layers",
+    "title": "Pricing authority layers",
+    "sub": "What the AI may do alone, what goes to a person, and what it must never do, drawn as layers so sales can be trusted to AI.",
+    "items": [
+      {
+        "name": "AI acts alone",
+        "desc": "Chats, guides, negotiates within limits",
+        "points": [
+          "One assistant across three channels: desktop and mobile application site, plus a mock LINE account",
+          "Within its authority it concedes a small step at a time; auto-debit or payroll accounts earn rule-based cuts",
+          "If an application stalls at one step too long, it checks in to win back customers who drop off"
+        ]
+      },
+      {
+        "name": "Manager decides",
+        "desc": "Beyond authority: a pricing request",
+        "points": [
+          "Requests beyond its authority or below the rate floor create a manager pricing request",
+          "The manager's approval or counter-offer flows back into the chat and onto the application",
+          "Human-on-the-loop: it runs on its own within limits; people step in only for exceptions"
+        ]
+      },
+      {
+        "name": "Never allowed",
+        "desc": "No guaranteed approval",
+        "points": [
+          "Output guardrails block phrases like \"guaranteed approval\"",
+          "Every quote discloses the total APR; rates and monthly payments are computed by code, not the LLM"
+        ]
+      },
+      {
+        "name": "Base safeguards",
+        "desc": "De-identification and usage caps",
+        "points": [
+          "Text sent to the cloud model is stripped of anything that could identify the customer",
+          "Daily usage is capped; past the cap it falls back to rule-based replies"
+        ]
+      }
+    ]
+  },
+  "agent-credit-review": {
+    "type": "pipeline",
+    "title": "Credit review pipeline",
+    "sub": "From document to annual income, every step shows its reasoning; when unsure it hands off, and people keep the decision.",
+    "items": [
+      {
+        "name": "Intake",
+        "desc": "6 document types and case packs",
+        "points": [
+          "A generator produces 6 synthetic income documents with skew, noise and stamps",
+          "It can also import the application case pack sent over by the Loan Assistant"
+        ]
+      },
+      {
+        "name": "OCR",
+        "desc": "On-prem OCR, cloud swappable",
+        "points": [
+          "Local OCR stands in for on-premises by default; a cloud vision model can be swapped in",
+          "Unclear dates or amounts are cropped and read again",
+          "Evaluation set of 12 applicants: 96.6% field accuracy"
+        ]
+      },
+      {
+        "name": "Consistency",
+        "desc": "Cross-checks across documents",
+        "points": [
+          "Do payslips, withholding statements and bank deposits match?",
+          "Do occupation and income range fit, and is income continuous?"
+        ]
+      },
+      {
+        "name": "Annual income",
+        "desc": "Rules, formula and reasons shown",
+        "points": [
+          "Lists the rule used, the formula and the reason for each step",
+          "Annual income was correct for every case in both the evaluation and demo sets"
+        ]
+      },
+      {
+        "name": "Human review",
+        "desc": "Confidence below 0.75 goes to a person",
+        "points": [
+          "Reviewers can accept or edit, and every edit needs a reason",
+          "No approval suggestion or credit score on screen; the decision stays with people",
+          "4 paired fairness tests all gave identical results"
+        ]
+      }
+    ]
+  },
+  "agent-customer-service": {
+    "type": "hub",
+    "title": "Service Copilot model",
+    "sub": "The agent sits at the centre with AI working around them; AI never replies to customers, and people confirm every record.",
+    "center": {
+      "name": "Service agent",
+      "desc": "Faces the customer, confirms last",
+      "points": [
+        "The human agent faces the customer; AI helps from behind",
+        "The agent reads the draft reply to the customer; AI never replies directly",
+        "Anything written to the record must be confirmed by the agent"
+      ]
+    },
+    "items": [
+      {
+        "name": "Live transcript",
+        "desc": "On-prem Whisper speech-to-text",
+        "points": [
+          "Local Whisper by default, with speakers separated by stereo channel",
+          "Measured word error rate of local Whisper: about 14%"
+        ]
+      },
+      {
+        "name": "KB suggestions",
+        "desc": "Suggestions and draft replies",
+        "points": [
+          "Knowledge-base suggestions update with the conversation, next to masked customer info",
+          "A draft reply is ready, and the agent decides how to say it"
+        ]
+      },
+      {
+        "name": "Call summary",
+        "desc": "Saved only after a person confirms",
+        "points": [
+          "After the call AI drafts a summary; the agent edits and confirms it",
+          "Personal data is masked again before saving; no full card number appeared in tests"
+        ]
+      },
+      {
+        "name": "First-pass QA",
+        "desc": "Serious issues go to a supervisor",
+        "points": [
+          "Scores each item on the rubric and routes serious issues to a supervisor",
+          "The QA centre compares AI scores with human scores"
+        ]
+      },
+      {
+        "name": "All on-prem",
+        "desc": "Recordings never leave the bank",
+        "points": [
+          "Because it handles call recordings and personal data, everything runs on-premises",
+          "In on-prem-only mode, the service refuses to start if it finds a cloud endpoint"
+        ]
+      }
+    ]
+  },
+  "agent-wealth-assistant": {
+    "type": "pipeline",
+    "title": "Five gates per question",
+    "sub": "Every customer question passes five gates in order, with guardrails at both ends, and the model never sees balances.",
+    "items": [
+      {
+        "name": "Input guard",
+        "desc": "Blocks personal data and jailbreaks",
+        "points": [
+          "First blocks personal data, prompt injection and jailbreak attempts",
+          "The prototype has 31 input rules plus personal-data masking"
+        ]
+      },
+      {
+        "name": "Intent",
+        "desc": "On-prem small model reads intent",
+        "points": [
+          "A small on-premises model works out what the customer is asking",
+          "The model only receives the question with identity details removed"
+        ]
+      },
+      {
+        "name": "Routing",
+        "desc": "FAQ or query agent",
+        "points": [
+          "General questions are answered from the FAQ; feature questions get a link to that page",
+          "Account questions go to a query agent that decides which APIs to call",
+          "In the prototype it calls 36 account tools via MCP, covering 240 fields"
+        ]
+      },
+      {
+        "name": "Output guard",
+        "desc": "Fix, block or pass",
+        "points": [
+          "Checks investment wording and personal-data leaks; the prototype has 32 output rules",
+          "Never says \"guaranteed returns\"; gets the customer's risk level before recommending products"
+        ]
+      },
+      {
+        "name": "Memory",
+        "desc": "Short-term and masked only",
+        "points": [
+          "Keeps only short-term conversation context",
+          "Stores only the version with personal data masked"
+        ]
+      }
+    ]
+  },
+  "ai-ops-platform": {
+    "type": "iceberg",
+    "title": "The gap iceberg",
+    "sub": "Plan and actual were several times apart because of definitions, not maths; align what's below the surface first.",
+    "items": [
+      {
+        "name": "Plan vs actual",
+        "desc": "Business plan beside real numbers",
+        "level": "above",
+        "points": [
+          "Each Agent's business plan (expected) sits next to actual numbers, with attainment computed",
+          "Plans cover four periods: the 2026 pilot and 2027 to 2029"
+        ]
+      },
+      {
+        "name": "Several-fold gaps",
+        "desc": "What the first comparison showed",
+        "level": "above",
+        "points": [
+          "In the first comparison, three numbers were off by several times",
+          "After fixing definitions, only Agents truly behind are listed under \"needs review\""
+        ]
+      },
+      {
+        "name": "Benefit basis",
+        "desc": "All assisted vs AI-driven",
+        "level": "below",
+        "points": [
+          "Loan Assistant actuals counted every AI-assisted application; the plan counted only the 18% AI drove",
+          "Plans now state a benefit basis: the same outcome at the same unit value"
+        ]
+      },
+      {
+        "name": "Missing ASR cost",
+        "desc": "Per-call cost left a piece out",
+        "level": "below",
+        "points": [
+          "The Service Agent plan's per-call cost left out speech recognition",
+          "Actual cost, however, is billed by call seconds"
+        ]
+      },
+      {
+        "name": "Amounts only",
+        "desc": "Credit history had no usage",
+        "level": "below",
+        "points": [
+          "Credit Agent history recorded amounts but not usage",
+          "So converted cost came out near zero; costs are now split into variable and fixed"
+        ]
+      },
+      {
+        "name": "Shared contract",
+        "desc": "One yardstick for four Agents",
+        "level": "below",
+        "points": [
+          "Agents report usage only; the platform converts it to NT$ with one price list",
+          "Customer IDs are hashed with one shared key, linking journeys without being reversible",
+          "Real data only; with fewer than 5 cases it shows counts, not percentages"
+        ]
+      }
+    ]
+  },
+  "agent-governance": {
+    "type": "layers",
+    "title": "Three pre-launch layers",
+    "sub": "Regulator principles broken into three checkable layers, each asked the same three questions: a nine-cell table.",
+    "items": [
+      {
+        "name": "Six principles",
+        "desc": "The regulator's language",
+        "points": [
+          "Governance and accountability, fairness, privacy, robustness and security, transparency, sustainability",
+          "The principles are clear, but nobody could say how to check them"
+        ]
+      },
+      {
+        "name": "Documents",
+        "desc": "Was the process followed?",
+        "points": [
+          "Was the process followed, were documents kept, and who approved it?",
+          "The inventory showed existing bank controls only covered this layer"
+        ]
+      },
+      {
+        "name": "AI output",
+        "desc": "Accurate? Fair?",
+        "points": [
+          "Is the answer accurate and fair, does it leak data, can it cite its basis?",
+          "Four kinds of AI, four test methods, one pass bar: zero critical errors"
+        ]
+      },
+      {
+        "name": "AI behaviour",
+        "desc": "What it accessed, any overreach",
+        "points": [
+          "What data did it access, what did it change, did it exceed its permissions?",
+          "Both the output and behaviour layers were completely empty in the inventory",
+          "Each layer asks: assessed before launch? Recorded? Still managed after launch?"
+        ]
+      }
+    ]
+  },
+  "finllm": {
+    "type": "cycle",
+    "title": "Batch cleaning loop",
+    "sub": "Bad data teaches the model wrong, so every batch is cleaned and scored one item at a time before the next.",
+    "items": [
+      {
+        "name": "New batch",
+        "desc": "One batch a week",
+        "points": [
+          "The holding company releases a batch of data each week",
+          "9 more batches are waiting, with a goal of finishing all cleaning by January 2027"
+        ]
+      },
+      {
+        "name": "Clean items",
+        "desc": "Clean, proofread, correct",
+        "points": [
+          "Clean, proofread and correct the raw data one item at a time",
+          "Batch 2-1 is done"
+        ]
+      },
+      {
+        "name": "Score rulings",
+        "desc": "Did the model read the rules right?",
+        "points": [
+          "Check whether the model understands regulatory questions correctly",
+          "Batch 4 is done; batch 5 is being scored"
+        ]
+      },
+      {
+        "name": "Standard SOP",
+        "desc": "Captured as fixed steps",
+        "points": [
+          "Turn the approach into a fixed-step standard process that scales to more items",
+          "Once all cleaning and scoring is done, evaluate the model as a whole"
+        ]
+      }
+    ]
+  },
+  "gemini-training": {
+    "type": "hub",
+    "title": "Scenario-led Gemini course",
+    "sub": "The course centres on \"how can my job use this\", with all three topics practised on each unit's own scenarios.",
+    "center": {
+      "name": "Use it in my job",
+      "desc": "Not a tour of features",
+      "points": [
+        "Handing out the tool isn't enough; staff need to know which work suits AI",
+        "Success is measured by attendance and how many AI use cases trainees propose afterwards"
+      ]
+    },
+    "items": [
+      {
+        "name": "Safety",
+        "desc": "How to use AI safely",
+        "points": [
+          "People weren't sure how to use generative AI safely",
+          "One of three topics; the outline is final, agreed with the consultant"
+        ]
+      },
+      {
+        "name": "Tools",
+        "desc": "How Gemini is actually used",
+        "points": [
+          "One of three topics: tools",
+          "The bank is pushing staff to use generative AI"
+        ]
+      },
+      {
+        "name": "Prompts",
+        "desc": "Instructions for the AI",
+        "points": [
+          "One of three topics: prompts, the instructions you give AI",
+          "Practised in class on work scenarios submitted by business units"
+        ]
+      },
+      {
+        "name": "Unit scenarios",
+        "desc": "Each unit brings its own",
+        "points": [
+          "Collecting the work each business unit wants AI to handle",
+          "Used directly in class instead of generic examples; collection is in progress"
+        ]
+      }
+    ]
+  },
+  "ai-ops-dashboard": {
+    "type": "hub",
+    "title": "Five AI value lenses",
+    "sub": "Five lenses around one question: is this AI investment worth it? Shared by internal tools and customer-facing Agents.",
+    "center": {
+      "name": "Worth it?",
+      "desc": "What managers care about most",
+      "points": [
+        "Adoption and quality answer \"is it used?\"; benefit, cost and risk answer \"is it worth it?\"",
+        "One framework covers Copilot, Gemini, the Ella assistant and the four Agents"
+      ]
+    },
+    "items": [
+      {
+        "name": "Adoption",
+        "desc": "Is anyone using it?",
+        "points": [
+          "Licences, activation rate, active users, number of departments using it",
+          "Copilot pilot expansion: 25 departments applied, 771 seats in total"
+        ]
+      },
+      {
+        "name": "Quality",
+        "desc": "Is it used well?",
+        "points": [
+          "Answer accuracy and the share handed to a human",
+          "Plus user feedback"
+        ]
+      },
+      {
+        "name": "Benefit",
+        "desc": "What it saves or adds",
+        "points": [
+          "Hours saved, plus business numbers like volume handled and conversion",
+          "Customer side: loans track conversion, credit volume, wealth activity and AUM"
+        ]
+      },
+      {
+        "name": "Cost",
+        "desc": "How much it costs",
+        "points": [
+          "Licence fees, token usage, GPU usage",
+          "The four Agents reuse their shared cost model"
+        ]
+      },
+      {
+        "name": "Risk",
+        "desc": "Is it safe?",
+        "points": [
+          "Miss rate, false-block rate and incidents",
+          "Reuses the miss and false-block rates measured in the Guardrails PoC"
+        ]
+      }
+    ]
+  },
+  "a2ui-research": {
+    "type": "compare",
+    "title": "A2UI division of control",
+    "sub": "AI decides the layout, the bank decides which components exist; that split is what lets A2UI pass security review.",
+    "items": [
+      {
+        "name": "AI decides",
+        "desc": "Layout and what to fill in",
+        "points": [
+          "The Agent sends JSON describing which components to show and what data to fill",
+          "It sends data, not code, so it can't run arbitrary programs",
+          "Candidate scenarios: asset overview, product comparison, form filling"
+        ]
+      },
+      {
+        "name": "Bank decides",
+        "desc": "Which components are allowed",
+        "points": [
+          "The front end renders with pre-approved components, which limits what A2UI can draw",
+          "The Wealth Assistant can't trade, so A2UI only shows information and forms, no order buttons",
+          "Generated screens also go through Guardrails and the pre-launch check"
+        ]
+      }
+    ]
+  },
+  "webai-finance": {
+    "type": "iceberg",
+    "title": "Research assistant iceberg",
+    "sub": "Users see a simple Q&A; what decides success is the permissions, data and flow below the surface.",
+    "items": [
+      {
+        "name": "Pick and ask",
+        "desc": "Pick a market or stock, then ask",
+        "level": "above",
+        "points": [
+          "Pick a market or a stock, and AI answers from curated data",
+          "Users can keep asking follow-up questions"
+        ]
+      },
+      {
+        "name": "Familiar UI",
+        "desc": "No new tool to learn",
+        "level": "above",
+        "points": [
+          "The AI assistant lives inside the interface people already use",
+          "Webai Finance is live"
+        ]
+      },
+      {
+        "name": "Permissions",
+        "desc": "Open yet isolated",
+        "level": "below",
+        "points": [
+          "The hardest part: the tool is open to the whole group",
+          "Yet the asset-management arm's data must stay walled off from everyone else"
+        ]
+      },
+      {
+        "name": "Data feeds",
+        "desc": "Three data types via SFTP",
+        "level": "below",
+        "points": [
+          "Broker reports, macro data and news come in via SFTP",
+          "Researchers used to gather and organise all this themselves every morning"
+        ]
+      },
+      {
+        "name": "Agent flow",
+        "desc": "Works the question step by step",
+        "level": "below",
+        "points": [
+          "Designed the step-by-step flow the AI Agent follows for each question",
+          "The PoC first proved AI could really answer market and stock questions"
+        ]
+      }
+    ]
+  },
+  "ai-governance-review": {
+    "type": "equation",
+    "title": "Three checks per report",
+    "sub": "Every AI usage report must pass three checks; the system does the judging, recalculating and reconciling before a reviewer looks.",
+    "items": [
+      {
+        "name": "Reasonableness",
+        "desc": "Azure OpenAI reads the report",
+        "points": [
+          "Reads \"current controls\" and \"risk treatment plan\" and judges whether they make sense",
+          "Reports come in from SharePoint, and results go back to the same place"
+        ]
+      },
+      {
+        "name": "Risk level",
+        "desc": "Recalculated automatically",
+        "points": [
+          "The system recalculates the risk level automatically",
+          "Then determines residual risk, the risk that remains after treatment"
+        ]
+      },
+      {
+        "name": "Asset register",
+        "desc": "Reconciled automatically",
+        "points": [
+          "Checks automatically that the report matches the asset register",
+          "People used to read each one by hand, each with their own standard"
+        ]
+      }
+    ],
+    "op": "+",
+    "result": {
+      "name": "Review report",
+      "desc": "Recommendations by severity",
+      "points": [
+        "Produces a review report and improvement suggestions, ranked by severity",
+        "CI/CD deploys every change to Azure Container Apps automatically",
+        "Next: measure review time per report, before vs after"
+      ]
+    }
+  },
+  "rag-support-bot": {
+    "type": "pipeline",
+    "title": "RAG Q&A pipeline",
+    "sub": "Five steps from manual to answer; changing how documents are chunked lifted accuracy from 60% to 85%.",
+    "items": [
+      {
+        "name": "Manuals",
+        "desc": "Parsed with LangExtract",
+        "points": [
+          "Members often look up manuals and database usage, with answers scattered everywhere",
+          "RAG over fine-tuning: manuals change often, and RAG only needs re-embedding"
+        ]
+      },
+      {
+        "name": "Semantic chunks",
+        "desc": "Accuracy 60% → 85%",
+        "points": [
+          "Fixed 500-token chunks gave the LLM broken context: 60% accuracy",
+          "Splitting by paragraph with overlap and chapter metadata raised it to 85%"
+        ]
+      },
+      {
+        "name": "Vector DB",
+        "desc": "Self-hosted Qdrant",
+        "points": [
+          "Compared Pinecone, Weaviate and Chroma, then chose Qdrant",
+          "Runs in-house with Docker, so data never leaves the company"
+        ]
+      },
+      {
+        "name": "Retrieval",
+        "desc": "Finds the relevant passages",
+        "points": [
+          "Qdrant finds the passages closest to the question",
+          "Filtering by category suits classified queries in finance"
+        ]
+      },
+      {
+        "name": "Answer",
+        "desc": "About 2 to 3 seconds",
+        "points": [
+          "The LLM answers from the retrieved passages in about 2 to 3 seconds",
+          "FastAPI back end; admins maintain the knowledge base themselves"
+        ]
+      }
+    ]
+  },
+  "multi-agent-advisory": {
+    "type": "compare",
+    "title": "One LLM vs a team",
+    "sub": "Like a fund house with different analysts, AI agents split the work and debate, fixing a single LLM's blind spots and black box.",
+    "items": [
+      {
+        "name": "Single LLM",
+        "desc": "One model does everything",
+        "points": [
+          "Struggles to cover technicals, news sentiment and fundamentals at once",
+          "Its advice shows no reasoning, so it can't be checked"
+        ]
+      },
+      {
+        "name": "Five-agent team",
+        "desc": "Analyse, debate, then trade",
+        "points": [
+          "Technical, sentiment and fundamental analysts each do one job",
+          "A bull-bear debater weighs both sides; a trader turns the verdict into buy or sell signals",
+          "LangGraph defines the flow, MCP pulls TEJ data, Zipline backtests three years"
+        ]
+      }
+    ]
+  },
+  "asr-transcription": {
+    "type": "pipeline",
+    "title": "Earnings call to table",
+    "sub": "From recording to a comparable summary table, so researchers no longer type up every call by ear.",
+    "items": [
+      {
+        "name": "Call recordings",
+        "desc": "Many calls, slow manual typing",
+        "points": [
+          "Someone used to listen to each call, type it up, then pull out key points",
+          "There are many earnings calls, so this took a lot of time"
+        ]
+      },
+      {
+        "name": "Speech-to-text",
+        "desc": "Whisper transcribes",
+        "points": [
+          "Whisper turns call audio and video into text",
+          "The whole flow is automated, with no file-by-file handling"
+        ]
+      },
+      {
+        "name": "Transcript",
+        "desc": "Produced automatically",
+        "points": [
+          "Recordings become transcripts automatically",
+          "Time spent preparing call transcripts went down"
+        ]
+      },
+      {
+        "name": "Summary table",
+        "desc": "Fixed fields",
+        "points": [
+          "Key points from each transcript go into a table with fixed fields",
+          "Researchers wanted points they could compare and cite directly"
+        ]
+      },
+      {
+        "name": "Compare calls",
+        "desc": "Across companies and quarters",
+        "points": [
+          "Researchers can compare key points across companies and quarters",
+          "Next: measure preparation time per call, before vs after automation"
+        ]
+      }
+    ]
+  },
+  "financial-statement-vlm": {
+    "type": "compare",
+    "title": "OCR vs vision LLM",
+    "sub": "Financial statements live in tables; turning images into text isn't enough, every number must map to its line item and period.",
+    "items": [
+      {
+        "name": "Classic OCR",
+        "desc": "Turns images into text only",
+        "points": [
+          "Recognises characters one by one and turns the image into text",
+          "Can't read table structure, so numbers don't map to the right line item and period"
+        ]
+      },
+      {
+        "name": "Vision LLM",
+        "desc": "Cloud Gemini reads the layout",
+        "points": [
+          "Understands layout, tables and text together",
+          "Reads each number along with the field it belongs to",
+          "Wired into the financial data pipeline and in production"
+        ]
+      }
+    ]
+  },
+  "moda-t-ambassador": {
+    "type": "equation",
+    "title": "Locals ask, talent solves",
+    "sub": "Businesses bring real problems, T Ambassadors work out solutions with them, filling the AI talent gap.",
+    "items": [
+      {
+        "name": "Locals ask",
+        "desc": "Businesses bring real problems",
+        "points": [
+          "Businesses and organisations raise problems they actually face",
+          "Rural organisations and SMEs lack people who know digital tools and AI"
+        ]
+      },
+      {
+        "name": "Talent solves",
+        "desc": "Ambassadors co-design",
+        "points": [
+          "T Ambassadors work with each business to design a digital solution",
+          "6th-cohort Digital Youth T Ambassador, working with government on digital transformation"
+        ]
+      }
+    ],
+    "op": "+",
+    "result": {
+      "name": "Digital solution",
+      "desc": "Generative AI adoption",
+      "points": [
+        "Helped businesses adopt generative AI and AIoT",
+        "Also promoted digital transformation policy and engaged with communities",
+        "Number of businesses, industries and concrete results: to be added"
+      ]
+    }
+  },
+  "tmba-cta-taiex": {
+    "type": "layers",
+    "title": "Foundations of a strategy",
+    "sub": "To be taken seriously a strategy must first be reproducible, then judged on return and risk with three metrics.",
+    "items": [
+      {
+        "name": "TAIEX CTA",
+        "desc": "Third place at the showcase",
+        "points": [
+          "Third place at the TMBA 26th Algorithmic Trading showcase",
+          "Trades TAIEX futures (Taiwan Stock Exchange index futures)"
+        ]
+      },
+      {
+        "name": "Optimisation",
+        "desc": "Tuning on the framework",
+        "points": [
+          "Parameters tuned on top of the backtesting framework",
+          "Backtest period and exact figures: to be added"
+        ]
+      },
+      {
+        "name": "Three metrics",
+        "desc": "Return, Sharpe, max drawdown",
+        "points": [
+          "Return alone hides how much risk was taken",
+          "Sharpe shows return per unit of risk; max drawdown shows the worst fall"
+        ]
+      },
+      {
+        "name": "Reproducible test",
+        "desc": "Same data, same result, every run",
+        "points": [
+          "First built a backtesting framework that simulates trades on historical data",
+          "Run the same data twice and the result must be identical"
+        ]
+      }
+    ]
+  },
+  "tmba-event-earnings-call": {
+    "type": "pipeline",
+    "title": "From event to signal",
+    "sub": "Tests whether what an earnings call reveals can be turned into a tradable signal.",
+    "items": [
+      {
+        "name": "Earnings call",
+        "desc": "Company explains outlook",
+        "points": [
+          "An earnings call is where a company explains its operations and outlook",
+          "The strategy uses the call as its trading event"
+        ]
+      },
+      {
+        "name": "Information",
+        "desc": "Operations and outlook",
+        "points": [
+          "The call releases information on operations and outlook",
+          "Hypothesis: that information may form a tradable signal"
+        ]
+      },
+      {
+        "name": "Trade signal",
+        "desc": "A Taiwan stock strategy",
+        "points": [
+          "Designed a Taiwan stock strategy around earnings-call events",
+          "Entry and exit rules: to be added"
+        ]
+      },
+      {
+        "name": "Backtest",
+        "desc": "Return and risk",
+        "points": [
+          "Simulated trades on historical data to assess return and risk",
+          "Backtest period and performance: to be added"
+        ]
+      }
+    ]
+  },
+  "thesis-rag-panel": {
+    "type": "equation",
+    "title": "LLM adds explanatory power",
+    "sub": "Adding LLM scores from financial reports on top of classic financial variables sharply raises the model's explanatory power.",
+    "items": [
+      {
+        "name": "Financial vars",
+        "desc": "Baseline model: 5.14%",
+        "points": [
+          "The baseline with classic financial variables only: within R² of 5.14%",
+          "Financial ratios explain only a small part of stock return variation"
+        ]
+      },
+      {
+        "name": "LLM scores",
+        "desc": "Six dimension scores",
+        "points": [
+          "RAG-LLM queries the reports, analyses 101 financial variables, gives 6 dimension scores",
+          "All 6 dimension scores are significant at the 1% level",
+          "Pilot reliability check: ICC of 0.759"
+        ]
+      }
+    ],
+    "op": "+",
+    "result": {
+      "name": "Enhanced model",
+      "desc": "within R² 63.73%",
+      "points": [
+        "within R² rises from 5.14% to 63.73%",
+        "Fixed-effects panel model: 592 listed electronics firms over 64 quarters",
+        "37,888 firm-quarter observations (2009Q3 to 2025Q2)"
+      ]
+    }
+  },
+  "fubon-esg-portfolio": {
+    "type": "hub",
+    "title": "Does ESG pay off?",
+    "sub": "The final project centres on one question: does applying ESG to Taiwan stock investing actually pay off?",
+    "center": {
+      "name": "ESG payoff",
+      "desc": "The project's core question",
+      "points": [
+        "ESG means environmental, social and governance, now a shared language in investing",
+        "Portfolio allocation logic and performance: to be added"
+      ]
+    },
+    "items": [
+      {
+        "name": "Own stock picks",
+        "desc": "The team picks holdings",
+        "points": [
+          "Mainly Taiwan stocks, with holdings chosen by the team",
+          "Completed the final project \"ESG in Investment Practice\" with teammates"
+        ]
+      },
+      {
+        "name": "ESG factors",
+        "desc": "Built into the allocation",
+        "points": [
+          "Applied the ESG factors learned in class to portfolio allocation",
+          "The programme ran for 3 months"
+        ]
+      },
+      {
+        "name": "Hands-on training",
+        "desc": "Researcher and PM work",
+        "points": [
+          "Every class had in-class assignments and team presentations",
+          "Gave trainees a real taste of analyst and fund manager work"
+        ]
+      },
+      {
+        "name": "PM feedback",
+        "desc": "Presented after the report",
+        "points": [
+          "Presented on stage after submitting the written report",
+          "Fund managers gave feedback"
+        ]
+      }
+    ]
+  },
+  "thesis-esg-capital-structure": {
+    "type": "pipeline",
+    "title": "ESG and capital structure",
+    "sub": "Tests whether ESG risk scores affect where Taiwanese companies get their money.",
+    "items": [
+      {
+        "name": "ESG risk score",
+        "desc": "How investors assess firms",
+        "points": [
+          "Investors use ESG risk scores to assess a company",
+          "The study looks at Taiwanese companies"
+        ]
+      },
+      {
+        "name": "Does it matter?",
+        "desc": "The thesis question",
+        "points": [
+          "Do ESG risk scores affect the capital structure of Taiwanese companies?",
+          "Research design, sample and method: to be added"
+        ]
+      },
+      {
+        "name": "Capital mix",
+        "desc": "Debt vs shareholder funding",
+        "points": [
+          "Capital structure: how much of a company's money comes from debt vs shareholders",
+          "Findings to be added; the thesis is complete and the degree awarded"
+        ]
+      }
+    ]
+  },
+  "tunghai-english-ta": {
+    "type": "hub",
+    "title": "English-taught TA",
+    "sub": "Three English-taught core courses with one shared aim: helping students learn business fundamentals in English.",
+    "center": {
+      "name": "Taught in English",
+      "desc": "Tunghai GMBA core courses",
+      "points": [
+        "Tunghai University offers core business courses taught in English",
+        "Students learning statistics, economics and finance in English needed TA support"
+      ]
+    },
+    "items": [
+      {
+        "name": "Statistics",
+        "desc": "Statistics",
+        "points": [
+          "Teaching assistant for the English-taught Statistics course",
+          "2023/09 to 2024/06; duties to be added"
+        ]
+      },
+      {
+        "name": "Economics",
+        "desc": "Economics",
+        "points": [
+          "Teaching assistant for the English-taught Economics course",
+          "2023/09 to 2024/06; duties to be added"
+        ]
+      },
+      {
+        "name": "Finance Mgmt",
+        "desc": "Financial Management",
+        "points": [
+          "Teaching assistant for the English-taught Financial Management course",
+          "2023/09 to 2024/06; duties to be added"
+        ]
+      }
+    ]
+  },
+  "finjourney": {
+    "type": "cycle",
+    "title": "Money management loop",
+    "sub": "All ten finance areas run the same loop: AI only proposes plans, and the system computes every number.",
+    "items": [
+      {
+        "name": "Set a goal",
+        "desc": "Each area gets a standard",
+        "points": [
+          "Ten areas: cash flow, emergency fund, net worth, investing, debt, tax and more",
+          "Based on the \"Personal Financial Overview\" diagram in the book \"Investment 101\""
+        ]
+      },
+      {
+        "name": "Plan actions",
+        "desc": "AI proposes a plan",
+        "points": [
+          "AI's revision plan must follow a JSON schema and pick only from system options",
+          "The system checks fields and ranges, then runs a lifetime cash-flow simulation and stress tests"
+        ]
+      },
+      {
+        "name": "Monthly check",
+        "desc": "Actual vs standard",
+        "points": [
+          "Each month compares actual against standard; each block shows the current figure",
+          "Other apps can push balances and transactions via an API, so no manual entry"
+        ]
+      },
+      {
+        "name": "Adjust",
+        "desc": "Change the plan or the goal",
+        "points": [
+          "The AI adviser reads the user's data, flags problems and risks, and suggests fixes",
+          "The system computes every number, because numbers are where AI errs most"
+        ]
+      }
+    ]
+  },
+  "vibe-edge": {
+    "type": "iceberg",
+    "title": "The backtest iceberg",
+    "sub": "AI generates strategies fast and in bulk; what decides credibility is whether three hidden biases are caught.",
+    "items": [
+      {
+        "name": "AI-written nodes",
+        "desc": "Research steps in bulk",
+        "level": "above",
+        "points": [
+          "AI agents write the research nodes, each one a research step",
+          "Every node declares inputs, outputs and parameters in the same manifest.yaml"
+        ]
+      },
+      {
+        "name": "Pretty backtests",
+        "desc": "Results that look good",
+        "level": "above",
+        "points": [
+          "Agents produce strategy variants far faster than people can",
+          "No real research case has yet passed the tests into the new factor library"
+        ]
+      },
+      {
+        "name": "Look-ahead bias",
+        "desc": "Using data not yet available",
+        "level": "below",
+        "points": [
+          "A leak sentinel injects a future price gap and checks whether the output changes",
+          "Every value carries the date it became public"
+        ]
+      },
+      {
+        "name": "Overfitting",
+        "desc": "Only works on past data",
+        "level": "below",
+        "points": [
+          "Walk-forward and purged k-fold keep training and test data from overlapping",
+          "A promoted cell may open the held-out sample only once"
+        ]
+      },
+      {
+        "name": "Multiple testing",
+        "desc": "Try enough and one looks good",
+        "level": "below",
+        "points": [
+          "Every attempt is logged; m equals the number of distinct cells in a study",
+          "Deflated Sharpe Ratio discounts performance by the number of attempts"
+        ]
+      },
+      {
+        "name": "Agent isn't judge",
+        "desc": "It can't touch the validator",
+        "level": "below",
+        "points": [
+          "Checks are hard-coded in the platform where node authors can't change them",
+          "All 3,749 tests pass; 412 numbered design decisions keep every result traceable"
+        ]
+      }
+    ]
+  },
+  "fincli": {
+    "type": "layers",
+    "title": "Raw data layer",
+    "sub": "The fetch layer never changes data: store exactly what the source gives, and leave cleaning to later stages.",
+    "items": [
+      {
+        "name": "Research platform",
+        "desc": "Read by Vibe-Edge",
+        "points": [
+          "Vibe-Edge's data layer reads from here and never writes",
+          "Added history for disposition and watch-list stocks, delistings, market holidays and more"
+        ]
+      },
+      {
+        "name": "Daily operations",
+        "desc": "Auto-updates after the close",
+        "points": [
+          "launchd fetches after every close, with a nightly health check",
+          "T86 is retried every 20 minutes until published; failed quotes retry after 5 minutes"
+        ]
+      },
+      {
+        "name": "Raw database",
+        "desc": "PostgreSQL, stored as-is",
+        "points": [
+          "Store exactly what the source gives; cleaning belongs to later stages",
+          "PostgreSQL grew to 26 tables, with weekly database backups"
+        ]
+      },
+      {
+        "name": "Spec + engine",
+        "desc": "Replaced 10k lines of code",
+        "points": [
+          "Each dataset needs only a spec file, fetched by one shared engine",
+          "Before switching, old and new output matched row by row on 141/141 datasets"
+        ]
+      },
+      {
+        "name": "23 sources",
+        "desc": "TWSE, TPEx, MOPS and more",
+        "points": [
+          "23 sources including TWSE, TPEx, MOPS, TEJ and TAIFEX",
+          "All 143 TWSE and 225 TPEx OpenAPI endpoints are connected"
+        ]
+      }
+    ]
+  },
+  "openstrategy": {
+    "type": "funnel",
+    "title": "Factor screening funnel",
+    "sub": "Starting from abnormal returns around earnings calls, narrowed to factors that form a stock signal, then tested out of sample.",
+    "items": [
+      {
+        "name": "Events & CAR",
+        "desc": "Abnormal returns around calls",
+        "points": [
+          "Earnings-call events from TEJ, with the call date as event day",
+          "Abnormal return = stock return − CAPM expected return; summed over the window gives CAR"
+        ]
+      },
+      {
+        "name": "9 variables",
+        "desc": "Candidate explanations",
+        "points": [
+          "Nine, including recording availability, turnover, prior return, holder changes and size",
+          "OLS regression, with correlations and VIF to rule out heavy overlap"
+        ]
+      },
+      {
+        "name": "4 significant",
+        "desc": "Prior return and three more",
+        "points": [
+          "Prior return, days since last call, company size and book-to-market",
+          "Significant over [-3, 3], and the same over [-2, 2]"
+        ]
+      },
+      {
+        "name": "1 composite",
+        "desc": "Enter only when score > 0",
+        "points": [
+          "Four factors as Z-scores, weighted by in-sample Sharpe into one score",
+          "Sharpe 1.21 in training (market 0.39), 1.37 over the full period (market 0.82)",
+          "2025: 0.94, slightly below the market's 0.99, missing the target"
+        ]
+      }
+    ]
+  }
+}

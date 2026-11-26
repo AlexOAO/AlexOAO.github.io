@@ -25,12 +25,12 @@ import urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CACHE_PATH = os.path.join(ROOT, 'data', 'en', 'translation-cache.json')
-JSON_FILES = ['work.json', 'projects.json', 'about.json', 'experience.json', 'flows.json', 'roles.json', 'glance.json', 'idp.json']   # data/<f> -> data/en/<f>
+JSON_FILES = ['work.json', 'projects.json', 'about.json', 'experience.json', 'flows.json', 'roles.json', 'glance.json', 'idp.json', 'models.json']   # data/<f> -> data/en/<f>
 POSTS = os.path.join(ROOT, 'posts', 'posts.json')                             # title/summary -> title_en/summary_en
 CJK = re.compile(r'[㐀-鿿＀-￯]')
 
 # Values that are codes, paths, or dates: copied as they are.
-KEEP_KEYS = {'href', 'track', 'slug', 'parent', 'sdlc', 'layers', 'status', 'url', 'demo', 'upstream', 'file', 'id', 'icon', 'lane', 'key', 'period'}
+KEEP_KEYS = {'href', 'type', 'op', 'level', 'pos', 'track', 'slug', 'parent', 'sdlc', 'layers', 'status', 'url', 'demo', 'upstream', 'file', 'id', 'icon', 'lane', 'key', 'period'}
 
 # Fixed wording, used before any machine translation.
 GLOSSARY = {

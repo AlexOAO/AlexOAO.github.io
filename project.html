@@ -117,12 +117,12 @@
   <div class="post-footer"><div class="pager" id="pager"></div></div>
 
   <script src="assets/js/common.js?v=20261120g"></script>
-  <script src="assets/js/concept-side.js?v=20261126b"></script>
+  <script src="assets/js/concept-model.js?v=20261126c"></script>
   <script>
     const { esc, dataPath, getJSON, stageNames, stagePills, visibleGroups, STAGE_ORDER, STAGE_COLOR, stageSpan, isGov, QUANT_ORDER, QUANT_COLOR, quantSpan, quantPill } = Site;
     const I18N = {
       en: {
-        cmKicker: 'Project outline', cmTitle: 'How this project unfolds', cmHint: 'Click a box to jump to that part; the part you are reading lights up.',
+        cmKicker: 'Concept model', close: 'Close',
         back: 'Back to Alex Li', toggle: '中文', kids: 'Sub-projects', partOf: 'Part of: ',
         prev: 'Previous', nextProj: 'Next', noStory: 'The story for this project is not written yet.',
         notFound: 'This project does not exist.', home: 'Back to the homepage', lc: 'Where it sits in the AI lifecycle', ms: 'Milestones',
@@ -133,7 +133,7 @@
         loadError: 'Content failed to load. A network filter may block this site.',
       },
       zh: {
-        cmKicker: '專案架構', cmTitle: '這個專案的脈絡', cmHint: '點任一格跳到該段；讀到哪一段，圖上就亮哪一格。',
+        cmKicker: '概念模型', close: '關閉',
         back: '回到首頁', toggle: 'EN', kids: '子專案', partOf: '上層專案：',
         prev: '上一個專案', nextProj: '下一個專案', noStory: '這個專案的文章還沒寫。',
         notFound: '找不到這個專案。', home: '回到首頁', lc: '在 AI 生命週期的位置', ms: '專案進度',
@@ -184,7 +184,7 @@
       const root = document.getElementById('project');
       const pager = document.getElementById('pager');
 
-      Promise.all([getJSON(dataPath('about.json')), getJSON(dataPath('work.json')), getJSON(dataPath('projects.json')).catch(() => []), getJSON(dataPath('flows.json')).catch(() => ({})), getJSON(dataPath('roles.json')).catch(() => []), getJSON(dataPath('glance.json')).catch(() => ({})), getStory()]).then(([about, raw, repos, flows, roles, glances, story]) => {
+      Promise.all([getJSON(dataPath('about.json')), getJSON(dataPath('work.json')), getJSON(dataPath('projects.json')).catch(() => []), getJSON(dataPath('flows.json')).catch(() => ({})), getJSON(dataPath('roles.json')).catch(() => []), getJSON(dataPath('glance.json')).catch(() => ({})), getJSON(dataPath('models.json')).catch(() => ({})), getStory()]).then(([about, raw, repos, flows, roles, glances, models, story]) => {
         const view = stageView(about, raw, flows, Object.fromEntries(roles.map(r => [r.key, r]))) || workView(about, raw) || quantView(about, repos);
         document.getElementById('backLink').href = view ? view.back : 'index.html#experience';
         if (!view) {
@@ -208,6 +208,7 @@
           </header>
           <div class="post-body story">
             ${view.stage ? '' : glancePanel(glances[slug])}
+            ${view.stage || !models[slug] ? '' : ConceptModel.html(models[slug], { kicker: T('cmKicker') })}
             ${view.diagram || ''}
             ${story ? markdown(story) : `<p class="error">${esc(T('noStory'))}</p>`}
             ${view.kids.length ? `<h2>${esc(view.kidsTitle || T('kids'))}</h2><div class="kids">${kidLinks}</div>` : ''}
@@ -216,11 +217,8 @@
         const { list, i } = view;
         const link = (x, cls, label) => x ? `<a class="${cls}" href="${href(x)}">${cls === 'prev' ? '← ' : ''}${esc(label)}${colon()}${esc(x.name)}${cls === 'next' ? ' →' : ''}</a>` : '';
         pager.innerHTML = link(list[i - 1], 'prev', T(view.stage ? 'prevStage' : 'prev')) + link(list[i + 1], 'next', T(view.stage ? 'nextStage' : 'nextProj'));
-        // Project outline beside the story: its sections and phases, built from the story itself.
-        const storyBody = root.querySelector('.post-body.story');
-        const outline = storyBody ? ConceptSide.fromStory(storyBody) : [];
-        if (outline.length >= 3) ConceptSide.mount(root, {
-          kicker: T('cmKicker'), title: T('cmTitle'), hint: T('cmHint'), type: 'outline', nodes: outline });
+        // Concept model (data/models.json): diagram nodes and buttons open a popup.
+        if (!view.stage && models[slug]) ConceptModel.bind(models[slug], root, { close: T('close') });
       }).catch(() => { root.innerHTML = `<p class="lead error">${esc(T('loadError'))}</p>`; });
     }
 
