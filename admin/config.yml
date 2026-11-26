@@ -1048,19 +1048,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -1092,19 +1092,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -1136,19 +1136,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -1180,19 +1180,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -1224,19 +1224,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -1268,19 +1268,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -1312,19 +1312,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -1356,19 +1356,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -1400,19 +1400,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -1444,19 +1444,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -1488,19 +1488,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -1532,19 +1532,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -1576,19 +1576,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -1620,19 +1620,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -1664,19 +1664,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -1708,19 +1708,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -1752,19 +1752,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -1796,19 +1796,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -1840,19 +1840,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -1884,19 +1884,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -1928,19 +1928,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -1972,19 +1972,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -2016,19 +2016,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -2060,19 +2060,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -2104,19 +2104,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -2148,19 +2148,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -2192,19 +2192,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -2236,19 +2236,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -2280,19 +2280,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"
@@ -2324,19 +2324,19 @@ collections:
               - name: center
                 label: "核心（只有核心與分支要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: result
                 label: "結果（只有公式要填）"
                 widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}
+                required: false
+                fields:
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: desc, label: "一句說明", widget: string, required: false }
+                  - { name: points, label: "彈出視窗內容（每行一項）", widget: list, field: { name: p, label: "內容", widget: string } }
               - name: items
                 label: "概念（圖上的每一格，點了會跳出視窗）"
                 label_singular: "概念"

@@ -407,12 +407,10 @@ def concept_fields():
 def model_fields():
     data = json.loads((ROOT / 'data/models.json').read_text(encoding='utf-8'))
     titles = project_titles()
-    pt = '''widget: object
-                    required: false
-                    fields:
-                      - {{ name: name, label: "名稱", widget: string }}
-                      - {{ name: desc, label: "一句說明", widget: string, required: false }}
-                      - {{ name: points, label: "彈出視窗內容（每行一項）", widget: list, field: {{ name: p, label: "內容", widget: string }} }}'''
+    pt = ("widget: object\n                required: false\n                fields:\n"
+          "                  - { name: name, label: \"名稱\", widget: string }\n"
+          "                  - { name: desc, label: \"一句說明\", widget: string, required: false }\n"
+          "                  - { name: points, label: \"彈出視窗內容（每行一項）\", widget: list, field: { name: p, label: \"內容\", widget: string } }")
     out = []
     for k in list(data) + [s for s in titles if s not in data]:
         out.append(f"""          - name: {q(k)}
