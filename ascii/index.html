@@ -233,7 +233,7 @@
     .nb-water { color: #1e293b; }
     .nb-snow { color: #cbd5e1; }
     .nb-foot { color: #475569; }
-    .nb-lamp { color: #fff; text-shadow: 0 0 8px rgba(241,245,249,0.95); animation: nbFlicker 6s steps(1) infinite; animation-delay: calc(var(--k, 0) * -2.1s); }
+    .nb-lamp { color: #fff; text-shadow: 0 0 8px rgba(241,245,249,0.95); animation: nbFlicker 6s steps(1) infinite; }
     @keyframes nbFlicker { 0%, 60%, 63%, 66%, 100% { opacity: 1; } 61%, 64% { opacity: 0.2; text-shadow: none; } }
     .nb-ref { display: inline-block; color: #e2e8f0; animation: nbShimmer 1.6s ease-in-out infinite alternate; animation-delay: calc(var(--k, 0) * -0.37s); }
     @keyframes nbShimmer { to { color: #64748b; transform: translateX(0.25em); } }
@@ -960,141 +960,122 @@
     // reins (r), reindeer (d) with antlers (a) and a glowing nose (n), a gold trail (t), moon (m), stars (s), mountains (x).
     function santaSleighPreview() {
       return paint([
-        '  +     .         .-.       *    .',
-        '     *           (   )   .      + ',
-        ' .       _^_      `-\'   \\Y/  \\Y/  ',
-        '        (o.o)        .    @>   @> ',
-        '    [#] (~~~)------------##---##  ',
-        '    \\##########/        / \\  / \\  ',
-        '  .  \\________/   +           .   ',
-        '.:*:=o========o=)                 ',
-        '       .   /\\        /\\     /\\    ',
-        '   /\\   /\\/  \\  /\\__/  \\/\\_/  \\_  ',
-        '__/  \\_/      \\/              \\__ '
+        '  +     .   .-.  ',
+        '     *     (   ) ',
+        ' .  _^_     `-\'  ',
+        '   (o.o)    \\Y/  ',
+        '[#](~~~)----@>   ',
+        '\\#######/  /##\\  ',
+        ' \\_____/   / \\ . ',
+        '.:=o=====o=)  *  ',
+        '    /\\      /\\   ',
+        ' /\\/  \\ /\\_/  \\_ ',
+        '/    \\/        \\_'
       ], [
-        '  s     s         mmm       s    s',
-        '     s           m   m   s      s ',
-        ' s       hhh      mmm   aaa  aaa  ',
-        '        fkkkf        s    dd   dn ',
-        '    ppp hfffhrrrrrrrrrrrrddrrrdd  ',
-        '    bbbbbbbbbbbb        ddd  ddd  ',
-        '  s  bbbbbbbbbb   s           s   ',
-        'ttttggggggggggggg                 ',
-        '       s   xx        xx     xx    ',
-        '   xx   xxx  x  xxxxx  xxxxx  xx  ',
-        'xxx  xxx      xx              xxx '
+        '  s     s   mmm  ',
+        '     s     m   m ',
+        ' s  hhh     mmm  ',
+        '   fkkkf    aaa  ',
+        'ppphfffhrrrrdn   ',
+        'bbbbbbbbb  dddd  ',
+        ' bbbbbbb   ddd s ',
+        'ttgggggggggg  s  ',
+        '    xx      xx   ',
+        ' xxx  x xxxx  xx ',
+        'x    xx        xx'
       ], { s: 'ss-star', m: 'ss-moon', h: 'ss-red ss-bob', b: 'ss-red ss-bob', f: 'ss-fur ss-bob', k: 'ss-skin ss-bob',
            p: 'ss-gift ss-bob', g: 'ss-gold ss-bob', r: 'ss-rein ss-bob', d: 'ss-deer ss-bob', a: 'ss-antler ss-bob',
            n: 'ss-nose', t: 'ss-trail', x: 'ss-mtn' });
     }
 
-    // Snowy night bridge: falling flakes, two bridge lamps and the big path lamp that flicker,
-    // dim buildings, stone bridge, lamp reflections shimmering in the river, water, railing,
-    // snowy path with lone footprints.
+    // Snowy night bridge: flakes (f), a bridge lamp and the big path lamp (L) on posts (p), dim buildings (b),
+    // stone bridge (B), lamp reflections shimmering in the river (R), water (w), railing (r),
+    // snowy path (n) with lone footprints (F) and a glint (S).
     function snowyBridgePreview() {
-      const rows = [
-        '  .     *     /    .     .  _/^\\_ ',
-        '   [#]-,   +    [#]-,    *  |@@@| ',
-        ' _|=|_ | .   _|=|__ |   .   |@@@| ',
-        '|:#::#|| |  |#::#::||  .  *  \'=\'  ',
-        '=============================|  . ',
-        ':|:/\'\'\'\'\'\\:|:/\'\'\'\'\'\\:|:/\'--|  ..  ',
-        '::/  =    \\::/ =    \\:/--  |/...  ',
-        '~~~~ = ~~~~~~~ =~~~~~--   /\'.,..  ',
-        ' ~  =  ~   ~  = ~ --|   /..*.,\'...',
-        '   ~ -  ~   ~ -=--  |  /.\'...,..\'.',
-        '-- ~ =   ~--|  =    | /...*..,..\'.'
-      ];
-      const EDGE = [99, 99, 99, 99, 99, 30, 28, 26, 24, 23, 22];   // where the snowy path starts
-      let k = 0;
-      return rows.map((r, y) => [...r].map((c, x) => {
-        if (c === ' ') return c;
-        let cl;
-        if (x >= EDGE[y]) cl = c === ',' ? 'nb-foot' : c === '*' ? 'nb-spark' : 'nb-snow';
-        else if (x >= 27 && y <= 6) cl = c === '@' || c === '^' ? 'nb-lamp' : 'nb-post';
-        else if (y <= 3) cl = '.*+/'.includes(c) && !(c === '/' && y === 0 && x > 26) ? 'nb-flake'
-          : (y === 1 && ((x >= 3 && x <= 5) || (x >= 16 && x <= 18))) ? 'nb-lamp'
-          : (x === 6 || x === 7 || x === 19 || x === 20) && y <= 3 && '-,|'.includes(c) ? 'nb-post' : 'nb-bldg';
-        else if ((c === '=' || c === '-') && y >= 6 && ((x >= 3 && x <= 6) || (x >= 13 && x <= 16))) cl = 'nb-ref';
-        else if (c === '~') cl = 'nb-water';
-        else if (c === '-' || (c === '|' && y >= 7)) cl = 'nb-rail';
-        else cl = 'nb-bridge';
-        // A lamp's letters share one --k so the whole head flickers together.
-        const kk = cl === 'nb-lamp' ? (x >= 27 ? 2 : x >= 16 ? 1 : 0) : k++;
-        const anim = cl === 'nb-flake' || cl === 'nb-ref' || cl === 'nb-lamp' || cl === 'nb-spark';
-        return `<span class="${cl}"${anim ? ` style="--k:${kk};--x:${x}"` : ''}>${Site.esc(c)}</span>`;
-      }).join('')).join('\n');
+      return paint([
+        '  .   *    _^_   ',
+        '[#]-,   +  |@|   ',
+        '|=|_|  .   \'=\'  .',
+        '===========|== . ',
+        ':/\'\'\'\\:/\'\'\'\\|  . ',
+        '/ = \\/ = \\|  /...',
+        '~~=~~~~=~~|  /.,.',
+        ' ~ = ~  -~| /.*,.',
+        '~  -  ~ ~| /..,\'.',
+        '-- ~ = ~-|/.,..\'.'
+      ], [
+        '  f   f    pLp   ',
+        'LLLpp   f  pLp   ',
+        'bbbbb  f   ppp  f',
+        'BBBBBBBBBBBpBB f ',
+        'BBBBBBBBBBBBp  n ',
+        'B R BB R Bp  nnnn',
+        'wwRwwwwRwwr  nnFn',
+        ' w R w  Rwr nnSFn',
+        'w  R  w wr nnnFnn',
+        'rr w R wrrnnFnnnn'
+      ], { f: 'nb-flake', p: 'nb-post', L: 'nb-lamp', b: 'nb-bldg', B: 'nb-bridge', R: 'nb-ref', w: 'nb-water',
+           r: 'nb-rail', n: 'nb-snow', F: 'nb-foot', S: 'nb-spark' });
     }
 
-    // Cozy Christmas room: string lights (b), tree (g) with lights (l), baubles (o), star (s) and gifts (R U);
-    // window (c curtains, f frame, v snow, M moon, n snowy ground); TV (x) with a flipping screen (e), knobs (p)
-    // and a blinking clock (d); wreath (G) with a bow (r), candles (i), mantel (m), stockings (k), bricks (B), fire (F);
-    // rug (q, N centre) and a breathing cat (C, E eyes).
+    // Cozy Christmas room: string lights (b, wire w), tree (g) with lights (l), baubles (o), star (s), trunk (t) and gifts (R U);
+    // window (c curtains, f frame, v snow, M moon, n snowy ground); TV (x) with a flipping screen (e) and a blinking clock (d);
+    // wreath (G) with lights (l), mantel (m), bricks (B), fire (F); rug (q, N centre) and a breathing cat (C, E eyes).
     function cozyChristmasPreview() {
       return paint([
-        'o~~~*~~~o~~~*~~~o~~~*~~~o~~~*~~~o~',
-        '    *   |.------.|   .-o-o-.      ',
-        '   /o\\  ||* . @ ||  o       o     ',
-        '  /+^o\\ || .  * ||   \'-o-o-\'      ',
-        '  /^^+\\ ||^^^^^^||   i   ><   i   ',
-        ' /o^+^^\\|\'------\'| ============== ',
-        ' /+^^o^\\ .-\\--/-.   v |.----.| v  ',
-        '/^o^^+^^\\|======|o   ||  ^^  ||   ',
-        '   |||   |======|o   || ^##^ ||   ',
-        '[#]|||[#][12:00 ]    ||######||   ',
-        '   .~~~~~~~~~~~~~~~~~.   /\\_/\\    ',
-        '  (  ~  (  ====  )  ~ ) =(-.-)__) '
+        'o~*~o~*~o~*~o~*~o',
+        '  *  .----.  .o. ',
+        ' /o\\ |*.@ | o   o',
+        '/+^o\\|^^^^| \'-o-\'',
+        '/^^+\\\'----\'======',
+        ' ||| [====] |^^| ',
+        '[#][](12:00) |##|',
+        ' .~~~~~~~. /\\_/\\ ',
+        '(  ~ == ~ ) (-.-)'
       ], [
-        'bwwwbwwwbwwwbwwwbwwwbwwwbwwwbwwwbw',
-        '    s   cffffffffc   GGlGlGG      ',
-        '   gog  cfv v M fc  l       l     ',
-        '  glgog cf v  v fc   GGlGlGG      ',
-        '  ggglg cfnnnnnnfc   i   rr   i   ',
-        ' goglgggcffffffffc mmmmmmmmmmmmmm ',
-        ' glggogg xxxxxxxx   k BBBBBBBB k  ',
-        'ggogglgggxeeeeeexp   BB  FF  BB   ',
-        '   ttt   xeeeeeexp   BB FFFF BB   ',
-        'RRRtttUUUxddddd x    BBFFFFFFBB   ',
-        '   qqqqqqqqqqqqqqqqqqq   CCCCC    ',
-        '  q  q  q  NNNN  q  q q CCECECCCC '
+        'bwbwbwbwbwbwbwbwb',
+        '  s  cffffc  GlG ',
+        ' gog cvvM c l   l',
+        'glgogcnnnnc GGlGG',
+        'ggglgffffffmmmmmm',
+        ' ttt xeeeex BFFB ',
+        'RRRUUxdddddx BFFB',
+        ' qqqqqqqqq CCCCC ',
+        'q  q NN q q CECEC'
       ], { b: 'cr-bulb', w: 'cr-wire', l: 'cr-bulb', g: 'cr-tree', o: 'cr-orn', s: 'cr-star', t: 'cr-trunk',
            R: 'cr-gift-r', U: 'cr-gift-b', c: 'cr-curtain', f: 'cr-wood', v: 'cr-snow', M: 'cr-moon', n: 'cr-ground',
-           x: 'cr-tv', e: 'cr-screen', p: 'cr-knob', d: 'cr-clock', G: 'cr-wreath', r: 'cr-bow', i: 'cr-candle',
-           m: 'cr-wood', k: 'cr-stock', B: 'cr-brick', F: 'cr-fire', q: 'cr-rug', N: 'cr-rug-in', C: 'cr-cat', E: 'cr-cat cr-eye' });
+           x: 'cr-tv', e: 'cr-screen', d: 'cr-clock', G: 'cr-wreath', m: 'cr-wood', B: 'cr-brick', F: 'cr-fire',
+           q: 'cr-rug', N: 'cr-rug-in', C: 'cr-cat', E: 'cr-cat cr-eye' });
     }
 
     // Sunset bridge: suspension tower (t), cables and deck (k), lamps (d), skyline (y) with lit windows (w),
-    // a hazy far tower (f), beacons (r), the sun (u), drifting clouds (c, lit edges l), stars (s), birds (b),
+    // a hazy far tower (f), the sun (u), drifting clouds (c, lit edges l), stars (s), birds (b),
     // water (a) with the sun's glitter (g), window reflections (x), a boat (h hull, o light) and its wake (e).
     function sunsetBridgePreview() {
       return paint([
-        ' ~~==~~        .      ~~===~~     ',
-        '~=====~~    v   v   ~~=====~~~    ',
-        '    H===H\\    v         |      .  ',
-        '   /H   H|\\            ##:    *   ',
-        '  / H   H| \\           ### //H=H##',
-        ' /  H===H|#|\\   .@@@.  ##//#|H H:#',
-        '/|  H   H|#|#\\\\@@@@@@@ //#|:|H#H##',
-        ' |  H   H|#|#|:\\      /#|:|#|H#H:#',
-        '==o=H==oH===o====o====o====o====o=',
-        '----H~-_H~-|-~|~+===+--__|--|--_|~',
-        '~~--H~~~H~_:~_:__*==-~~\\_o_/~-~~:-',
-        '_-~-H-_-H-~~~~-~++===--~~~-~-~~~~_'
+        ' ~~==~   v v  .  ',
+        '~====~~     ~==~ ',
+        '  H==H\\      |   ',
+        ' /H  H|\\    ##: *',
+        '/ H==H|#\\ .@. #H#',
+        '  H  H|#|@@@@@#H#',
+        '==H=oH==o==o==o=H',
+        '--H~-H~|*===*-|-~',
+        '~~H~~H~:_*=*_\\o/~',
+        '_-H-_H~~~+==+~-~_'
       ], [
-        ' cccccc        s      ccccccc     ',
-        'llllllll    b   b   llllllllll    ',
-        '    tttttk    b         y      s  ',
-        '   kt   tkk            yyw    r   ',
-        '  k t   tk k           yyy kkfffyy',
-        ' k  tttttkykk   uuuuu  yykkykf fwy',
-        'kk  t   tkykykkuuuuuuu kkykwkfyfyy',
-        ' k  t   tkykykwk      kykwkykfyfwy',
-        'kkdktkkdtkkkdkkkkdkkkkdkkkkdkkkkdk',
-        'aaaataaataaxaaxagggggaaaaxaaxaaaxa',
-        'aaaataaataaxaaxaagggaaahhohheeaaxa',
-        'aaaataaataaaaaaagggggaaaaaaaaaaaaa'
+        ' ccccc   b b  s  ',
+        'lllllll     llll ',
+        '  ttttk      y   ',
+        ' kt  tkk    yyw s',
+        'k ttttkyk uuu yfy',
+        '  t  tkykuuuuuyfy',
+        'kktkdtkkdkkdkkdkf',
+        'aataataxgggggaxaa',
+        'aataataxagggahohe',
+        'aataataaaggggaaaa'
       ], { c: 'sb-cloud', l: 'sb-lit', s: 'sb-star', b: 'sb-bird', t: 'sb-tower', k: 'sb-steel', y: 'sb-city', w: 'sb-win',
-           r: 'sb-beacon', f: 'sb-far', u: 'sb-sun', d: 'sb-lamp', a: 'sb-water', g: 'sb-glint', x: 'sb-refl',
+           f: 'sb-far', u: 'sb-sun', d: 'sb-lamp', a: 'sb-water', g: 'sb-glint', x: 'sb-refl',
            h: 'sb-hull', o: 'sb-light', e: 'sb-wake' });
     }
 
@@ -1102,31 +1083,31 @@
     // stars (s), the far treeline (t), and a lake of ice floes (i) mirroring the glow (w).
     function auroraPreview() {
       return paint([
-        '  +      .        *        .   +  ',
-        '     :  : \' :  \'    \' :  : \' :    ',
-        '  .  |: |!:||!|    :|!: |:|!:| .  ',
-        '    |!||!:|!||!|:  |!|:||!||!|!|  ',
-        '  _/============\\ /=============\\_',
-        '                 V                ',
-        ' .   :  \'   :   \'  :   \' :   \'   .',
-        '|!:|:|!|:|!|  |!:|!|:|!|:|!|:|!|:|',
-        '=========\\_____/==================',
-        '^A^_^^A^__^A^^^A^_^__^^A^^_^A^^^A^',
-        '~=~-  |!|  ~~=~-~ :|!|: ~-=~  |:  ',
-        ' ~~=~ :|: ~=~-~~ ~ |!| ~~=-~ :!: ~'
+        ' +    .    *   + ',
+        '  : \' :  \' : \' : ',
+        ' |:|!:|  |!:|:|! ',
+        '|!||!:|!||!|:|!|!',
+        '=======\\ /=======',
+        '        V        ',
+        ' .  :  \' :  \'  . ',
+        '|!:|:|!  |!:|:|!|',
+        '====\\___/========',
+        '^A^_^^A^_^^A^^_^A',
+        '~=~ |!| ~=~ |!| ~',
+        ' ~=~:|:~=-~ :|: ~'
       ], [
-        '  s      s        s        s   s  ',
-        '     v  v v v  v    v v  v v v    ',
-        '  s  rr rrrrrrr    rrrr rrrrrr s  ',
-        '    rrrrrrrrrrrrr  rrrrrrrrrrrrr  ',
-        '  eeeeeeeeeeeeeee eeeeeeeeeeeeeeee',
-        '                 e                ',
-        ' s   v  v   v   v  v   v v   v   s',
-        'rrrrrrrrrrrr  rrrrrrrrrrrrrrrrrrrr',
-        'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
-        'tttttttttttttttttttttttttttttttttt',
-        'iiii  www  iiiiii wwwww iiii  ww  ',
-        ' iiii www iiiiii i www iiiii www i'
+        ' s    s    s   s ',
+        '  v v v  v v v v ',
+        ' rrrrrr  rrrrrrr ',
+        'rrrrrrrrrrrrrrrrr',
+        'eeeeeeee eeeeeeee',
+        '        e        ',
+        ' s  v  v v  v  s ',
+        'rrrrrrr  rrrrrrrr',
+        'eeeeeeeeeeeeeeeee',
+        'ttttttttttttttttt',
+        'iii www iii www i',
+        ' iiiwwwiiii www i'
       ], { s: 'au-star', v: 'au-top', r: 'au-ray', e: 'au-edge', t: 'au-tree', i: 'au-ice', w: 'au-refl' });
     }
 
