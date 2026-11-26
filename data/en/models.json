@@ -7,7 +7,7 @@
     "outcome": "XecGuard done, advice: do not buy it yet; Vulcan still in testing",
     "items": [
       {
-        "name": "Define the question",
+        "name": "Problem definition",
         "desc": "Six policies mapped to FSC rules",
         "points": [
           "The vendor reports looked good, but none had tested KGI's own business",
@@ -272,7 +272,7 @@
     "role": "Contributor: built the prototype and cost framework; a colleague led computing estimates",
     "outcome": "Prototype works; waiting on the vendor's updated computing estimate",
     "center": {
-      "name": "Service agent",
+      "name": "Service rep",
       "desc": "Faces the customer, signs off",
       "points": [
         "The agent faces the customer while AI helps from behind and never replies directly",
@@ -380,7 +380,7 @@
         ]
       },
       {
-        "name": "Launch prep",
+        "name": "Launch readiness",
         "desc": "Three-year usage forecast",
         "points": [
           "From login numbers I forecast three years of usage and sized production and test environments",
@@ -531,7 +531,7 @@
         ]
       },
       {
-        "name": "Score rulings",
+        "name": "Regulatory scoring",
         "desc": "Did the model read it right?",
         "points": [
           "I score the model's answers to regulatory questions to see if it understood them",
@@ -540,7 +540,7 @@
       },
       {
         "name": "Standard process",
-        "desc": "Applied to the next batch",
+        "desc": "apply to next batch",
         "points": [
           "I wrote the method up as fixed steps so it scales to more items",
           "Once all batches are done, the model is evaluated as a whole and delivered on the group's schedule"
@@ -588,7 +588,7 @@
         ]
       },
       {
-        "name": "Track results",
+        "name": "Follow-up",
         "desc": "Turnout and use cases",
         "points": [
           "Afterwards I track attendance and how many AI use cases learners put forward",
@@ -604,7 +604,7 @@
     "role": "Contributor: helped design the metrics and planned the cost and guardrail data feeds",
     "outcome": "Five-lens framework done; dashboard still in planning",
     "center": {
-      "name": "Worth it?",
+      "name": "Is it worth it?",
       "desc": "Management's real question",
       "points": [
         "Copilot, Gemini and Ella inside, four Agents outside, each with its own numbers",
@@ -654,7 +654,7 @@
       },
       {
         "name": "First monthly report",
-        "desc": "Internal tools first",
+        "desc": "internal tools first",
         "points": [
           "Next, confirm with IT what Copilot data exists and produce the first monthly report",
           "Ella needs IT to open back-office access; then each metric gets a target"
@@ -1079,7 +1079,7 @@
       },
       {
         "name": "Backtest",
-        "desc": "Return and risk",
+        "desc": "Weighs return and risk",
         "points": [
           "Simulated trades on history to judge return and risk",
           "Backtest period and results: to be added; the research code later became OpenStrategy"
@@ -1116,7 +1116,7 @@
     "op": "+",
     "result": {
       "name": "Enhanced model",
-      "desc": "Within R² 63.73%",
+      "desc": "within R² 63.73%",
       "points": [
         "Adding the six scores to a fixed-effects panel model raised within R² to 63.73%",
         "Covering 2009Q3 to 2025Q2, supervised by Professors Chou Chih-Lung and Hsieh Chien-Ping",
@@ -1255,7 +1255,7 @@
       },
       {
         "name": "Finance Mgmt",
-        "desc": "Financial Management",
+        "desc": "Financial Mgmt",
         "points": [
           "Teaching assistant for the English-taught Financial Management course",
           "2023/09 to 2024/06; duties to be added"

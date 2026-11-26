@@ -340,44 +340,44 @@
     ],
     "nodes": [
       {
-        "label": "Loan assistant",
+        "label": "Loan",
         "x": 85,
         "y": 100,
         "w": 124,
         "h": 50,
         "shape": "hex",
         "tone": "cyan",
-        "size": 14
+        "size": 16
       },
       {
-        "label": "Credit review",
+        "label": "Credit",
         "x": 228,
         "y": 100,
         "w": 124,
         "h": 50,
         "shape": "hex",
         "tone": "cyan",
-        "size": 14
+        "size": 16
       },
       {
-        "label": "Service copilot",
+        "label": "Service",
         "x": 372,
         "y": 100,
         "w": 124,
         "h": 50,
         "shape": "hex",
         "tone": "cyan",
-        "size": 14
+        "size": 16
       },
       {
-        "label": "Wealth assistant",
+        "label": "Wealth",
         "x": 515,
         "y": 100,
         "w": 124,
         "h": 50,
         "shape": "hex",
         "tone": "cyan",
-        "size": 14
+        "size": 16
       },
       {
         "item": 0,
@@ -396,7 +396,7 @@
         "h": 50,
         "shape": "circle",
         "tone": "blue",
-        "size": 14
+        "size": 16
       },
       {
         "label": "Use per case",
@@ -406,7 +406,7 @@
         "h": 50,
         "shape": "circle",
         "tone": "blue",
-        "size": 14
+        "size": 16
       },
       {
         "label": "Unit price",
@@ -416,7 +416,7 @@
         "h": 50,
         "shape": "circle",
         "tone": "blue",
-        "size": 14
+        "size": 16
       },
       {
         "item": 1,
@@ -642,16 +642,16 @@
         "h": 50,
         "shape": "person",
         "tone": "amber",
-        "size": 14
+        "size": 16
       },
       {
-        "label": "Credit review",
+        "label": "Credit",
         "x": 500,
         "y": 378,
         "w": 140,
         "h": 50,
         "tone": "slate",
-        "size": 14
+        "size": 16
       },
       {
         "item": 5,
@@ -781,7 +781,7 @@
         "h": 88,
         "shape": "diamond",
         "tone": "amber",
-        "size": 12
+        "size": 15
       },
       {
         "item": 3,
@@ -917,7 +917,7 @@
         "h": 54,
         "shape": "person",
         "tone": "blue",
-        "size": 14
+        "size": 17
       },
       {
         "label": "Customer",
@@ -927,7 +927,7 @@
         "h": 54,
         "shape": "person",
         "tone": "slate",
-        "size": 14
+        "size": 17
       },
       {
         "item": 1,
@@ -979,7 +979,7 @@
         "h": 48,
         "shape": "person",
         "tone": "amber",
-        "size": 13
+        "size": 17
       },
       {
         "label": "Cloud",
@@ -989,7 +989,7 @@
         "h": 60,
         "shape": "cloud",
         "tone": "red",
-        "size": 13
+        "size": 16
       }
     ],
     "edges": [
@@ -1101,7 +1101,7 @@
         "h": 44,
         "shape": "pill",
         "tone": "slate",
-        "size": 13
+        "size": 15
       },
       {
         "item": 2,
@@ -1119,7 +1119,7 @@
         "w": 170,
         "h": 38,
         "tone": "amber",
-        "size": 13
+        "size": 15
       },
       {
         "label": "② On-prem intent",
@@ -1128,7 +1128,7 @@
         "w": 170,
         "h": 38,
         "tone": "slate",
-        "size": 13
+        "size": 15
       },
       {
         "label": "③ FAQ",
@@ -1137,7 +1137,7 @@
         "w": 96,
         "h": 40,
         "tone": "slate",
-        "size": 13
+        "size": 15
       },
       {
         "item": 3,
@@ -1154,7 +1154,7 @@
         "w": 170,
         "h": 38,
         "tone": "amber",
-        "size": 13
+        "size": 15
       },
       {
         "label": "⑤ Masked memory",
@@ -1163,7 +1163,7 @@
         "w": 170,
         "h": 38,
         "tone": "amber",
-        "size": 13
+        "size": 15
       },
       {
         "item": 4,
@@ -1256,7 +1256,7 @@
         "h": 46,
         "shape": "db",
         "tone": "slate",
-        "size": 13
+        "size": 15
       },
       {
         "label": "Credit",
@@ -1266,7 +1266,7 @@
         "h": 46,
         "shape": "db",
         "tone": "slate",
-        "size": 13
+        "size": 15
       },
       {
         "label": "Service",
@@ -1276,7 +1276,7 @@
         "h": 46,
         "shape": "db",
         "tone": "slate",
-        "size": 13
+        "size": 15
       },
       {
         "label": "Wealth",
@@ -1286,7 +1286,7 @@
         "h": 46,
         "shape": "db",
         "tone": "slate",
-        "size": 13
+        "size": 15
       },
       {
         "item": 2,
@@ -1329,7 +1329,7 @@
         "h": 50,
         "shape": "doc",
         "tone": "slate",
-        "size": 13
+        "size": 16
       },
       {
         "item": 1,
@@ -1357,7 +1357,7 @@
         "shape": "pill",
         "tone": "red",
         "solid": true,
-        "size": 13
+        "size": 16
       }
     ],
     "edges": [
@@ -1521,7 +1521,7 @@
         "w": 72,
         "h": 40,
         "tone": "slate",
-        "size": 13
+        "size": 15
       },
       {
         "label": "Output",
@@ -1530,7 +1530,7 @@
         "w": 72,
         "h": 40,
         "tone": "slate",
-        "size": 13
+        "size": 15
       },
       {
         "label": "Actions",
@@ -1539,7 +1539,7 @@
         "w": 72,
         "h": 40,
         "tone": "slate",
-        "size": 13
+        "size": 15
       },
       {
         "item": 2,
@@ -1559,7 +1559,7 @@
         "h": 44,
         "shape": "pill",
         "tone": "slate",
-        "size": 13
+        "size": 15
       },
       {
         "item": 3,
@@ -1579,7 +1579,7 @@
         "h": 44,
         "shape": "pill",
         "tone": "slate",
-        "size": 13
+        "size": 15
       },
       {
         "item": 4,
@@ -1743,7 +1743,7 @@
         "h": 40,
         "tone": "green",
         "solid": true,
-        "size": 12
+        "size": 14
       },
       {
         "label": "4 scored ✓",
@@ -1753,7 +1753,7 @@
         "h": 40,
         "tone": "green",
         "solid": true,
-        "size": 12
+        "size": 14
       },
       {
         "label": "5 scoring",
@@ -1762,7 +1762,7 @@
         "w": 104,
         "h": 40,
         "tone": "amber",
-        "size": 12
+        "size": 14
       },
       {
         "label": "9 more",
@@ -1771,7 +1771,7 @@
         "w": 104,
         "h": 40,
         "tone": "slate",
-        "size": 12
+        "size": 14
       },
       {
         "label": "by Jan 2027",
@@ -1781,7 +1781,7 @@
         "h": 40,
         "shape": "pill",
         "tone": "red",
-        "size": 12
+        "size": 14
       },
       {
         "item": 0,
@@ -1824,7 +1824,7 @@
         "w": 130,
         "h": 46,
         "tone": "slate",
-        "size": 13
+        "size": 15
       }
     ],
     "edges": [
@@ -1925,7 +1925,7 @@
         "h": 44,
         "shape": "pill",
         "tone": "slate",
-        "size": 13
+        "size": 15
       },
       {
         "label": "Staff",
@@ -1935,7 +1935,7 @@
         "h": 50,
         "shape": "person",
         "tone": "slate",
-        "size": 13
+        "size": 16
       },
       {
         "item": 0,
@@ -1953,7 +1953,7 @@
         "h": 50,
         "shape": "person",
         "tone": "slate",
-        "size": 13
+        "size": 16
       },
       {
         "label": "Safety",
@@ -1963,7 +1963,7 @@
         "h": 34,
         "shape": "pill",
         "tone": "amber",
-        "size": 12
+        "size": 14
       },
       {
         "label": "Tools",
@@ -1973,7 +1973,7 @@
         "h": 34,
         "shape": "pill",
         "tone": "amber",
-        "size": 12
+        "size": 14
       },
       {
         "label": "Prompt",
@@ -1983,7 +1983,7 @@
         "h": 34,
         "shape": "pill",
         "tone": "amber",
-        "size": 12
+        "size": 14
       },
       {
         "item": 1,
@@ -2001,7 +2001,7 @@
         "h": 50,
         "shape": "person",
         "tone": "slate",
-        "size": 13
+        "size": 15
       },
       {
         "item": 2,
@@ -2136,7 +2136,7 @@
         "w": 130,
         "h": 36,
         "tone": "blue",
-        "size": 13
+        "size": 15
       },
       {
         "label": "Gemini",
@@ -2145,7 +2145,7 @@
         "w": 130,
         "h": 36,
         "tone": "blue",
-        "size": 13
+        "size": 15
       },
       {
         "label": "Ella assistant",
@@ -2154,7 +2154,7 @@
         "w": 130,
         "h": 36,
         "tone": "blue",
-        "size": 13
+        "size": 15
       },
       {
         "label": "Four agents",
@@ -2163,7 +2163,7 @@
         "w": 130,
         "h": 36,
         "tone": "purple",
-        "size": 13
+        "size": 15
       },
       {
         "label": "Cost model",
@@ -2172,7 +2172,7 @@
         "w": 130,
         "h": 36,
         "tone": "purple",
-        "size": 13
+        "size": 15
       },
       {
         "label": "Guardrails PoC",
@@ -2181,7 +2181,7 @@
         "w": 120,
         "h": 36,
         "tone": "purple",
-        "size": 13
+        "size": 15
       },
       {
         "item": 0,
@@ -2331,7 +2331,7 @@
         "h": 54,
         "shape": "doc",
         "tone": "slate",
-        "size": 13
+        "size": 15
       },
       {
         "label": "Approved parts",
@@ -2341,7 +2341,7 @@
         "h": 60,
         "shape": "db",
         "tone": "blue",
-        "size": 13
+        "size": 15
       },
       {
         "label": "Screen",
@@ -2350,7 +2350,7 @@
         "w": 88,
         "h": 54,
         "tone": "green",
-        "size": 13
+        "size": 16
       },
       {
         "item": 1,
@@ -2516,7 +2516,7 @@
         "h": 44,
         "shape": "doc",
         "tone": "slate",
-        "size": 12
+        "size": 15
       },
       {
         "label": "Macro data",
@@ -2526,7 +2526,7 @@
         "h": 44,
         "shape": "doc",
         "tone": "slate",
-        "size": 12
+        "size": 15
       },
       {
         "label": "News",
@@ -2536,7 +2536,7 @@
         "h": 44,
         "shape": "doc",
         "tone": "slate",
-        "size": 12
+        "size": 15
       },
       {
         "item": 3,
@@ -2573,7 +2573,7 @@
         "h": 50,
         "shape": "person",
         "tone": "blue",
-        "size": 13
+        "size": 16
       },
       {
         "item": 0,
@@ -2592,7 +2592,7 @@
         "shape": "diamond",
         "tone": "amber",
         "solid": true,
-        "size": 12
+        "size": 15
       },
       {
         "label": "Asset manager",
@@ -2602,7 +2602,7 @@
         "h": 54,
         "shape": "person",
         "tone": "red",
-        "size": 13
+        "size": 16
       }
     ],
     "edges": [
@@ -2685,7 +2685,7 @@
         "h": 50,
         "shape": "person",
         "tone": "slate",
-        "size": 13
+        "size": 16
       },
       {
         "label": "SharePoint",
@@ -2695,7 +2695,7 @@
         "h": 64,
         "shape": "db",
         "tone": "blue",
-        "size": 13
+        "size": 16
       },
       {
         "item": 0,
@@ -2729,7 +2729,7 @@
         "h": 60,
         "shape": "doc",
         "tone": "amber",
-        "size": 13
+        "size": 16
       },
       {
         "label": "Reviewer",
@@ -2739,7 +2739,7 @@
         "h": 50,
         "shape": "person",
         "tone": "green",
-        "size": 13
+        "size": 16
       },
       {
         "label": "Azure DevOps",
@@ -2749,7 +2749,7 @@
         "h": 38,
         "shape": "pill",
         "tone": "cyan",
-        "size": 12
+        "size": 14
       },
       {
         "label": "Container Apps",
@@ -2759,7 +2759,7 @@
         "h": 38,
         "shape": "pill",
         "tone": "cyan",
-        "size": 12
+        "size": 14
       }
     ],
     "edges": [
@@ -3388,7 +3388,7 @@
         "label": "Line item × period → value",
         "w": 230,
         "h": 50,
-        "size": 13
+        "size": 16
       },
       {
         "x": 447,
@@ -3477,7 +3477,7 @@
         "label": "Rural groups, SMEs",
         "w": 196,
         "h": 50,
-        "size": 13
+        "size": 15
       },
       {
         "item": 0,
@@ -3496,7 +3496,7 @@
         "label": "T Ambassador, 6th",
         "w": 196,
         "h": 50,
-        "size": 13
+        "size": 15
       },
       {
         "item": 1,
@@ -3593,7 +3593,7 @@
         "label": "Same twice?",
         "w": 170,
         "h": 84,
-        "size": 13
+        "size": 14
       },
       {
         "item": 2,
@@ -3667,7 +3667,7 @@
         "solid": true,
         "w": 100,
         "h": 40,
-        "size": 13
+        "size": 16
       }
     ],
     "edges": [
@@ -3765,7 +3765,7 @@
         "label": "Before",
         "w": 110,
         "h": 40,
-        "size": 13
+        "size": 15
       },
       {
         "item": 0,
@@ -3776,7 +3776,7 @@
         "solid": true,
         "w": 190,
         "h": 90,
-        "size": 13
+        "size": 18
       },
       {
         "x": 525,
@@ -3786,7 +3786,7 @@
         "label": "After",
         "w": 110,
         "h": 40,
-        "size": 13
+        "size": 15
       },
       {
         "item": 2,
@@ -4039,7 +4039,7 @@
         "solid": true,
         "w": 200,
         "h": 36,
-        "size": 13
+        "size": 16
       },
       {
         "item": 1,
@@ -4076,7 +4076,7 @@
         "tone": "purple",
         "w": 140,
         "h": 60,
-        "size": 13
+        "size": 16
       }
     ],
     "edges": [
@@ -4178,7 +4178,7 @@
         "tone": "purple",
         "w": 160,
         "h": 70,
-        "size": 12
+        "size": 16
       },
       {
         "item": 2,
@@ -4812,7 +4812,7 @@
         "label": "PostgreSQL",
         "w": 150,
         "h": 70,
-        "size": 14
+        "size": 16
       },
       {
         "item": 5,
@@ -4943,7 +4943,7 @@
         "label": "Video",
         "w": 100,
         "h": 36,
-        "size": 12
+        "size": 13
       },
       {
         "x": 180,
@@ -4953,7 +4953,7 @@
         "label": "Turnover",
         "w": 100,
         "h": 36,
-        "size": 12
+        "size": 13
       },
       {
         "x": 290,
@@ -4963,7 +4963,7 @@
         "label": "Prior return",
         "w": 100,
         "h": 36,
-        "size": 12
+        "size": 13
       },
       {
         "x": 70,
@@ -4973,7 +4973,7 @@
         "label": "Top holders",
         "w": 100,
         "h": 36,
-        "size": 12
+        "size": 13
       },
       {
         "x": 180,
@@ -4983,7 +4983,7 @@
         "label": "Days since",
         "w": 100,
         "h": 36,
-        "size": 12
+        "size": 13
       },
       {
         "x": 290,
@@ -4993,7 +4993,7 @@
         "label": "Retail",
         "w": 100,
         "h": 36,
-        "size": 12
+        "size": 13
       },
       {
         "x": 70,
@@ -5003,7 +5003,7 @@
         "label": "Size",
         "w": 100,
         "h": 36,
-        "size": 12
+        "size": 13
       },
       {
         "x": 180,
@@ -5013,7 +5013,7 @@
         "label": "Book/market",
         "w": 100,
         "h": 36,
-        "size": 12
+        "size": 13
       },
       {
         "x": 290,
@@ -5023,7 +5023,7 @@
         "label": "Industry",
         "w": 100,
         "h": 36,
-        "size": 12
+        "size": 13
       },
       {
         "item": 2,
