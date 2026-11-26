@@ -250,10 +250,11 @@ p, li { text-wrap: pretty; }
 
 /* Before -> After card on project pages: one frame; muted "before", highlighted "now" with proofs; "what I did" below. */
 .ba { margin: 0 0 2.5rem; border: 1px solid var(--line); border-radius: 16px; background: #111a2e; overflow: hidden; }
-.ba-grid { display: grid; grid-template-columns: minmax(0, 1fr) 2.2rem minmax(0, 1.35fr); }
-.ba-before, .ba-after { padding: 1.1rem 1.2rem 1.2rem; }
+/* Two equal halves; the arrow is a round badge sitting exactly on the line between them. */
+.ba-grid { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.ba-before, .ba-after { padding: 1.1rem 1.6rem 1.2rem; }
 .ba-after { background: #0f2a26; border-left: 1px solid rgba(16,185,129,0.3); }
-.ba-arrow { display: flex; align-items: center; justify-content: center; color: #34d399; font-size: 1.3rem; background: linear-gradient(90deg, #111a2e 50%, #0f2a26 50%); }
+.ba-arrow { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 1; width: 2.2rem; height: 2.2rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #34d399; font-size: 1.15rem; background: #0b1120; border: 1px solid rgba(16,185,129,0.45); }
 .post-body .ba-k { margin: 0 0 0.45rem; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; color: #94a3b8; display: flex; align-items: center; gap: 0.5rem; }
 .ba-after .ba-k { color: #6ee7b7; }
 .ba-status { font-size: 0.68rem; letter-spacing: 0; padding: 0.05rem 0.45rem; border-radius: 6px; color: #fbbf24; border: 1px solid rgba(251,191,36,0.45); font-weight: 600; }
@@ -267,7 +268,7 @@ p, li { text-wrap: pretty; }
 .post-body .ba-did .ba-k { margin: 0; white-space: nowrap; }
 @media (max-width: 640px) {
   .ba-grid { grid-template-columns: minmax(0, 1fr); }
-  .ba-arrow { height: 1.8rem; background: linear-gradient(180deg, #111a2e 50%, #0f2a26 50%); transform: none; }
+  .ba-arrow { position: relative; left: auto; top: auto; transform: rotate(90deg); margin: -1.1rem auto; }
   .ba-after { border-left: 0; }
   .ba-did { flex-direction: column; gap: 0.2rem; }
 }
