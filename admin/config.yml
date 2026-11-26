@@ -1023,6 +1023,310 @@ collections:
                     fields:
                       - { name: stage, label: "階段", widget: string }
                       - { name: duty, label: "職責", widget: string }
+      - name: concepts
+        label: "部落格文章的概念架構圖（posts/concepts.json）"
+        file: /posts/concepts.json
+        format: json
+        fields:
+          - name: "a2ui-productization"
+            label: "從技術研究到產品：A2UI 的產品化旅程"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "圖的類型", widget: select, options: [{ label: "流程（由上往下）", value: flow }, { label: "層次（金字塔）", value: layers }, { label: "核心與分支", value: hub }] }
+              - { name: title, label: "概念圖標題", widget: string }
+              - name: center
+                label: "核心（只有「核心與分支」要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: label, label: "格子上的短文字", widget: string }
+                  - { name: heading, label: "對應段落標題的開頭（例如 一、）", widget: string }
+              - name: nodes
+                label: "格子（每格對應文章的一個段落）"
+                label_singular: "格子"
+                widget: list
+                summary: "{{fields.label}}"
+                fields:
+                  - { name: label, label: "格子上的短文字（10 字內最好）", widget: string }
+                  - { name: heading, label: "對應段落標題的開頭（例如 一、 或 為什麼選擇 RAG）", widget: string }
+          - name: "ai-agent-gpu-cost"
+            label: "AI Agent 的算力成本怎麼算：把 GPU 拆成空間與時間"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "圖的類型", widget: select, options: [{ label: "流程（由上往下）", value: flow }, { label: "層次（金字塔）", value: layers }, { label: "核心與分支", value: hub }] }
+              - { name: title, label: "概念圖標題", widget: string }
+              - name: center
+                label: "核心（只有「核心與分支」要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: label, label: "格子上的短文字", widget: string }
+                  - { name: heading, label: "對應段落標題的開頭（例如 一、）", widget: string }
+              - name: nodes
+                label: "格子（每格對應文章的一個段落）"
+                label_singular: "格子"
+                widget: list
+                summary: "{{fields.label}}"
+                fields:
+                  - { name: label, label: "格子上的短文字（10 字內最好）", widget: string }
+                  - { name: heading, label: "對應段落標題的開頭（例如 一、 或 為什麼選擇 RAG）", widget: string }
+          - name: "ai-agent-prelaunch-check"
+            label: "AI Agent 上線前要檢查什麼：把金管會六大原則變成一張九格表"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "圖的類型", widget: select, options: [{ label: "流程（由上往下）", value: flow }, { label: "層次（金字塔）", value: layers }, { label: "核心與分支", value: hub }] }
+              - { name: title, label: "概念圖標題", widget: string }
+              - name: center
+                label: "核心（只有「核心與分支」要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: label, label: "格子上的短文字", widget: string }
+                  - { name: heading, label: "對應段落標題的開頭（例如 一、）", widget: string }
+              - name: nodes
+                label: "格子（每格對應文章的一個段落）"
+                label_singular: "格子"
+                widget: list
+                summary: "{{fields.label}}"
+                fields:
+                  - { name: label, label: "格子上的短文字（10 字內最好）", widget: string }
+                  - { name: heading, label: "對應段落標題的開頭（例如 一、 或 為什麼選擇 RAG）", widget: string }
+          - name: "ai-guardrails-framework"
+            label: "銀行的 AI 安全護欄怎麼做：從金管會原則到 3,600 題實測"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "圖的類型", widget: select, options: [{ label: "流程（由上往下）", value: flow }, { label: "層次（金字塔）", value: layers }, { label: "核心與分支", value: hub }] }
+              - { name: title, label: "概念圖標題", widget: string }
+              - name: center
+                label: "核心（只有「核心與分支」要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: label, label: "格子上的短文字", widget: string }
+                  - { name: heading, label: "對應段落標題的開頭（例如 一、）", widget: string }
+              - name: nodes
+                label: "格子（每格對應文章的一個段落）"
+                label_singular: "格子"
+                widget: list
+                summary: "{{fields.label}}"
+                fields:
+                  - { name: label, label: "格子上的短文字（10 字內最好）", widget: string }
+                  - { name: heading, label: "對應段落標題的開頭（例如 一、 或 為什麼選擇 RAG）", widget: string }
+          - name: "ai-ops-dashboard"
+            label: "AI 營運成效怎麼看：一張 Dashboard 回答「AI 值不值得」"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "圖的類型", widget: select, options: [{ label: "流程（由上往下）", value: flow }, { label: "層次（金字塔）", value: layers }, { label: "核心與分支", value: hub }] }
+              - { name: title, label: "概念圖標題", widget: string }
+              - name: center
+                label: "核心（只有「核心與分支」要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: label, label: "格子上的短文字", widget: string }
+                  - { name: heading, label: "對應段落標題的開頭（例如 一、）", widget: string }
+              - name: nodes
+                label: "格子（每格對應文章的一個段落）"
+                label_singular: "格子"
+                widget: list
+                summary: "{{fields.label}}"
+                fields:
+                  - { name: label, label: "格子上的短文字（10 字內最好）", widget: string }
+                  - { name: heading, label: "對應段落標題的開頭（例如 一、 或 為什麼選擇 RAG）", widget: string }
+          - name: "ai-platform-poc"
+            label: "AI 代理平台怎麼選：在採購前用實測找出 12 個問題"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "圖的類型", widget: select, options: [{ label: "流程（由上往下）", value: flow }, { label: "層次（金字塔）", value: layers }, { label: "核心與分支", value: hub }] }
+              - { name: title, label: "概念圖標題", widget: string }
+              - name: center
+                label: "核心（只有「核心與分支」要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: label, label: "格子上的短文字", widget: string }
+                  - { name: heading, label: "對應段落標題的開頭（例如 一、）", widget: string }
+              - name: nodes
+                label: "格子（每格對應文章的一個段落）"
+                label_singular: "格子"
+                widget: list
+                summary: "{{fields.label}}"
+                fields:
+                  - { name: label, label: "格子上的短文字（10 字內最好）", widget: string }
+                  - { name: heading, label: "對應段落標題的開頭（例如 一、 或 為什麼選擇 RAG）", widget: string }
+          - name: "finjourney-two-weeks"
+            label: "一個人兩週做出 AI 理財產品：AI 只提方案，數字交給系統"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "圖的類型", widget: select, options: [{ label: "流程（由上往下）", value: flow }, { label: "層次（金字塔）", value: layers }, { label: "核心與分支", value: hub }] }
+              - { name: title, label: "概念圖標題", widget: string }
+              - name: center
+                label: "核心（只有「核心與分支」要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: label, label: "格子上的短文字", widget: string }
+                  - { name: heading, label: "對應段落標題的開頭（例如 一、）", widget: string }
+              - name: nodes
+                label: "格子（每格對應文章的一個段落）"
+                label_singular: "格子"
+                widget: list
+                summary: "{{fields.label}}"
+                fields:
+                  - { name: label, label: "格子上的短文字（10 字內最好）", widget: string }
+                  - { name: heading, label: "對應段落標題的開頭（例如 一、 或 為什麼選擇 RAG）", widget: string }
+          - name: "multi-agent-investment"
+            label: "Multi-Agent 投資決策架構：讓 AI 像基金團隊一樣思考"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "圖的類型", widget: select, options: [{ label: "流程（由上往下）", value: flow }, { label: "層次（金字塔）", value: layers }, { label: "核心與分支", value: hub }] }
+              - { name: title, label: "概念圖標題", widget: string }
+              - name: center
+                label: "核心（只有「核心與分支」要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: label, label: "格子上的短文字", widget: string }
+                  - { name: heading, label: "對應段落標題的開頭（例如 一、）", widget: string }
+              - name: nodes
+                label: "格子（每格對應文章的一個段落）"
+                label_singular: "格子"
+                widget: list
+                summary: "{{fields.label}}"
+                fields:
+                  - { name: label, label: "格子上的短文字（10 字內最好）", widget: string }
+                  - { name: heading, label: "對應段落標題的開頭（例如 一、 或 為什麼選擇 RAG）", widget: string }
+          - name: "rag-smart-customer-service"
+            label: "用 RAG 打造金融智能客服的踩坑紀錄"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "圖的類型", widget: select, options: [{ label: "流程（由上往下）", value: flow }, { label: "層次（金字塔）", value: layers }, { label: "核心與分支", value: hub }] }
+              - { name: title, label: "概念圖標題", widget: string }
+              - name: center
+                label: "核心（只有「核心與分支」要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: label, label: "格子上的短文字", widget: string }
+                  - { name: heading, label: "對應段落標題的開頭（例如 一、）", widget: string }
+              - name: nodes
+                label: "格子（每格對應文章的一個段落）"
+                label_singular: "格子"
+                widget: list
+                summary: "{{fields.label}}"
+                fields:
+                  - { name: label, label: "格子上的短文字（10 字內最好）", widget: string }
+                  - { name: heading, label: "對應段落標題的開頭（例如 一、 或 為什麼選擇 RAG）", widget: string }
+          - name: "thesis-llm-financial-statements"
+            label: "讓 LLM 讀財報：股價報酬的解釋力從 5.14% 到 63.73%"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "圖的類型", widget: select, options: [{ label: "流程（由上往下）", value: flow }, { label: "層次（金字塔）", value: layers }, { label: "核心與分支", value: hub }] }
+              - { name: title, label: "概念圖標題", widget: string }
+              - name: center
+                label: "核心（只有「核心與分支」要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: label, label: "格子上的短文字", widget: string }
+                  - { name: heading, label: "對應段落標題的開頭（例如 一、）", widget: string }
+              - name: nodes
+                label: "格子（每格對應文章的一個段落）"
+                label_singular: "格子"
+                widget: list
+                summary: "{{fields.label}}"
+                fields:
+                  - { name: label, label: "格子上的短文字（10 字內最好）", widget: string }
+                  - { name: heading, label: "對應段落標題的開頭（例如 一、 或 為什麼選擇 RAG）", widget: string }
+          - name: "traditional-vs-ai-development"
+            label: "傳統開發 vs. AI 開發：分工圖哪裡不一樣"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "圖的類型", widget: select, options: [{ label: "流程（由上往下）", value: flow }, { label: "層次（金字塔）", value: layers }, { label: "核心與分支", value: hub }] }
+              - { name: title, label: "概念圖標題", widget: string }
+              - name: center
+                label: "核心（只有「核心與分支」要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: label, label: "格子上的短文字", widget: string }
+                  - { name: heading, label: "對應段落標題的開頭（例如 一、）", widget: string }
+              - name: nodes
+                label: "格子（每格對應文章的一個段落）"
+                label_singular: "格子"
+                widget: list
+                summary: "{{fields.label}}"
+                fields:
+                  - { name: label, label: "格子上的短文字（10 字內最好）", widget: string }
+                  - { name: heading, label: "對應段落標題的開頭（例如 一、 或 為什麼選擇 RAG）", widget: string }
+          - name: "vibe-edge-backtest-trust"
+            label: "不讓回測騙自己：AI 寫策略，誰來當裁判"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "圖的類型", widget: select, options: [{ label: "流程（由上往下）", value: flow }, { label: "層次（金字塔）", value: layers }, { label: "核心與分支", value: hub }] }
+              - { name: title, label: "概念圖標題", widget: string }
+              - name: center
+                label: "核心（只有「核心與分支」要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: label, label: "格子上的短文字", widget: string }
+                  - { name: heading, label: "對應段落標題的開頭（例如 一、）", widget: string }
+              - name: nodes
+                label: "格子（每格對應文章的一個段落）"
+                label_singular: "格子"
+                widget: list
+                summary: "{{fields.label}}"
+                fields:
+                  - { name: label, label: "格子上的短文字（10 字內最好）", widget: string }
+                  - { name: heading, label: "對應段落標題的開頭（例如 一、 或 為什麼選擇 RAG）", widget: string }
+          - name: "vlm-vs-ocr-statements"
+            label: "掃描財報為什麼 OCR 不夠：視覺語言模型多看懂了什麼"
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - { name: type, label: "圖的類型", widget: select, options: [{ label: "流程（由上往下）", value: flow }, { label: "層次（金字塔）", value: layers }, { label: "核心與分支", value: hub }] }
+              - { name: title, label: "概念圖標題", widget: string }
+              - name: center
+                label: "核心（只有「核心與分支」要填）"
+                widget: object
+                required: false
+                fields:
+                  - { name: label, label: "格子上的短文字", widget: string }
+                  - { name: heading, label: "對應段落標題的開頭（例如 一、）", widget: string }
+              - name: nodes
+                label: "格子（每格對應文章的一個段落）"
+                label_singular: "格子"
+                widget: list
+                summary: "{{fields.label}}"
+                fields:
+                  - { name: label, label: "格子上的短文字（10 字內最好）", widget: string }
+                  - { name: heading, label: "對應段落標題的開頭（例如 一、 或 為什麼選擇 RAG）", widget: string }
       - name: flows
         label: "AI SDLC 階段頁的角色分工圖（flows.json）"
         file: /data/flows.json

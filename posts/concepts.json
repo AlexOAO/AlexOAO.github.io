@@ -1,0 +1,348 @@
+{
+  "a2ui-productization": {
+    "type": "flow",
+    "title": "產品化的五個站點",
+    "nodes": [
+      {
+        "label": "A2UI 是什麼",
+        "heading": "一、"
+      },
+      {
+        "label": "① 先找場景",
+        "heading": "三、"
+      },
+      {
+        "label": "② 資源決定上限",
+        "heading": "四、"
+      },
+      {
+        "label": "③ 技術可行是門檻",
+        "heading": "五、"
+      },
+      {
+        "label": "④⑤ PoC 到產品化",
+        "heading": "六、"
+      }
+    ]
+  },
+  "ai-agent-gpu-cost": {
+    "type": "flow",
+    "title": "AI 成本怎麼算",
+    "nodes": [
+      {
+        "label": "找共同計算單位",
+        "heading": "一、"
+      },
+      {
+        "label": "GPU＝空間 × 時間",
+        "heading": "二、"
+      },
+      {
+        "label": "三套成本＋效益",
+        "heading": "三、"
+      },
+      {
+        "label": "工作量跟著元件走",
+        "heading": "四、"
+      },
+      {
+        "label": "時段也是成本",
+        "heading": "五、"
+      }
+    ]
+  },
+  "ai-agent-prelaunch-check": {
+    "type": "flow",
+    "title": "上線前檢核的六步",
+    "nodes": [
+      {
+        "label": "原則拆成檢查對象",
+        "heading": "一、"
+      },
+      {
+        "label": "八項只問三件事",
+        "heading": "二、"
+      },
+      {
+        "label": "接進既有流程",
+        "heading": "三、"
+      },
+      {
+        "label": "四種 AI 四種測法",
+        "heading": "四、"
+      },
+      {
+        "label": "業務規則講清楚",
+        "heading": "五、"
+      },
+      {
+        "label": "寫進制度才持續",
+        "heading": "六、"
+      }
+    ]
+  },
+  "ai-guardrails-framework": {
+    "type": "layers",
+    "title": "護欄的層次",
+    "nodes": [
+      {
+        "label": "治理三層，護欄管一層",
+        "heading": "一、"
+      },
+      {
+        "label": "四層防禦",
+        "heading": "二、"
+      },
+      {
+        "label": "政策順序",
+        "heading": "三、"
+      },
+      {
+        "label": "題庫比產品重要",
+        "heading": "四、"
+      },
+      {
+        "label": "漏放率 × 誤擋率",
+        "heading": "五、"
+      },
+      {
+        "label": "護欄 ≠ 紅隊",
+        "heading": "六、"
+      },
+      {
+        "label": "管不到 Agent 行為",
+        "heading": "七、"
+      }
+    ]
+  },
+  "ai-ops-dashboard": {
+    "type": "hub",
+    "title": "Dashboard 的核心問題",
+    "center": {
+      "label": "只回答一件事：值不值得",
+      "heading": "一、"
+    },
+    "nodes": [
+      {
+        "label": "五個面向",
+        "heading": "二、"
+      },
+      {
+        "label": "採用 ≠ 成效",
+        "heading": "三、"
+      },
+      {
+        "label": "對內：原廠報表",
+        "heading": "四、"
+      },
+      {
+        "label": "對外：接業務成果",
+        "heading": "五、"
+      },
+      {
+        "label": "風險也是成效",
+        "heading": "六、"
+      },
+      {
+        "label": "從數字到決策",
+        "heading": "七、"
+      }
+    ]
+  },
+  "ai-platform-poc": {
+    "type": "flow",
+    "title": "選型 PoC 的五步",
+    "nodes": [
+      {
+        "label": "評測要回答的問題",
+        "heading": "一、"
+      },
+      {
+        "label": "依平台拆模組",
+        "heading": "二、"
+      },
+      {
+        "label": "先查真實踩坑",
+        "heading": "三、"
+      },
+      {
+        "label": "自己的資料＋嚴重度",
+        "heading": "四、"
+      },
+      {
+        "label": "同一把尺比較",
+        "heading": "五、"
+      }
+    ]
+  },
+  "finjourney-two-weeks": {
+    "type": "hub",
+    "title": "FinJourney 的核心規則",
+    "center": {
+      "label": "AI 提方案，系統算數字",
+      "heading": "一、"
+    },
+    "nodes": [
+      {
+        "label": "AI 只在框框裡提案",
+        "heading": "二、"
+      },
+      {
+        "label": "分工清楚的架構",
+        "heading": "三、"
+      },
+      {
+        "label": "上線後的保護",
+        "heading": "四、"
+      }
+    ]
+  },
+  "multi-agent-investment": {
+    "type": "flow",
+    "title": "多代理投顧的建構",
+    "nodes": [
+      {
+        "label": "架構設計",
+        "heading": "架構設計"
+      },
+      {
+        "label": "為什麼 LangGraph",
+        "heading": "為什麼用 LangGraph"
+      },
+      {
+        "label": "MCP 串接數據",
+        "heading": "MCP 串接"
+      },
+      {
+        "label": "回測驗證",
+        "heading": "回測驗證"
+      },
+      {
+        "label": "反思",
+        "heading": "反思"
+      }
+    ]
+  },
+  "rag-smart-customer-service": {
+    "type": "flow",
+    "title": "RAG 客服的四個決定",
+    "nodes": [
+      {
+        "label": "為什麼選 RAG",
+        "heading": "為什麼選擇 RAG"
+      },
+      {
+        "label": "向量資料庫選型",
+        "heading": "向量資料庫"
+      },
+      {
+        "label": "Chunk 策略",
+        "heading": "Chunk 策略"
+      },
+      {
+        "label": "最終架構",
+        "heading": "最終架構"
+      }
+    ]
+  },
+  "thesis-llm-financial-statements": {
+    "type": "flow",
+    "title": "研究的四步",
+    "nodes": [
+      {
+        "label": "資料：多季追蹤",
+        "heading": "一、"
+      },
+      {
+        "label": "方法：先查再打分",
+        "heading": "二、"
+      },
+      {
+        "label": "結果：解釋力提高",
+        "heading": "三、"
+      },
+      {
+        "label": "這個數字怎麼讀",
+        "heading": "四、"
+      }
+    ]
+  },
+  "traditional-vs-ai-development": {
+    "type": "flow",
+    "title": "兩種開發的對照",
+    "nodes": [
+      {
+        "label": "傳統：往下交棒",
+        "heading": "一、"
+      },
+      {
+        "label": "AI：四階段＋回路",
+        "heading": "二、"
+      },
+      {
+        "label": "七個差異",
+        "heading": "三、"
+      },
+      {
+        "label": "人與事怎麼推",
+        "heading": "四、"
+      },
+      {
+        "label": "我在圖的哪裡",
+        "heading": "五、"
+      }
+    ]
+  },
+  "vibe-edge-backtest-trust": {
+    "type": "layers",
+    "title": "讓回測可信的防線",
+    "nodes": [
+      {
+        "label": "三種常見的錯",
+        "heading": "一、"
+      },
+      {
+        "label": "裁判不能是選手",
+        "heading": "二、"
+      },
+      {
+        "label": "先鎖定，樣本外只開一次",
+        "heading": "三、"
+      },
+      {
+        "label": "資料也要誠實",
+        "heading": "四、"
+      },
+      {
+        "label": "練習不算證據",
+        "heading": "五、"
+      }
+    ]
+  },
+  "vlm-vs-ocr-statements": {
+    "type": "flow",
+    "title": "OCR 與 VLM 的分工",
+    "nodes": [
+      {
+        "label": "OCR：像素變文字",
+        "heading": "一、"
+      },
+      {
+        "label": "VLM：版面表格一起讀",
+        "heading": "二、"
+      },
+      {
+        "label": "OCR 就夠的時候",
+        "heading": "三、"
+      },
+      {
+        "label": "VLM 有幫助的時候",
+        "heading": "四、"
+      },
+      {
+        "label": "讀得懂 ≠ 數字對",
+        "heading": "五、"
+      }
+    ]
+  }
+}

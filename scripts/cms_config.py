@@ -318,6 +318,12 @@ __GLANCE__
                     fields:
                       - { name: stage, label: "階段", widget: string }
                       - { name: duty, label: "職責", widget: string }
+      - name: concepts
+        label: "部落格文章的概念架構圖（posts/concepts.json）"
+        file: /posts/concepts.json
+        format: json
+        fields:
+__CONCEPTS__
       - name: flows
         label: "AI SDLC 階段頁的角色分工圖（flows.json）"
         file: /data/flows.json
@@ -361,8 +367,39 @@ FLOW_STAGE = """          - name: {key}
 STAGES = [('plan', '① 業務規劃'), ('tune', '② 模型調教'), ('build', '③ 開發部署'), ('ops', '④ 營運監控'), ('gov', 'AI 治理（貫穿全週期）')]
 
 
+def concept_fields():
+    data = json.loads((ROOT / 'posts/concepts.json').read_text(encoding='utf-8'))
+    posts = {p['file'].split('/')[-1].replace('.html', ''): p['title'] for p in json.loads((ROOT / 'posts/posts.json').read_text(encoding='utf-8'))}
+    out = []
+    for k in list(data) + [p for p in posts if p not in data]:
+        out.append(f"""          - name: {q(k)}
+            label: {q(posts.get(k, k))}
+            widget: object
+            collapsed: true
+            required: false
+            fields:
+              - {{ name: type, label: "圖的類型", widget: select, options: [{{ label: "流程（由上往下）", value: flow }}, {{ label: "層次（金字塔）", value: layers }}, {{ label: "核心與分支", value: hub }}] }}
+              - {{ name: title, label: "概念圖標題", widget: string }}
+              - name: center
+                label: "核心（只有「核心與分支」要填）"
+                widget: object
+                required: false
+                fields:
+                  - {{ name: label, label: "格子上的短文字", widget: string }}
+                  - {{ name: heading, label: "對應段落標題的開頭（例如 一、）", widget: string }}
+              - name: nodes
+                label: "格子（每格對應文章的一個段落）"
+                label_singular: "格子"
+                widget: list
+                summary: "{{{{fields.label}}}}"
+                fields:
+                  - {{ name: label, label: "格子上的短文字（10 字內最好）", widget: string }}
+                  - {{ name: heading, label: "對應段落標題的開頭（例如 一、 或 為什麼選擇 RAG）", widget: string }}""")
+    return '\n'.join(out)
+
+
 def block():
-    body = FIXED.replace('__GLANCE__', glance_fields()).replace('- __LINK__', '- ' + LINK)
+    body = FIXED.replace('__GLANCE__', glance_fields()).replace('__CONCEPTS__\n', concept_fields() + '\n').replace('- __LINK__', '- ' + LINK)
     flows = '\n'.join(FLOW_STAGE.format(key=k, label=l) for k, l in STAGES)
     return BEGIN + '\n' + body.replace('__FLOWS__\n', flows + '\n') + END
 
