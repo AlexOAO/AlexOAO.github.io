@@ -778,14 +778,14 @@ collections:
         fields:
           - { name: updated, label: "最後更新（例如 2026/11）", widget: string }
           - name: cycle4
-            label: "IDP 四步循環（頁面最上方的圓環，點擊會跳出視窗）"
+            label: "IDP 四步循環（圓環與彈出視窗是方法論；點選後跳到下方「我的實際規劃」）"
             widget: object
             collapsed: true
             fields:
               - { name: title, label: "標題", widget: string }
               - { name: sub, label: "說明", widget: string }
               - name: steps
-                label: "四個步驟（依順序：職涯意向、自我評估、制定計畫、執行追蹤）"
+                label: "四個步驟（依順序：職涯意向、自我評估、制定計畫、執行追蹤；名稱與說明是方法論，請勿修改）"
                 label_singular: "步驟"
                 widget: list
                 min: 4
@@ -795,14 +795,17 @@ collections:
                   - { name: key, label: "代碼（英文，不顯示）", widget: string }
                   - { name: name, label: "步驟名稱（圓環上顯示）", widget: string }
                   - { name: sub, label: "一句說明", widget: string }
-                  - { name: items, label: "彈出視窗的內容（每行一項，建議 3 項）", widget: list, field: { name: item, label: "內容", widget: string } }
-                  - name: more
-                    label: "彈出視窗底部的連結"
-                    widget: object
-                    required: false
+                  - name: method
+                    label: "方法論的問題與我的回答（方法論文字請勿修改，只改「我的回答」）"
+                    label_singular: "項目"
+                    widget: list
+                    summary: "{{fields.q}}"
                     fields:
-                      - { name: text, label: "連結文字", widget: string }
-                      - { name: href, label: "跳到頁面哪一段（#sec-1 成長層級、#sec-2 職能、#sec-4 路徑、#sec-6 衡量）", widget: string }
+                      - { name: q, label: "方法論的問題（固定文字）", widget: string }
+                      - { name: a, label: "我的回答（還沒有就寫「待補充」）", widget: text }
+                      - { name: href, label: "連到頁面哪一段（選填：#sec-1 成長層級、#sec-2 職能、#sec-3 優先順序、#sec-4 路徑、#sec-6 衡量）", widget: string, required: false }
+              - { name: mine, label: "「我的實際規劃」區塊標題", widget: string }
+              - { name: mineSub, label: "「我的實際規劃」說明", widget: string }
           - name: iceberg
             label: "職能冰山模型（點擊泡泡會跳出視窗）"
             widget: object

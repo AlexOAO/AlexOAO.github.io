@@ -1,63 +1,107 @@
 {
   "cycle4": {
     "title": "The IDP four-step cycle",
-    "sub": "One round a year: where I'm going → where I am → how I'll grow → go and review. Click a step for details.",
+    "sub": "One round a year. The ring is the IDP method; click a step to see the questions it asks, then jump to my actual plan below.",
+    "mine": "My actual plan, answering each step",
+    "mineSub": "Left: the method's question. Right: my answer. Items marked “to be added” are in progress.",
     "steps": [
       {
         "key": "intent",
         "name": "Career intent",
-        "sub": "Where I'm going, who I want to be",
-        "items": [
-          "What the organization needs: AI that moves from pilots to investable, scalable work",
-          "Three-year goal: a value owner accountable for AI results and investment",
-          "Motive: every AI investment can say whether it was worth it"
-        ],
-        "more": {
-          "text": "See the three growth levels",
-          "href": "#sec-1"
-        }
+        "sub": "Where I want to go, who I want to become",
+        "method": [
+          {
+            "q": "Organization and department needs",
+            "a": "The department needs AI to move from pilots to investable, scalable work, with every investment able to say whether it was worth it"
+          },
+          {
+            "q": "Skills needed for the current (or future) role",
+            "a": "Today, as AI BA: problem framing and business cases; as a future value owner: portfolio management and cross-team decisions",
+            "href": "#sec-1"
+          },
+          {
+            "q": "Personal values and willingness",
+            "a": "Accountable for value, evidence first; willing to stand between the business and IT and see things through to launch"
+          },
+          {
+            "q": "Career aspirations and achievement motivation",
+            "a": "Within three years, become a value owner accountable for AI results and investment"
+          }
+        ]
       },
       {
         "key": "assess",
         "name": "Self-assessment",
-        "sub": "Where I am now (competency iceberg)",
-        "items": [
-          "Above water, knowledge and skills: finance, building AI, cost-benefit and governance",
-          "Below water, attitude: curious about the business, evidence first, accountable for value",
-          "Gaps 2 → 4: process design, business case, cross-team leadership"
-        ],
-        "more": {
-          "text": "See the eight competencies and priorities",
-          "href": "#sec-2"
-        }
+        "sub": "Where I am now, who I am",
+        "method": [
+          {
+            "q": "Performance to date",
+            "a": "Found 12 platform issues before purchase; built a 3,600-case guardrail test bank; finished four working Agent prototypes"
+          },
+          {
+            "q": "Feedback and suggestions received",
+            "a": "To be added (feedback from my manager and colleagues)"
+          },
+          {
+            "q": "Identify my main strengths and distinctive talents",
+            "a": "Finance × AI: I speak the business's language and build prototypes myself; covering several roles while the department was new showed me the whole AI project"
+          },
+          {
+            "q": "Recognize areas to strengthen or improve (the competency gap)",
+            "a": "Process design, business case and cross-team leadership, each from level 2 to 4",
+            "href": "#sec-2"
+          },
+          {
+            "q": "Set development goals from career intent and self-assessment",
+            "a": "Within three years, go from co-creating value to owning it",
+            "href": "#sec-3"
+          }
+        ]
       },
       {
         "key": "plan",
         "name": "Plan",
-        "sub": "How I'll grow (SMART)",
-        "items": [
-          "Months 0–6: map a full customer journey with the business",
-          "Months 6–12: write the first investment proposal after a pilot",
-          "Months 6–24: chair the investment gate and monthly results review"
-        ],
-        "more": {
-          "text": "See the three-year roadmap",
-          "href": "#sec-4"
-        }
+        "sub": "How to get there, how to grow",
+        "method": [
+          {
+            "q": "Turn development goals into concrete items (skills, knowledge or behaviour change)",
+            "a": "Skill: customer journey design; knowledge: investment proposals and benefit tracking; behaviour: chairing cross-team decisions"
+          },
+          {
+            "q": "Prioritize the items and plan timing and resources",
+            "a": "Months 0–6 journey map → months 6–12 investment proposal → months 6–24 chair the investment gate",
+            "href": "#sec-4"
+          },
+          {
+            "q": "Reach agreement with my manager and gain support",
+            "a": "To be added (goals and resources agreed with my manager)"
+          },
+          {
+            "q": "Complete this year's development plan (S.M.A.R.T.)",
+            "a": "This year: 1 customer journey being changed, 1 evidence pack, 1 investment proposal"
+          }
+        ]
       },
       {
         "key": "track",
         "name": "Execute and track",
-        "sub": "Go, and review regularly",
-        "items": [
-          "Results monthly, investment quarterly, IDP updated yearly",
-          "Yearly check: 1 journey, 1 evidence pack, 1 investment proposal",
-          "Align progress with my manager and adjust"
-        ],
-        "more": {
-          "text": "See the measures and yearly checklist",
-          "href": "#sec-6"
-        }
+        "sub": "Go!",
+        "method": [
+          {
+            "q": "Carry out the development plan",
+            "a": "Follow the three-year roadmap; every step has a checkable milestone",
+            "href": "#sec-4"
+          },
+          {
+            "q": "Review and track progress regularly (use the performance cycle's checkpoints to discuss with my manager)",
+            "a": "Results monthly, investment quarterly, IDP yearly; discussed with my manager at performance reviews"
+          },
+          {
+            "q": "Measure the effect and adjust in time",
+            "a": "Measured with the yearly checklist and two periods of benefit tracking; next year's plan adjusts to the results",
+            "href": "#sec-6"
+          }
+        ]
       }
     ]
   },
