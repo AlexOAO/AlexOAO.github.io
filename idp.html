@@ -157,6 +157,13 @@
     .ksa button:hover, .ksa button:focus-visible { border-color: #60a5fa; }
     .ksa button b { display: block; font-size: 0.92rem; } .ksa button span { font-size: 0.78rem; color: var(--mute); }
     .ksa button.above b { color: #bae6fd; } .ksa button.below b { color: #fde68a; }
+    .intro2.wide { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
+    .intro2.stack { grid-template-columns: minmax(0, 1fr); }
+    .intro2.stack .ksa { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    @media (max-width: 760px) { .intro2.stack .ksa { grid-template-columns: minmax(0, 1fr); } }
+    .ksa button[style*="--bc"] { border-left: 4px solid var(--bc); }
+    .ksa button[style*="--bc"] b { color: #f1f5f9; }
+    @media (max-width: 760px) { .intro2.wide { grid-template-columns: minmax(0, 1fr); } }
     .src4 { font-size: 0.75rem; color: var(--dim); margin-top: 0.6rem; }
     dialog.dlg { margin: auto; width: min(560px, calc(100vw - 2rem)); padding: 0; border: 1px solid var(--line); border-radius: 16px; background: #111a2e; color: var(--ink); }
     dialog.dlg::backdrop { background: rgba(2, 6, 23, 0.7); }
@@ -206,15 +213,33 @@
   <script>
     const { esc, dataPath, getJSON } = Site;
     const I18N = {
-      en: { goalName: 'My goal', pending: 'To be added', close: 'Close', idpTag: 'IDP framework', iceTag: 'Self-assessment', title: 'Individual Development Plan', back: 'Back to the homepage', toggle: '中文',
+      en: { imp: 'Importance to the goal', none: 'None at the moment', stepNote: 'A step I have walked in practice.', gateNote: 'The investment gate: evidence decides stop, hold, invest or scale. My biggest gap today.', noProof: 'No evidence yet.',
+        c5: 'Seven steps from finding the problem to tracking results, plus one investment gate; the colour shows how far I have got. Click a step for its evidence.', c5c: 'AI value|cycle',
+        c1: 'Three levels, one step up at a time: in place, now, goal. Click a level for what it means and the evidence.',
+        c7: 'Eight habits behind how I work. Click one for what it means.', c7c: 'How|I work',
+        c2: 'Solid line is where I am now, dashed is the three-year target. Click a competency for its level and evidence.',
+        c3: 'Importance to the goal × the gap to target sorts the eight competencies into four groups. Click a quadrant to see which ones.',
+        qm_tr: 'High importance, big gap: build first', qm_br: 'High importance, small gap: keep deepening', qm_tl: 'Lower importance, big gap: build later', qm_bl: 'Lower importance, small gap: maintain',
+        c4: 'A 36-month timeline: the level band on top, a bar per phase, diamonds for milestones. Click a phase for its tasks and outputs.',
+        c6: 'Six measures of results around the yearly minimum. Click one for details.', c6c: 'Yearly|checklist',
+        goalName: 'My goal', pending: 'To be added', close: 'Close', idpTag: 'IDP framework', iceTag: 'Self-assessment', title: 'Individual Development Plan', back: 'Back to the homepage', toggle: '中文',
         milestone: 'Milestone', q1: 'Where I am going', h1: 'Three levels of growth',
         q2: 'Where I am now', h2: 'Eight competencies: now vs three-year target', now: 'Now', target: 'Three-year target', comp: 'Competency', ev: 'Evidence',
         q3: 'What to build first', h3: 'Priority quadrant', xAxis: 'Importance to the goal →', yAxis: 'Gap to target →',
         q4: 'How I will get there', h4: 'Three-year roadmap', months: 'Month', steps: 'Steps', focus: 'Build', use: 'Use my strengths', plan: 'Plan', out: 'Deliverables',
         q5: 'Steps I have walked', h5: 'The AI value cycle', loop: '↺ Results feed the next problem',
         q6: 'How I will know', h6: 'Measures and yearly checklist', check: 'Yearly minimum',
-        h7: 'How I work', updated: 'Last updated', level: 'Level', loadError: 'Content failed to load. A network filter may block this site.' },
-      zh: { goalName: '我的目標', pending: '待補充', close: '關閉', idpTag: 'IDP 框架', iceTag: '自我評估', title: '個人發展計畫', back: '回到首頁', toggle: 'EN',
+        h7: 'How I work', updated: 'Last updated', level: 'Level {n}', loadError: 'Content failed to load. A network filter may block this site.' },
+      zh: { imp: '對目標的重要性', none: '目前沒有', stepNote: '這一步我已在實際專案中走過。', gateNote: '投資關卡：用證據決定停止、暫緩、投資或擴大。這是我目前最大的缺口。', noProof: '目前還沒有證據。',
+        c5: '從找問題到追成效的七個步驟，加上一道投資關卡；顏色代表我走到哪裡。點任一步看證據。', c5c: 'AI 價值|循環',
+        c1: '三個成長層級，一階一階往上：已具備、現在、目標。點任一層看內容與證據。',
+        c7: '八個我工作時的習慣。點任一項看說明。', c7c: '我的|工作方式',
+        c2: '實線是目前程度，虛線是三年目標。點任一項職能看等級與證據。',
+        c3: '用「對目標的重要性」×「與目標的差距」把八項職能分成四類。點任一象限看裡面有哪些職能。',
+        qm_tr: '重要性高、差距大：優先培養', qm_br: '重要性高、差距小：持續深化', qm_tl: '重要性較低、差距大：之後補強', qm_bl: '重要性較低、差距小：維持優勢',
+        c4: '36 個月的時間軸：上方是層級，長條是各階段，菱形是里程碑。點任一階段看任務與產出。',
+        c6: '六個面向衡量成效，中間是每年至少要完成的檢核。點任一項看細節。', c6c: '年度|檢核',
+        goalName: '我的目標', pending: '待補充', close: '關閉', idpTag: 'IDP 框架', iceTag: '自我評估', title: '個人發展計畫', back: '回到首頁', toggle: 'EN',
         milestone: '里程碑', q1: '我要去哪裡', h1: '三個成長層級',
         q2: '我現在在哪裡', h2: '八項職能：目前與三年目標', now: '目前', target: '三年目標', comp: '職能', ev: '證據',
         q3: '先培養什麼', h3: '優先順序象限圖', xAxis: '對目標的重要性 →', yAxis: '與目標的差距 →',
@@ -348,6 +373,113 @@
     // A band that opens each step's group of sections, in the ring's order.
     const band = (d, i) => !d.cycle4 ? '' : `<div class="band" id="step-${i}" style="--c:${STEP_COLORS[i]}"><span>${String(i + 1).padStart(2, '0')}</span><b>${esc(d.cycle4.steps[i].name)}</b><em>${esc(d.cycle4.steps[i].sub)}</em></div>`;
 
+    // ── Concept-model sections: a diagram on the left, concept buttons on the right; both open a popup ──
+    const POP = [];
+    const pop = e => (POP.push(e), POP.length - 1);
+    const SC = { done: '#16a34a', now: '#2563eb', next: '#7c3aed', gap: '#d97706' };
+    const btn = (label, sub, color, i) => `<button data-open="pop" data-i="${i}" style="--bc:${color}"><b>${esc(label)}</b>${sub ? `<span>${esc(sub)}</span>` : ''}</button>`;
+    function concept(id, q, title, sub, left, btns, wide, extra) {
+      return `${q ? `<p class="q">${esc(q)}</p>` : ''}<h2 id="${id}" style="margin-top:${q ? '0.2rem' : '1.6rem'};scroll-margin-top:5rem">${esc(title)}</h2>
+        <p class="lead2">${esc(sub)}</p><div class="intro2${wide === 'stack' ? ' stack' : wide ? ' wide' : ''}"><div>${left}</div><div><div class="ksa">${btns}</div>${extra || ''}</div></div>`;
+    }
+    const zhL = () => Site.getLang() !== 'en';
+    // Nodes on a ring (value cycle, how I work, measures); the centre can open a popup too.
+    function radial(nodes, center, title, loop) {
+      const zh = zhL(), cx = 300, cy = 220, R = 140, N = nodes.length;
+      let g = `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#334155" stroke-width="3" ${loop ? '' : 'stroke-dasharray="6 6"'}/>`;
+      if (loop) for (let k = 0; k < N; k++) {
+        const a = -Math.PI / 2 + (k + 0.5) * 2 * Math.PI / N, x = cx + R * Math.cos(a), y = cy + R * Math.sin(a), tx = -Math.sin(a), ty = Math.cos(a);
+        g += `<polygon points="${x + tx * 9},${y + ty * 9} ${x - tx * 5 + Math.cos(a) * 7},${y - ty * 5 + Math.sin(a) * 7} ${x - tx * 5 - Math.cos(a) * 7},${y - ty * 5 - Math.sin(a) * 7}" fill="#f59e0b"/>`;
+      }
+      nodes.forEach((n, k) => {
+        const a = -Math.PI / 2 + k * 2 * Math.PI / N, x = cx + R * Math.cos(a), y = cy + R * Math.sin(a);
+        const lx = cx + (R + 46) * Math.cos(a), ly = cy + (R + 46) * Math.sin(a) + 6, anc = Math.abs(Math.cos(a)) < 0.3 ? 'middle' : Math.cos(a) > 0 ? 'start' : 'end';
+        g += `<g class="bub" role="button" tabindex="0" data-open="pop" data-i="${n.i}" aria-label="${esc(n.label)}">
+          ${n.diamond ? `<polygon points="${x},${y - 34} ${x + 34},${y} ${x},${y + 34} ${x - 34},${y}" fill="${n.color}" stroke="#0b1120" stroke-width="3"/>`
+                      : `<circle cx="${x}" cy="${y}" r="30" fill="${n.color}" stroke="#0b1120" stroke-width="3"/>`}
+          <text x="${x}" y="${y + 7}" text-anchor="middle" font-size="19" font-weight="800" fill="#fff">${esc(n.no)}</text>
+          <text x="${lx}" y="${ly}" text-anchor="${anc}" font-size="${zh ? 18 : 14}" font-weight="700" fill="#e2e8f0">${esc(n.label)}</text></g>`;
+      });
+      const cl = center.lines;
+      g += `<g ${center.i != null ? `class="bub" role="button" tabindex="0" data-open="pop" data-i="${center.i}"` : ''}><circle cx="${cx}" cy="${cy}" r="78" fill="#111a2e" stroke="#475569" stroke-width="2"/>
+        ${cl.map((t, k) => `<text x="${cx}" y="${cy + (k - (cl.length - 1) / 2) * 26 + 7}" text-anchor="middle" font-size="${zh ? 20 : 15}" font-weight="800" fill="#f1f5f9">${esc(t)}</text>`).join('')}</g>`;
+      return `<svg viewBox="0 0 600 440" role="group" aria-label="${esc(title)}">${g}</svg>`;
+    }
+    // Rising steps (growth levels, three-year blueprint).
+    function stairs(items, title, flag) {
+      const zh = zhL(), n = items.length, w = 168, gap = 18, x0 = 30, base = 380;
+      let g = `<line x1="20" y1="${base}" x2="580" y2="${base}" stroke="#334155" stroke-width="2"/>`;
+      items.forEach((it, k) => {
+        const h = 120 + k * 80, x = x0 + k * (w + gap), y = base - h;
+        g += `<g class="bub" role="button" tabindex="0" data-open="pop" data-i="${it.i}" aria-label="${esc(it.name)}">
+          <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="${it.dash ? '#1e1b4b' : it.color}" stroke="${it.color}" stroke-width="3" ${it.dash ? 'stroke-dasharray="8 6"' : ''}/>
+          <text x="${x + 14}" y="${y + 30}" font-size="15" font-weight="700" fill="#e0e7ff">${esc(it.top)}</text>
+          <text x="${x + 14}" y="${y + 62}" font-size="${zh ? 24 : 18}" font-weight="800" fill="#fff">${esc(it.name)}</text>
+          <text x="${x + 14}" y="${base - 16}" font-size="${zh ? 15 : 13}" fill="#e2e8f0">${esc(it.sub)}</text></g>`;
+      });
+      g += `<path d="M60 ${base - 150} Q 300 ${base - 330} 540 ${base - 320}" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="2 8" stroke-linecap="round"/>
+        <polygon points="548,${base - 322} 532,${base - 330} 534,${base - 312}" fill="#f59e0b"/>`;
+      if (flag) g += `<g class="bub" role="button" tabindex="0" data-open="pop" data-i="${flag.i}"><rect x="420" y="6" width="160" height="38" rx="8" fill="#f59e0b"/><text x="500" y="32" text-anchor="middle" font-size="${zh ? 18 : 14}" font-weight="800" fill="#1f1300">${esc(flag.label)}</text></g>`;
+      return `<svg viewBox="0 0 600 400" role="group" aria-label="${esc(title)}">${g}</svg>`;
+    }
+    const ITEM = t => t;           // plain text line in a popup
+    const HTML = h => ({ html: h }); // pre-built HTML line in a popup
+
+    function cCycle(d) {
+      const nodes = d.cycle.map((c, k) => ({ no: c.gate ? '◆' : String(k < 5 ? k + 1 : k), label: c.name, color: SC[c.state], diamond: c.gate,
+        i: pop({ color: SC[c.state], title: c.name, sub: d.states[c.state], items: [c.gate ? T('gateNote') : T('stepNote'), c.proof ? HTML(chips([c.proof])) : T('noProof')] }) }));
+      const legend = `<p class="note">${['done', 'now', 'gap'].map(k => `<span style="color:${SC[k]}">●</span> ${esc(d.states[k])}`).join('　')}</p>`;
+      return concept('sec-5', T('q5'), T('h5'), T('c5'), radial(nodes, { lines: T('c5c').split('|') }, T('h5'), true),
+        nodes.map(n => btn(`${n.no} ${n.label}`, d.states[d.cycle[nodes.indexOf(n)].state], n.color, n.i)).join(''), false, legend + `<p class="loop">${esc(T('loop'))}</p>`);
+    }
+    function cLevels(d) {
+      const its = d.levels.map(l => ({ top: T('level').replace('{n}', l.n), name: l.name, sub: l.when, color: SC[l.state], dash: l.state === 'next',
+        i: pop({ color: SC[l.state], title: `${T('level').replace('{n}', l.n)} ${l.name}`, sub: l.when, items: [l.does, ...(l.proof || []).length ? [HTML(chips(l.proof))] : []] }) }));
+      return concept('sec-1', T('q1'), T('h1'), T('c1'), stairs(its, T('h1')), its.map(x => btn(`${x.top} ${x.name}`, x.sub, x.color, x.i)).join(''));
+    }
+    function cTraits(d) {
+      const tr = d.traits.map(t => Array.isArray(t) ? { name: t[0], desc: t[1] } : t);
+      const nodes = tr.map((t, k) => ({ no: String(k + 1), label: t.name, color: '#0ea5e9', i: pop({ color: '#0ea5e9', title: t.name, sub: T('h7'), items: [t.desc] }) }));
+      return concept('sec-7', '', T('h7'), T('c7'), radial(nodes, { lines: T('c7c').split('|') }, T('h7')), nodes.map(n => btn(n.label, tr[+n.no - 1].desc, n.color, n.i)).join(''));
+    }
+    function cComp(d) {
+      const btns = d.competencies.map(c => btn(c.name, `${c.now} → ${c.target}`, c.target - c.now >= 2 ? '#f59e0b' : '#16a34a', pop({
+        color: c.target - c.now >= 2 ? '#f59e0b' : '#16a34a', title: c.name, sub: `${T('now')} ${c.now} → ${T('target')} ${c.target}`,
+        items: [`${T('now')}：${c.now}｜${d.scale[c.now - 1] || ''}`, `${T('target')}：${c.target}｜${d.scale[c.target - 1] || ''}`, `${T('imp')}：${c.importance}`, ...(c.evidence || []).length ? [HTML(chips(c.evidence))] : []] }))).join('');
+      const left = `<div class="box chart">${radar(d)}<div class="legend"><span><i style="border-color:var(--now)"></i>${esc(T('now'))}</span><span><i style="border-color:var(--tgt);border-top-style:dashed"></i>${esc(T('target'))}</span></div></div>`;
+      return concept('sec-2', T('q2'), T('h2'), T('c2'), left, btns, true, `<p class="note">${d.scale.map((x, k) => `${k + 1}＝${esc(x)}`).join('　')}</p>`);
+    }
+    function cQuad(d) {
+      const Q = d.quadrants, C = d.competencies;
+      const cell = (pri, big) => C.filter(c => (c.importance >= 3.5) === pri && (c.target - c.now >= 2) === big);
+      const defs = [['tr', true, true, '#f59e0b'], ['br', true, false, '#16a34a'], ['tl', false, true, '#94a3b8'], ['bl', false, false, '#2563eb']];
+      const btns = defs.map(([k, pri, big, col]) => { const l = cell(pri, big);
+        return btn(Q[k], T('qm_' + k), col, pop({ color: col, title: Q[k], sub: T('qm_' + k), items: l.length ? l.map(c => `${c.name}：${c.now} → ${c.target}`) : [T('none')] })); }).join('');
+      return concept('sec-3', T('q3'), T('h3'), T('c3'), `<div class="box chart">${quadrant(d)}</div>`, btns, true, `<p class="note">${esc(d.selfNote)}</p>`);
+    }
+    function cBlue(b) {
+      const cols = ['#2563eb', '#0891b2', '#9333ea'];
+      const its = b.phases.map((ph, k) => ({ top: ph.when, name: ph.name, sub: '', color: cols[k],
+        i: pop({ color: cols[k], title: `${ph.when} ${ph.name}`, sub: ph.line, items: [...ph.tasks.map(t => `${t.t}：${t.d}`), `${T('milestone')}：${ph.milestone}`] }) }));
+      const gi = pop({ color: '#f59e0b', title: b.goal_title, sub: b.tag, items: [b.goal] });
+      const hi = pop({ color: '#16a34a', title: b.have_title, sub: '', items: b.have.map(h => `${h.k}：${h.v}`) });
+      const ai = pop({ color: '#7c3aed', title: b.axes_title, sub: '', items: b.axes.map((a, k) => `${k + 1}. ${a}`) });
+      const btns = its.map((x, k) => btn(`${x.top} ${x.name}`, b.phases[k].line, x.color, x.i)).join('') + btn(b.have_title, b.have.map(h => h.k).join('・'), '#16a34a', hi)
+        + btn(b.axes_title, b.axes.join('・'), '#7c3aed', ai) + btn(b.goal_title, b.goal, '#f59e0b', gi);
+      return concept('sec-plan3', '', b.title, b.sub, stairs(its, b.title, { label: b.goal_title, i: gi }), btns);
+    }
+    function cRoad(d) {
+      const btns = d.roadmap.map(r => btn(`${r.when}`, r.title, '#2563eb', pop({ color: '#2563eb', title: `${r.when} ${r.title}`, sub: d.levels[r.level - 1].name,
+        items: [`${T('steps')}：${r.steps.join(' › ')}`, `${T('focus')}：${r.focus.join('・')}`, `${T('use')}：${r.use.join('・')}`, ...r.plan.map(x => `${T('plan')}：${x}`), `${T('out')}：${r.output.join('・')}`] }))).join('');
+      return concept('sec-4', T('q4'), T('h4'), T('c4'), `<div class="box chart">${gantt(d)}</div>`, btns, 'stack');
+    }
+    function cMeasure(d) {
+      const ci = pop({ color: '#f59e0b', title: T('check'), sub: d.review, items: d.checklist });
+      const nodes = d.measures.map((m, k) => ({ no: String(k + 1), label: m.name, color: '#16a34a', i: pop({ color: '#16a34a', title: m.name, sub: T('h6'), items: [m.what] }) }));
+      return concept('sec-6', T('q6'), T('h6'), T('c6'), radial(nodes, { lines: T('c6c').split('|'), i: ci }, T('h6')),
+        nodes.map((n, k) => btn(n.label, d.measures[k].what, n.color, n.i)).join('') + btn(T('check'), d.review, '#f59e0b', ci));
+    }
+
     // ── Popup: one <dialog> for both diagrams ──
     let current = null;
     function openPopup(kind, i) {
@@ -361,6 +493,7 @@
           return { html: el ? `<a href="${esc(m.href)}" data-close>${esc(m.q)}<span>${esc(name)} ↓</span></a>`
                             : `<span style="display:flex;justify-content:space-between;gap:.6rem">${esc(m.q)}<span class="pending">${esc(T('pending'))}</span></span>` };
         }); more = null; }
+      else if (kind === 'pop') { const e = POP[i]; color = e.color; title = e.title; sub = e.sub; items = e.items; more = e.more; }
       else { const it = current.iceberg.items[i]; color = it.level === 'above' ? '#0ea5e9' : '#f59e0b'; title = `${it.name}${Site.getLang() === 'en' ? '' : ' ' + it.en}`; sub = `${it.level === 'above' ? current.iceberg.above : current.iceberg.below}｜${it.desc}`; items = it.items; }
       dlg.style.setProperty('--c', color);
       dlg.innerHTML = `<div class="dlg-head"><div class="tx"><h3>${no ? `${no} ` : ''}${esc(title)}</h3><p>${esc(sub)}</p></div>
@@ -418,25 +551,22 @@
           </div></div>`).join('');
         const cy = d.cycle.map((c, i) => `<div class="box cy-step ${c.gate ? 'gate' : ''}"><span class="cy-i">${c.gate ? '◆' : String(i < 5 ? i + 1 : i).padStart(2, '0')}</span>
           <b>${esc(c.name)}</b><span class="pill ${c.state}">${esc(d.states[c.state])}</span>${c.proof ? chips([c.proof]) : ''}</div>`).join('');
+        POP.length = 0;
         document.getElementById('idp').innerHTML = `
           ${d.cycle4 ? ring4(d.cycle4) : ''}
           ${band(d, 0)}
-${head(T('q5'), T('h5'), 'sec-5')}<div class="cy">${cy}</div><p class="loop">${esc(T('loop'))}</p>
-                    ${head(T('q1'), T('h1'), 'sec-1')}<div class="lv">${lvl}</div>
-          <h2 id="sec-7" style="scroll-margin-top:5rem">${esc(T('h7'))}</h2><div class="traits">${d.traits.map(t => Array.isArray(t) ? { name: t[0], desc: t[1] } : t).map(t => `<div class="box"><b>${esc(t.name)}</b>${esc(t.desc)}</div>`).join('')}</div>
+          ${cCycle(d)}
+          ${cLevels(d)}
+          ${cTraits(d)}
           ${band(d, 1)}
           ${d.iceberg ? iceberg(d.iceberg) : ''}
-          ${head(T('q2'), T('h2'), 'sec-2')}
-          <div class="two"><div class="box chart">${radar(d)}<div class="legend"><span><i style="border-color:var(--now)"></i>${esc(T('now'))}</span><span><i style="border-color:var(--tgt);border-top-style:dashed"></i>${esc(T('target'))}</span></div></div>
-            <div><table class="tbl"><thead><tr><th>${esc(T('comp'))}</th><th>${esc(T('now'))} → ${esc(T('target'))}</th><th>${esc(T('ev'))}</th></tr></thead><tbody>${rows}</tbody></table>
-            <p class="note">${scale}</p></div></div>
-          ${head(T('q3'), T('h3'), 'sec-3')}<div class="box chart">${quadrant(d)}</div><p class="note">${esc(d.selfNote)}</p>
+          ${cComp(d)}
+          ${cQuad(d)}
           ${band(d, 2)}
-          ${d.blueprint ? blueprint(d.blueprint) : ''}
-          ${head(T('q4'), T('h4'), 'sec-4')}<div class="box chart">${gantt(d)}</div><div class="rm">${rm}</div>
+          ${d.blueprint ? cBlue(d.blueprint) : ''}
+          ${cRoad(d)}
           ${band(d, 3)}
-          ${head(T('q6'), T('h6'), 'sec-6')}<div class="ms">${d.measures.map(m => `<div class="box"><b>${esc(m.name)}</b><span>${esc(m.what)}</span></div>`).join('')}</div>
-          <p class="rm-k k-out">${esc(T('check'))}</p><ul class="ck">${d.checklist.map(x => `<li>${esc(x)}</li>`).join('')}</ul><p class="lead2">${esc(d.review)}</p>
+          ${cMeasure(d)}
           <p class="updated">${esc(T('updated'))}：${esc(d.updated)}</p>`;
       }).catch(e => { console.error(e); document.getElementById('idp').innerHTML = `<p class="error">${esc(T('loadError'))}</p>`; });
     }
