@@ -167,6 +167,9 @@
     .dlg-body ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.5rem; }
     .dlg-body li { padding: 0.6rem 0.8rem; border-radius: 10px; background: #0b1426; border-left: 3px solid var(--c, #60a5fa); line-height: 1.6; font-size: 0.95rem; }
     .dlg-more { display: inline-block; margin-top: 0.9rem; color: #93c5fd; font-weight: 600; }
+    .band { display: flex; align-items: baseline; gap: 0.8rem; margin: 3.6rem 0 0.4rem; padding: 0.7rem 1rem; border-radius: 12px; background: color-mix(in srgb, var(--c) 18%, #0b1120); border-left: 5px solid var(--c); scroll-margin-top: 5rem; }
+    .band span { font-family: var(--display); font-weight: 800; color: #fff; background: var(--c); border-radius: 6px; padding: 0.05rem 0.5rem; }
+    .band b { font-size: 1.2rem; color: #f1f5f9; } .band em { font-style: normal; color: var(--mute); font-size: 0.9rem; }
     h2.hit, .goal.hit { box-shadow: -14px 0 0 -8px #f59e0b; }
     .pending { color: #fbbf24; font-size: 0.82rem; white-space: nowrap; }
     .dlg-body li a { color: var(--ink); text-decoration: none; display: flex; justify-content: space-between; gap: 0.6rem; }
@@ -339,9 +342,12 @@
       });
       svg += '<polygon points="300,138 286,152 314,152" fill="#f59e0b"/><rect x="295" y="152" width="10" height="16" fill="#f59e0b"/>';
       const btns = ic.items.map((it, i) => `<button class="${it.level}" data-open="ice" data-i="${i}"><b>${esc(it.name)}${zh ? ` <small>${esc(it.en)}</small>` : ''}</b><span>${esc(it.desc)}</span></button>`).join('');
-      return `<p class="q">${esc(T('iceTag'))}</p><h2 id="sec-ice" style="margin-top:2.6rem;scroll-margin-top:5rem">${esc(ic.title)}</h2><p class="lead2">${esc(ic.sub)}</p>
+      return `<h2 id="sec-ice" style="margin-top:1.6rem;scroll-margin-top:5rem">${esc(ic.title)}</h2><p class="lead2">${esc(ic.sub)}</p>
         <div class="intro2"><svg viewBox="0 0 600 440" role="group" aria-label="${esc(ic.title)}">${svg}</svg><div><div class="ksa">${btns}</div><p class="src4">${esc(ic.source)}</p></div></div>`;
     }
+    // A band that opens each step's group of sections, in the ring's order.
+    const band = (d, i) => !d.cycle4 ? '' : `<div class="band" id="step-${i}" style="--c:${STEP_COLORS[i]}"><span>${String(i + 1).padStart(2, '0')}</span><b>${esc(d.cycle4.steps[i].name)}</b><em>${esc(d.cycle4.steps[i].sub)}</em></div>`;
+
     // ── Popup: one <dialog> for both diagrams ──
     let current = null;
     function openPopup(kind, i) {
@@ -414,19 +420,23 @@
           <b>${esc(c.name)}</b><span class="pill ${c.state}">${esc(d.states[c.state])}</span>${c.proof ? chips([c.proof]) : ''}</div>`).join('');
         document.getElementById('idp').innerHTML = `
           ${d.cycle4 ? ring4(d.cycle4) : ''}
+          ${band(d, 0)}
+${head(T('q5'), T('h5'), 'sec-5')}<div class="cy">${cy}</div><p class="loop">${esc(T('loop'))}</p>
+                    ${head(T('q1'), T('h1'), 'sec-1')}<div class="lv">${lvl}</div>
+          <h2 id="sec-7" style="scroll-margin-top:5rem">${esc(T('h7'))}</h2><div class="traits">${d.traits.map(t => Array.isArray(t) ? { name: t[0], desc: t[1] } : t).map(t => `<div class="box"><b>${esc(t.name)}</b>${esc(t.desc)}</div>`).join('')}</div>
+          ${band(d, 1)}
           ${d.iceberg ? iceberg(d.iceberg) : ''}
-          ${d.blueprint ? blueprint(d.blueprint) : ''}
-          ${head('1 · ' + T('q1'), T('h1'), 'sec-1')}<div class="lv">${lvl}</div>
-          ${head('2 · ' + T('q2'), T('h2'), 'sec-2')}
+          ${head(T('q2'), T('h2'), 'sec-2')}
           <div class="two"><div class="box chart">${radar(d)}<div class="legend"><span><i style="border-color:var(--now)"></i>${esc(T('now'))}</span><span><i style="border-color:var(--tgt);border-top-style:dashed"></i>${esc(T('target'))}</span></div></div>
             <div><table class="tbl"><thead><tr><th>${esc(T('comp'))}</th><th>${esc(T('now'))} → ${esc(T('target'))}</th><th>${esc(T('ev'))}</th></tr></thead><tbody>${rows}</tbody></table>
             <p class="note">${scale}</p></div></div>
-          ${head('3 · ' + T('q3'), T('h3'), 'sec-3')}<div class="box chart">${quadrant(d)}</div><p class="note">${esc(d.selfNote)}</p>
-          ${head('4 · ' + T('q4'), T('h4'), 'sec-4')}<div class="box chart">${gantt(d)}</div><div class="rm">${rm}</div>
-          ${head('5 · ' + T('q5'), T('h5'), 'sec-5')}<div class="cy">${cy}</div><p class="loop">${esc(T('loop'))}</p>
-          ${head('6 · ' + T('q6'), T('h6'), 'sec-6')}<div class="ms">${d.measures.map(m => `<div class="box"><b>${esc(m.name)}</b><span>${esc(m.what)}</span></div>`).join('')}</div>
+          ${head(T('q3'), T('h3'), 'sec-3')}<div class="box chart">${quadrant(d)}</div><p class="note">${esc(d.selfNote)}</p>
+          ${band(d, 2)}
+          ${d.blueprint ? blueprint(d.blueprint) : ''}
+          ${head(T('q4'), T('h4'), 'sec-4')}<div class="box chart">${gantt(d)}</div><div class="rm">${rm}</div>
+          ${band(d, 3)}
+          ${head(T('q6'), T('h6'), 'sec-6')}<div class="ms">${d.measures.map(m => `<div class="box"><b>${esc(m.name)}</b><span>${esc(m.what)}</span></div>`).join('')}</div>
           <p class="rm-k k-out">${esc(T('check'))}</p><ul class="ck">${d.checklist.map(x => `<li>${esc(x)}</li>`).join('')}</ul><p class="lead2">${esc(d.review)}</p>
-          <h2 id="sec-7" style="scroll-margin-top:5rem">${esc(T('h7'))}</h2><div class="traits">${d.traits.map(t => Array.isArray(t) ? { name: t[0], desc: t[1] } : t).map(t => `<div class="box"><b>${esc(t.name)}</b>${esc(t.desc)}</div>`).join('')}</div>
           <p class="updated">${esc(T('updated'))}：${esc(d.updated)}</p>`;
       }).catch(e => { console.error(e); document.getElementById('idp').innerHTML = `<p class="error">${esc(T('loadError'))}</p>`; });
     }
