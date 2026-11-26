@@ -777,6 +777,54 @@ collections:
         format: json
         fields:
           - { name: updated, label: "最後更新（例如 2026/11）", widget: string }
+          - name: cycle4
+            label: "IDP 四步循環（頁面最上方的圓環，點擊會跳出視窗）"
+            widget: object
+            collapsed: true
+            fields:
+              - { name: title, label: "標題", widget: string }
+              - { name: sub, label: "說明", widget: string }
+              - name: steps
+                label: "四個步驟（依順序：職涯意向、自我評估、制定計畫、執行追蹤）"
+                label_singular: "步驟"
+                widget: list
+                min: 4
+                max: 4
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: key, label: "代碼（英文，不顯示）", widget: string }
+                  - { name: name, label: "步驟名稱（圓環上顯示）", widget: string }
+                  - { name: sub, label: "一句說明", widget: string }
+                  - { name: items, label: "彈出視窗的內容（每行一項，建議 3 項）", widget: list, field: { name: item, label: "內容", widget: string } }
+                  - name: more
+                    label: "彈出視窗底部的連結"
+                    widget: object
+                    required: false
+                    fields:
+                      - { name: text, label: "連結文字", widget: string }
+                      - { name: href, label: "跳到頁面哪一段（#sec-1 成長層級、#sec-2 職能、#sec-4 路徑、#sec-6 衡量）", widget: string }
+          - name: iceberg
+            label: "職能冰山模型（點擊泡泡會跳出視窗）"
+            widget: object
+            collapsed: true
+            fields:
+              - { name: title, label: "標題", widget: string }
+              - { name: sub, label: "說明", widget: string }
+              - { name: above, label: "水面上的標示（容易觀察）", widget: string }
+              - { name: below, label: "水面下的標示（不易觀察）", widget: string }
+              - { name: source, label: "資料來源", widget: string }
+              - name: items
+                label: "冰山上的項目"
+                label_singular: "項目"
+                widget: list
+                summary: "{{fields.name}}"
+                fields:
+                  - { name: key, label: "位置代碼（knowledge、skill、attitude、values、traits、motive）", widget: select, options: [knowledge, skill, attitude, values, traits, motive] }
+                  - { name: name, label: "名稱", widget: string }
+                  - { name: en, label: "英文名稱", widget: string }
+                  - { name: level, label: "水面上或水面下", widget: select, options: [{ label: "水面上（容易觀察）", value: above }, { label: "水面下（不易觀察）", value: below }] }
+                  - { name: desc, label: "一句說明（例如 知道什麼）", widget: string }
+                  - { name: items, label: "彈出視窗的內容（我的狀態，每行一項）", widget: list, field: { name: item, label: "內容", widget: string } }
           - { name: goal, label: "目標（一句話）", widget: text }
           - { name: tagline, label: "副標", widget: string }
           - name: blueprint

@@ -131,6 +131,43 @@
     .traits div { padding: 0.6rem 0.8rem; font-size: 0.85rem; color: #cbd5e1; } .traits b { display: block; color: var(--ink); font-size: 0.88rem; }
     .updated { color: var(--dim); font-size: 0.85rem; margin-top: 2rem; }
     .error { color: #f59e0b; }
+    /* IDP four-step ring and competency iceberg; both open a popup */
+    .intro2 { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 1.4rem; align-items: center; margin: 1rem 0 0.5rem; }
+    .intro2 svg { width: 100%; height: auto; display: block; }
+    .seg { cursor: pointer; outline: none; }
+    .seg path { transition: filter 0.2s, opacity 0.2s; }
+    .seg:hover path, .seg:focus-visible path { filter: brightness(1.25); }
+    .seg:focus-visible path { stroke: #fbbf24; stroke-width: 4; }
+    .seg text, .bub text { pointer-events: none; font-family: 'Noto Sans TC', 'Inter', sans-serif; }
+    .steps4 { display: grid; gap: 0.55rem; }
+    .step4 { display: grid; grid-template-columns: 2.4rem minmax(0, 1fr) auto; gap: 0.75rem; align-items: center; text-align: left; width: 100%;
+      padding: 0.75rem 0.9rem; border-radius: 12px; background: var(--box); border: 1px solid var(--line); color: var(--ink); cursor: pointer; font: inherit; }
+    .step4:hover, .step4:focus-visible { border-color: var(--c); }
+    .step4 .no { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; border-radius: 50%; background: var(--c); color: #fff; font-weight: 800; font-family: var(--display); }
+    .step4 b { display: block; font-size: 1rem; } .step4 span { display: block; font-size: 0.82rem; color: var(--mute); }
+    .step4 .go { color: var(--mute); font-size: 1.1rem; }
+    .bub { cursor: pointer; outline: none; }
+    .bub circle { transition: filter 0.2s; }
+    .bub:hover circle, .bub:focus-visible circle { filter: brightness(1.15); }
+    .bub:focus-visible circle { stroke: #fbbf24; stroke-width: 4; }
+    .quote { padding: 1rem 1.2rem; border-radius: 14px; background: var(--box); border: 1px solid var(--line); }
+    .post-body .quote p { margin: 0 0 0.6rem; color: #e2e8f0; line-height: 1.7; }
+    .ksa { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.45rem; }
+    .ksa button { text-align: left; padding: 0.55rem 0.75rem; border-radius: 10px; border: 1px solid var(--line); background: #0f1a30; color: var(--ink); cursor: pointer; font: inherit; }
+    .ksa button:hover, .ksa button:focus-visible { border-color: #60a5fa; }
+    .ksa button b { display: block; font-size: 0.92rem; } .ksa button span { font-size: 0.78rem; color: var(--mute); }
+    .ksa button.above b { color: #bae6fd; } .ksa button.below b { color: #fde68a; }
+    .src4 { font-size: 0.75rem; color: var(--dim); margin-top: 0.6rem; }
+    dialog.dlg { margin: auto; width: min(560px, calc(100vw - 2rem)); padding: 0; border: 1px solid var(--line); border-radius: 16px; background: #111a2e; color: var(--ink); }
+    dialog.dlg::backdrop { background: rgba(2, 6, 23, 0.7); }
+    .dlg-head { padding: 1.1rem 1.3rem 0.8rem; border-top: 5px solid var(--c, #60a5fa); border-radius: 16px 16px 0 0; display: flex; gap: 0.8rem; align-items: flex-start; }
+    .dlg-head .tx { flex: 1; } .dlg-head h3 { margin: 0; font-size: 1.3rem; } .dlg-head p { margin: 0.2rem 0 0; color: var(--mute); font-size: 0.9rem; }
+    .dlg-x { background: none; border: 0; color: var(--mute); font-size: 1.5rem; line-height: 1; cursor: pointer; padding: 0.2rem 0.4rem; }
+    .dlg-body { padding: 0 1.3rem 1.2rem; }
+    .dlg-body ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.5rem; }
+    .dlg-body li { padding: 0.6rem 0.8rem; border-radius: 10px; background: #0b1426; border-left: 3px solid var(--c, #60a5fa); line-height: 1.6; font-size: 0.95rem; }
+    .dlg-more { display: inline-block; margin-top: 0.9rem; color: #93c5fd; font-weight: 600; }
+    @media (max-width: 760px) { .intro2 { grid-template-columns: minmax(0, 1fr); } .intro2 svg { max-width: 360px; margin: 0 auto; } .ksa { grid-template-columns: minmax(0, 1fr); } }
     @media (max-width: 760px) {
       .sum, .lv, .two, .rm-body, .ms, .ck, .traits { grid-template-columns: minmax(0, 1fr); }
       .lv-card { min-height: 0 !important; }
@@ -157,11 +194,12 @@
     </header>
     <div class="post-body" id="idp"><p>Loading...</p></div>
   </article>
+  <dialog id="dlg" class="dlg" aria-label="Details"></dialog>
   <script src="assets/js/common.js?v=20261120g"></script>
   <script>
     const { esc, dataPath, getJSON } = Site;
     const I18N = {
-      en: { title: 'Individual Development Plan', back: 'Back to the homepage', toggle: '中文',
+      en: { close: 'Close', idpTag: 'IDP framework', iceTag: 'Self-assessment', title: 'Individual Development Plan', back: 'Back to the homepage', toggle: '中文',
         milestone: 'Milestone', q1: 'Where I am going', h1: 'Three levels of growth',
         q2: 'Where I am now', h2: 'Eight competencies: now vs three-year target', now: 'Now', target: 'Three-year target', comp: 'Competency', ev: 'Evidence',
         q3: 'What to build first', h3: 'Priority quadrant', xAxis: 'Importance to the goal →', yAxis: 'Gap to target →',
@@ -169,7 +207,7 @@
         q5: 'Steps I have walked', h5: 'The AI value cycle', loop: '↺ Results feed the next problem',
         q6: 'How I will know', h6: 'Measures and yearly checklist', check: 'Yearly minimum',
         h7: 'How I work', updated: 'Last updated', level: 'Level', loadError: 'Content failed to load. A network filter may block this site.' },
-      zh: { title: '個人發展計畫', back: '回到首頁', toggle: 'EN',
+      zh: { close: '關閉', idpTag: 'IDP 框架', iceTag: '自我評估', title: '個人發展計畫', back: '回到首頁', toggle: 'EN',
         milestone: '里程碑', q1: '我要去哪裡', h1: '三個成長層級',
         q2: '我現在在哪裡', h2: '八項職能：目前與三年目標', now: '目前', target: '三年目標', comp: '職能', ev: '證據',
         q3: '先培養什麼', h3: '優先順序象限圖', xAxis: '對目標的重要性 →', yAxis: '與目標的差距 →',
@@ -183,7 +221,7 @@
     const link = x => Array.isArray(x) ? { text: x[0], href: x[1] } : x;
     const chips = l => (l || []).length ? `<div class="chips">${l.map(link).map(x => `<a href="${esc(x.href)}">${esc(x.text)} →</a>`).join('')}</div>` : '';
     const ul = l => `<ul>${l.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
-    const head = (q, h) => `<p class="q">${esc(q)}</p><h2 style="margin-top:0.2rem">${esc(h)}</h2>`;
+    const head = (q, h, id) => `<p class="q">${esc(q)}</p><h2${id ? ` id="${id}"` : ''} style="margin-top:0.2rem;scroll-margin-top:5rem">${esc(h)}</h2>`;
 
     // Three-year blueprint: three phase columns (tasks and milestone), then current abilities, upgrade axes and the goal.
     function blueprint(b) {
@@ -251,6 +289,79 @@
       return `<div class="gantt-wrap"><svg viewBox="0 0 ${W} ${H + 8}" role="img" aria-label="${esc(T('h4'))}">${g}</svg></div>`;
     }
 
+    // ── IDP four-step ring: four clickable quadrants; each opens a popup with the step's details ──
+    const STEP_COLORS = ['#7c3aed', '#2563eb', '#b45309', '#047857'];
+    const lines2 = (name, zh) => {
+      if (zh) { const h = Math.ceil(name.length / 2); return [name.slice(0, h), name.slice(h)]; }
+      const w = name.replace('-', '- ').split(' '); if (w.length < 2) return [name, '']; const h = Math.ceil(w.length / 2); return [w.slice(0, h).join(' ').replace('- ', '-'), w.slice(h).join(' ')];
+    };
+    function ring4(c) {
+      const zh = Site.getLang() !== 'en', cx = 220, cy = 220, ro = 178, ri = 70, ra = 198, g = 0.05;
+      const P = (r, a) => [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+      let svg = '';
+      c.steps.forEach((st, i) => {
+        const a0 = -Math.PI + i * Math.PI / 2 + g, a1 = -Math.PI + (i + 1) * Math.PI / 2 - g, am = (a0 + a1) / 2;
+        const [x0, y0] = P(ro, a0), [x1, y1] = P(ro, a1), [x2, y2] = P(ri, a1), [x3, y3] = P(ri, a0), [tx, ty] = P(124, am);
+        const [l1, l2] = lines2(st.name, zh), fs = zh ? 24 : 17;
+        svg += `<g class="seg" role="button" tabindex="0" data-open="step" data-i="${i}" aria-label="${esc(String(i + 1).padStart(2, '0') + ' ' + st.name)}">
+          <path d="M${x0} ${y0} A${ro} ${ro} 0 0 1 ${x1} ${y1} L${x2} ${y2} A${ri} ${ri} 0 0 0 ${x3} ${y3} Z" fill="${STEP_COLORS[i]}"/>
+          <text x="${tx}" y="${ty - (l2 ? fs * 0.15 : -fs * 0.35)}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#fff">${esc(l1)}</text>
+          ${l2 ? `<text x="${tx}" y="${ty + fs * 1.05}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#fff">${esc(l2)}</text>` : ''}</g>`;
+        const b0 = a0 + 0.2, b1 = a1 - 0.12, [p0x, p0y] = P(ra, b0), [p1x, p1y] = P(ra, b1);
+        const tX = -Math.sin(b1), tY = Math.cos(b1), nX = Math.cos(b1), nY = Math.sin(b1);
+        svg += `<path d="M${p0x} ${p0y} A${ra} ${ra} 0 0 1 ${p1x} ${p1y}" fill="none" stroke="#f59e0b" stroke-width="6" stroke-linecap="round"/>
+          <polygon points="${p1x + tX * 16},${p1y + tY * 16} ${p1x + nX * 10 - tX * 3},${p1y + nY * 10 - tY * 3} ${p1x - nX * 10 - tX * 3},${p1y - nY * 10 - tY * 3}" fill="#f59e0b"/>`;
+      });
+      svg += `<circle cx="${cx}" cy="${cy}" r="${ri - 8}" fill="#0b1120" stroke="#334155"/><text x="${cx}" y="${cy + 11}" text-anchor="middle" font-size="32" font-weight="800" fill="#e2e8f0" font-family="Inter, sans-serif">IDP</text>`;
+      const list = c.steps.map((st, i) => `<button class="step4" style="--c:${STEP_COLORS[i]}" data-open="step" data-i="${i}">
+        <span class="no">${String(i + 1).padStart(2, '0')}</span><span><b>${esc(st.name)}</b><span>${esc(st.sub)}</span></span><span class="go">›</span></button>`).join('');
+      return `<p class="q">${esc(T('idpTag'))}</p><h2 id="sec-0" style="margin-top:0.2rem">${esc(c.title)}</h2><p class="lead2">${esc(c.sub)}</p>
+        <div class="intro2"><svg viewBox="0 0 440 440" role="group" aria-label="${esc(c.title)}">${svg}</svg><div class="steps4">${list}</div></div>`;
+    }
+    // ── Competency iceberg: knowledge and skill above the water, the rest below; each bubble opens a popup ──
+    function iceberg(ic) {
+      const zh = Site.getLang() !== 'en';
+      const pos = zh ? { knowledge: [262, 112], skill: [348, 112], attitude: [232, 228], values: [378, 228], traits: [232, 330], motive: [378, 330] } : { knowledge: [248, 112], skill: [356, 112], attitude: [232, 228], values: [378, 228], traits: [232, 330], motive: [378, 330] };
+      let svg = `<rect x="0" y="0" width="600" height="160" fill="#13213b"/><rect x="0" y="160" width="600" height="280" fill="#0b3354"/>
+        <polygon points="214,160 262,72 300,44 342,78 390,160" fill="#d6ecf7"/>
+        <polygon points="150,160 450,160 500,262 430,404 262,420 112,290" fill="#4f97bd"/>
+        <line x1="0" y1="160" x2="600" y2="160" stroke="#93c5fd" stroke-width="2" stroke-dasharray="8 6"/>
+        <text x="16" y="30" font-size="17" fill="#cbd5e1">${esc(ic.above)}</text><text x="16" y="424" font-size="17" fill="#cbd5e1">${esc(ic.below)}</text>`;
+      ic.items.forEach((it, i) => {
+        const [x, y] = pos[it.key] || [300, 300], up = it.level === 'above';
+        svg += `<g class="bub" role="button" tabindex="0" data-open="ice" data-i="${i}" aria-label="${esc(it.name)}">
+          <circle cx="${x}" cy="${y}" r="${zh ? 40 : 50}" fill="${up ? '#f8fafc' : '#e0f2fe'}" stroke="${up ? '#0ea5e9' : '#f59e0b'}" stroke-width="3"/>
+          <text x="${x}" y="${y + (zh ? 8 : 6)}" text-anchor="middle" font-size="${zh ? 22 : 14}" font-weight="800" fill="#0b2265">${esc(it.name)}</text></g>`;
+      });
+      svg += '<polygon points="300,138 286,152 314,152" fill="#f59e0b"/><rect x="295" y="152" width="10" height="16" fill="#f59e0b"/>';
+      const btns = ic.items.map((it, i) => `<button class="${it.level}" data-open="ice" data-i="${i}"><b>${esc(it.name)}${zh ? ` <small>${esc(it.en)}</small>` : ''}</b><span>${esc(it.desc)}</span></button>`).join('');
+      return `<p class="q">${esc(T('iceTag'))}</p><h2 style="margin-top:2.6rem">${esc(ic.title)}</h2><p class="lead2">${esc(ic.sub)}</p>
+        <div class="intro2"><svg viewBox="0 0 600 440" role="group" aria-label="${esc(ic.title)}">${svg}</svg><div><div class="ksa">${btns}</div><p class="src4">${esc(ic.source)}</p></div></div>`;
+    }
+    // ── Popup: one <dialog> for both diagrams ──
+    let current = null;
+    function openPopup(kind, i) {
+      if (!current) return;
+      const dlg = document.getElementById('dlg');
+      let color, no = '', title, sub, items, more;
+      if (kind === 'step') { const st = current.cycle4.steps[i]; color = STEP_COLORS[i]; no = String(i + 1).padStart(2, '0'); title = st.name; sub = st.sub; items = st.items; more = st.more; }
+      else { const it = current.iceberg.items[i]; color = it.level === 'above' ? '#0ea5e9' : '#f59e0b'; title = `${it.name}${Site.getLang() === 'en' ? '' : ' ' + it.en}`; sub = `${it.level === 'above' ? current.iceberg.above : current.iceberg.below}｜${it.desc}`; items = it.items; }
+      dlg.style.setProperty('--c', color);
+      dlg.innerHTML = `<div class="dlg-head"><div class="tx"><h3>${no ? `${no} ` : ''}${esc(title)}</h3><p>${esc(sub)}</p></div>
+        <button class="dlg-x" aria-label="${esc(T('close'))}" data-close>×</button></div>
+        <div class="dlg-body"><ul>${items.map(x => `<li>${esc(x)}</li>`).join('')}</ul>${more ? `<a class="dlg-more" href="${esc(more.href)}" data-close>${esc(more.text)} →</a>` : ''}</div>`;
+      dlg.showModal();
+    }
+    document.addEventListener('click', e => {
+      const dlg = document.getElementById('dlg');
+      if (e.target === dlg || e.target.closest('[data-close]')) { dlg.close(); return; }
+      const t = e.target.closest('[data-open]'); if (t) openPopup(t.dataset.open, +t.dataset.i);
+    });
+    document.addEventListener('keydown', e => {
+      const t = e.target.closest && e.target.closest('g[data-open]');
+      if (t && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openPopup(t.dataset.open, +t.dataset.i); }
+    });
+
     function render() {
       document.documentElement.lang = Site.getLang() === 'en' ? 'en' : 'zh-Hant';
       document.title = `${T('title')} IDP | Alex Li (李翔緯)`;
@@ -258,6 +369,7 @@
       document.getElementById('backText').textContent = T('back');
       document.getElementById('langToggle').textContent = T('toggle');
       getJSON(dataPath('idp.json')).then(d => {
+        current = d;
         document.getElementById('goal').textContent = d.goal;
         document.getElementById('tagline').textContent = d.tagline;
         document.getElementById('sum').innerHTML = d.summary.map(s => `<div class="box"><b>${esc(s.value)}</b><span>${esc(s.label)}</span></div>`).join('');
@@ -277,16 +389,18 @@
         const cy = d.cycle.map((c, i) => `<div class="box cy-step ${c.gate ? 'gate' : ''}"><span class="cy-i">${c.gate ? '◆' : String(i < 5 ? i + 1 : i).padStart(2, '0')}</span>
           <b>${esc(c.name)}</b><span class="pill ${c.state}">${esc(d.states[c.state])}</span>${c.proof ? chips([c.proof]) : ''}</div>`).join('');
         document.getElementById('idp').innerHTML = `
+          ${d.cycle4 ? ring4(d.cycle4) : ''}
+          ${d.iceberg ? iceberg(d.iceberg) : ''}
           ${d.blueprint ? blueprint(d.blueprint) : ''}
-          ${head('1 · ' + T('q1'), T('h1'))}<div class="lv">${lvl}</div>
-          ${head('2 · ' + T('q2'), T('h2'))}
+          ${head('1 · ' + T('q1'), T('h1'), 'sec-1')}<div class="lv">${lvl}</div>
+          ${head('2 · ' + T('q2'), T('h2'), 'sec-2')}
           <div class="two"><div class="box chart">${radar(d)}<div class="legend"><span><i style="border-color:var(--now)"></i>${esc(T('now'))}</span><span><i style="border-color:var(--tgt);border-top-style:dashed"></i>${esc(T('target'))}</span></div></div>
             <div><table class="tbl"><thead><tr><th>${esc(T('comp'))}</th><th>${esc(T('now'))} → ${esc(T('target'))}</th><th>${esc(T('ev'))}</th></tr></thead><tbody>${rows}</tbody></table>
             <p class="note">${scale}</p></div></div>
-          ${head('3 · ' + T('q3'), T('h3'))}<div class="box chart">${quadrant(d)}</div><p class="note">${esc(d.selfNote)}</p>
-          ${head('4 · ' + T('q4'), T('h4'))}<div class="box chart">${gantt(d)}</div><div class="rm">${rm}</div>
-          ${head('5 · ' + T('q5'), T('h5'))}<div class="cy">${cy}</div><p class="loop">${esc(T('loop'))}</p>
-          ${head('6 · ' + T('q6'), T('h6'))}<div class="ms">${d.measures.map(m => `<div class="box"><b>${esc(m.name)}</b><span>${esc(m.what)}</span></div>`).join('')}</div>
+          ${head('3 · ' + T('q3'), T('h3'), 'sec-3')}<div class="box chart">${quadrant(d)}</div><p class="note">${esc(d.selfNote)}</p>
+          ${head('4 · ' + T('q4'), T('h4'), 'sec-4')}<div class="box chart">${gantt(d)}</div><div class="rm">${rm}</div>
+          ${head('5 · ' + T('q5'), T('h5'), 'sec-5')}<div class="cy">${cy}</div><p class="loop">${esc(T('loop'))}</p>
+          ${head('6 · ' + T('q6'), T('h6'), 'sec-6')}<div class="ms">${d.measures.map(m => `<div class="box"><b>${esc(m.name)}</b><span>${esc(m.what)}</span></div>`).join('')}</div>
           <p class="rm-k k-out">${esc(T('check'))}</p><ul class="ck">${d.checklist.map(x => `<li>${esc(x)}</li>`).join('')}</ul><p class="lead2">${esc(d.review)}</p>
           <h2>${esc(T('h7'))}</h2><div class="traits">${d.traits.map(t => Array.isArray(t) ? { name: t[0], desc: t[1] } : t).map(t => `<div class="box"><b>${esc(t.name)}</b>${esc(t.desc)}</div>`).join('')}</div>
           <p class="updated">${esc(T('updated'))}：${esc(d.updated)}</p>`;

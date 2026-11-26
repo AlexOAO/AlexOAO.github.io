@@ -1,4 +1,144 @@
 {
+  "cycle4": {
+    "title": "The IDP four-step cycle",
+    "sub": "One round a year: where I'm going → where I am → how I'll grow → go and review. Click a step for details.",
+    "steps": [
+      {
+        "key": "intent",
+        "name": "Career intent",
+        "sub": "Where I'm going, who I want to be",
+        "items": [
+          "What the organization needs: AI that moves from pilots to investable, scalable work",
+          "Three-year goal: a value owner accountable for AI results and investment",
+          "Motive: every AI investment can say whether it was worth it"
+        ],
+        "more": {
+          "text": "See the three growth levels",
+          "href": "#sec-1"
+        }
+      },
+      {
+        "key": "assess",
+        "name": "Self-assessment",
+        "sub": "Where I am now (competency iceberg)",
+        "items": [
+          "Above water, knowledge and skills: finance, building AI, cost-benefit and governance",
+          "Below water, attitude: curious about the business, evidence first, accountable for value",
+          "Gaps 2 → 4: process design, business case, cross-team leadership"
+        ],
+        "more": {
+          "text": "See the eight competencies and priorities",
+          "href": "#sec-2"
+        }
+      },
+      {
+        "key": "plan",
+        "name": "Plan",
+        "sub": "How I'll grow (SMART)",
+        "items": [
+          "Months 0–6: map a full customer journey with the business",
+          "Months 6–12: write the first investment proposal after a pilot",
+          "Months 6–24: chair the investment gate and monthly results review"
+        ],
+        "more": {
+          "text": "See the three-year roadmap",
+          "href": "#sec-4"
+        }
+      },
+      {
+        "key": "track",
+        "name": "Execute and track",
+        "sub": "Go, and review regularly",
+        "items": [
+          "Results monthly, investment quarterly, IDP updated yearly",
+          "Yearly check: 1 journey, 1 evidence pack, 1 investment proposal",
+          "Align progress with my manager and adjust"
+        ],
+        "more": {
+          "text": "See the measures and yearly checklist",
+          "href": "#sec-6"
+        }
+      }
+    ]
+  },
+  "iceberg": {
+    "title": "The competency iceberg",
+    "sub": "Competency is more than the visible knowledge and skills; it includes attitude, values, traits and motives below the water. Click one to see where I stand.",
+    "above": "Easy to see",
+    "below": "Hard to see",
+    "source": "Spencer, L. M. & Spencer, S. M. (1993). Competency at Work.",
+    "items": [
+      {
+        "key": "knowledge",
+        "name": "Knowledge",
+        "en": "Knowledge",
+        "level": "above",
+        "desc": "What I know",
+        "items": [
+          "MA in finance, quant research and an empirical thesis",
+          "The FSC's AI principles and pre-launch governance",
+          "How AI projects cost: GPUs, tokens, licences"
+        ]
+      },
+      {
+        "key": "skill",
+        "name": "Skill",
+        "en": "Skill",
+        "level": "above",
+        "desc": "What I can do",
+        "items": [
+          "Python, SQL, FastAPI, React: I build prototypes myself",
+          "RAG, multi-agent, VLM, LLM evaluation",
+          "Cost-benefit models, test design, acceptance question banks"
+        ]
+      },
+      {
+        "key": "attitude",
+        "name": "Attitude",
+        "en": "Attitude",
+        "level": "below",
+        "desc": "How I approach work",
+        "items": [
+          "Curious about the business: I learn it without waiting for requests",
+          "Evidence first: data, not gut feeling",
+          "Launch is not the finish line: results get tracked after"
+        ]
+      },
+      {
+        "key": "values",
+        "name": "Values",
+        "en": "Values",
+        "level": "below",
+        "desc": "What I care about",
+        "items": [
+          "Accountable for value: every AI investment must say whether it was worth it",
+          "Pragmatic: I know when not to use AI"
+        ]
+      },
+      {
+        "key": "traits",
+        "name": "Traits",
+        "en": "Traits",
+        "level": "below",
+        "desc": "How I tend to think",
+        "items": [
+          "Problem framing: break vague problems into testable ones",
+          "Cross-disciplinary: I can talk finance, technology and governance"
+        ]
+      },
+      {
+        "key": "motive",
+        "name": "Motives",
+        "en": "Motives",
+        "level": "below",
+        "desc": "Why I do it",
+        "items": [
+          "Take AI from pilots to real use",
+          "Challenge “we've always done it this way” and make the process better"
+        ]
+      }
+    ]
+  },
   "blueprint": {
     "title": "Three-year development blueprint",
     "sub": "From proving value with the business to owning AI's results and investment",
