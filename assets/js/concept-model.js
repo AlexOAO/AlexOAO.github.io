@@ -30,6 +30,18 @@ const ConceptModel = (() => {
   .cmod-x { background: none; border: 0; color: #94a3b8; font-size: 1.5rem; line-height: 1; cursor: pointer; padding: 0.2rem 0.4rem; }
   .cmod-db { padding: 0 1.3rem 1.2rem; } .cmod-db ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.5rem; }
   .cmod-db li { padding: 0.6rem 0.8rem; border-radius: 10px; background: #0b1426; border-left: 3px solid var(--c); line-height: 1.6; font-size: 0.95rem; }
+  .cmod-fig { position: relative; }
+  .cmod-zoom { position: absolute; right: 8px; top: 8px; font: inherit; font-size: 0.72rem; font-weight: 700; color: #bfdbfe; background: #1e3a8a; border: 0; border-radius: 6px; padding: 0.2rem 0.5rem; cursor: pointer; opacity: 0.9; }
+  .cmod-zoom:hover { opacity: 1; }
+  dialog.cmod-big { width: min(1000px, calc(100vw - 2rem)); }
+  .cmod-big .cmod-db { padding: 0.4rem 1rem 1rem; }
+  .cmod-big svg { width: 100%; height: auto; display: block; }
+  .cmod-big text { font-family: 'Noto Sans TC', 'Inter', sans-serif; pointer-events: none; }
+  .cmod-ro { display: grid; gap: 0.35rem; margin: 0 0 0.8rem; }
+  .cmod-ro div { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.6rem; align-items: baseline; padding: 0.45rem 0.65rem; border-radius: 10px; background: #111a2e; border: 1px solid rgba(148,163,184,0.14); }
+  .cmod-ro dt { font-size: 0.72rem; font-weight: 700; color: #c4b5fd; white-space: nowrap; }
+  .cmod-ro dd { margin: 0; font-size: 0.86rem; color: #e2e8f0; line-height: 1.5; }
+  .cmod-ro .out { background: #0f2a26; border-color: rgba(16,185,129,0.35); } .cmod-ro .out dt { color: #6ee7b7; }
   /* Side column: the model sits beside the article (sticky on wide screens, above it on narrow ones). */
   .cmod-wrap { max-width: 720px; margin: 0 auto; }
   .cmod-side { margin: 0 1.5rem 1.2rem; padding: 1rem; border: 1px solid rgba(148,163,184,0.18); border-radius: 16px; background: #0f172a; }
@@ -42,7 +54,7 @@ const ConceptModel = (() => {
   .cmod-side .cmod-btns button { padding: 0.45rem 0.65rem; }
   .cmod-side .cmod-btns b { font-size: 0.86rem; } .cmod-side .cmod-btns span { font-size: 0.74rem; }
   @media (min-width: 1180px) {
-    .cmod-wrap { max-width: 1140px; display: grid; grid-template-columns: 340px minmax(0, 720px); gap: 44px; align-items: start; }
+    .cmod-wrap { max-width: 1180px; display: grid; grid-template-columns: 420px minmax(0, 720px); gap: 40px; align-items: start; }
     .cmod-side { position: sticky; top: 1.5rem; margin: 3.5rem 0 0; max-height: calc(100vh - 3rem); overflow: auto; }
     .cmod-wrap > article.post { margin: 0; }
   }
@@ -178,8 +190,66 @@ const ConceptModel = (() => {
     }
   };
 
+  // Bespoke diagram (m.diagram): each project draws its own picture on a 600-wide canvas.
+  //   zones: [{x, y, w, h, label, tone}]            background regions (x, y = top-left)
+  //   nodes: [{item | label, x, y, w, h, shape, tone}] x, y = centre; item = index into m.items (clickable)
+  //          shape: rect | pill | circle | diamond | hex | db | doc | person | cloud
+  //   edges: [{from, to, label, style, bend}]       indexes into nodes; style solid | dashed | two-way
+  //   notes: [{x, y, text, tone, size}]
+  const TONE = { blue: ['#1d4ed8', '#dbeafe'], cyan: ['#0e7490', '#cffafe'], purple: ['#6d28d9', '#ede9fe'], amber: ['#b45309', '#fef3c7'],
+    green: ['#15803d', '#dcfce7'], pink: ['#be185d', '#fce7f3'], slate: ['#334155', '#e2e8f0'], red: ['#b91c1c', '#fee2e2'] };
+  const ZONE = { blue: '#0f1f3d', cyan: '#0b2a33', purple: '#1e1538', amber: '#2b200b', green: '#0d2a1c', pink: '#2b1020', slate: '#131c2e', red: '#2b1212', water: '#0b3354', sky: '#13213b' };
+  function shape(n, fill, stroke) {
+    const { x, y } = n, w = n.w || 130, h = n.h || 54, l = x - w / 2, t = y - h / 2, sw = 'stroke-width="2.5"';
+    switch (n.shape) {
+      case 'circle': return `<ellipse cx="${x}" cy="${y}" rx="${w / 2}" ry="${h / 2}" fill="${fill}" stroke="${stroke}" ${sw}/>`;
+      case 'pill': return `<rect x="${l}" y="${t}" width="${w}" height="${h}" rx="${h / 2}" fill="${fill}" stroke="${stroke}" ${sw}/>`;
+      case 'diamond': return `<polygon points="${x},${t} ${l + w},${y} ${x},${t + h} ${l},${y}" fill="${fill}" stroke="${stroke}" ${sw}/>`;
+      case 'hex': { const d = Math.min(18, w / 5); return `<polygon points="${l + d},${t} ${l + w - d},${t} ${l + w},${y} ${l + w - d},${t + h} ${l + d},${t + h} ${l},${y}" fill="${fill}" stroke="${stroke}" ${sw}/>`; }
+      case 'db': { const e = Math.min(10, h / 5); return `<path d="M${l} ${t + e} A${w / 2} ${e} 0 0 1 ${l + w} ${t + e} V${t + h - e} A${w / 2} ${e} 0 0 1 ${l} ${t + h - e} Z" fill="${fill}" stroke="${stroke}" ${sw}/><path d="M${l} ${t + e} A${w / 2} ${e} 0 0 0 ${l + w} ${t + e}" fill="none" stroke="${stroke}" ${sw}/>`; }
+      case 'doc': return `<path d="M${l} ${t} H${l + w - 16} L${l + w} ${t + 16} V${t + h} H${l} Z" fill="${fill}" stroke="${stroke}" ${sw}/><path d="M${l + w - 16} ${t} V${t + 16} H${l + w}" fill="none" stroke="${stroke}" ${sw}/>`;
+      case 'person': { const r = Math.min(w, h) * 0.2; return `<rect x="${l}" y="${t}" width="${w}" height="${h}" rx="14" fill="${fill}" stroke="${stroke}" ${sw}/><circle cx="${l + 20}" cy="${y - 4}" r="${r * 0.55}" fill="${stroke}"/><path d="M${l + 8} ${y + r} Q${l + 20} ${y + 2} ${l + 32} ${y + r}" fill="${stroke}"/>`; }
+      case 'cloud': return `<path d="M${l + w * 0.25} ${t + h} H${l + w * 0.78} A${h * 0.42} ${h * 0.42} 0 0 0 ${l + w * 0.8} ${t + h * 0.2} A${h * 0.45} ${h * 0.45} 0 0 0 ${l + w * 0.32} ${t + h * 0.18} A${h * 0.42} ${h * 0.42} 0 0 0 ${l + w * 0.25} ${t + h} Z" fill="${fill}" stroke="${stroke}" ${sw}/>`;
+      default: return `<rect x="${l}" y="${t}" width="${w}" height="${h}" rx="10" fill="${fill}" stroke="${stroke}" ${sw}/>`;
+    }
+  }
+  function edgeEnd(n, tx, ty) {   // where a line from the node's centre toward (tx, ty) leaves its box
+    const w = (n.w || 130) / 2, h = (n.h || 54) / 2, dx = tx - n.x, dy = ty - n.y;
+    if (!dx && !dy) return [n.x, n.y];
+    const k = Math.min(w / Math.abs(dx || 1e-9), h / Math.abs(dy || 1e-9));
+    return [n.x + dx * Math.min(k, 1) * 1.04, n.y + dy * Math.min(k, 1) * 1.04];
+  }
+  function custom(m) {
+    const D = m.diagram, H = D.h || 440; let g = '<defs><marker id="cm-ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#94a3b8"/></marker></defs>';
+    (D.zones || []).forEach(z => {
+      g += `<rect x="${z.x}" y="${z.y}" width="${z.w}" height="${z.h}" rx="${z.tone === 'water' || z.tone === 'sky' ? 0 : 14}" fill="${ZONE[z.tone] || ZONE.slate}" stroke="${z.tone === 'water' || z.tone === 'sky' ? 'none' : '#334155'}" stroke-dasharray="6 5"/>`;
+      if (z.label) g += `<text x="${z.x + 12}" y="${z.y + 22}" font-size="13" font-weight="700" fill="#94a3b8">${esc(z.label)}</text>`;
+    });
+    const N = D.nodes || [];
+    (D.edges || []).forEach(e => {
+      const a = N[e.from], b = N[e.to]; if (!a || !b) return;
+      const [x1, y1] = edgeEnd(a, b.x, b.y), [x2, y2] = edgeEnd(b, a.x, a.y), bend = e.bend || 0;
+      const mx = (x1 + x2) / 2 - (y2 - y1) * bend, my = (y1 + y2) / 2 + (x2 - x1) * bend;
+      g += `<path d="M${x1} ${y1} Q${mx} ${my} ${x2} ${y2}" fill="none" stroke="#94a3b8" stroke-width="2" ${e.style === 'dashed' ? 'stroke-dasharray="6 5"' : ''} marker-end="url(#cm-ar)" ${e.style === 'two-way' ? 'marker-start="url(#cm-ar)"' : ''}/>`;
+      if (e.label) { const lx = (x1 + 2 * mx + x2) / 4, ly = (y1 + 2 * my + y2) / 4, lw = tw(e.label, 12) + 10;
+        g += `<rect x="${lx - lw / 2}" y="${ly - 10}" width="${lw}" height="20" rx="6" fill="#0b1120" opacity="0.9"/><text x="${lx}" y="${ly + 4}" text-anchor="middle" font-size="12" font-weight="600" fill="#cbd5e1">${esc(e.label)}</text>`; }
+    });
+    N.forEach(n => {
+      const it = n.item != null ? m.items[n.item] : null, name = it ? it.name : n.label, [stroke, light] = TONE[n.tone] || TONE.blue;
+      const fill = n.solid ? stroke : '#0f172a', col = n.solid ? '#ffffff' : light, w = n.w || 130;
+      const inner = shape(n, fill, stroke) + txt(n.shape === 'person' ? n.x + 14 : n.x, n.y, name || '', n.size || fs(), { max: (n.shape === 'person' ? w - 46 : w - 18), fill: col });
+      g += it ? nd(n.item, name, inner) : `<g>${inner}</g>`;
+    });
+    (D.notes || []).forEach(t => { const [, light] = TONE[t.tone] || TONE.slate; g += txt(t.x, t.y, t.text, t.size || 13, { fill: light, weight: 600, max: t.max || 260, anchor: t.anchor || 'middle' }); });
+    return { g, h: H };
+  }
+
   // Every clickable thing: items, plus the hub's centre ('c') and the equation's result ('r').
   function entries(m) {
+    if (m.diagram) {   // bespoke diagram: a button takes the colour of its node
+      const tone = k => ((m.diagram.nodes || []).find(n => n.item === k) || {}).tone;
+      return m.items.map((it, k) => ({ id: String(k), color: (TONE[tone(k)] || TONE.blue)[0], it }));
+    }
     const out = m.items.map((it, k) => ({ id: String(k), color: m.type === 'compare' ? (k ? ACC : '#64748b') : m.type === 'matrix' && it.pos === 'tr' ? ACC : PAL[k % PAL.length], it }));
     if (m.type === 'hub' && m.center) out.unshift({ id: 'c', color: ACC, it: m.center });
     if (m.type === 'equation' && m.result) out.push({ id: 'r', color: ACC, it: m.result });
@@ -188,13 +258,14 @@ const ConceptModel = (() => {
 
   let styled = false;
   function html(m, opt = {}) {
-    if (!m || !draw[m.type]) return '';
+    if (!m || !(m.diagram || draw[m.type])) return '';
     if (!styled) { const s = document.createElement('style'); s.textContent = css; document.head.appendChild(s); styled = true; }
-    const { g, h } = draw[m.type](m);
+    const { g, h } = m.diagram ? custom(m) : draw[m.type](m);
     const btns = entries(m).map(e => `<button data-cm="${e.id}" style="--c:${e.color}"><b>${esc(e.it.name)}</b>${e.it.desc ? `<span>${esc(e.it.desc)}</span>` : ''}</button>`).join('');
     return `<section class="cmod">${opt.kicker ? `<p class="cmod-k">${esc(opt.kicker)}</p>` : ''}<h2 class="cmod-t">${esc(m.title)}</h2>
       ${m.sub ? `<p class="cmod-sub">${esc(m.sub)}</p>` : ''}
-      <div class="cmod-grid"><div class="cmod-fig"><svg viewBox="0 0 600 ${h}" role="group" aria-label="${esc(m.title)}">${g}</svg></div><div class="cmod-btns">${btns}</div></div></section>`;
+      ${m.role || m.outcome ? `<dl class="cmod-ro">${m.role ? `<div><dt>${esc(opt.roleLabel || '')}</dt><dd>${esc(m.role)}</dd></div>` : ''}${m.outcome ? `<div class="out"><dt>${esc(opt.outcomeLabel || '')}</dt><dd>${esc(m.outcome)}</dd></div>` : ''}</dl>` : ''}
+      <div class="cmod-grid"><div class="cmod-fig">${opt.zoom ? `<button class="cmod-zoom" data-zoom>${esc(opt.zoom)}</button>` : ''}<svg viewBox="0 0 600 ${h}" role="group" aria-label="${esc(m.title)}">${g}</svg></div><div class="cmod-btns">${btns}</div></div></section>`;
   }
 
   function bind(m, root, opt = {}) {
@@ -207,12 +278,22 @@ const ConceptModel = (() => {
     const map = Object.fromEntries(entries(m).map(e => [e.id, e]));
     const open = id => {
       const e = map[id]; if (!e) return;
+      if (dlg.open) dlg.close();
+      dlg.classList.remove('cmod-big');
       dlg.style.setProperty('--c', e.color);
       dlg.innerHTML = `<div class="cmod-dh"><div><h3>${esc(e.it.name)}</h3>${e.it.desc ? `<p>${esc(e.it.desc)}</p>` : ''}</div>
         <button class="cmod-x" data-x aria-label="${esc(opt.close || 'Close')}">×</button></div>
         <div class="cmod-db"><ul>${(e.it.points || []).map(p => `<li>${esc(p)}</li>`).join('')}</ul></div>`;
       dlg.showModal();
     };
+    const z = root.querySelector('.cmod [data-zoom]');
+    if (z) z.addEventListener('click', () => {
+      const svg = root.querySelector('.cmod-fig svg').outerHTML;
+      dlg.classList.add('cmod-big'); dlg.style.setProperty('--c', '#3b82f6');
+      dlg.innerHTML = `<div class="cmod-dh"><div><h3>${esc(m.title)}</h3>${m.sub ? `<p>${esc(m.sub)}</p>` : ''}</div><button class="cmod-x" data-x aria-label="${esc(opt.close || 'Close')}">×</button></div><div class="cmod-db">${svg}</div>`;
+      dlg.querySelectorAll('[data-cm]').forEach(el => el.addEventListener('click', () => open(el.dataset.cm)));
+      dlg.showModal();
+    });
     root.querySelectorAll('.cmod [data-cm]').forEach(el => {
       el.addEventListener('click', () => open(el.dataset.cm));
       if (el.tagName === 'g') el.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); open(el.dataset.cm); } });
@@ -224,7 +305,7 @@ const ConceptModel = (() => {
     if (!article) return;
     let wrap = article.parentNode.classList.contains('cmod-wrap') ? article.parentNode : null;
     if (wrap) wrap.querySelectorAll(':scope > .cmod-side').forEach(x => x.remove());
-    if (!m || !draw[m.type]) return;
+    if (!m || !(m.diagram || draw[m.type])) return;
     if (!wrap) { wrap = document.createElement('div'); wrap.className = 'cmod-wrap'; article.parentNode.insertBefore(wrap, article); wrap.appendChild(article); }
     const side = document.createElement('aside');
     side.className = 'cmod-side';

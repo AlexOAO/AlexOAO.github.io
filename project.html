@@ -117,12 +117,12 @@
   <div class="post-footer"><div class="pager" id="pager"></div></div>
 
   <script src="assets/js/common.js?v=20261120g"></script>
-  <script src="assets/js/concept-model.js?v=20261126c"></script>
+  <script src="assets/js/concept-model.js?v=20261126d"></script>
   <script>
     const { esc, dataPath, getJSON, stageNames, stagePills, visibleGroups, STAGE_ORDER, STAGE_COLOR, stageSpan, isGov, QUANT_ORDER, QUANT_COLOR, quantSpan, quantPill } = Site;
     const I18N = {
       en: {
-        cmKicker: 'Concept model', close: 'Close',
+        cmKicker: 'The project at a glance', cmZoom: 'Enlarge', cmRole: 'My role', cmOutcome: 'Outcome', close: 'Close',
         back: 'Back to Alex Li', toggle: '中文', kids: 'Sub-projects', partOf: 'Part of: ',
         prev: 'Previous', nextProj: 'Next', noStory: 'The story for this project is not written yet.',
         notFound: 'This project does not exist.', home: 'Back to the homepage', lc: 'Where it sits in the AI lifecycle', ms: 'Milestones',
@@ -133,7 +133,7 @@
         loadError: 'Content failed to load. A network filter may block this site.',
       },
       zh: {
-        cmKicker: '概念模型', close: '關閉',
+        cmKicker: '這個專案的全貌', cmZoom: '放大', cmRole: '我的角色', cmOutcome: '成果', close: '關閉',
         back: '回到首頁', toggle: 'EN', kids: '子專案', partOf: '上層專案：',
         prev: '上一個專案', nextProj: '下一個專案', noStory: '這個專案的文章還沒寫。',
         notFound: '找不到這個專案。', home: '回到首頁', lc: '在 AI 生命週期的位置', ms: '專案進度',
@@ -217,7 +217,7 @@
         const link = (x, cls, label) => x ? `<a class="${cls}" href="${href(x)}">${cls === 'prev' ? '← ' : ''}${esc(label)}${colon()}${esc(x.name)}${cls === 'next' ? ' →' : ''}</a>` : '';
         pager.innerHTML = link(list[i - 1], 'prev', T(view.stage ? 'prevStage' : 'prev')) + link(list[i + 1], 'next', T(view.stage ? 'nextStage' : 'nextProj'));
         // Concept model (data/models.json): diagram nodes and buttons open a popup.
-        ConceptModel.mountSide(root, view.stage ? null : models[slug], { kicker: T('cmKicker'), close: T('close') });
+        ConceptModel.mountSide(root, view.stage ? null : models[slug], { zoom: T('cmZoom'), kicker: T('cmKicker'), roleLabel: T('cmRole'), outcomeLabel: T('cmOutcome'), close: T('close') });
       }).catch(() => { root.innerHTML = `<p class="lead error">${esc(T('loadError'))}</p>`; });
     }
 

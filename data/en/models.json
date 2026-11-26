@@ -1,501 +1,2707 @@
 {
   "guardrails-poc": {
-    "type": "compare",
-    "title": "Add-on guardrail vs built-in",
-    "sub": "Both defences side by side on the same attack prompts, to decide whether an add-on guardrail is worth buying.",
+    "type": "pipeline",
+    "title": "Guardrail PoC, end to end",
+    "sub": "Vendor reports never tested our own business, so I ran 3,600 questions against an add-on guardrail and advised sticking with the built-in defence for now.",
+    "role": "Led the bank's side of the PoC: wrote the questions, ran and analysed tests, made the call",
+    "outcome": "XecGuard done, advice: do not buy it yet; Vulcan still in testing",
     "items": [
       {
-        "name": "Add-on guardrail",
-        "desc": "XecGuard: blocks a lot, over-blocks too",
+        "name": "Define the question",
+        "desc": "Six policies mapped to FSC rules",
         "points": [
-          "Blocked 98.3% of red-team attack prompts, but wrongly blocked 20 of 30 normal questions",
-          "Added about 0.8 s per check and scored only 62.5/100 on the 9-dimension assessment",
-          "Custom policies helped: on 1,500 prompts, missed attacks fell from 10.2% to 2.2%"
+          "The vendor reports looked good, but none had tested KGI's own business",
+          "I listed the six policy types XecGuard had switched on and mapped them to FSC principles 2 to 5",
+          "One question only: can it stop attacks aimed at KGI without blocking customers' normal questions?"
         ]
       },
       {
-        "name": "Built-in defence",
-        "desc": "Already blocked every attack prompt",
+        "name": "Build the questions",
+        "desc": "Three sets, 3,600 in total",
         "points": [
-          "The platform's own defence already blocked every prompt in the same attack set",
-          "Adding another layer would not block more, but would wrongly block more normal questions",
-          "Recommendation: use the built-in defence for now, with no extra integration or licence fee"
+          "Following the OWASP AI Testing Guide, I built three question sets, 3,600 questions in all",
+          "The 1,100 domain questions cover the wealth app's 10 business areas, each tied to a real API field",
+          "Attack to normal questions run 4:1, each tagged with a risk level, and the set is version-controlled"
+        ]
+      },
+      {
+        "name": "Two test rounds",
+        "desc": "R1 and R2, logged per question",
+        "points": [
+          "R1 ran all 3,600 with only the six policies; R2 added a system prompt and custom rules, then reran",
+          "It blocked 98.3% of red-team prompts, but also 20 of 30 normal questions, adding about 0.8 s each",
+          "Custom policies worked: on 1,500 questions the miss rate fell from 10.2% to 2.2%"
+        ]
+      },
+      {
+        "name": "Nine-part comparison",
+        "desc": "Add-on vs built-in",
+        "points": [
+          "I scored XecGuard and the platform's built-in defence on the same nine-part evaluation sheet",
+          "XecGuard scored only 62.5/100; the built-in defence had already blocked every attack in the same set",
+          "Vulcan: 1,330 red-team benchmark prompts across 44 risk types, 73.4 for validation coverage"
+        ]
+      },
+      {
+        "name": "Recommendation",
+        "desc": "Use the built-in defence first",
+        "points": [
+          "An extra layer would block no more, wrongly block more, and need its own integration and fees",
+          "The 3,600-question set stays, so every future Agent is accepted against the same yardstick",
+          "Next: finish the Vulcan PoC and set pass marks for missed attacks and wrongly blocked questions"
         ]
       }
-    ]
+    ],
+    "diagram": {
+      "h": 455,
+      "zones": [
+        {
+          "x": 16,
+          "y": 200,
+          "w": 276,
+          "h": 160,
+          "tone": "amber"
+        },
+        {
+          "x": 308,
+          "y": 200,
+          "w": 276,
+          "h": 160,
+          "tone": "green"
+        }
+      ],
+      "nodes": [
+        {
+          "label": "FSC principles 2–5",
+          "x": 100,
+          "y": 50,
+          "w": 170,
+          "h": 44,
+          "shape": "pill",
+          "tone": "slate"
+        },
+        {
+          "item": 0,
+          "x": 290,
+          "y": 50,
+          "w": 150,
+          "h": 54,
+          "tone": "blue"
+        },
+        {
+          "item": 1,
+          "x": 490,
+          "y": 50,
+          "w": 150,
+          "h": 64,
+          "shape": "db",
+          "tone": "blue"
+        },
+        {
+          "item": 2,
+          "x": 300,
+          "y": 158,
+          "w": 150,
+          "h": 54,
+          "tone": "cyan"
+        },
+        {
+          "label": "R2: add rules",
+          "x": 85,
+          "y": 158,
+          "w": 124,
+          "h": 44,
+          "shape": "pill",
+          "tone": "cyan",
+          "size": 15
+        },
+        {
+          "label": "XecGuard",
+          "x": 154,
+          "y": 280,
+          "w": 170,
+          "h": 50,
+          "shape": "hex",
+          "tone": "amber",
+          "solid": true
+        },
+        {
+          "label": "Built-in guard",
+          "x": 446,
+          "y": 280,
+          "w": 170,
+          "h": 50,
+          "shape": "hex",
+          "tone": "green",
+          "solid": true
+        },
+        {
+          "item": 3,
+          "x": 300,
+          "y": 402,
+          "w": 170,
+          "h": 54,
+          "tone": "purple"
+        },
+        {
+          "item": 4,
+          "x": 500,
+          "y": 402,
+          "w": 150,
+          "h": 54,
+          "tone": "green",
+          "solid": true
+        }
+      ],
+      "edges": [
+        {
+          "from": 0,
+          "to": 1
+        },
+        {
+          "from": 1,
+          "to": 2
+        },
+        {
+          "from": 2,
+          "to": 3,
+          "label": "3,600 Qs · 4:1"
+        },
+        {
+          "from": 3,
+          "to": 4,
+          "label": "misses",
+          "style": "two-way"
+        },
+        {
+          "from": 3,
+          "to": 5,
+          "bend": 0.25
+        },
+        {
+          "from": 3,
+          "to": 6,
+          "bend": -0.25
+        },
+        {
+          "from": 5,
+          "to": 7
+        },
+        {
+          "from": 6,
+          "to": 7
+        },
+        {
+          "from": 7,
+          "to": 8
+        }
+      ],
+      "notes": [
+        {
+          "x": 28,
+          "y": 222,
+          "text": "Add-on guard",
+          "tone": "amber",
+          "size": 13,
+          "anchor": "start"
+        },
+        {
+          "x": 572,
+          "y": 222,
+          "text": "Already in platform",
+          "tone": "green",
+          "size": 13,
+          "anchor": "end"
+        },
+        {
+          "x": 100,
+          "y": 324,
+          "text": "Blocks 98.3%",
+          "tone": "amber",
+          "size": 12
+        },
+        {
+          "x": 100,
+          "y": 342,
+          "text": "Wrongly blocks 20/30",
+          "tone": "amber",
+          "size": 12
+        },
+        {
+          "x": 500,
+          "y": 324,
+          "text": "Blocks all attacks",
+          "tone": "green",
+          "size": 12
+        },
+        {
+          "x": 500,
+          "y": 342,
+          "text": "No extra fee",
+          "tone": "green",
+          "size": 12
+        },
+        {
+          "x": 300,
+          "y": 443,
+          "text": "XecGuard 62.5 / 100",
+          "tone": "purple",
+          "size": 12
+        }
+      ]
+    }
   },
   "agentic-platform-eval": {
     "type": "funnel",
     "title": "Pre-purchase issue funnel",
-    "sub": "Hands-on tests before purchase, narrowed down to the issues that would block a launch, so we don't pick the wrong platform.",
+    "sub": "A wrong platform often shows its gaps halfway through, so I tested both candidates before purchase, found 12 issues and scored them side by side.",
+    "role": "Led the evaluation: designed and ran the tests, logged issues, filled in the scores",
+    "outcome": "12 issues found before purchase, 4 of them launch blockers",
     "items": [
       {
-        "name": "26 tests",
-        "desc": "Hands-on tests on Agatha",
+        "name": "Two candidates",
+        "desc": "Agatha and open-source Dify",
         "points": [
-          "Ran 26 hands-on tests on Agatha and rated every issue by severity",
-          "For the other candidate, Dify, designed 34 tests and wrote the PoC report"
+          "Four business Agents need a platform; pick wrong and a key feature may be missing halfway through",
+          "The question was not which has more features, but which will not break in our use cases"
+        ]
+      },
+      {
+        "name": "60 hands-on tests",
+        "desc": "Across both platforms",
+        "points": [
+          "I designed Dify's tests around its own five modules, after collecting known issues from its GitHub",
+          "The bank's 238 regulatory and 119 penalty Q&As tested its knowledge base, sources and hallucination",
+          "On Agatha I ran 26 tests and tagged every issue by severity"
         ]
       },
       {
         "name": "12 issues",
-        "desc": "Found before purchase, not after launch",
+        "desc": "Found before purchase",
         "points": [
-          "The 26 tests surfaced 12 issues, all found before purchase",
-          "Three severity levels: launch blocker, security issue, general issue"
+          "Agatha's 26 tests turned up 12 issues, all found before purchase",
+          "Sorted into three grades: launch blockers, security issues and general issues"
         ]
       },
       {
         "name": "4 blockers",
-        "desc": "Would keep an Agent from launching",
+        "desc": "Plus one security hole",
         "points": [
-          "4 of the 12 issues would keep an Agent from going live",
-          "One more was a security vulnerability"
+          "Of the 12 issues, 4 would have kept an Agent from launching",
+          "One more was a security hole, caught now instead of after launch"
         ]
       },
       {
-        "name": "Selection basis",
-        "desc": "One scorecard, side by side",
+        "name": "Basis for the pick",
+        "desc": "42-item scorecard, side by side",
         "points": [
-          "Both platforms scored on the group's scorecard: 9 categories, 42 items",
-          "The PoC report and scorecards became the group's basis for choosing the platform"
-        ]
-      }
-    ]
-  },
-  "agent-cost-roi": {
-    "type": "equation",
-    "title": "Unit cost formula",
-    "sub": "The four Agents spend money in different ways; one formula breaks them down so they fit in one table.",
-    "items": [
-      {
-        "name": "Volume",
-        "desc": "Provided by business units",
-        "points": [
-          "Both cost and benefit start from business volume, so the two can be compared",
-          "Once data is in, each Agent gets a three-year baseline for volume, cost and benefit"
-        ]
-      },
-      {
-        "name": "Usage per case",
-        "desc": "Resources each case consumes",
-        "points": [
-          "Usage figures come from IT",
-          "Some run in the cloud, some on-premises; some bill per call, others per case"
-        ]
-      },
-      {
-        "name": "Unit price",
-        "desc": "Turns usage into money",
-        "points": [
-          "Cost = volume × resources per case × unit price of the resource",
-          "Benefit works the same way: volume × benefit per case × unit value"
+          "Both platforms were scored on the group's 42-item, nine-category sheet and on our department's sheet",
+          "My PoC report and scorecards are what the group used to choose its platform",
+          "Once chosen, the guardrail question set and pre-launch checks apply to every Agent built on it"
         ]
       }
     ],
-    "op": "×",
+    "diagram": {
+      "h": 445,
+      "zones": [
+        {
+          "x": 14,
+          "y": 14,
+          "w": 572,
+          "h": 290,
+          "label": "Before buying: hands-on",
+          "tone": "slate"
+        },
+        {
+          "x": 14,
+          "y": 318,
+          "w": 572,
+          "h": 113,
+          "label": "The purchase",
+          "tone": "green"
+        }
+      ],
+      "nodes": [
+        {
+          "item": 0,
+          "x": 85,
+          "y": 170,
+          "w": 130,
+          "h": 60,
+          "tone": "blue"
+        },
+        {
+          "item": 1,
+          "x": 245,
+          "y": 170,
+          "w": 130,
+          "h": 150,
+          "tone": "cyan"
+        },
+        {
+          "item": 2,
+          "x": 400,
+          "y": 170,
+          "w": 120,
+          "h": 104,
+          "tone": "amber"
+        },
+        {
+          "item": 3,
+          "x": 526,
+          "y": 170,
+          "w": 112,
+          "h": 70,
+          "tone": "red",
+          "solid": true
+        },
+        {
+          "item": 4,
+          "x": 300,
+          "y": 383,
+          "w": 200,
+          "h": 54,
+          "tone": "green",
+          "solid": true
+        }
+      ],
+      "edges": [
+        {
+          "from": 0,
+          "to": 1
+        },
+        {
+          "from": 1,
+          "to": 2
+        },
+        {
+          "from": 2,
+          "to": 3
+        },
+        {
+          "from": 1,
+          "to": 4,
+          "label": "9 areas, 42 items",
+          "bend": 0.12
+        },
+        {
+          "from": 3,
+          "to": 4,
+          "bend": -0.12
+        }
+      ],
+      "notes": [
+        {
+          "x": 85,
+          "y": 116,
+          "text": "Agatha: 26",
+          "tone": "blue",
+          "size": 12
+        },
+        {
+          "x": 85,
+          "y": 224,
+          "text": "Dify: 34",
+          "tone": "blue",
+          "size": 12
+        },
+        {
+          "x": 528,
+          "y": 226,
+          "text": "+1 security hole",
+          "tone": "red",
+          "size": 12
+        },
+        {
+          "x": 400,
+          "y": 72,
+          "text": "fewer to the right",
+          "tone": "slate",
+          "size": 12
+        },
+        {
+          "x": 575,
+          "y": 385,
+          "text": "not found after launch",
+          "tone": "green",
+          "size": 12,
+          "anchor": "end",
+          "max": 150
+        }
+      ]
+    }
+  },
+  "agent-cost-roi": {
+    "type": "equation",
+    "title": "Four Agents, one cost lens",
+    "sub": "The four Agents serve different people and spend money differently, so I built four prototypes and one shared cost-benefit formula to compare them side by side.",
+    "role": "Built all four prototypes and led the shared cost-benefit framework",
+    "outcome": "Four working prototypes; three-year baselines being built",
+    "items": [
+      {
+        "name": "Four prototypes",
+        "desc": "Acquire, transact, serve, grow",
+        "points": [
+          "Each Agent covers one stage of the customer journey: acquisition, transaction, service, wealth",
+          "I made each one a working prototype, so business units could see and try it before investing",
+          "The wealth assistant, for example, is a mobile banking MVP, from login to chatting with the AI"
+        ]
+      },
+      {
+        "name": "Shared formula",
+        "desc": "Everything starts from volume",
+        "points": [
+          "Cost = volume × usage per case × unit price, and benefit works the same way",
+          "Cloud or on-prem, billed per call or per case, all become cost per case and ROI",
+          "Business ratios show whether AI is doing the work; realisation ratios show whether forecasts came true"
+        ]
+      },
+      {
+        "name": "Three-year baseline",
+        "desc": "Volume and usage being collected",
+        "points": [
+          "Business units supply volumes; IT supplies usage",
+          "Once the data is in, I build a three-year volume, cost and benefit baseline for each Agent",
+          "Small internal requests use a simpler scorecard instead: benefit, feasibility, compliance and cost"
+        ]
+      }
+    ],
+    "op": "+",
     "result": {
-      "name": "Unit cost & ROI",
-      "desc": "All four Agents side by side",
+      "name": "Side by side",
+      "desc": "Four Agents, one table",
       "points": [
-        "Business ratio: work handled by AI ÷ total volume, i.e. is the AI actually doing the work?",
-        "Realisation ratio: actual ÷ baseline, i.e. did the original estimate come true?",
-        "Planned: a realisation ratio below threshold triggers a review of resources or scope"
+        "For the first time, all four Agents fit in one comparison table",
+        "After launch, a realisation ratio below the threshold triggers a review of resources or scope",
+        "The AI operations platform now runs this comparison, with plan and actual side by side"
+      ]
+    },
+    "diagram": {
+      "h": 450,
+      "zones": [
+        {
+          "x": 14,
+          "y": 14,
+          "w": 572,
+          "h": 130,
+          "label": "Customer journey",
+          "tone": "sky"
+        }
+      ],
+      "nodes": [
+        {
+          "label": "Loan assistant",
+          "x": 85,
+          "y": 100,
+          "w": 124,
+          "h": 50,
+          "shape": "hex",
+          "tone": "cyan",
+          "size": 14
+        },
+        {
+          "label": "Credit review",
+          "x": 228,
+          "y": 100,
+          "w": 124,
+          "h": 50,
+          "shape": "hex",
+          "tone": "cyan",
+          "size": 14
+        },
+        {
+          "label": "Service copilot",
+          "x": 372,
+          "y": 100,
+          "w": 124,
+          "h": 50,
+          "shape": "hex",
+          "tone": "cyan",
+          "size": 14
+        },
+        {
+          "label": "Wealth assistant",
+          "x": 515,
+          "y": 100,
+          "w": 124,
+          "h": 50,
+          "shape": "hex",
+          "tone": "cyan",
+          "size": 14
+        },
+        {
+          "item": 0,
+          "x": 300,
+          "y": 200,
+          "w": 170,
+          "h": 50,
+          "tone": "purple",
+          "solid": true
+        },
+        {
+          "label": "Volume",
+          "x": 72,
+          "y": 300,
+          "w": 106,
+          "h": 50,
+          "shape": "circle",
+          "tone": "blue",
+          "size": 14
+        },
+        {
+          "label": "Use per case",
+          "x": 215,
+          "y": 300,
+          "w": 118,
+          "h": 50,
+          "shape": "circle",
+          "tone": "blue",
+          "size": 14
+        },
+        {
+          "label": "Unit price",
+          "x": 360,
+          "y": 300,
+          "w": 126,
+          "h": 50,
+          "shape": "circle",
+          "tone": "blue",
+          "size": 14
+        },
+        {
+          "item": 1,
+          "x": 512,
+          "y": 300,
+          "w": 128,
+          "h": 54,
+          "tone": "blue",
+          "solid": true
+        },
+        {
+          "item": 2,
+          "x": 300,
+          "y": 405,
+          "w": 190,
+          "h": 60,
+          "shape": "db",
+          "tone": "amber"
+        }
+      ],
+      "edges": [
+        {
+          "from": 0,
+          "to": 1
+        },
+        {
+          "from": 1,
+          "to": 2
+        },
+        {
+          "from": 2,
+          "to": 3
+        },
+        {
+          "from": 4,
+          "to": 0,
+          "style": "dashed"
+        },
+        {
+          "from": 4,
+          "to": 1,
+          "style": "dashed"
+        },
+        {
+          "from": 4,
+          "to": 2,
+          "style": "dashed"
+        },
+        {
+          "from": 4,
+          "to": 3,
+          "style": "dashed"
+        },
+        {
+          "from": 8,
+          "to": 9,
+          "label": "cost per case · ROI",
+          "bend": -0.1
+        }
+      ],
+      "notes": [
+        {
+          "x": 85,
+          "y": 60,
+          "text": "Acquire",
+          "tone": "cyan",
+          "size": 13
+        },
+        {
+          "x": 228,
+          "y": 60,
+          "text": "Transact",
+          "tone": "cyan",
+          "size": 13
+        },
+        {
+          "x": 372,
+          "y": 60,
+          "text": "Serve",
+          "tone": "cyan",
+          "size": 13
+        },
+        {
+          "x": 515,
+          "y": 60,
+          "text": "Grow",
+          "tone": "cyan",
+          "size": 13
+        },
+        {
+          "x": 143,
+          "y": 300,
+          "text": "×",
+          "tone": "slate",
+          "size": 22
+        },
+        {
+          "x": 288,
+          "y": 300,
+          "text": "×",
+          "tone": "slate",
+          "size": 22
+        },
+        {
+          "x": 434,
+          "y": 300,
+          "text": "=",
+          "tone": "slate",
+          "size": 22
+        },
+        {
+          "x": 200,
+          "y": 348,
+          "text": "Benefit too: volume × value per case × unit value",
+          "tone": "slate",
+          "size": 12,
+          "max": 300
+        },
+        {
+          "x": 105,
+          "y": 405,
+          "text": "business ratio",
+          "tone": "amber",
+          "size": 12
+        },
+        {
+          "x": 105,
+          "y": 423,
+          "text": "realisation ratio",
+          "tone": "amber",
+          "size": 12
+        },
+        {
+          "x": 500,
+          "y": 420,
+          "text": "volumes coming in",
+          "tone": "amber",
+          "size": 12
+        }
       ]
     }
   },
   "agent-loan-assistant": {
     "type": "layers",
-    "title": "Pricing authority layers",
-    "sub": "What the AI may do alone, what goes to a person, and what it must never do, drawn as layers so sales can be trusted to AI.",
+    "title": "Loan assistant, layer by layer",
+    "sub": "Applicants left when no one answered, so I built a prototype that chats, guides the application and negotiates within limits, tied to the cost framework.",
+    "role": "Built the prototype and brought it into the four Agents' shared cost framework",
+    "outcome": "Prototype works end to end; baseline waits on business volumes",
     "items": [
       {
-        "name": "AI acts alone",
-        "desc": "Chats, guides, negotiates within limits",
+        "name": "Three channels",
+        "desc": "Desktop, mobile, mock LINE",
         "points": [
-          "One assistant across three channels: desktop and mobile application site, plus a mock LINE account",
-          "Within its authority it concedes a small step at a time; auto-debit or payroll accounts earn rule-based cuts",
-          "If an application stalls at one step too long, it checks in to win back customers who drop off"
+          "Applicants with questions often left when no one answered right away",
+          "Desktop and mobile application sites plus a mock LINE account all run the same assistant",
+          "After accepting a quote on LINE, a customer jumps straight to the application site to continue"
         ]
       },
       {
-        "name": "Manager decides",
-        "desc": "Beyond authority: a pricing request",
+        "name": "Guided application",
+        "desc": "Four steps, quote to submit",
         "points": [
-          "Requests beyond its authority or below the rate floor create a manager pricing request",
-          "The manager's approval or counter-offer flows back into the chat and onto the application",
-          "Human-on-the-loop: it runs on its own within limits; people step in only for exceptions"
+          "Personal, mortgage and car loan pages with calculators, plus a four-step application",
+          "If an application stalls on a step, the assistant checks in, winning back people who drift away"
         ]
       },
       {
-        "name": "Never allowed",
-        "desc": "No guaranteed approval",
+        "name": "Negotiation in limits",
+        "desc": "Beyond limits: a pricing request",
         "points": [
-          "Output guardrails block phrases like \"guaranteed approval\"",
-          "Every quote discloses the total APR; rates and monthly payments are computed by code, not the LLM"
+          "The base rate follows the pre-screen grade, and within its authority the assistant concedes in small steps",
+          "Beyond its authority it raises a pricing request; the manager's approval or counter-offer returns to the chat",
+          "Human-on-the-loop: it acts alone within limits and hands exceptions to a person"
         ]
       },
       {
-        "name": "Base safeguards",
-        "desc": "De-identification and usage caps",
+        "name": "Guardrails & privacy",
+        "desc": "Never promises approval",
         "points": [
-          "Text sent to the cloud model is stripped of anything that could identify the customer",
-          "Daily usage is capped; past the cap it falls back to rule-based replies"
+          "An output guardrail blocks lines like \"guaranteed approval\", and every quote shows the total-cost APR",
+          "Code, not the model, works out rates and payments; text is de-identified before the cloud, with a daily cap"
+        ]
+      },
+      {
+        "name": "Hand-off to credit",
+        "desc": "Exports a case pack",
+        "points": [
+          "A submitted application exports as a case pack, with document images, for the credit review Agent",
+          "Tested: the credit Agent imports it, reads the images and works out annual income",
+          "A 12-page back office, plus automated tests for pricing limits and the full end-to-end flow"
+        ]
+      },
+      {
+        "name": "Cost and benefit",
+        "desc": "Metrics set, awaiting volumes",
+        "points": [
+          "Its value is in how many applications it helps close, not hours saved",
+          "Business ratio: AI-assisted applications ÷ all applications, plus the conversion rate",
+          "I have asked the business unit for volumes; the three-year baseline follows once they arrive"
         ]
       }
-    ]
+    ],
+    "diagram": {
+      "h": 440,
+      "zones": [
+        {
+          "x": 14,
+          "y": 14,
+          "w": 572,
+          "h": 92,
+          "tone": "slate"
+        },
+        {
+          "x": 14,
+          "y": 116,
+          "w": 572,
+          "h": 180,
+          "tone": "blue"
+        },
+        {
+          "x": 200,
+          "y": 306,
+          "w": 386,
+          "h": 120,
+          "tone": "amber"
+        },
+        {
+          "x": 14,
+          "y": 306,
+          "w": 176,
+          "h": 120,
+          "label": "Measure",
+          "tone": "green"
+        }
+      ],
+      "nodes": [
+        {
+          "item": 0,
+          "x": 105,
+          "y": 60,
+          "w": 160,
+          "h": 50,
+          "tone": "cyan"
+        },
+        {
+          "item": 3,
+          "x": 105,
+          "y": 215,
+          "w": 160,
+          "h": 58,
+          "shape": "hex",
+          "tone": "red"
+        },
+        {
+          "item": 1,
+          "x": 310,
+          "y": 170,
+          "w": 150,
+          "h": 44,
+          "tone": "blue"
+        },
+        {
+          "item": 2,
+          "x": 310,
+          "y": 255,
+          "w": 170,
+          "h": 72,
+          "shape": "diamond",
+          "tone": "amber"
+        },
+        {
+          "item": 4,
+          "x": 500,
+          "y": 170,
+          "w": 140,
+          "h": 44,
+          "tone": "blue"
+        },
+        {
+          "label": "Manager pricing",
+          "x": 310,
+          "y": 378,
+          "w": 150,
+          "h": 50,
+          "shape": "person",
+          "tone": "amber",
+          "size": 14
+        },
+        {
+          "label": "Credit review",
+          "x": 500,
+          "y": 378,
+          "w": 140,
+          "h": 50,
+          "tone": "slate",
+          "size": 14
+        },
+        {
+          "item": 5,
+          "x": 102,
+          "y": 378,
+          "w": 150,
+          "h": 50,
+          "tone": "green"
+        }
+      ],
+      "edges": [
+        {
+          "from": 0,
+          "to": 1,
+          "label": "de-identify"
+        },
+        {
+          "from": 1,
+          "to": 2
+        },
+        {
+          "from": 1,
+          "to": 3
+        },
+        {
+          "from": 2,
+          "to": 4
+        },
+        {
+          "from": 3,
+          "to": 5,
+          "label": "over the limit",
+          "style": "two-way"
+        },
+        {
+          "from": 4,
+          "to": 6,
+          "label": "case pack"
+        }
+      ],
+      "notes": [
+        {
+          "x": 574,
+          "y": 326,
+          "text": "People · next stage",
+          "tone": "amber",
+          "size": 13,
+          "anchor": "end"
+        },
+        {
+          "x": 574,
+          "y": 36,
+          "text": "Customer",
+          "tone": "slate",
+          "size": 13,
+          "anchor": "end"
+        },
+        {
+          "x": 574,
+          "y": 134,
+          "text": "Cloud · loan assistant",
+          "tone": "blue",
+          "size": 13,
+          "anchor": "end"
+        },
+        {
+          "x": 400,
+          "y": 62,
+          "text": "never promises approval · rates come from code",
+          "tone": "red",
+          "size": 12,
+          "max": 220
+        }
+      ]
+    }
   },
   "agent-credit-review": {
     "type": "pipeline",
     "title": "Credit review pipeline",
-    "sub": "From document to annual income, every step shows its reasoning; when unsure it hands off, and people keep the decision.",
+    "sub": "Underwriters checked papers one by one, slowly and unevenly, so I built a prototype that reads them, checks them and works out income, then priced each case.",
+    "role": "Built the prototype and led its cost-benefit assessment",
+    "outcome": "96.6% field accuracy; three-year cost baseline done",
     "items": [
       {
         "name": "Intake",
         "desc": "6 document types and case packs",
         "points": [
-          "A generator produces 6 synthetic income documents with skew, noise and stamps",
-          "It can also import the application case pack sent over by the Loan Assistant"
+          "Underwriters checked income papers and worked out income by hand, slowly and unevenly",
+          "My generator makes 6 kinds of synthetic papers with skew, noise and stamps, each with a known answer",
+          "It also imports the case packs sent over by the loan assistant"
         ]
       },
       {
         "name": "OCR",
-        "desc": "On-prem OCR, cloud swappable",
+        "desc": "On-prem first, cloud swappable",
         "points": [
-          "Local OCR stands in for on-premises by default; a cloud vision model can be swapped in",
-          "Unclear dates or amounts are cropped and read again",
-          "Evaluation set of 12 applicants: 96.6% field accuracy"
+          "Local OCR stands in for on-prem by default, and a cloud vision model can be swapped in",
+          "A date or amount it cannot read is cropped and read again",
+          "Field accuracy: 96.6% on the 12-person test set, 97.7% on the demo cases"
         ]
       },
       {
-        "name": "Consistency",
-        "desc": "Cross-checks across documents",
+        "name": "Checks & income",
+        "desc": "Reasons for every step",
         "points": [
-          "Do payslips, withholding statements and bank deposits match?",
-          "Do occupation and income range fit, and is income continuous?"
-        ]
-      },
-      {
-        "name": "Annual income",
-        "desc": "Rules, formula and reasons shown",
-        "points": [
-          "Lists the rule used, the formula and the reason for each step",
-          "Annual income was correct for every case in both the evaluation and demo sets"
+          "It cross-checks payslips, withholding slips and bank deposits against each other",
+          "Income comes with the rules, formula and reasons used; every test and demo case was right",
+          "Every problem planted in the documents was found"
         ]
       },
       {
         "name": "Human review",
-        "desc": "Confidence below 0.75 goes to a person",
+        "desc": "Below 0.75 goes to a person",
         "points": [
-          "Reviewers can accept or edit, and every edit needs a reason",
-          "No approval suggestion or credit score on screen; the decision stays with people",
-          "4 paired fairness tests all gave identical results"
+          "Unsure cases go to a person, and any change by an underwriter needs a reason",
+          "No approval advice or credit score is shown, so the decision stays with people",
+          "All 4 fairness pairs got identical results"
+        ]
+      },
+      {
+        "name": "Cost baseline",
+        "desc": "Cost per case, three years",
+        "points": [
+          "I split the flow into on-prem reading and cloud processing, costing each in its closest unit",
+          "From case volumes and three-year growth forecasts I worked out cost per case and a three-year baseline",
+          "Work runs in off-peak batches; next, add build and upkeep costs to finish TCO and ROI"
         ]
       }
-    ]
+    ],
+    "diagram": {
+      "h": 445,
+      "zones": [
+        {
+          "x": 150,
+          "y": 14,
+          "w": 150,
+          "h": 290,
+          "label": "On-prem",
+          "tone": "cyan"
+        },
+        {
+          "x": 310,
+          "y": 14,
+          "w": 150,
+          "h": 290,
+          "label": "Cloud",
+          "tone": "purple"
+        }
+      ],
+      "nodes": [
+        {
+          "item": 0,
+          "x": 80,
+          "y": 130,
+          "w": 116,
+          "h": 62,
+          "shape": "doc",
+          "tone": "blue"
+        },
+        {
+          "item": 1,
+          "x": 225,
+          "y": 130,
+          "w": 124,
+          "h": 54,
+          "tone": "cyan"
+        },
+        {
+          "item": 2,
+          "x": 385,
+          "y": 130,
+          "w": 124,
+          "h": 54,
+          "tone": "purple"
+        },
+        {
+          "label": "Confidence < 0.75",
+          "x": 530,
+          "y": 130,
+          "w": 110,
+          "h": 88,
+          "shape": "diamond",
+          "tone": "amber",
+          "size": 12
+        },
+        {
+          "item": 3,
+          "x": 528,
+          "y": 262,
+          "w": 110,
+          "h": 54,
+          "shape": "person",
+          "tone": "amber"
+        },
+        {
+          "item": 4,
+          "x": 305,
+          "y": 378,
+          "w": 220,
+          "h": 66,
+          "shape": "db",
+          "tone": "green"
+        }
+      ],
+      "edges": [
+        {
+          "from": 0,
+          "to": 1
+        },
+        {
+          "from": 1,
+          "to": 2
+        },
+        {
+          "from": 2,
+          "to": 3
+        },
+        {
+          "from": 3,
+          "to": 4,
+          "label": "yes"
+        },
+        {
+          "from": 1,
+          "to": 5,
+          "label": "reading"
+        },
+        {
+          "from": 2,
+          "to": 5,
+          "label": "processing"
+        }
+      ],
+      "notes": [
+        {
+          "x": 305,
+          "y": 72,
+          "text": "all runs in an off-peak batch",
+          "tone": "slate",
+          "size": 12,
+          "max": 280
+        },
+        {
+          "x": 80,
+          "y": 72,
+          "text": "← loan case pack",
+          "tone": "blue",
+          "size": 12
+        },
+        {
+          "x": 225,
+          "y": 190,
+          "text": "re-reads blurry cells",
+          "tone": "cyan",
+          "size": 12,
+          "max": 130
+        },
+        {
+          "x": 528,
+          "y": 312,
+          "text": "field accuracy 96.6%",
+          "tone": "green",
+          "size": 12
+        },
+        {
+          "x": 528,
+          "y": 330,
+          "text": "income all correct",
+          "tone": "green",
+          "size": 12
+        },
+        {
+          "x": 305,
+          "y": 428,
+          "text": "cost per case → 3-year baseline",
+          "tone": "green",
+          "size": 12,
+          "max": 300
+        }
+      ]
+    }
   },
   "agent-customer-service": {
     "type": "hub",
     "title": "Service Copilot model",
-    "sub": "The agent sits at the centre with AI working around them; AI never replies to customers, and people confirm every record.",
+    "sub": "Call agents searched mid-call and wrote notes after, so I built an AI sidekick prototype that finds facts, drafts replies and sums up calls; people sign off.",
+    "role": "Contributor: built the prototype and cost framework; a colleague led computing estimates",
+    "outcome": "Prototype works; waiting on the vendor's updated computing estimate",
     "center": {
       "name": "Service agent",
-      "desc": "Faces the customer, confirms last",
+      "desc": "Faces the customer, signs off",
       "points": [
-        "The human agent faces the customer; AI helps from behind",
-        "The agent reads the draft reply to the customer; AI never replies directly",
-        "Anything written to the record must be confirmed by the agent"
+        "The agent faces the customer while AI helps from behind and never replies directly",
+        "The agent reads any draft aloud in their own words and confirms everything saved to the record"
       ]
     },
     "items": [
       {
-        "name": "Live transcript",
-        "desc": "On-prem Whisper speech-to-text",
+        "name": "Synthetic calls",
+        "desc": "12 two-channel recordings",
         "points": [
-          "Local Whisper by default, with speakers separated by stereo channel",
-          "Measured word error rate of local Whisper: about 14%"
+          "I made 12 calls with computer voices: lost cards, billing disputes, suspected fraud and more",
+          "Two channels split agent and customer, and no real customer data is in any recording"
+        ]
+      },
+      {
+        "name": "Live transcript",
+        "desc": "On-prem Whisper",
+        "points": [
+          "Local Whisper runs by default and tells speakers apart by channel",
+          "Word error rate was about 14%, and speaker and call-type labels were all correct"
         ]
       },
       {
         "name": "KB suggestions",
-        "desc": "Suggestions and draft replies",
+        "desc": "Tips and draft replies",
         "points": [
-          "Knowledge-base suggestions update with the conversation, next to masked customer info",
-          "A draft reply is ready, and the agent decides how to say it"
+          "Knowledge-base tips update with the call, beside customer details with personal data masked",
+          "It drafts a reply first, and the agent decides what to say"
         ]
       },
       {
-        "name": "Call summary",
-        "desc": "Saved only after a person confirms",
+        "name": "Summary & QA",
+        "desc": "Serious issues to a supervisor",
         "points": [
-          "After the call AI drafts a summary; the agent edits and confirms it",
-          "Personal data is masked again before saving; no full card number appeared in tests"
-        ]
-      },
-      {
-        "name": "First-pass QA",
-        "desc": "Serious issues go to a supervisor",
-        "points": [
-          "Scores each item on the rubric and routes serious issues to a supervisor",
-          "The QA centre compares AI scores with human scores"
+          "After the call AI writes a summary; it is saved only once the agent confirms, masked again first",
+          "QA scores each item on a rubric and sends serious issues to a supervisor; no full card number appeared"
         ]
       },
       {
         "name": "All on-prem",
-        "desc": "Recordings never leave the bank",
+        "desc": "Recordings stay in the bank",
         "points": [
-          "Because it handles call recordings and personal data, everything runs on-premises",
-          "In on-prem-only mode, the service refuses to start if it finds a cloud endpoint"
+          "Because it handles call recordings and personal data, everything runs in the bank's own data centre",
+          "In on-prem-only mode, the service refuses to start if it finds any cloud address"
+        ]
+      },
+      {
+        "name": "Cost framework",
+        "desc": "Service cost per call",
+        "points": [
+          "Speech and text are measured in different units, so I turned both into a service cost per call",
+          "The call-volume baseline is done; after a first computing meeting, we are waiting on the vendor"
         ]
       }
-    ]
+    ],
+    "diagram": {
+      "h": 440,
+      "zones": [
+        {
+          "x": 14,
+          "y": 14,
+          "w": 430,
+          "h": 412,
+          "label": "Inside the bank",
+          "tone": "cyan"
+        },
+        {
+          "x": 456,
+          "y": 14,
+          "w": 130,
+          "h": 412,
+          "label": "Outside",
+          "tone": "slate"
+        }
+      ],
+      "nodes": [
+        {
+          "item": 0,
+          "x": 100,
+          "y": 92,
+          "w": 140,
+          "h": 56,
+          "shape": "doc",
+          "tone": "slate"
+        },
+        {
+          "label": "Service rep",
+          "x": 330,
+          "y": 92,
+          "w": 140,
+          "h": 54,
+          "shape": "person",
+          "tone": "blue",
+          "size": 14
+        },
+        {
+          "label": "Customer",
+          "x": 521,
+          "y": 92,
+          "w": 110,
+          "h": 54,
+          "shape": "person",
+          "tone": "slate",
+          "size": 14
+        },
+        {
+          "item": 1,
+          "x": 100,
+          "y": 210,
+          "w": 140,
+          "h": 54,
+          "tone": "cyan"
+        },
+        {
+          "item": 2,
+          "x": 330,
+          "y": 210,
+          "w": 140,
+          "h": 54,
+          "tone": "blue"
+        },
+        {
+          "item": 3,
+          "x": 330,
+          "y": 318,
+          "w": 140,
+          "h": 54,
+          "tone": "amber"
+        },
+        {
+          "item": 5,
+          "x": 100,
+          "y": 318,
+          "w": 140,
+          "h": 54,
+          "tone": "green"
+        },
+        {
+          "item": 4,
+          "x": 458,
+          "y": 264,
+          "w": 92,
+          "h": 44,
+          "shape": "hex",
+          "tone": "cyan",
+          "solid": true
+        },
+        {
+          "label": "Supervisor",
+          "x": 330,
+          "y": 400,
+          "w": 140,
+          "h": 48,
+          "shape": "person",
+          "tone": "amber",
+          "size": 13
+        },
+        {
+          "label": "Cloud",
+          "x": 521,
+          "y": 380,
+          "w": 110,
+          "h": 60,
+          "shape": "cloud",
+          "tone": "red",
+          "size": 13
+        }
+      ],
+      "edges": [
+        {
+          "from": 2,
+          "to": 1,
+          "label": "call",
+          "style": "two-way"
+        },
+        {
+          "from": 0,
+          "to": 3,
+          "label": "two channels"
+        },
+        {
+          "from": 3,
+          "to": 4,
+          "label": "live"
+        },
+        {
+          "from": 4,
+          "to": 1,
+          "label": "draft"
+        },
+        {
+          "from": 3,
+          "to": 5,
+          "label": "after the call"
+        },
+        {
+          "from": 5,
+          "to": 8,
+          "label": "serious"
+        },
+        {
+          "from": 3,
+          "to": 6,
+          "label": "seconds",
+          "style": "dashed"
+        },
+        {
+          "from": 7,
+          "to": 9,
+          "label": "refused",
+          "style": "dashed"
+        }
+      ],
+      "notes": [
+        {
+          "x": 352,
+          "y": 150,
+          "text": "read aloud by a person",
+          "tone": "blue",
+          "size": 12,
+          "anchor": "start",
+          "max": 90
+        },
+        {
+          "x": 240,
+          "y": 374,
+          "text": "saved after a person checks",
+          "tone": "amber",
+          "size": 12,
+          "anchor": "end"
+        }
+      ]
+    }
   },
   "agent-wealth-assistant": {
     "type": "pipeline",
-    "title": "Five gates per question",
-    "sub": "Every customer question passes five gates in order, with guardrails at both ends, and the model never sees balances.",
+    "title": "Wealth assistant, end to end",
+    "sub": "Customers dug through many accounts to see what they own, so I led the PoC and resource plan and built a banking prototype where one question checks it all.",
+    "role": "Led the PoC and launch resource planning, and built the prototype myself",
+    "outcome": "Working 118-page banking prototype; launch handed to the next team",
     "items": [
       {
-        "name": "Input guard",
-        "desc": "Blocks personal data and jailbreaks",
+        "name": "PoC",
+        "desc": "Proves the Q&A works",
         "points": [
-          "First blocks personal data, prompt injection and jailbreak attempts",
-          "The prototype has 31 input rules plus personal-data masking"
+          "Customers had to dig through each account to piece together what they own",
+          "A PoC came first, confirming the AI assistant could answer questions"
         ]
       },
       {
-        "name": "Intent",
-        "desc": "On-prem small model reads intent",
+        "name": "Architecture hand-off",
+        "desc": "Draft passed to a senior dev",
         "points": [
-          "A small on-premises model works out what the customer is asking",
-          "The model only receives the question with identity details removed"
+          "I drew the first system architecture and wrote up the test results and documents",
+          "Then handed development to a senior colleague"
         ]
       },
       {
-        "name": "Routing",
-        "desc": "FAQ or query agent",
+        "name": "Banking prototype",
+        "desc": "118 working pages",
         "points": [
-          "General questions are answered from the FAQ; feature questions get a link to that page",
-          "Account questions go to a query agent that decides which APIs to call",
-          "In the prototype it calls 36 account tools via MCP, covering 240 fields"
+          "From the specs I built a mobile and web banking MVP with 118 working pages",
+          "Transfers, FX and fund orders all post to a mock bank, and the AI's answers update at once"
         ]
       },
       {
-        "name": "Output guard",
-        "desc": "Fix, block or pass",
+        "name": "AI assistant",
+        "desc": "36 account tools",
         "points": [
-          "Checks investment wording and personal-data leaks; the prototype has 32 output rules",
-          "Never says \"guaranteed returns\"; gets the customer's risk level before recommending products"
+          "It calls 36 account tools over MCP, covering 240 fields",
+          "It gets the risk level before recommending anything, never trades, never touches passwords or codes",
+          "Following A2UI v0.9 it adds charts to answers, and passes every official test case"
         ]
       },
       {
-        "name": "Memory",
-        "desc": "Short-term and masked only",
+        "name": "Five gates",
+        "desc": "Guards at both ends",
         "points": [
-          "Keeps only short-term conversation context",
-          "Stores only the version with personal data masked"
+          "31 input rules and 32 output rules, plus personal-data masking",
+          "An on-prem small model reads intent, and the model never sees any balance",
+          "It keeps only short-term memory, and only the masked version"
+        ]
+      },
+      {
+        "name": "Launch prep",
+        "desc": "Three-year usage forecast",
+        "points": [
+          "From login numbers I forecast three years of usage and sized production and test environments",
+          "It is the heaviest user of the four Agents; the team that took it over drives the launch",
+          "After launch, the metric is activity: people using AI chat ÷ people logging in"
         ]
       }
-    ]
+    ],
+    "diagram": {
+      "h": 450,
+      "zones": [
+        {
+          "x": 240,
+          "y": 14,
+          "w": 346,
+          "h": 422,
+          "tone": "slate"
+        }
+      ],
+      "nodes": [
+        {
+          "item": 0,
+          "x": 110,
+          "y": 55,
+          "w": 150,
+          "h": 50,
+          "tone": "blue"
+        },
+        {
+          "item": 1,
+          "x": 110,
+          "y": 160,
+          "w": 150,
+          "h": 50,
+          "tone": "blue"
+        },
+        {
+          "item": 5,
+          "x": 110,
+          "y": 300,
+          "w": 150,
+          "h": 50,
+          "tone": "green"
+        },
+        {
+          "label": "Team takes it live",
+          "x": 110,
+          "y": 400,
+          "w": 150,
+          "h": 44,
+          "shape": "pill",
+          "tone": "slate",
+          "size": 13
+        },
+        {
+          "item": 2,
+          "x": 400,
+          "y": 52,
+          "w": 200,
+          "h": 46,
+          "tone": "purple",
+          "solid": true
+        },
+        {
+          "label": "① Input guard",
+          "x": 370,
+          "y": 122,
+          "w": 170,
+          "h": 38,
+          "tone": "amber",
+          "size": 13
+        },
+        {
+          "label": "② On-prem intent",
+          "x": 370,
+          "y": 180,
+          "w": 170,
+          "h": 38,
+          "tone": "slate",
+          "size": 13
+        },
+        {
+          "label": "③ FAQ",
+          "x": 305,
+          "y": 250,
+          "w": 96,
+          "h": 40,
+          "tone": "slate",
+          "size": 13
+        },
+        {
+          "item": 3,
+          "x": 430,
+          "y": 250,
+          "w": 130,
+          "h": 46,
+          "tone": "purple"
+        },
+        {
+          "label": "④ Output guard",
+          "x": 370,
+          "y": 322,
+          "w": 170,
+          "h": 38,
+          "tone": "amber",
+          "size": 13
+        },
+        {
+          "label": "⑤ Masked memory",
+          "x": 370,
+          "y": 385,
+          "w": 170,
+          "h": 38,
+          "tone": "amber",
+          "size": 13
+        },
+        {
+          "item": 4,
+          "x": 538,
+          "y": 253,
+          "w": 60,
+          "h": 300,
+          "tone": "amber",
+          "solid": true
+        }
+      ],
+      "edges": [
+        {
+          "from": 0,
+          "to": 1
+        },
+        {
+          "from": 1,
+          "to": 2,
+          "style": "dashed"
+        },
+        {
+          "from": 2,
+          "to": 3
+        },
+        {
+          "from": 1,
+          "to": 4,
+          "label": "I built it",
+          "bend": -0.15
+        },
+        {
+          "from": 4,
+          "to": 5
+        },
+        {
+          "from": 5,
+          "to": 6
+        },
+        {
+          "from": 6,
+          "to": 7
+        },
+        {
+          "from": 6,
+          "to": 8
+        },
+        {
+          "from": 7,
+          "to": 9
+        },
+        {
+          "from": 8,
+          "to": 9
+        },
+        {
+          "from": 9,
+          "to": 10
+        }
+      ],
+      "notes": [
+        {
+          "x": 548,
+          "y": 52,
+          "text": "118 pages",
+          "tone": "purple",
+          "size": 12,
+          "max": 70
+        }
+      ]
+    }
   },
   "ai-ops-platform": {
     "type": "iceberg",
-    "title": "The gap iceberg",
-    "sub": "Plan and actual were several times apart because of definitions, not maths; align what's below the surface first.",
+    "title": "The operations iceberg",
+    "sub": "The four Agents' numbers sat in four back offices, so I built one platform for operations and journeys; it caught plan and actual measured in different ways.",
+    "role": "Led design and build of the data contract, the platform and all four Agent exports",
+    "outcome": "All four prototypes connected; business plans revised to version 2",
     "items": [
       {
+        "name": "One platform",
+        "desc": "Five modules, four Agents",
+        "level": "above",
+        "points": [
+          "Answering \"is it worth it, what does it cost\" used to mean four back offices and manual conversion",
+          "Five modules: overview, customer journey, cost and performance, business plans, governance",
+          "The report site is read-only and only the admin site can change things, both behind Zero Trust"
+        ]
+      },
+      {
         "name": "Plan vs actual",
-        "desc": "Business plan beside real numbers",
+        "desc": "Side by side, with hit rates",
         "level": "above",
         "points": [
-          "Each Agent's business plan (expected) sits next to actual numbers, with attainment computed",
-          "Plans cover four periods: the 2026 pilot and 2027 to 2029"
+          "Plans cover a 2026 pilot and 2027 to 2029, shown beside the actuals",
+          "The very first comparison had three numbers several times apart",
+          "After fixes, only Agents truly behind are flagged, like the loan assistant below its own 80% bar"
         ]
       },
       {
-        "name": "Several-fold gaps",
-        "desc": "What the first comparison showed",
-        "level": "above",
-        "points": [
-          "In the first comparison, three numbers were off by several times",
-          "After fixing definitions, only Agents truly behind are listed under \"needs review\""
-        ]
-      },
-      {
-        "name": "Benefit basis",
-        "desc": "All assisted vs AI-driven",
+        "name": "Data contract",
+        "desc": "Read-only exports, pulled",
         "level": "below",
         "points": [
-          "Loan Assistant actuals counted every AI-assisted application; the plan counted only the 18% AI drove",
-          "Plans now state a benefit basis: the same outcome at the same unit value"
+          "No shared code: each Agent follows one format and opens a read-only export",
+          "Exports need a key and accept only internal calls; if the platform stops, the Agents carry on"
         ]
       },
       {
-        "name": "Missing ASR cost",
-        "desc": "Per-call cost left a piece out",
+        "name": "Hashed journeys",
+        "desc": "No national ID in sight",
         "level": "below",
         "points": [
-          "The Service Agent plan's per-call cost left out speech recognition",
-          "Actual cost, however, is billed by call seconds"
+          "All four Agents hash customer IDs with the same key",
+          "The four stages join into one customer's timeline, yet the hash cannot be reversed to an identity",
+          "I walked one test customer through all four Agents and fixed a time-zone bug that misordered intake"
         ]
       },
       {
-        "name": "Amounts only",
-        "desc": "Credit history had no usage",
+        "name": "One yardstick",
+        "desc": "Usage priced in NT$",
         "level": "below",
         "points": [
-          "Credit Agent history recorded amounts but not usage",
-          "So converted cost came out near zero; costs are now split into variable and fixed"
+          "Agents report only usage, and the platform prices it from one rate card",
+          "Real data only; under 5 cases it shows a count, not a percentage"
         ]
       },
       {
-        "name": "Shared contract",
-        "desc": "One yardstick for four Agents",
+        "name": "Fixing definitions",
+        "desc": "Root of the three gaps",
         "level": "below",
         "points": [
-          "Agents report usage only; the platform converts it to NT$ with one price list",
-          "Customer IDs are hashed with one shared key, linking journeys without being reversible",
-          "Real data only; with fewer than 5 cases it shows counts, not percentages"
+          "Loan benefit: actual counted all assisted applications, the plan only the 18% AI drove",
+          "Service per-call cost left out speech recognition; credit history kept amounts but no usage",
+          "I added a benefit basis and split variable from fixed cost; the plans were approved as version 2"
         ]
       }
-    ]
+    ],
+    "diagram": {
+      "h": 445,
+      "zones": [
+        {
+          "x": 14,
+          "y": 14,
+          "w": 120,
+          "h": 416,
+          "label": "Four agents",
+          "tone": "slate"
+        }
+      ],
+      "nodes": [
+        {
+          "label": "Loan",
+          "x": 74,
+          "y": 95,
+          "w": 104,
+          "h": 46,
+          "shape": "db",
+          "tone": "slate",
+          "size": 13
+        },
+        {
+          "label": "Credit",
+          "x": 74,
+          "y": 175,
+          "w": 104,
+          "h": 46,
+          "shape": "db",
+          "tone": "slate",
+          "size": 13
+        },
+        {
+          "label": "Service",
+          "x": 74,
+          "y": 255,
+          "w": 104,
+          "h": 46,
+          "shape": "db",
+          "tone": "slate",
+          "size": 13
+        },
+        {
+          "label": "Wealth",
+          "x": 74,
+          "y": 335,
+          "w": 104,
+          "h": 46,
+          "shape": "db",
+          "tone": "slate",
+          "size": 13
+        },
+        {
+          "item": 2,
+          "x": 192,
+          "y": 215,
+          "w": 84,
+          "h": 300,
+          "tone": "cyan"
+        },
+        {
+          "item": 0,
+          "x": 330,
+          "y": 215,
+          "w": 130,
+          "h": 110,
+          "tone": "purple",
+          "solid": true
+        },
+        {
+          "item": 4,
+          "x": 330,
+          "y": 70,
+          "w": 150,
+          "h": 50,
+          "tone": "amber"
+        },
+        {
+          "item": 3,
+          "x": 330,
+          "y": 365,
+          "w": 150,
+          "h": 50,
+          "tone": "cyan"
+        },
+        {
+          "label": "Business plan",
+          "x": 505,
+          "y": 55,
+          "w": 130,
+          "h": 50,
+          "shape": "doc",
+          "tone": "slate",
+          "size": 13
+        },
+        {
+          "item": 1,
+          "x": 505,
+          "y": 170,
+          "w": 140,
+          "h": 80,
+          "shape": "circle",
+          "tone": "blue"
+        },
+        {
+          "item": 5,
+          "x": 505,
+          "y": 290,
+          "w": 136,
+          "h": 50,
+          "tone": "amber"
+        },
+        {
+          "label": "Needs review",
+          "x": 505,
+          "y": 392,
+          "w": 130,
+          "h": 44,
+          "shape": "pill",
+          "tone": "red",
+          "solid": true,
+          "size": 13
+        }
+      ],
+      "edges": [
+        {
+          "from": 0,
+          "to": 4
+        },
+        {
+          "from": 1,
+          "to": 4
+        },
+        {
+          "from": 2,
+          "to": 4
+        },
+        {
+          "from": 3,
+          "to": 4
+        },
+        {
+          "from": 4,
+          "to": 5
+        },
+        {
+          "from": 6,
+          "to": 5,
+          "label": "NT$"
+        },
+        {
+          "from": 7,
+          "to": 5,
+          "label": "customer 360",
+          "style": "two-way"
+        },
+        {
+          "from": 8,
+          "to": 9,
+          "label": "plan"
+        },
+        {
+          "from": 5,
+          "to": 9
+        },
+        {
+          "from": 9,
+          "to": 10,
+          "label": "3 gaps"
+        },
+        {
+          "from": 10,
+          "to": 11,
+          "label": "still behind on v2"
+        }
+      ],
+      "notes": [
+        {
+          "x": 192,
+          "y": 384,
+          "text": "read-only",
+          "tone": "cyan",
+          "size": 12
+        },
+        {
+          "x": 192,
+          "y": 404,
+          "text": "pulled / min",
+          "tone": "cyan",
+          "size": 12,
+          "max": 110
+        }
+      ]
+    }
   },
   "agent-governance": {
     "type": "layers",
-    "title": "Three pre-launch layers",
-    "sub": "Regulator principles broken into three checkable layers, each asked the same three questions: a nine-cell table.",
+    "title": "Nine-cell launch check",
+    "sub": "The regulator's principles were clear but no one could say how to check them, so I broke them into a nine-cell table: fill every cell with proof to pass.",
+    "role": "Led the design of the bank's pre-launch AI check",
+    "outcome": "Survey and framework done; data collection under way, pilot next",
     "items": [
       {
         "name": "Six principles",
         "desc": "The regulator's language",
         "points": [
-          "Governance and accountability, fairness, privacy, robustness and security, transparency, sustainability",
-          "The principles are clear, but nobody could say how to check them"
+          "Accountability, fairness, privacy, robustness and safety, transparency, sustainability",
+          "Four Agents were about to launch, yet no one could say how to check them"
         ]
       },
       {
-        "name": "Documents",
-        "desc": "Was the process followed?",
+        "name": "Three layers",
+        "desc": "Documents, output, behaviour",
         "points": [
-          "Was the process followed, were documents kept, and who approved it?",
-          "The inventory showed existing bank controls only covered this layer"
+          "I split checks into three layers: documents, the AI's output and the AI's behaviour",
+          "The survey showed existing rules covered only documents; output and behaviour were blank"
         ]
       },
       {
-        "name": "AI output",
-        "desc": "Accurate? Fair?",
+        "name": "Nine-cell table",
+        "desc": "Three layers × three questions",
         "points": [
-          "Is the answer accurate and fair, does it leak data, can it cite its basis?",
-          "Four kinds of AI, four test methods, one pass bar: zero critical errors"
+          "The examiners' eight items really ask three things: assessed? recorded? still managed?",
+          "Three layers by three questions make nine cells; fill all with proof to pass"
         ]
       },
       {
-        "name": "AI behaviour",
-        "desc": "What it accessed, any overreach",
+        "name": "Five-step check",
+        "desc": "Four AI types, four tests",
         "points": [
-          "What data did it access, what did it change, did it exceed its permissions?",
-          "Both the output and behaviour layers were completely empty in the inventory",
-          "Each layer asks: assessed before launch? Recorded? Still managed after launch?"
+          "It sits after risk assessment and before approval: scope, rules, questions, testing, report",
+          "Chat, decision, generative and scoring AI each get their own test, sharing one bar: zero serious errors"
+        ]
+      },
+      {
+        "name": "Pilot and rulebook",
+        "desc": "Starting with the loan assistant",
+        "points": [
+          "Business units are now answering how each of the four Agents maps to the six principles",
+          "The loan assistant pilots it first, then it goes into the bank's AI lifecycle rules",
+          "It starts at SIT/UAT, and nothing reaches production without a check report"
         ]
       }
-    ]
+    ],
+    "diagram": {
+      "h": 430,
+      "zones": [
+        {
+          "x": 250,
+          "y": 103,
+          "w": 106,
+          "h": 44,
+          "tone": "green"
+        },
+        {
+          "x": 362,
+          "y": 103,
+          "w": 106,
+          "h": 44,
+          "tone": "green"
+        },
+        {
+          "x": 474,
+          "y": 103,
+          "w": 106,
+          "h": 44,
+          "tone": "green"
+        },
+        {
+          "x": 250,
+          "y": 153,
+          "w": 106,
+          "h": 44,
+          "tone": "red"
+        },
+        {
+          "x": 362,
+          "y": 153,
+          "w": 106,
+          "h": 44,
+          "tone": "red"
+        },
+        {
+          "x": 474,
+          "y": 153,
+          "w": 106,
+          "h": 44,
+          "tone": "red"
+        },
+        {
+          "x": 250,
+          "y": 203,
+          "w": 106,
+          "h": 44,
+          "tone": "red"
+        },
+        {
+          "x": 362,
+          "y": 203,
+          "w": 106,
+          "h": 44,
+          "tone": "red"
+        },
+        {
+          "x": 474,
+          "y": 203,
+          "w": 106,
+          "h": 44,
+          "tone": "red"
+        }
+      ],
+      "nodes": [
+        {
+          "item": 0,
+          "x": 85,
+          "y": 50,
+          "w": 130,
+          "h": 50,
+          "tone": "purple"
+        },
+        {
+          "item": 1,
+          "x": 85,
+          "y": 175,
+          "w": 130,
+          "h": 54,
+          "tone": "blue"
+        },
+        {
+          "label": "Docs",
+          "x": 198,
+          "y": 125,
+          "w": 72,
+          "h": 40,
+          "tone": "slate",
+          "size": 13
+        },
+        {
+          "label": "Output",
+          "x": 198,
+          "y": 175,
+          "w": 72,
+          "h": 40,
+          "tone": "slate",
+          "size": 13
+        },
+        {
+          "label": "Actions",
+          "x": 198,
+          "y": 225,
+          "w": 72,
+          "h": 40,
+          "tone": "slate",
+          "size": 13
+        },
+        {
+          "item": 2,
+          "x": 415,
+          "y": 42,
+          "w": 180,
+          "h": 40,
+          "shape": "pill",
+          "tone": "green",
+          "solid": true
+        },
+        {
+          "label": "Risk rating",
+          "x": 75,
+          "y": 345,
+          "w": 110,
+          "h": 44,
+          "shape": "pill",
+          "tone": "slate",
+          "size": 13
+        },
+        {
+          "item": 3,
+          "x": 240,
+          "y": 345,
+          "w": 150,
+          "h": 56,
+          "shape": "hex",
+          "tone": "amber",
+          "solid": true
+        },
+        {
+          "label": "Approval",
+          "x": 395,
+          "y": 345,
+          "w": 96,
+          "h": 44,
+          "shape": "pill",
+          "tone": "slate",
+          "size": 13
+        },
+        {
+          "item": 4,
+          "x": 525,
+          "y": 345,
+          "w": 110,
+          "h": 56,
+          "tone": "green"
+        }
+      ],
+      "edges": [
+        {
+          "from": 0,
+          "to": 1,
+          "label": "split into"
+        },
+        {
+          "from": 0,
+          "to": 5,
+          "label": "× 3 questions"
+        },
+        {
+          "from": 4,
+          "to": 7,
+          "label": "all filled"
+        },
+        {
+          "from": 6,
+          "to": 7
+        },
+        {
+          "from": 7,
+          "to": 8
+        },
+        {
+          "from": 8,
+          "to": 9
+        }
+      ],
+      "notes": [
+        {
+          "x": 303,
+          "y": 125,
+          "text": "✓ covered",
+          "tone": "green",
+          "size": 13
+        },
+        {
+          "x": 415,
+          "y": 125,
+          "text": "✓ covered",
+          "tone": "green",
+          "size": 13
+        },
+        {
+          "x": 527,
+          "y": 125,
+          "text": "✓ covered",
+          "tone": "green",
+          "size": 13
+        },
+        {
+          "x": 303,
+          "y": 175,
+          "text": "blank",
+          "tone": "red",
+          "size": 13
+        },
+        {
+          "x": 415,
+          "y": 175,
+          "text": "blank",
+          "tone": "red",
+          "size": 13
+        },
+        {
+          "x": 527,
+          "y": 175,
+          "text": "blank",
+          "tone": "red",
+          "size": 13
+        },
+        {
+          "x": 303,
+          "y": 225,
+          "text": "blank",
+          "tone": "red",
+          "size": 13
+        },
+        {
+          "x": 415,
+          "y": 225,
+          "text": "blank",
+          "tone": "red",
+          "size": 13
+        },
+        {
+          "x": 527,
+          "y": 225,
+          "text": "blank",
+          "tone": "red",
+          "size": 13
+        },
+        {
+          "x": 303,
+          "y": 88,
+          "text": "Assessed?",
+          "tone": "slate",
+          "size": 13
+        },
+        {
+          "x": 415,
+          "y": 88,
+          "text": "Recorded?",
+          "tone": "slate",
+          "size": 13
+        },
+        {
+          "x": 527,
+          "y": 88,
+          "text": "Still managed?",
+          "tone": "slate",
+          "size": 13
+        },
+        {
+          "x": 300,
+          "y": 402,
+          "text": "pass = zero severe errors · no report, no production",
+          "tone": "amber",
+          "size": 12,
+          "max": 420
+        },
+        {
+          "x": 420,
+          "y": 272,
+          "text": "Survey: today only layer one is covered",
+          "tone": "slate",
+          "size": 12,
+          "max": 330
+        }
+      ]
+    }
   },
   "finllm": {
     "type": "cycle",
     "title": "Batch cleaning loop",
-    "sub": "Bad data teaches the model wrong, so every batch is cleaned and scored one item at a time before the next.",
+    "sub": "Bad training data teaches a finance model wrong, so I clean it item by item, score its regulatory answers, and turned the method into a standard process.",
+    "role": "Contributor: cleaned the data and scored the model's regulatory answers",
+    "outcome": "Batch 2-1 cleaned and batch 4 scored",
     "items": [
       {
         "name": "New batch",
         "desc": "One batch a week",
         "points": [
-          "The holding company releases a batch of data each week",
-          "9 more batches are waiting, with a goal of finishing all cleaning by January 2027"
+          "The FSC is backing FinLLM, and KGI takes part in data cleaning and model evaluation",
+          "The group sends one batch a week, with 9 more still to come"
         ]
       },
       {
-        "name": "Clean items",
+        "name": "Clean each item",
         "desc": "Clean, proofread, correct",
         "points": [
-          "Clean, proofread and correct the raw data one item at a time",
-          "Batch 2-1 is done"
+          "I clean, proofread and correct the raw data one item at a time",
+          "Batch 2-1 is done; the goal is to finish all cleaning by January 2027"
         ]
       },
       {
         "name": "Score rulings",
-        "desc": "Did the model read the rules right?",
+        "desc": "Did the model read it right?",
         "points": [
-          "Check whether the model understands regulatory questions correctly",
-          "Batch 4 is done; batch 5 is being scored"
+          "I score the model's answers to regulatory questions to see if it understood them",
+          "Batch 4 is done and batch 5 is being scored"
         ]
       },
       {
-        "name": "Standard SOP",
-        "desc": "Captured as fixed steps",
+        "name": "Standard process",
+        "desc": "Applied to the next batch",
         "points": [
-          "Turn the approach into a fixed-step standard process that scales to more items",
-          "Once all cleaning and scoring is done, evaluate the model as a whole"
+          "I wrote the method up as fixed steps so it scales to more items",
+          "Once all batches are done, the model is evaluated as a whole and delivered on the group's schedule"
         ]
       }
-    ]
+    ],
+    "diagram": {
+      "h": 420,
+      "zones": [
+        {
+          "x": 14,
+          "y": 14,
+          "w": 572,
+          "h": 110,
+          "label": "Batch progress",
+          "tone": "slate"
+        }
+      ],
+      "nodes": [
+        {
+          "label": "2-1 cleaned ✓",
+          "x": 72,
+          "y": 82,
+          "w": 104,
+          "h": 40,
+          "tone": "green",
+          "solid": true,
+          "size": 12
+        },
+        {
+          "label": "4 scored ✓",
+          "x": 186,
+          "y": 82,
+          "w": 104,
+          "h": 40,
+          "tone": "green",
+          "solid": true,
+          "size": 12
+        },
+        {
+          "label": "5 scoring",
+          "x": 300,
+          "y": 82,
+          "w": 104,
+          "h": 40,
+          "tone": "amber",
+          "size": 12
+        },
+        {
+          "label": "9 more",
+          "x": 414,
+          "y": 82,
+          "w": 104,
+          "h": 40,
+          "tone": "slate",
+          "size": 12
+        },
+        {
+          "label": "by Jan 2027",
+          "x": 528,
+          "y": 82,
+          "w": 100,
+          "h": 40,
+          "shape": "pill",
+          "tone": "red",
+          "size": 12
+        },
+        {
+          "item": 0,
+          "x": 95,
+          "y": 250,
+          "w": 130,
+          "h": 60,
+          "shape": "circle",
+          "tone": "blue"
+        },
+        {
+          "item": 1,
+          "x": 320,
+          "y": 185,
+          "w": 150,
+          "h": 54,
+          "tone": "cyan"
+        },
+        {
+          "item": 2,
+          "x": 320,
+          "y": 320,
+          "w": 150,
+          "h": 54,
+          "tone": "purple"
+        },
+        {
+          "item": 3,
+          "x": 520,
+          "y": 185,
+          "w": 120,
+          "h": 54,
+          "tone": "green",
+          "solid": true
+        },
+        {
+          "label": "Evaluate → deliver",
+          "x": 515,
+          "y": 320,
+          "w": 130,
+          "h": 46,
+          "tone": "slate",
+          "size": 13
+        }
+      ],
+      "edges": [
+        {
+          "from": 0,
+          "to": 1
+        },
+        {
+          "from": 1,
+          "to": 2
+        },
+        {
+          "from": 2,
+          "to": 3
+        },
+        {
+          "from": 3,
+          "to": 4
+        },
+        {
+          "from": 5,
+          "to": 6,
+          "label": "weekly"
+        },
+        {
+          "from": 5,
+          "to": 7
+        },
+        {
+          "from": 6,
+          "to": 8,
+          "label": "codify"
+        },
+        {
+          "from": 8,
+          "to": 5,
+          "label": "apply to next batch",
+          "bend": -0.32,
+          "style": "dashed"
+        },
+        {
+          "from": 7,
+          "to": 9,
+          "style": "dashed"
+        }
+      ],
+      "notes": [
+        {
+          "x": 515,
+          "y": 362,
+          "text": "when all done",
+          "tone": "slate",
+          "size": 12
+        },
+        {
+          "x": 300,
+          "y": 395,
+          "text": "one item at a time; no shortcut",
+          "tone": "slate",
+          "size": 12,
+          "max": 300
+        }
+      ]
+    }
   },
   "gemini-training": {
     "type": "hub",
     "title": "Scenario-led Gemini course",
-    "sub": "The course centres on \"how can my job use this\", with all three topics practised on each unit's own scenarios.",
+    "sub": "Staff had the tool but not a sense of what to hand it, so I planned a course where each unit practises safety, tools and prompts on its own work.",
+    "role": "Led the course design and gathered work scenarios from each unit",
+    "outcome": "Outline final; scenarios being gathered, classes not yet run",
     "center": {
       "name": "Use it in my job",
-      "desc": "Not a tour of features",
+      "desc": "Not a feature tour",
       "points": [
-        "Handing out the tool isn't enough; staff need to know which work suits AI",
-        "Success is measured by attendance and how many AI use cases trainees propose afterwards"
+        "Handing out the tool is not enough; staff need to know which tasks suit AI",
+        "The course answers \"how can my job use this\", not \"what can the tool do\""
       ]
     },
     "items": [
       {
-        "name": "Safety",
-        "desc": "How to use AI safely",
+        "name": "Set the outline",
+        "desc": "Three topics, agreed with advisers",
         "points": [
-          "People weren't sure how to use generative AI safely",
-          "One of three topics; the outline is final, agreed with the consultant"
+          "I agreed the outline with advisers around three topics: safety, tools and prompts",
+          "Safety answers the common worry about how to use AI without risk"
         ]
       },
       {
-        "name": "Tools",
-        "desc": "How Gemini is actually used",
-        "points": [
-          "One of three topics: tools",
-          "The bank is pushing staff to use generative AI"
-        ]
-      },
-      {
-        "name": "Prompts",
-        "desc": "Instructions for the AI",
-        "points": [
-          "One of three topics: prompts, the instructions you give AI",
-          "Practised in class on work scenarios submitted by business units"
-        ]
-      },
-      {
-        "name": "Unit scenarios",
+        "name": "Gather scenarios",
         "desc": "Each unit brings its own",
         "points": [
-          "Collecting the work each business unit wants AI to handle",
-          "Used directly in class instead of generic examples; collection is in progress"
+          "I am collecting the tasks each business unit wants AI to help with",
+          "Classes will practise on them instead of generic examples; collection is ongoing"
+        ]
+      },
+      {
+        "name": "Run the classes",
+        "desc": "Practise on real work",
+        "points": [
+          "Once scenarios are in, classes run all three topics on each unit's own work",
+          "Prompts, the instructions given to AI, are written for real tasks"
+        ]
+      },
+      {
+        "name": "Track results",
+        "desc": "Turnout and use cases",
+        "points": [
+          "Afterwards I track attendance and how many AI use cases learners put forward",
+          "The second number shows whether people took the class back to their jobs"
         ]
       }
-    ]
+    ],
+    "diagram": {
+      "h": 430,
+      "zones": [
+        {
+          "x": 14,
+          "y": 14,
+          "w": 170,
+          "h": 402,
+          "label": "Tool only",
+          "tone": "red"
+        },
+        {
+          "x": 196,
+          "y": 14,
+          "w": 390,
+          "h": 402,
+          "label": "This course",
+          "tone": "green"
+        },
+        {
+          "x": 214,
+          "y": 134,
+          "w": 354,
+          "h": 52,
+          "tone": "amber"
+        }
+      ],
+      "nodes": [
+        {
+          "label": "Gemini seat",
+          "x": 99,
+          "y": 95,
+          "w": 130,
+          "h": 44,
+          "shape": "pill",
+          "tone": "slate",
+          "size": 13
+        },
+        {
+          "label": "Staff",
+          "x": 99,
+          "y": 200,
+          "w": 120,
+          "h": 50,
+          "shape": "person",
+          "tone": "slate",
+          "size": 13
+        },
+        {
+          "item": 0,
+          "x": 310,
+          "y": 80,
+          "w": 140,
+          "h": 50,
+          "tone": "blue"
+        },
+        {
+          "label": "Consultant",
+          "x": 500,
+          "y": 80,
+          "w": 120,
+          "h": 50,
+          "shape": "person",
+          "tone": "slate",
+          "size": 13
+        },
+        {
+          "label": "Safety",
+          "x": 270,
+          "y": 160,
+          "w": 88,
+          "h": 34,
+          "shape": "pill",
+          "tone": "amber",
+          "size": 12
+        },
+        {
+          "label": "Tools",
+          "x": 380,
+          "y": 160,
+          "w": 88,
+          "h": 34,
+          "shape": "pill",
+          "tone": "amber",
+          "size": 12
+        },
+        {
+          "label": "Prompt",
+          "x": 490,
+          "y": 160,
+          "w": 88,
+          "h": 34,
+          "shape": "pill",
+          "tone": "amber",
+          "size": 12
+        },
+        {
+          "item": 1,
+          "x": 300,
+          "y": 255,
+          "w": 130,
+          "h": 50,
+          "tone": "cyan"
+        },
+        {
+          "label": "Business units",
+          "x": 505,
+          "y": 255,
+          "w": 120,
+          "h": 50,
+          "shape": "person",
+          "tone": "slate",
+          "size": 13
+        },
+        {
+          "item": 2,
+          "x": 310,
+          "y": 360,
+          "w": 140,
+          "h": 50,
+          "tone": "blue",
+          "solid": true
+        },
+        {
+          "item": 3,
+          "x": 500,
+          "y": 360,
+          "w": 130,
+          "h": 50,
+          "tone": "green"
+        }
+      ],
+      "edges": [
+        {
+          "from": 0,
+          "to": 1
+        },
+        {
+          "from": 2,
+          "to": 5,
+          "style": "dashed"
+        },
+        {
+          "from": 3,
+          "to": 2,
+          "label": "agree",
+          "style": "two-way"
+        },
+        {
+          "from": 8,
+          "to": 7,
+          "label": "own tasks"
+        },
+        {
+          "from": 7,
+          "to": 9,
+          "label": "into class"
+        },
+        {
+          "from": 9,
+          "to": 10
+        },
+        {
+          "from": 1,
+          "to": 9,
+          "label": "joins",
+          "style": "dashed"
+        }
+      ],
+      "notes": [
+        {
+          "x": 99,
+          "y": 262,
+          "text": "Which work can AI take?",
+          "tone": "red",
+          "size": 12,
+          "max": 140
+        },
+        {
+          "x": 99,
+          "y": 300,
+          "text": "How to use it safely?",
+          "tone": "red",
+          "size": 12,
+          "max": 140
+        },
+        {
+          "x": 212,
+          "y": 196,
+          "text": "Three topics",
+          "tone": "amber",
+          "size": 12,
+          "anchor": "start"
+        },
+        {
+          "x": 500,
+          "y": 400,
+          "text": "attendance · use cases",
+          "tone": "green",
+          "size": 12
+        }
+      ]
+    }
   },
   "ai-ops-dashboard": {
     "type": "hub",
     "title": "Five AI value lenses",
-    "sub": "Five lenses around one question: is this AI investment worth it? Shared by internal tools and customer-facing Agents.",
+    "sub": "Every AI effort had its own numbers but none showed if it was worth it, so I helped design five shared lenses for internal tools and customer-facing Agents.",
+    "role": "Contributor: helped design the metrics and planned the cost and guardrail data feeds",
+    "outcome": "Five-lens framework done; dashboard still in planning",
     "center": {
       "name": "Worth it?",
-      "desc": "What managers care about most",
+      "desc": "Management's real question",
       "points": [
-        "Adoption and quality answer \"is it used?\"; benefit, cost and risk answer \"is it worth it?\"",
-        "One framework covers Copilot, Gemini, the Ella assistant and the four Agents"
+        "Copilot, Gemini and Ella inside, four Agents outside, each with its own numbers",
+        "Adoption and quality say whether it is used; benefit, cost and risk say whether it is worth it"
       ]
     },
     "items": [
@@ -503,90 +2709,520 @@
         "name": "Adoption",
         "desc": "Is anyone using it?",
         "points": [
-          "Licences, activation rate, active users, number of departments using it",
-          "Copilot pilot expansion: 25 departments applied, 771 seats in total"
+          "Licences, activation, active users and how many departments use it",
+          "Copilot is widening its trial: 25 departments have applied for 771 seats"
         ]
       },
       {
         "name": "Quality",
         "desc": "Is it used well?",
         "points": [
-          "Answer accuracy and the share handed to a human",
-          "Plus user feedback"
+          "Answer accuracy, hand-off-to-human rate and user feedback",
+          "Copilot's and Gemini's own vendor reports already carry usage data"
         ]
       },
       {
         "name": "Benefit",
-        "desc": "What it saves or adds",
+        "desc": "Tied to business results",
         "points": [
-          "Hours saved, plus business numbers like volume handled and conversion",
-          "Customer side: loans track conversion, credit volume, wealth activity and AUM"
+          "Internally, hours saved; externally, conversion for loans and throughput for credit review",
+          "Service cost for the call centre, activity and AUM for the wealth assistant"
         ]
       },
       {
         "name": "Cost",
-        "desc": "How much it costs",
+        "desc": "Reuses the Agent model",
         "points": [
-          "Licence fees, token usage, GPU usage",
-          "The four Agents reuse their shared cost model"
+          "Licence fees, token usage and GPU usage",
+          "Customer-facing Agents reuse the four Agents' cost model"
         ]
       },
       {
         "name": "Risk",
-        "desc": "Is it safe?",
+        "desc": "Reuses guardrail results",
         "points": [
-          "Miss rate, false-block rate and incidents",
-          "Reuses the miss and false-block rates measured in the Guardrails PoC"
-        ]
-      }
-    ]
-  },
-  "a2ui-research": {
-    "type": "compare",
-    "title": "A2UI division of control",
-    "sub": "AI decides the layout, the bank decides which components exist; that split is what lets A2UI pass security review.",
-    "items": [
-      {
-        "name": "AI decides",
-        "desc": "Layout and what to fill in",
-        "points": [
-          "The Agent sends JSON describing which components to show and what data to fill",
-          "It sends data, not code, so it can't run arbitrary programs",
-          "Candidate scenarios: asset overview, product comparison, form filling"
+          "Missed-attack rate, false-block rate and incidents",
+          "Figures come from the miss and false-block rates measured in the Guardrails PoC"
         ]
       },
       {
-        "name": "Bank decides",
-        "desc": "Which components are allowed",
+        "name": "First monthly report",
+        "desc": "Internal tools first",
         "points": [
-          "The front end renders with pre-approved components, which limits what A2UI can draw",
-          "The Wealth Assistant can't trade, so A2UI only shows information and forms, no order buttons",
-          "Generated screens also go through Guardrails and the pre-launch check"
+          "Next, confirm with IT what Copilot data exists and produce the first monthly report",
+          "Ella needs IT to open back-office access; then each metric gets a target"
         ]
       }
-    ]
+    ],
+    "diagram": {
+      "h": 440,
+      "zones": [
+        {
+          "x": 14,
+          "y": 14,
+          "w": 170,
+          "h": 200,
+          "label": "Internal · staff",
+          "tone": "blue"
+        },
+        {
+          "x": 14,
+          "y": 226,
+          "w": 170,
+          "h": 200,
+          "label": "External · customers",
+          "tone": "purple"
+        },
+        {
+          "x": 228,
+          "y": 14,
+          "w": 150,
+          "h": 176,
+          "label": "Is it used?",
+          "tone": "slate"
+        },
+        {
+          "x": 228,
+          "y": 202,
+          "w": 150,
+          "h": 224,
+          "label": "Is it worth it?",
+          "tone": "amber"
+        }
+      ],
+      "nodes": [
+        {
+          "label": "Copilot",
+          "x": 99,
+          "y": 70,
+          "w": 130,
+          "h": 36,
+          "tone": "blue",
+          "size": 13
+        },
+        {
+          "label": "Gemini",
+          "x": 99,
+          "y": 122,
+          "w": 130,
+          "h": 36,
+          "tone": "blue",
+          "size": 13
+        },
+        {
+          "label": "Ella assistant",
+          "x": 99,
+          "y": 174,
+          "w": 130,
+          "h": 36,
+          "tone": "blue",
+          "size": 13
+        },
+        {
+          "label": "Four agents",
+          "x": 99,
+          "y": 282,
+          "w": 130,
+          "h": 36,
+          "tone": "purple",
+          "size": 13
+        },
+        {
+          "label": "Cost model",
+          "x": 99,
+          "y": 334,
+          "w": 130,
+          "h": 36,
+          "tone": "purple",
+          "size": 13
+        },
+        {
+          "label": "Guardrails PoC",
+          "x": 94,
+          "y": 386,
+          "w": 120,
+          "h": 36,
+          "tone": "purple",
+          "size": 13
+        },
+        {
+          "item": 0,
+          "x": 303,
+          "y": 82,
+          "w": 120,
+          "h": 42,
+          "tone": "cyan"
+        },
+        {
+          "item": 1,
+          "x": 303,
+          "y": 150,
+          "w": 120,
+          "h": 42,
+          "tone": "cyan"
+        },
+        {
+          "item": 2,
+          "x": 303,
+          "y": 262,
+          "w": 120,
+          "h": 42,
+          "tone": "amber"
+        },
+        {
+          "item": 3,
+          "x": 303,
+          "y": 326,
+          "w": 120,
+          "h": 42,
+          "tone": "amber"
+        },
+        {
+          "item": 4,
+          "x": 305,
+          "y": 390,
+          "w": 116,
+          "h": 42,
+          "tone": "amber"
+        },
+        {
+          "item": 5,
+          "x": 510,
+          "y": 245,
+          "w": 140,
+          "h": 60,
+          "tone": "green",
+          "solid": true
+        }
+      ],
+      "edges": [
+        {
+          "from": 0,
+          "to": 6,
+          "label": "771 seats"
+        },
+        {
+          "from": 1,
+          "to": 6
+        },
+        {
+          "from": 2,
+          "to": 6
+        },
+        {
+          "from": 3,
+          "to": 8,
+          "label": "outcomes"
+        },
+        {
+          "from": 4,
+          "to": 9
+        },
+        {
+          "from": 5,
+          "to": 10,
+          "label": "miss rates"
+        },
+        {
+          "from": 6,
+          "to": 11,
+          "bend": -0.12
+        },
+        {
+          "from": 7,
+          "to": 11
+        },
+        {
+          "from": 8,
+          "to": 11
+        },
+        {
+          "from": 9,
+          "to": 11
+        },
+        {
+          "from": 10,
+          "to": 11,
+          "bend": 0.12
+        }
+      ],
+      "notes": [
+        {
+          "x": 510,
+          "y": 295,
+          "text": "internal tools first",
+          "tone": "green",
+          "size": 12
+        }
+      ]
+    }
+  },
+  "a2ui-research": {
+    "type": "pipeline",
+    "title": "A2UI path to product",
+    "sub": "Money answers came as long text that customers struggled with, so I am taking A2UI from technology to product in five stages and have picked three use cases.",
+    "role": "Led the research into whether it can become a bank product feature",
+    "outcome": "Stages one and two: use cases picked, resources being confirmed",
+    "items": [
+      {
+        "name": "Why A2UI",
+        "desc": "Screens, not code",
+        "points": [
+          "The Agent sends JSON naming components and data; the front end draws them from approved parts",
+          "AI decides the layout; the bank decides which components exist",
+          "It sends data, not code, which is what gives it a chance in security review"
+        ]
+      },
+      {
+        "name": "Business use cases",
+        "desc": "Three candidates ready",
+        "points": [
+          "Built around the wealth assistant: asset overview, product comparison, form filling",
+          "Under the pre-launch check it cannot trade, so there are no order buttons"
+        ]
+      },
+      {
+        "name": "Resources",
+        "desc": "Environment and components",
+        "points": [
+          "I listed environment specs, Azure AI Foundry and token requests, and IT test hookups",
+          "The approved component list decides what A2UI can draw; this is being confirmed"
+        ]
+      },
+      {
+        "name": "Value check",
+        "desc": "The checkpoint",
+        "points": [
+          "Technically possible is only the entry bar; the next gate is business value",
+          "With business units, agree which use case goes first and how success is measured"
+        ]
+      },
+      {
+        "name": "PoC and launch",
+        "desc": "Guardrails, then product",
+        "points": [
+          "Build the chosen case in a test environment under the guardrails and pre-launch check",
+          "Then schedule it with the wealth assistant team; the prototype already supports A2UI"
+        ]
+      }
+    ],
+    "diagram": {
+      "h": 440,
+      "zones": [
+        {
+          "x": 14,
+          "y": 14,
+          "w": 572,
+          "h": 160,
+          "label": "How: send a screen, not code",
+          "tone": "purple"
+        },
+        {
+          "x": 14,
+          "y": 190,
+          "w": 290,
+          "h": 236,
+          "tone": "amber"
+        }
+      ],
+      "nodes": [
+        {
+          "item": 0,
+          "x": 95,
+          "y": 105,
+          "w": 130,
+          "h": 54,
+          "tone": "purple",
+          "solid": true
+        },
+        {
+          "label": "JSON data",
+          "x": 250,
+          "y": 105,
+          "w": 110,
+          "h": 54,
+          "shape": "doc",
+          "tone": "slate",
+          "size": 13
+        },
+        {
+          "label": "Approved parts",
+          "x": 400,
+          "y": 105,
+          "w": 120,
+          "h": 60,
+          "shape": "db",
+          "tone": "blue",
+          "size": 13
+        },
+        {
+          "label": "Screen",
+          "x": 530,
+          "y": 105,
+          "w": 88,
+          "h": 54,
+          "tone": "green",
+          "size": 13
+        },
+        {
+          "item": 1,
+          "x": 86,
+          "y": 290,
+          "w": 120,
+          "h": 54,
+          "tone": "green"
+        },
+        {
+          "item": 2,
+          "x": 232,
+          "y": 290,
+          "w": 120,
+          "h": 54,
+          "tone": "blue"
+        },
+        {
+          "item": 3,
+          "x": 385,
+          "y": 290,
+          "w": 130,
+          "h": 90,
+          "shape": "diamond",
+          "tone": "amber",
+          "solid": true
+        },
+        {
+          "item": 4,
+          "x": 522,
+          "y": 290,
+          "w": 112,
+          "h": 54,
+          "tone": "slate"
+        }
+      ],
+      "edges": [
+        {
+          "from": 0,
+          "to": 1
+        },
+        {
+          "from": 1,
+          "to": 2
+        },
+        {
+          "from": 2,
+          "to": 3
+        },
+        {
+          "from": 0,
+          "to": 4,
+          "label": "used where?"
+        },
+        {
+          "from": 4,
+          "to": 5
+        },
+        {
+          "from": 5,
+          "to": 6
+        },
+        {
+          "from": 6,
+          "to": 7
+        }
+      ],
+      "notes": [
+        {
+          "x": 160,
+          "y": 410,
+          "text": "▲ We are here: stages 1–2",
+          "tone": "amber",
+          "size": 13,
+          "max": 270
+        },
+        {
+          "x": 385,
+          "y": 350,
+          "text": "Checkpoint",
+          "tone": "amber",
+          "size": 12
+        },
+        {
+          "x": 250,
+          "y": 152,
+          "text": "AI picks the layout",
+          "tone": "slate",
+          "size": 12
+        },
+        {
+          "x": 400,
+          "y": 152,
+          "text": "bank picks the parts",
+          "tone": "blue",
+          "size": 12
+        },
+        {
+          "x": 86,
+          "y": 352,
+          "text": "asset overview",
+          "tone": "green",
+          "size": 12
+        },
+        {
+          "x": 86,
+          "y": 370,
+          "text": "fund comparison",
+          "tone": "green",
+          "size": 12
+        },
+        {
+          "x": 86,
+          "y": 388,
+          "text": "form filling",
+          "tone": "green",
+          "size": 12
+        },
+        {
+          "x": 232,
+          "y": 352,
+          "text": "env · parts list",
+          "tone": "blue",
+          "size": 12,
+          "max": 120
+        },
+        {
+          "x": 522,
+          "y": 346,
+          "text": "guardrails · no order button",
+          "tone": "red",
+          "size": 12,
+          "max": 120
+        }
+      ]
+    }
   },
   "webai-finance": {
     "type": "iceberg",
     "title": "Research assistant iceberg",
-    "sub": "Users see a simple Q&A; what decides success is the permissions, data and flow below the surface.",
+    "sub": "Researchers first had to gather reports, macro data and news daily, so I took a module from requirements to launch alone: pick a market or stock, ask AI.",
+    "role": "Owned the module and took it from requirements to launch on my own",
+    "outcome": "Live; hard numbers on the impact to be added",
     "items": [
       {
         "name": "Pick and ask",
-        "desc": "Pick a market or stock, then ask",
+        "desc": "Pick a market or stock",
         "level": "above",
         "points": [
-          "Pick a market or a stock, and AI answers from curated data",
-          "Users can keep asking follow-up questions"
+          "Pick a market or a stock and AI answers from curated data, with follow-ups",
+          "Researchers used to collect and sort reports and news themselves every day"
         ]
       },
       {
-        "name": "Familiar UI",
+        "name": "Live in familiar UI",
         "desc": "No new tool to learn",
         "level": "above",
         "points": [
-          "The AI assistant lives inside the interface people already use",
-          "Webai Finance is live"
+          "The assistant sits inside the interface people already use",
+          "Webai Finance is live, and time spent gathering data has gone down"
         ]
       },
       {
@@ -594,8 +3230,8 @@
         "desc": "Open yet isolated",
         "level": "below",
         "points": [
-          "The hardest part: the tool is open to the whole group",
-          "Yet the asset-management arm's data must stay walled off from everyone else"
+          "The hardest part was access: the tool is open to the whole group",
+          "Yet the asset manager's data had to stay walled off, so one design had to do both"
         ]
       },
       {
@@ -603,80 +3239,440 @@
         "desc": "Three data types via SFTP",
         "level": "below",
         "points": [
-          "Broker reports, macro data and news come in via SFTP",
-          "Researchers used to gather and organise all this themselves every morning"
+          "Broker reports, macro data and news come in over SFTP",
+          "The PoC first proved AI could answer market and stock questions from them"
         ]
       },
       {
         "name": "Agent flow",
-        "desc": "Works the question step by step",
+        "desc": "Works it step by step",
         "level": "below",
         "points": [
-          "Designed the step-by-step flow the AI Agent follows for each question",
-          "The PoC first proved AI could really answer market and stock questions"
+          "I set up the flow the AI Agent follows to work through each question",
+          "Next: put numbers on the impact, such as daily time spent preparing data"
         ]
       }
-    ]
+    ],
+    "diagram": {
+      "h": 430,
+      "zones": [
+        {
+          "x": 14,
+          "y": 276,
+          "w": 380,
+          "h": 140,
+          "label": "Open to the group",
+          "tone": "blue"
+        },
+        {
+          "x": 404,
+          "y": 276,
+          "w": 182,
+          "h": 140,
+          "label": "Asset manager: walled off",
+          "tone": "red"
+        }
+      ],
+      "nodes": [
+        {
+          "label": "Broker reports",
+          "x": 72,
+          "y": 50,
+          "w": 104,
+          "h": 44,
+          "shape": "doc",
+          "tone": "slate",
+          "size": 12
+        },
+        {
+          "label": "Macro data",
+          "x": 72,
+          "y": 120,
+          "w": 104,
+          "h": 44,
+          "shape": "doc",
+          "tone": "slate",
+          "size": 12
+        },
+        {
+          "label": "News",
+          "x": 72,
+          "y": 190,
+          "w": 104,
+          "h": 44,
+          "shape": "doc",
+          "tone": "slate",
+          "size": 12
+        },
+        {
+          "item": 3,
+          "x": 232,
+          "y": 120,
+          "w": 130,
+          "h": 54,
+          "shape": "db",
+          "tone": "cyan"
+        },
+        {
+          "item": 4,
+          "x": 410,
+          "y": 120,
+          "w": 130,
+          "h": 54,
+          "shape": "hex",
+          "tone": "purple"
+        },
+        {
+          "item": 1,
+          "x": 530,
+          "y": 220,
+          "w": 110,
+          "h": 54,
+          "tone": "blue",
+          "solid": true
+        },
+        {
+          "label": "Researcher",
+          "x": 90,
+          "y": 350,
+          "w": 124,
+          "h": 50,
+          "shape": "person",
+          "tone": "blue",
+          "size": 13
+        },
+        {
+          "item": 0,
+          "x": 268,
+          "y": 350,
+          "w": 124,
+          "h": 50,
+          "tone": "green"
+        },
+        {
+          "item": 2,
+          "x": 399,
+          "y": 340,
+          "w": 110,
+          "h": 70,
+          "shape": "diamond",
+          "tone": "amber",
+          "solid": true,
+          "size": 12
+        },
+        {
+          "label": "Asset manager",
+          "x": 520,
+          "y": 360,
+          "w": 110,
+          "h": 54,
+          "shape": "person",
+          "tone": "red",
+          "size": 13
+        }
+      ],
+      "edges": [
+        {
+          "from": 0,
+          "to": 3
+        },
+        {
+          "from": 1,
+          "to": 3
+        },
+        {
+          "from": 2,
+          "to": 3
+        },
+        {
+          "from": 3,
+          "to": 4,
+          "label": "SFTP"
+        },
+        {
+          "from": 4,
+          "to": 5,
+          "label": "answer"
+        },
+        {
+          "from": 6,
+          "to": 7,
+          "label": "pick"
+        },
+        {
+          "from": 7,
+          "to": 4,
+          "label": "ask",
+          "bend": 0.12
+        }
+      ],
+      "notes": [
+        {
+          "x": 530,
+          "y": 264,
+          "text": "Kinance",
+          "tone": "blue",
+          "size": 12
+        },
+        {
+          "x": 410,
+          "y": 70,
+          "text": "step by step",
+          "tone": "purple",
+          "size": 12
+        }
+      ]
+    }
   },
   "ai-governance-review": {
     "type": "equation",
     "title": "Three checks per report",
-    "sub": "Every AI usage report must pass three checks; the system does the judging, recalculating and reconciling before a reviewer looks.",
+    "sub": "Subsidiary AI reports were reviewed by hand, each reviewer differently, so I built a system that judges, recalculates and reconciles them before review.",
+    "role": "Led development of the automated AI governance review and took it live",
+    "outcome": "Live: three review tasks now handled by the system",
     "items": [
       {
         "name": "Reasonableness",
-        "desc": "Azure OpenAI reads the report",
+        "desc": "Azure OpenAI reads it",
         "points": [
-          "Reads \"current controls\" and \"risk treatment plan\" and judges whether they make sense",
-          "Reports come in from SharePoint, and results go back to the same place"
+          "The group AI office must review every subsidiary's AI usage report",
+          "Reports come from SharePoint, and Azure OpenAI judges the controls and risk treatment plans"
         ]
       },
       {
         "name": "Risk level",
         "desc": "Recalculated automatically",
         "points": [
-          "The system recalculates the risk level automatically",
-          "Then determines residual risk, the risk that remains after treatment"
+          "People used to redo each one by hand, each to their own standard",
+          "The system recalculates the risk level, then judges the residual risk left after treatment"
         ]
       },
       {
         "name": "Asset register",
         "desc": "Reconciled automatically",
         "points": [
-          "Checks automatically that the report matches the asset register",
-          "People used to read each one by hand, each with their own standard"
+          "It checks automatically that each report matches the asset register",
+          "With this, the three most labour-heavy review tasks all moved to the system"
         ]
       }
     ],
     "op": "+",
     "result": {
       "name": "Review report",
-      "desc": "Recommendations by severity",
+      "desc": "Advice ranked by severity",
       "points": [
-        "Produces a review report and improvement suggestions, ranked by severity",
-        "CI/CD deploys every change to Azure Container Apps automatically",
-        "Next: measure review time per report, before vs after"
+        "It writes a review report and fixes ranked by severity, back into SharePoint",
+        "Azure DevOps CI/CD deploys it to Azure Container Apps, tested on every change",
+        "Next: time each review to compare before and after"
+      ]
+    },
+    "diagram": {
+      "h": 440,
+      "zones": [
+        {
+          "x": 200,
+          "y": 14,
+          "w": 170,
+          "h": 270,
+          "label": "System first",
+          "tone": "purple"
+        },
+        {
+          "x": 14,
+          "y": 362,
+          "w": 572,
+          "h": 64,
+          "tone": "slate"
+        }
+      ],
+      "nodes": [
+        {
+          "label": "Subsidiaries",
+          "x": 92,
+          "y": 60,
+          "w": 150,
+          "h": 50,
+          "shape": "person",
+          "tone": "slate",
+          "size": 13
+        },
+        {
+          "label": "SharePoint",
+          "x": 90,
+          "y": 200,
+          "w": 130,
+          "h": 64,
+          "shape": "db",
+          "tone": "blue",
+          "size": 13
+        },
+        {
+          "item": 0,
+          "x": 285,
+          "y": 78,
+          "w": 140,
+          "h": 50,
+          "tone": "purple"
+        },
+        {
+          "item": 1,
+          "x": 285,
+          "y": 158,
+          "w": 140,
+          "h": 50,
+          "tone": "purple"
+        },
+        {
+          "item": 2,
+          "x": 285,
+          "y": 238,
+          "w": 140,
+          "h": 50,
+          "tone": "purple"
+        },
+        {
+          "label": "Review report",
+          "x": 480,
+          "y": 175,
+          "w": 130,
+          "h": 60,
+          "shape": "doc",
+          "tone": "amber",
+          "size": 13
+        },
+        {
+          "label": "Reviewer",
+          "x": 480,
+          "y": 300,
+          "w": 130,
+          "h": 50,
+          "shape": "person",
+          "tone": "green",
+          "size": 13
+        },
+        {
+          "label": "Azure DevOps",
+          "x": 180,
+          "y": 394,
+          "w": 140,
+          "h": 38,
+          "shape": "pill",
+          "tone": "cyan",
+          "size": 12
+        },
+        {
+          "label": "Container Apps",
+          "x": 440,
+          "y": 394,
+          "w": 150,
+          "h": 38,
+          "shape": "pill",
+          "tone": "cyan",
+          "size": 12
+        }
+      ],
+      "edges": [
+        {
+          "from": 0,
+          "to": 1,
+          "label": "upload"
+        },
+        {
+          "from": 1,
+          "to": 2
+        },
+        {
+          "from": 1,
+          "to": 3
+        },
+        {
+          "from": 1,
+          "to": 4
+        },
+        {
+          "from": 2,
+          "to": 5
+        },
+        {
+          "from": 3,
+          "to": 5
+        },
+        {
+          "from": 4,
+          "to": 5
+        },
+        {
+          "from": 5,
+          "to": 6,
+          "label": "with fixes"
+        },
+        {
+          "from": 6,
+          "to": 1,
+          "label": "back to same place",
+          "style": "dashed",
+          "bend": -0.4
+        },
+        {
+          "from": 7,
+          "to": 8,
+          "label": "every change"
+        }
+      ],
+      "notes": [
+        {
+          "x": 26,
+          "y": 380,
+          "text": "CI/CD",
+          "tone": "cyan",
+          "size": 13,
+          "anchor": "start"
+        },
+        {
+          "x": 480,
+          "y": 122,
+          "text": "residual risk rated",
+          "tone": "amber",
+          "size": 12
+        },
+        {
+          "x": 480,
+          "y": 62,
+          "text": "Before: read by hand",
+          "tone": "red",
+          "size": 12
+        },
+        {
+          "x": 480,
+          "y": 80,
+          "text": "uneven standards",
+          "tone": "red",
+          "size": 12
+        }
       ]
     }
   },
   "rag-support-bot": {
     "type": "pipeline",
-    "title": "RAG Q&A pipeline",
-    "sub": "Five steps from manual to answer; changing how documents are chunked lifted accuracy from 60% to 85%.",
+    "title": "Little t RAG pipeline",
+    "sub": "Answers were scattered across manuals, so members waited for support; I built a RAG assistant from scratch, and new chunking lifted accuracy from 60% to 85%.",
+    "role": "Team project; I owned the RAG design, vector database and front and back end",
+    "outcome": "Live: accuracy 60% to 85%, answers in about 2 to 3 seconds",
     "items": [
       {
         "name": "Manuals",
-        "desc": "Parsed with LangExtract",
+        "desc": "Answers scattered",
         "points": [
-          "Members often look up manuals and database usage, with answers scattered everywhere",
-          "RAG over fine-tuning: manuals change often, and RAG only needs re-embedding"
+          "Members often look up manuals and database usage, and waited for support when they could not find it",
+          "RAG over fine-tuning: manuals change often, and RAG only needs the embeddings rebuilt",
+          "Documents are parsed with LangExtract"
         ]
       },
       {
         "name": "Semantic chunks",
         "desc": "Accuracy 60% → 85%",
         "points": [
-          "Fixed 500-token chunks gave the LLM broken context: 60% accuracy",
+          "Fixed 500-token chunks broke up context, and accuracy sat at 60%",
           "Splitting by paragraph with overlap and chapter metadata raised it to 85%"
         ]
       },
@@ -684,221 +3680,1145 @@
         "name": "Vector DB",
         "desc": "Self-hosted Qdrant",
         "points": [
-          "Compared Pinecone, Weaviate and Chroma, then chose Qdrant",
-          "Runs in-house with Docker, so data never leaves the company"
+          "I compared Pinecone, Weaviate and Chroma, then chose Qdrant",
+          "It runs in-house on Docker, so no data leaves the company"
         ]
       },
       {
         "name": "Retrieval",
-        "desc": "Finds the relevant passages",
+        "desc": "Filter by category",
         "points": [
           "Qdrant finds the passages closest to the question",
-          "Filtering by category suits classified queries in finance"
+          "Filtering by category suits the classified lookups common in finance"
         ]
       },
       {
         "name": "Answer",
         "desc": "About 2 to 3 seconds",
         "points": [
-          "The LLM answers from the retrieved passages in about 2 to 3 seconds",
-          "FastAPI back end; admins maintain the knowledge base themselves"
+          "The LLM answers from those passages in about 2 to 3 seconds",
+          "FastAPI back end and HTML front end; admins maintain the knowledge base themselves"
         ]
       }
-    ]
+    ],
+    "diagram": {
+      "h": 440,
+      "zones": [
+        {
+          "x": 12,
+          "y": 12,
+          "w": 576,
+          "h": 150,
+          "tone": "purple",
+          "label": "Back office: build the index (re-embed when docs change)"
+        },
+        {
+          "x": 12,
+          "y": 278,
+          "w": 576,
+          "h": 150,
+          "tone": "blue",
+          "label": "Front desk: members ask"
+        }
+      ],
+      "nodes": [
+        {
+          "x": 82,
+          "y": 95,
+          "shape": "person",
+          "tone": "slate",
+          "label": "Admin",
+          "w": 120,
+          "h": 54
+        },
+        {
+          "item": 0,
+          "x": 250,
+          "y": 95,
+          "shape": "doc",
+          "tone": "slate",
+          "w": 120,
+          "h": 54
+        },
+        {
+          "item": 1,
+          "x": 470,
+          "y": 95,
+          "shape": "hex",
+          "tone": "amber",
+          "solid": true,
+          "w": 170,
+          "h": 56
+        },
+        {
+          "item": 2,
+          "x": 300,
+          "y": 220,
+          "shape": "db",
+          "tone": "cyan",
+          "solid": true,
+          "w": 170,
+          "h": 70
+        },
+        {
+          "x": 82,
+          "y": 355,
+          "shape": "person",
+          "tone": "slate",
+          "label": "Member",
+          "w": 120,
+          "h": 54
+        },
+        {
+          "item": 3,
+          "x": 300,
+          "y": 355,
+          "tone": "blue",
+          "w": 130,
+          "h": 54
+        },
+        {
+          "item": 4,
+          "x": 500,
+          "y": 355,
+          "shape": "pill",
+          "tone": "green",
+          "solid": true,
+          "w": 140,
+          "h": 54
+        }
+      ],
+      "edges": [
+        {
+          "from": 0,
+          "to": 1
+        },
+        {
+          "from": 1,
+          "to": 2
+        },
+        {
+          "from": 2,
+          "to": 3,
+          "bend": -0.12,
+          "label": "embedding"
+        },
+        {
+          "from": 4,
+          "to": 5,
+          "label": "asks"
+        },
+        {
+          "from": 3,
+          "to": 5,
+          "style": "two-way",
+          "label": "nearest chunks"
+        },
+        {
+          "from": 5,
+          "to": 6,
+          "label": "LLM"
+        }
+      ],
+      "notes": [
+        {
+          "x": 455,
+          "y": 50,
+          "tone": "amber",
+          "text": "500-token chunks 60% → semantic 85%",
+          "size": 12,
+          "max": 250
+        },
+        {
+          "x": 110,
+          "y": 220,
+          "tone": "cyan",
+          "text": "Self-hosted Qdrant: data stays in-house",
+          "size": 12,
+          "max": 170
+        },
+        {
+          "x": 490,
+          "y": 220,
+          "tone": "slate",
+          "text": "Knowledge base apart from the model: no retraining",
+          "size": 12,
+          "max": 170
+        },
+        {
+          "x": 500,
+          "y": 405,
+          "tone": "green",
+          "text": "Answer in about 2–3 s",
+          "size": 12
+        }
+      ]
+    }
   },
   "multi-agent-advisory": {
     "type": "compare",
     "title": "One LLM vs a team",
-    "sub": "Like a fund house with different analysts, AI agents split the work and debate, fixing a single LLM's blind spots and black box.",
+    "sub": "One AI could not cover every angle or show its reasoning, so five Agents split the work and debate like a fund team, backtested over three years in Zipline.",
+    "role": "Contributor: designed each Agent's role and connected TEJ data through MCP",
+    "outcome": "A three-year backtest gave the team confidence; results are not public",
     "items": [
       {
         "name": "Single LLM",
-        "desc": "One model does everything",
+        "desc": "Problem: blind spots, black box",
         "points": [
-          "Struggles to cover technicals, news sentiment and fundamentals at once",
-          "Its advice shows no reasoning, so it can't be checked"
+          "It struggles to weigh technicals, news sentiment and fundamentals at once",
+          "Its advice shows no reasoning, so it cannot be checked",
+          "Like one person making every investment call, it has blind spots"
         ]
       },
       {
         "name": "Five-agent team",
-        "desc": "Analyse, debate, then trade",
+        "desc": "What we built: divide and debate",
         "points": [
-          "Technical, sentiment and fundamental analysts each do one job",
-          "A bull-bear debater weighs both sides; a trader turns the verdict into buy or sell signals",
-          "LangGraph defines the flow, MCP pulls TEJ data, Zipline backtests three years"
+          "Three analysts each do one job, a debater weighs both sides, a trader gives the signal",
+          "LangGraph keeps the flow controllable; I connected TEJ data through MCP",
+          "Signals ran through a three-year Zipline backtest, which gave the team confidence in the design"
         ]
       }
-    ]
+    ],
+    "diagram": {
+      "h": 440,
+      "zones": [
+        {
+          "x": 12,
+          "y": 12,
+          "w": 160,
+          "h": 416,
+          "tone": "slate",
+          "label": "Before"
+        },
+        {
+          "x": 184,
+          "y": 12,
+          "w": 404,
+          "h": 416,
+          "tone": "blue",
+          "label": "What we built: LangGraph"
+        }
+      ],
+      "nodes": [
+        {
+          "item": 0,
+          "x": 92,
+          "y": 180,
+          "shape": "circle",
+          "tone": "slate",
+          "w": 130,
+          "h": 100
+        },
+        {
+          "item": 1,
+          "x": 290,
+          "y": 72,
+          "shape": "pill",
+          "tone": "amber",
+          "solid": true,
+          "w": 170,
+          "h": 44
+        },
+        {
+          "x": 500,
+          "y": 72,
+          "shape": "db",
+          "tone": "cyan",
+          "label": "TEJ data",
+          "w": 130,
+          "h": 48
+        },
+        {
+          "x": 252,
+          "y": 165,
+          "tone": "blue",
+          "label": "Technical",
+          "w": 118,
+          "h": 48
+        },
+        {
+          "x": 386,
+          "y": 165,
+          "tone": "blue",
+          "label": "Sentiment",
+          "w": 118,
+          "h": 48
+        },
+        {
+          "x": 520,
+          "y": 165,
+          "tone": "blue",
+          "label": "Fundamental",
+          "w": 118,
+          "h": 48
+        },
+        {
+          "x": 386,
+          "y": 258,
+          "shape": "hex",
+          "tone": "purple",
+          "solid": true,
+          "label": "Bull vs bear",
+          "w": 220,
+          "h": 62
+        },
+        {
+          "x": 270,
+          "y": 355,
+          "shape": "person",
+          "tone": "purple",
+          "label": "Trader",
+          "w": 150,
+          "h": 50
+        },
+        {
+          "x": 495,
+          "y": 355,
+          "tone": "green",
+          "solid": true,
+          "label": "Zipline backtest",
+          "w": 150,
+          "h": 50
+        }
+      ],
+      "edges": [
+        {
+          "from": 2,
+          "to": 4
+        },
+        {
+          "from": 2,
+          "to": 5,
+          "label": "MCP"
+        },
+        {
+          "from": 2,
+          "to": 3,
+          "bend": 0.08
+        },
+        {
+          "from": 3,
+          "to": 6
+        },
+        {
+          "from": 4,
+          "to": 6
+        },
+        {
+          "from": 5,
+          "to": 6
+        },
+        {
+          "from": 6,
+          "to": 7
+        },
+        {
+          "from": 7,
+          "to": 8,
+          "label": "buy/sell"
+        }
+      ],
+      "notes": [
+        {
+          "x": 92,
+          "y": 88,
+          "tone": "red",
+          "text": "?",
+          "size": 34
+        },
+        {
+          "x": 92,
+          "y": 270,
+          "tone": "slate",
+          "text": "Misses technicals, news, fundamentals",
+          "size": 12,
+          "max": 130
+        },
+        {
+          "x": 92,
+          "y": 335,
+          "tone": "red",
+          "text": "No visible reasoning to check",
+          "size": 12,
+          "max": 130
+        },
+        {
+          "x": 495,
+          "y": 402,
+          "tone": "green",
+          "text": "Three years of Taiwan stock history",
+          "size": 12,
+          "max": 180
+        }
+      ]
+    }
   },
   "asr-transcription": {
     "type": "pipeline",
     "title": "Earnings call to table",
-    "sub": "From recording to a comparable summary table, so researchers no longer type up every call by ear.",
+    "sub": "Someone used to type up each earnings call by ear, so I automated it with Whisper: recordings become transcripts, then a key-point table that compares easily.",
+    "role": "Contributor: automated the speech-to-text and summary steps",
+    "outcome": "Automated and faster; before-and-after numbers still to be measured",
     "items": [
       {
         "name": "Call recordings",
-        "desc": "Many calls, slow manual typing",
+        "desc": "Many calls, slow by hand",
         "points": [
-          "Someone used to listen to each call, type it up, then pull out key points",
-          "There are many earnings calls, so this took a lot of time"
+          "Someone used to type up each call by ear, then pull out the key points",
+          "Researchers needed points they could compare and quote, not just transcripts"
         ]
       },
       {
         "name": "Speech-to-text",
         "desc": "Whisper transcribes",
         "points": [
-          "Whisper turns call audio and video into text",
-          "The whole flow is automated, with no file-by-file handling"
+          "The PoC used Whisper to turn call recordings into text",
+          "Once that worked, the whole flow was automated"
         ]
       },
       {
-        "name": "Transcript",
-        "desc": "Produced automatically",
+        "name": "Automated flow",
+        "desc": "No file-by-file work",
         "points": [
-          "Recordings become transcripts automatically",
-          "Time spent preparing call transcripts went down"
+          "With so many calls, I automated the whole processing flow",
+          "Recordings become transcripts automatically, with no handling file by file"
         ]
       },
       {
         "name": "Summary table",
         "desc": "Fixed fields",
         "points": [
-          "Key points from each transcript go into a table with fixed fields",
-          "Researchers wanted points they could compare and cite directly"
+          "Each transcript's key points go into a table with fixed fields",
+          "Preparing call write-ups now takes less time"
         ]
       },
       {
         "name": "Compare calls",
-        "desc": "Across companies and quarters",
+        "desc": "Across firms and quarters",
         "points": [
-          "Researchers can compare key points across companies and quarters",
-          "Next: measure preparation time per call, before vs after automation"
+          "Researchers compare key points across companies and quarters directly",
+          "Next: time each call to compare before and after automation"
         ]
       }
-    ]
+    ],
+    "diagram": {
+      "h": 420,
+      "zones": [
+        {
+          "x": 12,
+          "y": 12,
+          "w": 576,
+          "h": 96,
+          "tone": "red",
+          "label": "Before"
+        },
+        {
+          "x": 12,
+          "y": 122,
+          "w": 576,
+          "h": 286,
+          "tone": "blue",
+          "label": "Now: the whole flow runs itself"
+        }
+      ],
+      "nodes": [
+        {
+          "x": 120,
+          "y": 66,
+          "shape": "person",
+          "tone": "red",
+          "label": "Researcher",
+          "w": 150,
+          "h": 48
+        },
+        {
+          "item": 0,
+          "x": 95,
+          "y": 195,
+          "shape": "doc",
+          "tone": "slate",
+          "w": 140,
+          "h": 54
+        },
+        {
+          "x": 95,
+          "y": 262,
+          "shape": "doc",
+          "tone": "slate",
+          "label": "Call 2",
+          "w": 140,
+          "h": 44
+        },
+        {
+          "x": 95,
+          "y": 324,
+          "shape": "doc",
+          "tone": "slate",
+          "label": "Call N …",
+          "w": 140,
+          "h": 44
+        },
+        {
+          "item": 2,
+          "x": 290,
+          "y": 172,
+          "shape": "pill",
+          "tone": "amber",
+          "solid": true,
+          "w": 170,
+          "h": 44
+        },
+        {
+          "item": 1,
+          "x": 290,
+          "y": 265,
+          "shape": "hex",
+          "tone": "cyan",
+          "solid": true,
+          "w": 150,
+          "h": 62
+        },
+        {
+          "x": 480,
+          "y": 175,
+          "shape": "doc",
+          "tone": "cyan",
+          "label": "Transcript",
+          "w": 150,
+          "h": 44
+        },
+        {
+          "item": 3,
+          "x": 480,
+          "y": 265,
+          "tone": "green",
+          "w": 150,
+          "h": 54
+        },
+        {
+          "item": 4,
+          "x": 480,
+          "y": 355,
+          "tone": "green",
+          "solid": true,
+          "w": 170,
+          "h": 54
+        }
+      ],
+      "edges": [
+        {
+          "from": 1,
+          "to": 5
+        },
+        {
+          "from": 2,
+          "to": 5
+        },
+        {
+          "from": 3,
+          "to": 5
+        },
+        {
+          "from": 4,
+          "to": 5,
+          "style": "dashed"
+        },
+        {
+          "from": 5,
+          "to": 6
+        },
+        {
+          "from": 6,
+          "to": 7,
+          "label": "key points"
+        },
+        {
+          "from": 7,
+          "to": 8,
+          "label": "side by side"
+        }
+      ],
+      "notes": [
+        {
+          "x": 390,
+          "y": 66,
+          "tone": "red",
+          "text": "Listening and typing each call by hand, one at a time",
+          "size": 13,
+          "max": 330
+        },
+        {
+          "x": 270,
+          "y": 380,
+          "tone": "slate",
+          "text": "Next: time each call before vs after",
+          "size": 12,
+          "max": 220
+        }
+      ]
+    }
   },
   "financial-statement-vlm": {
     "type": "compare",
     "title": "OCR vs vision LLM",
-    "sub": "Financial statements live in tables; turning images into text isn't enough, every number must map to its line item and period.",
+    "sub": "Scanned statements are images and classic OCR misses their tables, so I helped switch to cloud Gemini vision, which reads layout and numbers and is now live.",
+    "role": "Contributor: helped build the Gemini image reading; exact scope to be added",
+    "outcome": "Live; accuracy and time saved to be added",
     "items": [
       {
         "name": "Classic OCR",
-        "desc": "Turns images into text only",
+        "desc": "Problem: misses tables",
         "points": [
-          "Recognises characters one by one and turns the image into text",
-          "Can't read table structure, so numbers don't map to the right line item and period"
+          "Some of TEJ's statement sources are scans, images rather than text",
+          "Statements live in tables, where every number must map to a line item and period",
+          "OCR only turns images into text and cannot read that structure"
         ]
       },
       {
         "name": "Vision LLM",
-        "desc": "Cloud Gemini reads the layout",
+        "desc": "Switched to cloud Gemini",
         "points": [
-          "Understands layout, tables and text together",
-          "Reads each number along with the field it belongs to",
-          "Wired into the financial data pipeline and in production"
+          "Scanned pages go to Gemini, which reads layout, tables and text together",
+          "It reads each number with its field and is now live in the statement data flow",
+          "Validation details, accuracy and volume: to be added"
         ]
       }
-    ]
+    ],
+    "diagram": {
+      "h": 430,
+      "zones": [
+        {
+          "x": 12,
+          "y": 124,
+          "w": 282,
+          "h": 294,
+          "tone": "red",
+          "label": "Reads characters"
+        },
+        {
+          "x": 306,
+          "y": 124,
+          "w": 282,
+          "h": 294,
+          "tone": "green",
+          "label": "Reads the layout"
+        }
+      ],
+      "nodes": [
+        {
+          "x": 300,
+          "y": 50,
+          "shape": "doc",
+          "tone": "slate",
+          "solid": true,
+          "label": "Scanned page (an image)",
+          "w": 240,
+          "h": 56
+        },
+        {
+          "item": 0,
+          "x": 153,
+          "y": 190,
+          "tone": "red",
+          "w": 150,
+          "h": 50
+        },
+        {
+          "x": 153,
+          "y": 285,
+          "shape": "doc",
+          "tone": "slate",
+          "label": "Loose text",
+          "w": 170,
+          "h": 50
+        },
+        {
+          "item": 1,
+          "x": 447,
+          "y": 190,
+          "tone": "green",
+          "solid": true,
+          "w": 190,
+          "h": 50
+        },
+        {
+          "x": 447,
+          "y": 285,
+          "tone": "green",
+          "label": "Line item × period → value",
+          "w": 230,
+          "h": 50,
+          "size": 13
+        },
+        {
+          "x": 447,
+          "y": 372,
+          "shape": "pill",
+          "tone": "blue",
+          "solid": true,
+          "label": "In the pipeline: live",
+          "w": 230,
+          "h": 46
+        }
+      ],
+      "edges": [
+        {
+          "from": 0,
+          "to": 1,
+          "bend": 0.1
+        },
+        {
+          "from": 0,
+          "to": 3,
+          "bend": -0.1,
+          "label": "to cloud Gemini"
+        },
+        {
+          "from": 1,
+          "to": 2,
+          "label": "char by char"
+        },
+        {
+          "from": 3,
+          "to": 4,
+          "label": "layout + tables + text"
+        },
+        {
+          "from": 4,
+          "to": 5
+        }
+      ],
+      "notes": [
+        {
+          "x": 153,
+          "y": 360,
+          "tone": "red",
+          "text": "Table lost: numbers lose their line item and period",
+          "size": 12,
+          "max": 240
+        }
+      ]
+    }
   },
   "moda-t-ambassador": {
     "type": "equation",
     "title": "Locals ask, talent solves",
-    "sub": "Businesses bring real problems, T Ambassadors work out solutions with them, filling the AI talent gap.",
+    "sub": "Rural groups and small firms lacked people who know AI, so as a T Ambassador I worked out solutions with firms and helped them adopt generative AI.",
+    "role": "6th-cohort Digital Youth T Ambassador, helping firms adopt AI",
+    "outcome": "Programme completed; firms coached and results to be added",
     "items": [
       {
         "name": "Locals ask",
-        "desc": "Businesses bring real problems",
+        "desc": "Firms bring real problems",
         "points": [
-          "Businesses and organisations raise problems they actually face",
-          "Rural organisations and SMEs lack people who know digital tools and AI"
+          "Rural organisations and small firms lack people who know digital tools and AI",
+          "In the Ministry of Digital Affairs' programme, firms and groups bring the problems they actually face"
         ]
       },
       {
         "name": "Talent solves",
-        "desc": "Ambassadors co-design",
+        "desc": "Co-designed with firms",
         "points": [
-          "T Ambassadors work with each business to design a digital solution",
-          "6th-cohort Digital Youth T Ambassador, working with government on digital transformation"
+          "I served as a 6th-cohort Digital Youth T Ambassador, working with government on digital change",
+          "Together with firms, we turned real problems into digital solutions"
         ]
       }
     ],
     "op": "+",
     "result": {
       "name": "Digital solution",
-      "desc": "Generative AI adoption",
+      "desc": "Generative AI adopted",
       "points": [
-        "Helped businesses adopt generative AI and AIoT",
-        "Also promoted digital transformation policy and engaged with communities",
-        "Number of businesses, industries and concrete results: to be added"
+        "Helped firms bring in generative AI and AI-enabled IoT",
+        "Also promoted digital transformation policy and engaged the community",
+        "Number of firms, industries and concrete results: to be added"
+      ]
+    },
+    "diagram": {
+      "h": 440,
+      "zones": [
+        {
+          "x": 12,
+          "y": 128,
+          "w": 220,
+          "h": 196,
+          "tone": "amber",
+          "label": "Local side"
+        },
+        {
+          "x": 368,
+          "y": 128,
+          "w": 220,
+          "h": 196,
+          "tone": "blue",
+          "label": "Talent"
+        }
+      ],
+      "nodes": [
+        {
+          "x": 300,
+          "y": 52,
+          "tone": "purple",
+          "solid": true,
+          "label": "Ministry of Digital Affairs",
+          "w": 240,
+          "h": 50
+        },
+        {
+          "x": 122,
+          "y": 185,
+          "shape": "person",
+          "tone": "amber",
+          "label": "Rural groups, SMEs",
+          "w": 196,
+          "h": 50,
+          "size": 13
+        },
+        {
+          "item": 0,
+          "x": 122,
+          "y": 270,
+          "tone": "amber",
+          "solid": true,
+          "w": 170,
+          "h": 54
+        },
+        {
+          "x": 478,
+          "y": 185,
+          "shape": "person",
+          "tone": "blue",
+          "label": "T Ambassador, 6th",
+          "w": 196,
+          "h": 50,
+          "size": 13
+        },
+        {
+          "item": 1,
+          "x": 478,
+          "y": 270,
+          "tone": "blue",
+          "solid": true,
+          "w": 170,
+          "h": 54
+        },
+        {
+          "x": 300,
+          "y": 392,
+          "shape": "pill",
+          "tone": "green",
+          "solid": true,
+          "label": "GenAI and AIoT adopted",
+          "w": 280,
+          "h": 50
+        }
+      ],
+      "edges": [
+        {
+          "from": 0,
+          "to": 1,
+          "bend": 0.08
+        },
+        {
+          "from": 0,
+          "to": 3,
+          "bend": -0.08
+        },
+        {
+          "from": 2,
+          "to": 4,
+          "bend": -0.2,
+          "label": "real problems"
+        },
+        {
+          "from": 4,
+          "to": 2,
+          "bend": -0.2,
+          "label": "co-designed fixes"
+        },
+        {
+          "from": 2,
+          "to": 5,
+          "bend": 0.1
+        },
+        {
+          "from": 4,
+          "to": 5,
+          "bend": -0.1
+        }
+      ],
+      "notes": [
+        {
+          "x": 95,
+          "y": 52,
+          "tone": "purple",
+          "text": "Goals: digital equity, close the talent gap",
+          "size": 12,
+          "max": 150
+        }
       ]
     }
   },
   "tmba-cta-taiex": {
     "type": "layers",
     "title": "Foundations of a strategy",
-    "sub": "To be taken seriously a strategy must first be reproducible, then judged on return and risk with three metrics.",
+    "sub": "A strategy that cannot be rerun is hard to trust, so I built a reproducible backtest first, tuned it on three metrics, and placed third at the showcase.",
+    "role": "Led development of the TAIEX futures CTA strategy and its backtest framework",
+    "outcome": "Third place at the TMBA 26th algo trading showcase",
     "items": [
       {
         "name": "TAIEX CTA",
-        "desc": "Third place at the showcase",
+        "desc": "Hypothesis and market",
         "points": [
-          "Third place at the TMBA 26th Algorithmic Trading showcase",
-          "Trades TAIEX futures (Taiwan Stock Exchange index futures)"
+          "TMBA's algo trading team builds a strategy every cohort and judges it at term end",
+          "I built a CTA strategy on TAIEX futures"
+        ]
+      },
+      {
+        "name": "Reproducible test",
+        "desc": "Same data, same result",
+        "points": [
+          "I first built a backtest framework that simulates trades on history",
+          "Run the same data twice and get the same result, or the strategy cannot be trusted"
+        ]
+      },
+      {
+        "name": "Three metrics",
+        "desc": "Return, Sharpe, drawdown",
+        "points": [
+          "Return alone hides how much risk was taken",
+          "Sharpe shows return per unit of risk; max drawdown shows the deepest fall"
         ]
       },
       {
         "name": "Optimisation",
         "desc": "Tuning on the framework",
         "points": [
-          "Parameters tuned on top of the backtesting framework",
+          "I tuned parameters on the framework and judged them on the three metrics",
           "Backtest period and exact figures: to be added"
         ]
       },
       {
-        "name": "Three metrics",
-        "desc": "Return, Sharpe, max drawdown",
+        "name": "Showcase",
+        "desc": "Third place",
         "points": [
-          "Return alone hides how much risk was taken",
-          "Sharpe shows return per unit of risk; max drawdown shows the worst fall"
-        ]
-      },
-      {
-        "name": "Reproducible test",
-        "desc": "Same data, same result, every run",
-        "points": [
-          "First built a backtesting framework that simulates trades on historical data",
-          "Run the same data twice and the result must be identical"
+          "Placed third at the TMBA 26th cohort's algo trading showcase",
+          "Next: add the return, Sharpe and max drawdown figures"
         ]
       }
-    ]
+    ],
+    "diagram": {
+      "h": 440,
+      "zones": [],
+      "nodes": [
+        {
+          "item": 0,
+          "x": 95,
+          "y": 62,
+          "tone": "slate",
+          "w": 150,
+          "h": 50
+        },
+        {
+          "item": 1,
+          "x": 295,
+          "y": 62,
+          "shape": "hex",
+          "tone": "blue",
+          "solid": true,
+          "w": 180,
+          "h": 54
+        },
+        {
+          "x": 495,
+          "y": 62,
+          "shape": "diamond",
+          "tone": "amber",
+          "label": "Same twice?",
+          "w": 170,
+          "h": 84,
+          "size": 13
+        },
+        {
+          "item": 2,
+          "x": 330,
+          "y": 220,
+          "shape": "circle",
+          "tone": "purple",
+          "solid": true,
+          "w": 150,
+          "h": 90
+        },
+        {
+          "x": 510,
+          "y": 170,
+          "shape": "pill",
+          "tone": "purple",
+          "label": "Return",
+          "w": 120,
+          "h": 36,
+          "size": 14
+        },
+        {
+          "x": 525,
+          "y": 222,
+          "shape": "pill",
+          "tone": "purple",
+          "label": "Sharpe",
+          "w": 120,
+          "h": 36,
+          "size": 14
+        },
+        {
+          "x": 510,
+          "y": 274,
+          "shape": "pill",
+          "tone": "purple",
+          "label": "Max drawdown",
+          "w": 120,
+          "h": 36,
+          "size": 14
+        },
+        {
+          "item": 3,
+          "x": 110,
+          "y": 220,
+          "tone": "cyan",
+          "w": 150,
+          "h": 54
+        },
+        {
+          "x": 110,
+          "y": 384,
+          "tone": "slate",
+          "label": "2",
+          "w": 100,
+          "h": 56
+        },
+        {
+          "x": 220,
+          "y": 371,
+          "tone": "slate",
+          "label": "1",
+          "w": 100,
+          "h": 82
+        },
+        {
+          "item": 4,
+          "x": 330,
+          "y": 392,
+          "tone": "green",
+          "solid": true,
+          "w": 100,
+          "h": 40,
+          "size": 13
+        }
+      ],
+      "edges": [
+        {
+          "from": 0,
+          "to": 1
+        },
+        {
+          "from": 1,
+          "to": 2
+        },
+        {
+          "from": 2,
+          "to": 3,
+          "bend": -0.1,
+          "label": "yes"
+        },
+        {
+          "from": 3,
+          "to": 4,
+          "style": "dashed"
+        },
+        {
+          "from": 3,
+          "to": 5,
+          "style": "dashed"
+        },
+        {
+          "from": 3,
+          "to": 6,
+          "style": "dashed"
+        },
+        {
+          "from": 3,
+          "to": 7,
+          "label": "tune"
+        },
+        {
+          "from": 7,
+          "to": 1,
+          "bend": 0.12,
+          "label": "rerun"
+        },
+        {
+          "from": 3,
+          "to": 10
+        }
+      ],
+      "notes": [
+        {
+          "x": 392,
+          "y": 392,
+          "tone": "green",
+          "anchor": "start",
+          "text": "3rd place",
+          "size": 15
+        },
+        {
+          "x": 392,
+          "y": 420,
+          "tone": "slate",
+          "anchor": "start",
+          "text": "TMBA 26th algo showcase",
+          "size": 12,
+          "max": 200
+        },
+        {
+          "x": 505,
+          "y": 322,
+          "tone": "purple",
+          "text": "Return alone hides the risk",
+          "size": 12,
+          "max": 150
+        }
+      ]
+    }
   },
   "tmba-event-earnings-call": {
     "type": "pipeline",
     "title": "From event to signal",
-    "sub": "Tests whether what an earnings call reveals can be turned into a tradable signal.",
+    "sub": "Whether earnings calls offer trades was only a hunch, so I led a Taiwan stock strategy built around them and backtested it on history.",
+    "role": "Led development and backtesting of the earnings-call event strategy",
+    "outcome": "Strategy built; entry and exit rules and results to be added",
     "items": [
       {
         "name": "Earnings call",
-        "desc": "Company explains outlook",
+        "desc": "Company explains its outlook",
         "points": [
-          "An earnings call is where a company explains its operations and outlook",
-          "The strategy uses the call as its trading event"
+          "An earnings call is where a company explains its business and outlook",
+          "This was my second strategy at TMBA"
         ]
       },
       {
-        "name": "Information",
-        "desc": "Operations and outlook",
+        "name": "Hypothesis",
+        "desc": "News may become a signal",
         "points": [
-          "The call releases information on operations and outlook",
+          "Calls release information on operations and outlook",
           "Hypothesis: that information may form a tradable signal"
         ]
       },
       {
-        "name": "Trade signal",
-        "desc": "A Taiwan stock strategy",
+        "name": "Strategy",
+        "desc": "Built on the call as event",
         "points": [
-          "Designed a Taiwan stock strategy around earnings-call events",
+          "I designed a Taiwan stock strategy with the call as the trading event",
           "Entry and exit rules: to be added"
         ]
       },
@@ -906,134 +4826,675 @@
         "name": "Backtest",
         "desc": "Return and risk",
         "points": [
-          "Simulated trades on historical data to assess return and risk",
-          "Backtest period and performance: to be added"
+          "Simulated trades on history to judge return and risk",
+          "Backtest period and results: to be added; the research code later became OpenStrategy"
         ]
       }
-    ]
+    ],
+    "diagram": {
+      "h": 420,
+      "zones": [],
+      "nodes": [
+        {
+          "item": 1,
+          "x": 300,
+          "y": 82,
+          "shape": "cloud",
+          "tone": "purple",
+          "w": 220,
+          "h": 90
+        },
+        {
+          "x": 75,
+          "y": 215,
+          "shape": "pill",
+          "tone": "slate",
+          "label": "Before",
+          "w": 110,
+          "h": 40,
+          "size": 13
+        },
+        {
+          "item": 0,
+          "x": 300,
+          "y": 215,
+          "shape": "diamond",
+          "tone": "amber",
+          "solid": true,
+          "w": 190,
+          "h": 90,
+          "size": 13
+        },
+        {
+          "x": 525,
+          "y": 215,
+          "shape": "pill",
+          "tone": "slate",
+          "label": "After",
+          "w": 110,
+          "h": 40,
+          "size": 13
+        },
+        {
+          "item": 2,
+          "x": 480,
+          "y": 350,
+          "tone": "blue",
+          "solid": true,
+          "w": 160,
+          "h": 54
+        },
+        {
+          "item": 3,
+          "x": 140,
+          "y": 350,
+          "shape": "db",
+          "tone": "green",
+          "w": 170,
+          "h": 54
+        }
+      ],
+      "edges": [
+        {
+          "from": 1,
+          "to": 2
+        },
+        {
+          "from": 2,
+          "to": 3
+        },
+        {
+          "from": 2,
+          "to": 0,
+          "style": "dashed",
+          "label": "outlook released"
+        },
+        {
+          "from": 2,
+          "to": 4,
+          "bend": 0.1,
+          "label": "tradable?"
+        },
+        {
+          "from": 4,
+          "to": 5,
+          "label": "simulate on history"
+        }
+      ],
+      "notes": [
+        {
+          "x": 300,
+          "y": 276,
+          "tone": "amber",
+          "text": "t = 0",
+          "size": 13
+        },
+        {
+          "x": 100,
+          "y": 82,
+          "tone": "purple",
+          "text": "Question: can this event become a trade signal?",
+          "size": 12,
+          "max": 170
+        },
+        {
+          "x": 140,
+          "y": 398,
+          "tone": "green",
+          "text": "Weighs return and risk",
+          "size": 12
+        },
+        {
+          "x": 500,
+          "y": 82,
+          "tone": "blue",
+          "text": "Taiwan stocks",
+          "size": 12,
+          "max": 150
+        }
+      ]
+    }
   },
   "thesis-rag-panel": {
     "type": "equation",
     "title": "LLM adds explanatory power",
-    "sub": "Adding LLM scores from financial reports on top of classic financial variables sharply raises the model's explanatory power.",
+    "sub": "Financial ratios explain little of stock returns, so I built a RAG-LLM that scores reports on six dimensions, lifting explanatory power from 5.14% to 63.73%.",
+    "role": "Master's thesis author: built the AI scoring system and ran the analysis",
+    "outcome": "Within R² 5.14% to 63.73%; master's degree earned",
     "items": [
       {
         "name": "Financial vars",
-        "desc": "Baseline model: 5.14%",
+        "desc": "Baseline: 5.14%",
         "points": [
-          "The baseline with classic financial variables only: within R² of 5.14%",
-          "Financial ratios explain only a small part of stock return variation"
+          "Research question: can an LLM pull more explanatory signals out of financial reports?",
+          "The baseline with classic financial variables only had a within R² of 5.14%",
+          "Sample: 592 listed electronics firms over 64 quarters, 37,888 firm-quarters"
         ]
       },
       {
         "name": "LLM scores",
-        "desc": "Six dimension scores",
+        "desc": "RAG-LLM, six dimensions",
         "points": [
-          "RAG-LLM queries the reports, analyses 101 financial variables, gives 6 dimension scores",
-          "All 6 dimension scores are significant at the 1% level",
-          "Pilot reliability check: ICC of 0.759"
+          "My RAG-LLM looks up the reports, analyses 101 variables and scores six dimensions",
+          "All six scores are significant at the 1% level",
+          "A pilot reliability check gave an ICC of 0.759"
         ]
       }
     ],
     "op": "+",
     "result": {
       "name": "Enhanced model",
-      "desc": "within R² 63.73%",
+      "desc": "Within R² 63.73%",
       "points": [
-        "within R² rises from 5.14% to 63.73%",
-        "Fixed-effects panel model: 592 listed electronics firms over 64 quarters",
-        "37,888 firm-quarter observations (2009Q3 to 2025Q2)"
+        "Adding the six scores to a fixed-effects panel model raised within R² to 63.73%",
+        "Covering 2009Q3 to 2025Q2, supervised by Professors Chou Chih-Lung and Hsieh Chien-Ping",
+        "Completed the NTUST finance master's thesis and earned the degree"
+      ]
+    },
+    "diagram": {
+      "h": 440,
+      "zones": [
+        {
+          "x": 230,
+          "y": 12,
+          "w": 358,
+          "h": 416,
+          "tone": "slate",
+          "label": "Within R²: how much of returns is explained"
+        }
+      ],
+      "nodes": [
+        {
+          "x": 110,
+          "y": 62,
+          "shape": "db",
+          "tone": "slate",
+          "label": "592 firms × 64 qtrs",
+          "w": 180,
+          "h": 60
+        },
+        {
+          "item": 0,
+          "x": 110,
+          "y": 200,
+          "tone": "slate",
+          "w": 170,
+          "h": 54
+        },
+        {
+          "item": 1,
+          "x": 110,
+          "y": 330,
+          "shape": "hex",
+          "tone": "purple",
+          "solid": true,
+          "w": 170,
+          "h": 54
+        },
+        {
+          "x": 330,
+          "y": 377,
+          "tone": "slate",
+          "solid": true,
+          "label": "5.14%",
+          "w": 110,
+          "h": 26,
+          "size": 15
+        },
+        {
+          "x": 490,
+          "y": 235,
+          "tone": "green",
+          "solid": true,
+          "label": "63.73%",
+          "w": 110,
+          "h": 310,
+          "size": 22
+        }
+      ],
+      "edges": [
+        {
+          "from": 0,
+          "to": 1
+        },
+        {
+          "from": 1,
+          "to": 2,
+          "label": "RAG-LLM reads reports"
+        },
+        {
+          "from": 2,
+          "to": 4,
+          "bend": -0.1
+        }
+      ],
+      "notes": [
+        {
+          "x": 110,
+          "y": 108,
+          "tone": "slate",
+          "text": "37,888 obs, 2009Q3–2025Q2",
+          "size": 12,
+          "max": 200
+        },
+        {
+          "x": 330,
+          "y": 408,
+          "tone": "slate",
+          "text": "Baseline",
+          "size": 13
+        },
+        {
+          "x": 490,
+          "y": 408,
+          "tone": "green",
+          "text": "+ six LLM scores",
+          "size": 13
+        },
+        {
+          "x": 335,
+          "y": 180,
+          "tone": "purple",
+          "text": "All six significant at 1%",
+          "size": 12,
+          "max": 150
+        },
+        {
+          "x": 335,
+          "y": 230,
+          "tone": "purple",
+          "text": "Pilot reliability ICC 0.759",
+          "size": 12,
+          "max": 150
+        },
+        {
+          "x": 110,
+          "y": 395,
+          "tone": "purple",
+          "text": "101 variables → six dimension scores",
+          "size": 12,
+          "max": 200
+        }
       ]
     }
   },
   "fubon-esg-portfolio": {
     "type": "hub",
     "title": "Does ESG pay off?",
-    "sub": "The final project centres on one question: does applying ESG to Taiwan stock investing actually pay off?",
+    "sub": "Whether ESG helps stock picking still needed testing, so my team built ESG factors into a Taiwan stock portfolio and presented it to fund managers.",
+    "role": "Team member, completing the final project with my group",
+    "outcome": "Project done with fund manager feedback; performance to be added",
     "center": {
       "name": "ESG payoff",
-      "desc": "The project's core question",
+      "desc": "The core question",
       "points": [
-        "ESG means environmental, social and governance, now a shared language in investing",
-        "Portfolio allocation logic and performance: to be added"
+        "ESG, meaning environmental, social and governance, is now common language in investing",
+        "The project asked: does applying ESG to stock investing actually pay off?"
       ]
     },
     "items": [
       {
+        "name": "The programme",
+        "desc": "Fubon and five universities",
+        "points": [
+          "Fubon Asset Management has run it with five universities for 7 years; NTUST joined for the first time",
+          "I was in NTUST's first cohort, one of 113 trainees that year"
+        ]
+      },
+      {
         "name": "Own stock picks",
         "desc": "The team picks holdings",
         "points": [
-          "Mainly Taiwan stocks, with holdings chosen by the team",
-          "Completed the final project \"ESG in Investment Practice\" with teammates"
+          "Mainly Taiwan stocks, picked by our team",
+          "The final project was \"Putting ESG into Investment Practice\""
         ]
       },
       {
         "name": "ESG factors",
         "desc": "Built into the allocation",
         "points": [
-          "Applied the ESG factors learned in class to portfolio allocation",
-          "The programme ran for 3 months"
+          "We built the ESG factors from class into the portfolio allocation",
+          "Allocation logic and performance: to be added"
         ]
       },
       {
         "name": "Hands-on training",
         "desc": "Researcher and PM work",
         "points": [
-          "Every class had in-class assignments and team presentations",
-          "Gave trainees a real taste of analyst and fund manager work"
+          "Three months, with exercises and group reports in every class",
+          "It gave trainees a real taste of research and fund manager work"
         ]
       },
       {
         "name": "PM feedback",
         "desc": "Presented after the report",
         "points": [
-          "Presented on stage after submitting the written report",
+          "We wrote the report, then presented it",
           "Fund managers gave feedback"
         ]
       }
-    ]
+    ],
+    "diagram": {
+      "h": 440,
+      "zones": [
+        {
+          "x": 12,
+          "y": 12,
+          "w": 425,
+          "h": 416,
+          "tone": "blue"
+        },
+        {
+          "x": 28,
+          "y": 108,
+          "w": 393,
+          "h": 304,
+          "tone": "cyan"
+        },
+        {
+          "x": 44,
+          "y": 184,
+          "w": 361,
+          "h": 212,
+          "tone": "green",
+          "label": "Our team"
+        }
+      ],
+      "nodes": [
+        {
+          "item": 0,
+          "x": 225,
+          "y": 42,
+          "shape": "pill",
+          "tone": "blue",
+          "solid": true,
+          "w": 200,
+          "h": 40
+        },
+        {
+          "item": 3,
+          "x": 225,
+          "y": 134,
+          "shape": "pill",
+          "tone": "cyan",
+          "solid": true,
+          "w": 200,
+          "h": 36,
+          "size": 13
+        },
+        {
+          "item": 1,
+          "x": 130,
+          "y": 248,
+          "tone": "slate",
+          "w": 140,
+          "h": 54
+        },
+        {
+          "item": 2,
+          "x": 320,
+          "y": 248,
+          "shape": "hex",
+          "tone": "amber",
+          "solid": true,
+          "w": 140,
+          "h": 54
+        },
+        {
+          "x": 190,
+          "y": 350,
+          "tone": "green",
+          "solid": true,
+          "label": "Portfolio",
+          "w": 170,
+          "h": 48
+        },
+        {
+          "item": 4,
+          "x": 516,
+          "y": 340,
+          "shape": "person",
+          "tone": "purple",
+          "w": 140,
+          "h": 60,
+          "size": 13
+        }
+      ],
+      "edges": [
+        {
+          "from": 2,
+          "to": 3
+        },
+        {
+          "from": 3,
+          "to": 4,
+          "label": "into weights"
+        },
+        {
+          "from": 4,
+          "to": 5,
+          "bend": -0.35,
+          "label": "report + pitch"
+        },
+        {
+          "from": 5,
+          "to": 4,
+          "style": "dashed",
+          "bend": -0.35,
+          "label": "feedback"
+        }
+      ],
+      "notes": [
+        {
+          "x": 225,
+          "y": 80,
+          "tone": "blue",
+          "text": "Fubon with five universities, year 7, 113 trainees",
+          "size": 12,
+          "max": 380
+        },
+        {
+          "x": 225,
+          "y": 166,
+          "tone": "cyan",
+          "text": "Three months of exercises and team reports",
+          "size": 12,
+          "max": 300
+        },
+        {
+          "x": 516,
+          "y": 150,
+          "tone": "amber",
+          "text": "Does ESG help stock picking?",
+          "size": 12,
+          "max": 130
+        },
+        {
+          "x": 516,
+          "y": 250,
+          "tone": "blue",
+          "text": "NTUST's first cohort",
+          "size": 12,
+          "max": 130
+        }
+      ]
+    }
   },
   "thesis-esg-capital-structure": {
     "type": "pipeline",
     "title": "ESG and capital structure",
-    "sub": "Tests whether ESG risk scores affect where Taiwanese companies get their money.",
+    "sub": "Few had linked ESG risk scores to how companies raise money, so I wrote my thesis testing that link for Taiwanese companies.",
+    "role": "Thesis author: posed the question and completed the research",
+    "outcome": "Thesis done, master's degree earned; findings to be added",
     "items": [
       {
         "name": "ESG risk score",
         "desc": "How investors assess firms",
         "points": [
-          "Investors use ESG risk scores to assess a company",
+          "Investors use ESG risk scores to judge a company",
           "The study looks at Taiwanese companies"
         ]
       },
       {
-        "name": "Does it matter?",
-        "desc": "The thesis question",
+        "name": "Research question",
+        "desc": "Does it shape funding?",
         "points": [
-          "Do ESG risk scores affect the capital structure of Taiwanese companies?",
-          "Research design, sample and method: to be added"
+          "Do ESG risk scores affect Taiwanese companies' capital structure?",
+          "Design, sample and method: to be added"
         ]
       },
       {
         "name": "Capital mix",
-        "desc": "Debt vs shareholder funding",
+        "desc": "Debt vs shareholder funds",
         "points": [
-          "Capital structure: how much of a company's money comes from debt vs shareholders",
-          "Findings to be added; the thesis is complete and the degree awarded"
+          "Capital structure: how much of a firm's money comes from debt and how much from shareholders",
+          "Findings: to be added"
+        ]
+      },
+      {
+        "name": "Thesis done",
+        "desc": "Master's degree earned",
+        "points": [
+          "Completed the Tunghai GMBA master's thesis and earned the degree",
+          "The full text is in Taiwan's national thesis database"
         ]
       }
-    ]
+    ],
+    "diagram": {
+      "h": 420,
+      "zones": [
+        {
+          "x": 404,
+          "y": 20,
+          "w": 184,
+          "h": 310,
+          "tone": "slate",
+          "label": "Where funds come from"
+        }
+      ],
+      "nodes": [
+        {
+          "x": 100,
+          "y": 70,
+          "shape": "person",
+          "tone": "slate",
+          "label": "Investors",
+          "w": 140,
+          "h": 50
+        },
+        {
+          "item": 0,
+          "x": 100,
+          "y": 200,
+          "shape": "pill",
+          "tone": "amber",
+          "solid": true,
+          "w": 170,
+          "h": 60
+        },
+        {
+          "item": 1,
+          "x": 282,
+          "y": 200,
+          "shape": "hex",
+          "tone": "purple",
+          "w": 160,
+          "h": 70,
+          "size": 12
+        },
+        {
+          "item": 2,
+          "x": 496,
+          "y": 72,
+          "tone": "blue",
+          "solid": true,
+          "w": 160,
+          "h": 44
+        },
+        {
+          "x": 496,
+          "y": 167,
+          "tone": "red",
+          "label": "Debt",
+          "w": 160,
+          "h": 100
+        },
+        {
+          "x": 496,
+          "y": 268,
+          "tone": "green",
+          "label": "Shareholder funds",
+          "w": 160,
+          "h": 86
+        },
+        {
+          "item": 3,
+          "x": 282,
+          "y": 372,
+          "shape": "pill",
+          "tone": "green",
+          "solid": true,
+          "w": 220,
+          "h": 46
+        }
+      ],
+      "edges": [
+        {
+          "from": 0,
+          "to": 1,
+          "label": "to assess firms"
+        },
+        {
+          "from": 1,
+          "to": 2
+        },
+        {
+          "from": 2,
+          "to": 4,
+          "style": "dashed"
+        },
+        {
+          "from": 2,
+          "to": 5,
+          "style": "dashed"
+        },
+        {
+          "from": 2,
+          "to": 6,
+          "label": "tested on Taiwan firms"
+        }
+      ],
+      "notes": [
+        {
+          "x": 282,
+          "y": 140,
+          "tone": "purple",
+          "text": "?",
+          "size": 30
+        },
+        {
+          "x": 496,
+          "y": 355,
+          "tone": "purple",
+          "text": "Does the mix shift?",
+          "size": 12,
+          "max": 170
+        }
+      ]
+    }
   },
   "tunghai-english-ta": {
     "type": "hub",
     "title": "English-taught TA",
-    "sub": "Three English-taught core courses with one shared aim: helping students learn business fundamentals in English.",
+    "sub": "Students learning statistics, economics and finance in English needed support, so I served as teaching assistant in three English-taught core courses.",
+    "role": "Teaching assistant for three English-taught core courses",
+    "outcome": "TA for 3 courses completed; duties to be added",
     "center": {
       "name": "Taught in English",
       "desc": "Tunghai GMBA core courses",
       "points": [
-        "Tunghai University offers core business courses taught in English",
-        "Students learning statistics, economics and finance in English needed TA support"
+        "Tunghai University runs its core business courses in English",
+        "Students learning these subjects in English needed a TA alongside"
       ]
     },
     "items": [
@@ -1061,82 +5522,356 @@
           "2023/09 to 2024/06; duties to be added"
         ]
       }
-    ]
+    ],
+    "diagram": {
+      "h": 400,
+      "zones": [
+        {
+          "x": 30,
+          "y": 114,
+          "w": 540,
+          "h": 172,
+          "tone": "slate",
+          "label": "English-taught core"
+        }
+      ],
+      "nodes": [
+        {
+          "x": 300,
+          "y": 50,
+          "shape": "person",
+          "tone": "cyan",
+          "label": "Students",
+          "w": 160,
+          "h": 50
+        },
+        {
+          "item": 0,
+          "x": 130,
+          "y": 214,
+          "tone": "blue",
+          "solid": true,
+          "w": 140,
+          "h": 120
+        },
+        {
+          "item": 1,
+          "x": 300,
+          "y": 214,
+          "tone": "purple",
+          "solid": true,
+          "w": 140,
+          "h": 120
+        },
+        {
+          "item": 2,
+          "x": 470,
+          "y": 214,
+          "tone": "green",
+          "solid": true,
+          "w": 140,
+          "h": 120
+        },
+        {
+          "x": 300,
+          "y": 322,
+          "tone": "amber",
+          "solid": true,
+          "label": "Me: TA in all three",
+          "w": 520,
+          "h": 44
+        }
+      ],
+      "edges": [
+        {
+          "from": 1,
+          "to": 0
+        },
+        {
+          "from": 2,
+          "to": 0
+        },
+        {
+          "from": 3,
+          "to": 0
+        }
+      ],
+      "notes": [
+        {
+          "x": 470,
+          "y": 50,
+          "tone": "cyan",
+          "text": "Learning core subjects in English",
+          "size": 12,
+          "max": 150
+        },
+        {
+          "x": 300,
+          "y": 370,
+          "tone": "amber",
+          "text": "Tunghai University GMBA",
+          "size": 13
+        }
+      ]
+    }
   },
   "finjourney": {
     "type": "cycle",
-    "title": "Money management loop",
-    "sub": "All ten finance areas run the same loop: AI only proposes plans, and the system computes every number.",
+    "title": "One-person product loop",
+    "sub": "Spending, investments and insurance sat apart, hiding problems, so I built alone a product that maps it all with an AI adviser, live in under two weeks.",
+    "role": "Solo build: planning, AI tuning, development, deployment and operations",
+    "outcome": "Live in under two weeks with 656 tests; user feedback to be added",
     "items": [
       {
-        "name": "Set a goal",
-        "desc": "Each area gets a standard",
+        "name": "Planning",
+        "desc": "Ten areas, one map",
         "points": [
-          "Ten areas: cash flow, emergency fund, net worth, investing, debt, tax and more",
-          "Based on the \"Personal Financial Overview\" diagram in the book \"Investment 101\""
+          "Spending, investments and insurance sat in separate sheets and apps, hiding the problems",
+          "Based on the overview diagram in \"Investment 101\", I split it into ten areas, each from goal to adjustment"
         ]
       },
       {
-        "name": "Plan actions",
-        "desc": "AI proposes a plan",
+        "name": "AI tuning",
+        "desc": "AI proposes, system computes",
         "points": [
-          "AI's revision plan must follow a JSON schema and pick only from system options",
-          "The system checks fields and ranges, then runs a lifetime cash-flow simulation and stress tests"
+          "AI fixes must follow a JSON schema and pick only from options the system offers",
+          "The system checks fields and ranges, then runs a lifetime cash-flow simulation and stress cases",
+          "Prompts follow the card the user is viewing, so the AI acts as that card's adviser"
         ]
       },
       {
-        "name": "Monthly check",
-        "desc": "Actual vs standard",
+        "name": "Build and deploy",
+        "desc": "Live in under two weeks",
         "points": [
-          "Each month compares actual against standard; each block shows the current figure",
-          "Other apps can push balances and transactions via an API, so no manual entry"
+          "The FastAPI back end does all the maths; the React front end only displays it",
+          "An intake API lets other apps send balances and transactions, so nothing is typed by hand",
+          "656 automated tests; it runs on my own Mac and goes online through Cloudflare Tunnel"
         ]
       },
       {
-        "name": "Adjust",
-        "desc": "Change the plan or the goal",
+        "name": "Operations",
+        "desc": "Invites and consent records",
         "points": [
-          "The AI adviser reads the user's data, flags problems and risks, and suggests fixes",
-          "The system computes every number, because numbers are where AI errs most"
+          "Sign-up by invite code, one database per user, daily backups kept 14 days",
+          "Before using AI, users consent and the version and time are logged; no consent, no AI call",
+          "The free tier caps monthly AI use, and only successful answers count"
         ]
       }
-    ]
+    ],
+    "diagram": {
+      "h": 440,
+      "zones": [
+        {
+          "x": 12,
+          "y": 12,
+          "w": 150,
+          "h": 416,
+          "tone": "slate",
+          "label": "Internet"
+        },
+        {
+          "x": 174,
+          "y": 12,
+          "w": 270,
+          "h": 416,
+          "tone": "blue",
+          "label": "My Mac (live in < 2 weeks)"
+        },
+        {
+          "x": 456,
+          "y": 12,
+          "w": 132,
+          "h": 416,
+          "tone": "purple",
+          "label": "OpenAI"
+        }
+      ],
+      "nodes": [
+        {
+          "x": 87,
+          "y": 80,
+          "shape": "person",
+          "tone": "slate",
+          "label": "User",
+          "w": 126,
+          "h": 50
+        },
+        {
+          "x": 87,
+          "y": 200,
+          "shape": "pill",
+          "tone": "slate",
+          "label": "Cloudflare",
+          "w": 126,
+          "h": 50,
+          "size": 13
+        },
+        {
+          "x": 87,
+          "y": 345,
+          "shape": "person",
+          "tone": "slate",
+          "label": "Admin",
+          "w": 126,
+          "h": 50
+        },
+        {
+          "item": 0,
+          "x": 309,
+          "y": 80,
+          "tone": "blue",
+          "solid": true,
+          "w": 200,
+          "h": 54
+        },
+        {
+          "item": 2,
+          "x": 309,
+          "y": 200,
+          "shape": "db",
+          "tone": "cyan",
+          "solid": true,
+          "w": 200,
+          "h": 60
+        },
+        {
+          "item": 3,
+          "x": 309,
+          "y": 345,
+          "shape": "hex",
+          "tone": "amber",
+          "w": 180,
+          "h": 60
+        },
+        {
+          "item": 1,
+          "x": 522,
+          "y": 200,
+          "shape": "hex",
+          "tone": "purple",
+          "solid": true,
+          "w": 120,
+          "h": 60
+        }
+      ],
+      "edges": [
+        {
+          "from": 0,
+          "to": 1
+        },
+        {
+          "from": 1,
+          "to": 3,
+          "bend": -0.1,
+          "label": "Tunnel"
+        },
+        {
+          "from": 3,
+          "to": 4,
+          "style": "two-way",
+          "label": "API does the maths"
+        },
+        {
+          "from": 4,
+          "to": 6,
+          "style": "two-way",
+          "label": "JSON"
+        },
+        {
+          "from": 5,
+          "to": 6,
+          "style": "dashed",
+          "bend": 0.1,
+          "label": "consent"
+        },
+        {
+          "from": 2,
+          "to": 5,
+          "label": "Access"
+        }
+      ],
+      "notes": [
+        {
+          "x": 522,
+          "y": 120,
+          "tone": "purple",
+          "text": "AI only proposes",
+          "size": 12,
+          "max": 110
+        },
+        {
+          "x": 522,
+          "y": 262,
+          "tone": "purple",
+          "text": "System does the numbers",
+          "size": 12,
+          "max": 110
+        },
+        {
+          "x": 309,
+          "y": 252,
+          "tone": "cyan",
+          "text": "656 tests, one SQLite per user",
+          "size": 12,
+          "max": 240
+        },
+        {
+          "x": 309,
+          "y": 405,
+          "tone": "amber",
+          "text": "Invite codes, daily backups kept 14 days",
+          "size": 12,
+          "max": 250
+        },
+        {
+          "x": 87,
+          "y": 270,
+          "tone": "slate",
+          "text": "Exposed via tunnel",
+          "size": 12,
+          "max": 130
+        }
+      ]
+    }
   },
   "vibe-edge": {
     "type": "iceberg",
     "title": "The backtest iceberg",
-    "sub": "AI generates strategies fast and in bulk; what decides credibility is whether three hidden biases are caught.",
+    "sub": "AI dreams up strategies faster than anyone can check, so I built a five-layer research platform from scratch, guarded by a validator the AI cannot change.",
+    "role": "Solo build: vision, specs, architecture and daily operations",
+    "outcome": "Version 0.6.0, all 3,749 tests pass; no live study in the factor library yet",
     "items": [
       {
         "name": "AI-written nodes",
-        "desc": "Research steps in bulk",
+        "desc": "Ideas, fast and many",
         "level": "above",
         "points": [
-          "AI agents write the research nodes, each one a research step",
-          "Every node declares inputs, outputs and parameters in the same manifest.yaml"
+          "Agents produce variants far faster than a person can check them",
+          "Every node declares inputs, outputs and parameters in the same manifest.yaml",
+          "From zero to version 0.6.0 in 12 weeks and 281 commits"
         ]
       },
       {
-        "name": "Pretty backtests",
-        "desc": "Results that look good",
+        "name": "Paper trading",
+        "desc": "Raw data to trade list",
         "level": "above",
         "points": [
-          "Agents produce strategy variants far faster than people can",
-          "No real research case has yet passed the tests into the new factor library"
+          "Five layers run from raw data to a paper trade list, with no real money",
+          "No live study has yet passed the tests and entered the factor library"
         ]
       },
       {
         "name": "Look-ahead bias",
-        "desc": "Using data not yet available",
+        "desc": "Sentinels and release dates",
         "level": "below",
         "points": [
-          "A leak sentinel injects a future price gap and checks whether the output changes",
-          "Every value carries the date it became public"
+          "A leak sentinel plants a future price gap to see if a node's output changes",
+          "Every value carries the date it became public, and the universe is free of survivorship bias"
         ]
       },
       {
         "name": "Overfitting",
-        "desc": "Only works on past data",
+        "desc": "Out-of-sample opened once",
         "level": "below",
         "points": [
           "Walk-forward and purged k-fold keep training and test data from overlapping",
@@ -1145,97 +5880,498 @@
       },
       {
         "name": "Multiple testing",
-        "desc": "Try enough and one looks good",
+        "desc": "Every attempt counted",
         "level": "below",
         "points": [
-          "Every attempt is logged; m equals the number of distinct cells in a study",
-          "Deflated Sharpe Ratio discounts performance by the number of attempts"
+          "Every attempt is logged, with m equal to the number of distinct cells in a study",
+          "The Deflated Sharpe Ratio discounts results by the number of tries"
         ]
       },
       {
         "name": "Agent isn't judge",
-        "desc": "It can't touch the validator",
+        "desc": "Validator and ops guard",
         "level": "below",
         "points": [
-          "Checks are hard-coded in the platform where node authors can't change them",
-          "All 3,749 tests pass; 412 numbered design decisions keep every result traceable"
+          "Checks are fixed in the platform, out of reach of the agents writing nodes",
+          "Daily updates went from over an hour to about 100 seconds, with memory under 1 GB",
+          "AI spend goes through one global ledger with a hard cap of US$5 a month"
         ]
       }
-    ]
+    ],
+    "diagram": {
+      "h": 440,
+      "zones": [
+        {
+          "x": 12,
+          "y": 12,
+          "w": 170,
+          "h": 416,
+          "tone": "purple",
+          "label": "AI agents"
+        },
+        {
+          "x": 200,
+          "y": 12,
+          "w": 200,
+          "h": 416,
+          "tone": "amber"
+        },
+        {
+          "x": 418,
+          "y": 12,
+          "w": 170,
+          "h": 416,
+          "tone": "green",
+          "label": "Paper trading"
+        }
+      ],
+      "nodes": [
+        {
+          "item": 0,
+          "x": 97,
+          "y": 110,
+          "tone": "purple",
+          "solid": true,
+          "w": 150,
+          "h": 60
+        },
+        {
+          "x": 97,
+          "y": 208,
+          "shape": "pill",
+          "tone": "purple",
+          "label": "Variant 1",
+          "w": 120,
+          "h": 34,
+          "size": 14
+        },
+        {
+          "x": 97,
+          "y": 254,
+          "shape": "pill",
+          "tone": "purple",
+          "label": "Variant 2",
+          "w": 120,
+          "h": 34,
+          "size": 14
+        },
+        {
+          "x": 97,
+          "y": 300,
+          "shape": "pill",
+          "tone": "purple",
+          "label": "Variant 3 …",
+          "w": 120,
+          "h": 34,
+          "size": 14
+        },
+        {
+          "item": 5,
+          "x": 300,
+          "y": 52,
+          "tone": "red",
+          "solid": true,
+          "w": 180,
+          "h": 44
+        },
+        {
+          "item": 2,
+          "x": 300,
+          "y": 145,
+          "shape": "hex",
+          "tone": "amber",
+          "w": 170,
+          "h": 56
+        },
+        {
+          "item": 3,
+          "x": 300,
+          "y": 240,
+          "shape": "hex",
+          "tone": "amber",
+          "w": 170,
+          "h": 56
+        },
+        {
+          "item": 4,
+          "x": 300,
+          "y": 335,
+          "shape": "hex",
+          "tone": "amber",
+          "w": 170,
+          "h": 56
+        },
+        {
+          "item": 1,
+          "x": 503,
+          "y": 240,
+          "tone": "green",
+          "solid": true,
+          "w": 150,
+          "h": 60
+        }
+      ],
+      "edges": [
+        {
+          "from": 0,
+          "to": 5
+        },
+        {
+          "from": 0,
+          "to": 1,
+          "style": "dashed"
+        },
+        {
+          "from": 5,
+          "to": 6
+        },
+        {
+          "from": 6,
+          "to": 7
+        },
+        {
+          "from": 7,
+          "to": 8,
+          "bend": -0.12,
+          "label": "passes"
+        }
+      ],
+      "notes": [
+        {
+          "x": 97,
+          "y": 370,
+          "tone": "purple",
+          "text": "Every attempt is logged",
+          "size": 12,
+          "max": 150
+        },
+        {
+          "x": 300,
+          "y": 398,
+          "tone": "amber",
+          "text": "Hard-coded: agents cannot edit it",
+          "size": 12,
+          "max": 180
+        },
+        {
+          "x": 503,
+          "y": 130,
+          "tone": "green",
+          "text": "Five layers: raw data to trade list",
+          "size": 12,
+          "max": 150
+        },
+        {
+          "x": 503,
+          "y": 320,
+          "tone": "green",
+          "text": "v0.6.0, all 3,749 tests pass",
+          "size": 12,
+          "max": 150
+        },
+        {
+          "x": 503,
+          "y": 362,
+          "tone": "slate",
+          "text": "No live study in the library yet",
+          "size": 12,
+          "max": 150
+        }
+      ]
+    }
   },
   "fincli": {
     "type": "layers",
     "title": "Raw data layer",
-    "sub": "The fetch layer never changes data: store exactly what the source gives, and leave cleaning to later stages.",
+    "sub": "Much Taiwan market data had no ready tool and was wired by hand, so I built a fetcher that pulls 23 sources every day and stores them exactly as received.",
+    "role": "Built tw-fin-scraper and yf-history on my own",
+    "outcome": "23 sources updated daily; old and new fetchers match 141/141",
     "items": [
       {
-        "name": "Research platform",
-        "desc": "Read by Vibe-Edge",
+        "name": "Never alter",
+        "desc": "Store as-is, clean later",
         "points": [
-          "Vibe-Edge's data layer reads from here and never writes",
-          "Added history for disposition and watch-list stocks, delistings, market holidays and more"
+          "Much Taiwan data has no SDK, so each official API or page had to be wired one by one",
+          "Rule: store exactly what the source gives, or no one downstream can recover the original"
         ]
       },
       {
-        "name": "Daily operations",
-        "desc": "Auto-updates after the close",
+        "name": "Backfill first",
+        "desc": "51 stocks, 1,699 days",
         "points": [
-          "launchd fetches after every close, with a nightly health check",
-          "T86 is retried every 20 minutes until published; failed quotes retry after 5 minutes"
-        ]
-      },
-      {
-        "name": "Raw database",
-        "desc": "PostgreSQL, stored as-is",
-        "points": [
-          "Store exactly what the source gives; cleaning belongs to later stages",
-          "PostgreSQL grew to 26 tables, with weekly database backups"
-        ]
-      },
-      {
-        "name": "Spec + engine",
-        "desc": "Replaced 10k lines of code",
-        "points": [
-          "Each dataset needs only a spec file, fetched by one shared engine",
-          "Before switching, old and new output matched row by row on 141/141 datasets"
+          "yfinance backfilled 51 Taiwan stocks over 1,699 trading days as raw CSV",
+          "When rate-limited I treated HTTP 428 like 429 and retried with exponential backoff"
         ]
       },
       {
         "name": "23 sources",
         "desc": "TWSE, TPEx, MOPS and more",
         "points": [
-          "23 sources including TWSE, TPEx, MOPS, TEJ and TAIFEX",
-          "All 143 TWSE and 225 TPEx OpenAPI endpoints are connected"
+          "Eight new sources at once, PostgreSQL grew to 26 tables, and runs resume where they stopped",
+          "All 143 TWSE and 225 TPEx OpenAPI endpoints are connected",
+          "TEJ is reached by browser automation, saving snapshots of 238 tables"
+        ]
+      },
+      {
+        "name": "Spec + engine",
+        "desc": "About 10k lines removed",
+        "points": [
+          "Each dataset is one spec file, fetched by a single engine",
+          "Before switching, old and new outputs matched row for row on 141/141 datasets"
+        ]
+      },
+      {
+        "name": "Daily operations",
+        "desc": "Auto-runs after the close",
+        "points": [
+          "launchd runs it after each close, with a nightly health check and weekly database backups",
+          "If T86 is not out, it retries every 20 minutes; a failed quote fetch waits 5 minutes"
+        ]
+      },
+      {
+        "name": "Feeds research",
+        "desc": "Read-only for Vibe-Edge",
+        "points": [
+          "For Vibe-Edge I added history on disposition and watch-list stocks, delistings and market holidays",
+          "Every table is listed in the data catalogue, and Vibe-Edge reads from it without writing"
         ]
       }
-    ]
+    ],
+    "diagram": {
+      "h": 440,
+      "zones": [],
+      "nodes": [
+        {
+          "item": 2,
+          "x": 300,
+          "y": 36,
+          "shape": "pill",
+          "tone": "cyan",
+          "solid": true,
+          "w": 170,
+          "h": 40
+        },
+        {
+          "x": 70,
+          "y": 92,
+          "tone": "cyan",
+          "label": "TWSE",
+          "w": 100,
+          "h": 36,
+          "size": 15
+        },
+        {
+          "x": 185,
+          "y": 92,
+          "tone": "cyan",
+          "label": "TPEx",
+          "w": 100,
+          "h": 36,
+          "size": 15
+        },
+        {
+          "x": 300,
+          "y": 92,
+          "tone": "cyan",
+          "label": "MOPS",
+          "w": 100,
+          "h": 36,
+          "size": 15
+        },
+        {
+          "x": 415,
+          "y": 92,
+          "tone": "cyan",
+          "label": "TEJ",
+          "w": 100,
+          "h": 36,
+          "size": 15
+        },
+        {
+          "x": 530,
+          "y": 92,
+          "tone": "cyan",
+          "label": "TAIFEX",
+          "w": 100,
+          "h": 36,
+          "size": 15
+        },
+        {
+          "item": 3,
+          "x": 300,
+          "y": 185,
+          "shape": "hex",
+          "tone": "blue",
+          "solid": true,
+          "w": 400,
+          "h": 56
+        },
+        {
+          "item": 4,
+          "x": 90,
+          "y": 282,
+          "shape": "circle",
+          "tone": "purple",
+          "solid": true,
+          "w": 130,
+          "h": 80
+        },
+        {
+          "item": 0,
+          "x": 300,
+          "y": 272,
+          "tone": "amber",
+          "solid": true,
+          "w": 130,
+          "h": 44
+        },
+        {
+          "item": 1,
+          "x": 520,
+          "y": 272,
+          "shape": "doc",
+          "tone": "slate",
+          "w": 130,
+          "h": 50
+        },
+        {
+          "x": 300,
+          "y": 368,
+          "shape": "db",
+          "tone": "cyan",
+          "label": "PostgreSQL",
+          "w": 150,
+          "h": 70,
+          "size": 14
+        },
+        {
+          "item": 5,
+          "x": 525,
+          "y": 378,
+          "tone": "green",
+          "solid": true,
+          "w": 120,
+          "h": 44
+        }
+      ],
+      "edges": [
+        {
+          "from": 1,
+          "to": 6
+        },
+        {
+          "from": 2,
+          "to": 6
+        },
+        {
+          "from": 3,
+          "to": 6
+        },
+        {
+          "from": 4,
+          "to": 6
+        },
+        {
+          "from": 5,
+          "to": 6
+        },
+        {
+          "from": 7,
+          "to": 6,
+          "style": "dashed",
+          "bend": -0.1
+        },
+        {
+          "from": 6,
+          "to": 8
+        },
+        {
+          "from": 9,
+          "to": 8,
+          "label": "yfinance"
+        },
+        {
+          "from": 8,
+          "to": 10
+        },
+        {
+          "from": 10,
+          "to": 11,
+          "label": "read-only"
+        }
+      ],
+      "notes": [
+        {
+          "x": 440,
+          "y": 228,
+          "tone": "blue",
+          "text": "Old vs new: 141/141 match",
+          "size": 12,
+          "max": 200
+        },
+        {
+          "x": 95,
+          "y": 350,
+          "tone": "purple",
+          "text": "Runs after every close",
+          "size": 12,
+          "max": 170
+        },
+        {
+          "x": 95,
+          "y": 380,
+          "tone": "purple",
+          "text": "T86 late: every 20 min",
+          "size": 12,
+          "max": 170
+        },
+        {
+          "x": 95,
+          "y": 414,
+          "tone": "purple",
+          "text": "On failure: wait 5 min, up to 3 tries",
+          "size": 12,
+          "max": 150
+        },
+        {
+          "x": 300,
+          "y": 418,
+          "tone": "cyan",
+          "text": "26 tables, weekly backup",
+          "size": 12,
+          "max": 170
+        }
+      ]
+    }
   },
   "openstrategy": {
     "type": "funnel",
     "title": "Factor screening funnel",
-    "sub": "Starting from abnormal returns around earnings calls, narrowed to factors that form a stock signal, then tested out of sample.",
+    "sub": "Price moves around earnings calls lacked statistical backing, so my event study found four factors for stock picks; in 2025 they slightly trailed the market.",
+    "role": "Led the research design, coding and backtesting",
+    "outcome": "Four significant factors; 2025 Sharpe 0.94 vs market 0.99",
     "items": [
       {
         "name": "Events & CAR",
         "desc": "Abnormal returns around calls",
         "points": [
-          "Earnings-call events from TEJ, with the call date as event day",
-          "Abnormal return = stock return − CAPM expected return; summed over the window gives CAR"
+          "Earnings call events come from TEJ, with the call date as the event day",
+          "Abnormal return = stock return minus CAPM expected return; summed, that is CAR"
         ]
       },
       {
         "name": "9 variables",
         "desc": "Candidate explanations",
         "points": [
-          "Nine, including recording availability, turnover, prior return, holder changes and size",
-          "OLS regression, with correlations and VIF to rule out heavy overlap"
+          "Nine candidates, including a public recording, turnover, prior return, holdings changes and size",
+          "Tested with OLS regression, with correlations and VIF to check for overlap"
         ]
       },
       {
         "name": "4 significant",
         "desc": "Prior return and three more",
         "points": [
-          "Prior return, days since last call, company size and book-to-market",
+          "Prior return, days since the last call, company size and book-to-market",
           "Significant over [-3, 3], and the same over [-2, 2]"
         ]
       },
@@ -1243,11 +6379,231 @@
         "name": "1 composite",
         "desc": "Enter only when score > 0",
         "points": [
-          "Four factors as Z-scores, weighted by in-sample Sharpe into one score",
-          "Sharpe 1.21 in training (market 0.39), 1.37 over the full period (market 0.82)",
-          "2025: 0.94, slightly below the market's 0.99, missing the target"
+          "The four factors become Z-scores, weighted by in-sample Sharpe into one score",
+          "Capital follows the score: 1.5x for the top 20%, 0.5x for the bottom 20%"
+        ]
+      },
+      {
+        "name": "Out of sample",
+        "desc": "Trailed the market in 2025",
+        "points": [
+          "Sharpe 1.21 in training (market 0.39) and 1.37 over the full period (market 0.82)",
+          "In 2025 it was 0.94, just under the market's 0.99, missing the target",
+          "Next: find why it lagged, and put the full code in the repo"
         ]
       }
-    ]
+    ],
+    "diagram": {
+      "h": 450,
+      "zones": [],
+      "nodes": [
+        {
+          "item": 0,
+          "x": 300,
+          "y": 36,
+          "tone": "slate",
+          "solid": true,
+          "w": 240,
+          "h": 44
+        },
+        {
+          "item": 1,
+          "x": 180,
+          "y": 98,
+          "shape": "pill",
+          "tone": "slate",
+          "w": 170,
+          "h": 38
+        },
+        {
+          "x": 70,
+          "y": 145,
+          "tone": "slate",
+          "solid": false,
+          "label": "Video",
+          "w": 100,
+          "h": 36,
+          "size": 12
+        },
+        {
+          "x": 180,
+          "y": 145,
+          "tone": "slate",
+          "solid": false,
+          "label": "Turnover",
+          "w": 100,
+          "h": 36,
+          "size": 12
+        },
+        {
+          "x": 290,
+          "y": 145,
+          "tone": "amber",
+          "solid": true,
+          "label": "Prior return",
+          "w": 100,
+          "h": 36,
+          "size": 12
+        },
+        {
+          "x": 70,
+          "y": 191,
+          "tone": "slate",
+          "solid": false,
+          "label": "Top holders",
+          "w": 100,
+          "h": 36,
+          "size": 12
+        },
+        {
+          "x": 180,
+          "y": 191,
+          "tone": "amber",
+          "solid": true,
+          "label": "Days since",
+          "w": 100,
+          "h": 36,
+          "size": 12
+        },
+        {
+          "x": 290,
+          "y": 191,
+          "tone": "slate",
+          "solid": false,
+          "label": "Retail",
+          "w": 100,
+          "h": 36,
+          "size": 12
+        },
+        {
+          "x": 70,
+          "y": 237,
+          "tone": "amber",
+          "solid": true,
+          "label": "Size",
+          "w": 100,
+          "h": 36,
+          "size": 12
+        },
+        {
+          "x": 180,
+          "y": 237,
+          "tone": "amber",
+          "solid": true,
+          "label": "Book/market",
+          "w": 100,
+          "h": 36,
+          "size": 12
+        },
+        {
+          "x": 290,
+          "y": 237,
+          "tone": "slate",
+          "solid": false,
+          "label": "Industry",
+          "w": 100,
+          "h": 36,
+          "size": 12
+        },
+        {
+          "item": 2,
+          "x": 470,
+          "y": 98,
+          "tone": "amber",
+          "solid": true,
+          "w": 150,
+          "h": 46
+        },
+        {
+          "item": 3,
+          "x": 470,
+          "y": 290,
+          "shape": "hex",
+          "tone": "purple",
+          "solid": true,
+          "w": 170,
+          "h": 54
+        },
+        {
+          "item": 4,
+          "x": 470,
+          "y": 405,
+          "tone": "red",
+          "w": 170,
+          "h": 54
+        },
+        {
+          "x": 180,
+          "y": 321,
+          "tone": "green",
+          "label": "In-sample 1.21 / 0.39",
+          "w": 250,
+          "h": 36,
+          "size": 14
+        },
+        {
+          "x": 180,
+          "y": 363,
+          "tone": "green",
+          "label": "Full period 1.37 / 0.82",
+          "w": 250,
+          "h": 36,
+          "size": 14
+        },
+        {
+          "x": 180,
+          "y": 405,
+          "tone": "red",
+          "solid": true,
+          "label": "2025: 0.94 / 0.99",
+          "w": 250,
+          "h": 36,
+          "size": 14
+        }
+      ],
+      "edges": [
+        {
+          "from": 0,
+          "to": 1
+        },
+        {
+          "from": 1,
+          "to": 11,
+          "label": "OLS"
+        },
+        {
+          "from": 11,
+          "to": 12,
+          "label": "z-score weights"
+        },
+        {
+          "from": 12,
+          "to": 13,
+          "label": "enter if score > 0"
+        },
+        {
+          "from": 13,
+          "to": 16
+        }
+      ],
+      "notes": [
+        {
+          "x": 510,
+          "y": 36,
+          "tone": "slate",
+          "text": "Window [-3, 3]; same at [-2, 2]",
+          "size": 12,
+          "max": 150
+        },
+        {
+          "x": 180,
+          "y": 290,
+          "tone": "green",
+          "text": "Sharpe: strategy / market",
+          "size": 12,
+          "max": 240
+        }
+      ]
+    }
   }
 }
