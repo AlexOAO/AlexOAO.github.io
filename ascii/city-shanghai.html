@@ -572,6 +572,8 @@
   }
 
   // ---------- Scene state ----------
+  const LINGER = 24;   // extra seconds the finished city stays up (one 24 s music loop)
+  let linger = 0;
   let t = T_START, skyT = 0, built = 0, letters = 0, typed = 0, pearlPal = 0, pearlPrev = 0, pearlT = -99, nextMeteor = 4;
   const PEARL = [
     [[255, 64, 170], [255, 160, 225]],   // magenta / pink
@@ -600,7 +602,9 @@
     skyT += dt;
     const t0 = t;
     if (!reduced) {
-      t += dt;
+      // Linger on the finished city: the scene clock waits just before the fade for one more music loop.
+      if (t < T.FADE - 0.3) linger = 0;
+      if (linger < LINGER && t + dt >= T.FADE - 0.3) { t = Math.max(t, T.FADE - 0.3); linger += dt; } else t += dt;
       if (t >= T.END) { t = 0; loopReset(); music('restart'); }
     }
     cues(t0, t);

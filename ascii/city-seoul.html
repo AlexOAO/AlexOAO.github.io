@@ -604,6 +604,8 @@
   }
 
   // ---------- Scene state ----------
+  const LINGER = 24;   // extra seconds the finished city stays up (one 24 s music loop)
+  let linger = 0;
   let t = T_START, skyT = 0, built = 0, lit = 0, letters = 0, scrambling = 0, frameNo = 0;
   let deckShowT = -99, lotteShowT = -99, goldShowT = -99, gateShowT = -99;
   let fUser = -1, fAmt = reduced ? 1 : 0;   // fUser: -1 automatic, 0 off, 1 on (reset every loop)
@@ -1088,7 +1090,9 @@
       const t1 = t;
       skyT += dt;
       if (!reduced) {
-        t += dt;
+        // Linger on the finished city: the scene clock waits just before the fade for one more music loop.
+        if (t < T.FADE - 0.3) linger = 0;
+        if (linger < LINGER && t + dt >= T.FADE - 0.3) { t = Math.max(t, T.FADE - 0.3); linger += dt; } else t += dt;
         if (t >= T.END) { t = 0; typed = 0; fUser = -1; music('restart'); }
       }
       frameNo++;

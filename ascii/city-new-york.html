@@ -758,6 +758,8 @@
   }
 
   // ---------- Scene state ----------
+  const LINGER = 24;   // extra seconds the finished city stays up (one 24 s music loop)
+  let linger = 0;
   let t = T_START, skyT = 0, letters = 0, nScr = 0, nBuilt = 0, nLit = 0, nSpark = 0, typed = 0;
   const showT = [-99, -99, -99, -99, -99];
   const env = g => clamp(Math.min((skyT - showT[g]) / 0.4, (showT[g] + TAP_SHOW - skyT) / 0.6), 0, 1);
@@ -1240,7 +1242,9 @@
       const t1 = t, typed1 = typed, scr1 = nScr;
       skyT += dt;
       if (!reduced) {
-        t += dt;
+        // Linger on the finished city: the scene clock waits just before the fade for one more music loop.
+        if (t < T.FADE - 0.3) linger = 0;
+        if (linger < LINGER && t + dt >= T.FADE - 0.3) { t = Math.max(t, T.FADE - 0.3); linger += dt; } else t += dt;
         if (t >= T.END) { t = 0; nextLaunch = 0; musicLoop++; music('restart'); } // music re-syncs; tapped fireworks fly on
       }
       frameNo++;

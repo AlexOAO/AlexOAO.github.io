@@ -417,6 +417,8 @@
   }
 
   // ---------- Scene state ----------
+  const LINGER = 24;   // extra seconds the finished city stays up (one 24 s music loop)
+  let linger = 0;
   let t = T_START, skyT = 0, nextLaunch = 0;
   let vivT0 = -99, vivPat = -1, vivX = 0, vivY = 0;
   let nOpera = 0, nTot = 0, nBuilt = 0, letters = 0, fk = 1, lightK = 0, typed = 0, typedPrev = 0;
@@ -431,7 +433,9 @@
     skyT += dt;
     if (!reduced) {
       const a = t;
-      t += dt;
+      // Linger on the finished city: the scene clock waits just before the fade for one more music loop.
+      if (t < T.FADE - 0.3) linger = 0;
+      if (linger < LINGER && t + dt >= T.FADE - 0.3) { t = Math.max(t, T.FADE - 0.3); linger += dt; } else t += dt;
       if (t >= T.END) { t -= T.END; music('restart'); }
       else soundCues(a, t);
       // The scheduled show.

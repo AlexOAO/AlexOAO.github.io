@@ -475,6 +475,8 @@
   }
 
   // ---------- Scene state ----------
+  const LINGER = 24;   // extra seconds the finished city stays up (one 24 s music loop)
+  let linger = 0;
   let t = T_START, skyT = 0, fa = 1, built = 0, letters = 0, burjSec = 0;
   let par = 0, parTo = 0, gX = 0, gY = 0, gXTo = 0, gYTo = 0, gK = 0.4, gKTo = 0.4, lastMove = -1e9;
 
@@ -883,7 +885,9 @@
       const t1 = t, s1 = skyT, sec1 = burjSec, typed1 = typed;
       skyT += dt;
       if (!reduced) {
-        t += dt;
+        // Linger on the finished city: the scene clock waits just before the fade for one more music loop.
+        if (t < T.FADE - 0.3) linger = 0;
+        if (linger < LINGER && t + dt >= T.FADE - 0.3) { t = Math.max(t, T.FADE - 0.3); linger += dt; } else t += dt;
         if (t >= T.END) { t = 0; music('restart'); }
       }
       updateEffects(dt);

@@ -590,6 +590,8 @@
   }
 
   // ---------- Scene state ----------
+  const LINGER = 24;   // extra seconds the finished city stays up (one 24 s music loop)
+  let linger = 0;
   let t = T_START, clk = 0, bellUntil = -1, tapSparkT = -99, nextStar = 6, steer = 0, steerT = -1e9, aimX = 0, aimY = 0;
   let built = 0, shown = 0, lit = 0, letters = 0, typed = 0;
   const sparkAmt = () => Math.max(!reduced && t >= T.SPARK && t < T.SPARK + T.SPARK_DUR ? smooth((t - T.SPARK) / 0.3) * smooth((T.SPARK + T.SPARK_DUR - t) / 0.5) : 0,
@@ -599,7 +601,9 @@
     clk += dt * (reduced ? 0.6 : 1);
     const was = t;
     if (!reduced) {
-      t += dt;
+      // Linger on the finished city: the scene clock waits just before the fade for one more music loop.
+      if (t < T.FADE - 0.3) linger = 0;
+      if (linger < LINGER && t + dt >= T.FADE - 0.3) { t = Math.max(t, T.FADE - 0.3); linger += dt; } else t += dt;
       if (t >= LOOP) { t -= LOOP; stars = []; }
       cues(was, t);
       if (t > nextStar && t > T.FAR && t < T.FADE) { spawnStar(W * (0.15 + 0.7 * Math.random()), H * (0.05 + 0.15 * Math.random())); nextStar = t + 7 + Math.random() * 5; }

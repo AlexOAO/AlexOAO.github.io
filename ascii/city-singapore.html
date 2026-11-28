@@ -552,6 +552,8 @@
   }
 
   // ---------- Scene state ----------
+  const LINGER = 24;   // extra seconds the finished city stays up (one 24 s music loop)
+  let linger = 0;
   let t = T_START, clk = 0, showT = -99, lotusT = -99, par = 0, parTo = 0, steerT = -99, letters = 0, built = 0, lit = 0, litPrev = -1;
   const showEnv = () => {
     const s = clk - showT;
@@ -954,7 +956,9 @@
       const t1 = t;
       clk += dt;
       if (!reduced) {
-        t += dt;
+        // Linger on the finished city: the scene clock waits just before the fade for one more music loop.
+        if (t < T.FADE - 0.3) linger = 0;
+        if (linger < LINGER && t + dt >= T.FADE - 0.3) { t = Math.max(t, T.FADE - 0.3); linger += dt; } else t += dt;
         if (t >= T.END) { t = 0; music('restart'); }
       }
       updateFx(dt);

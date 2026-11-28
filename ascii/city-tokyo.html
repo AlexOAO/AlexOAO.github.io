@@ -651,6 +651,8 @@
   }
 
   // ---------- Scene state ----------
+  const LINGER = 24;   // extra seconds the finished city stays up (one 24 s music loop)
+  let linger = 0;
   let t = T_START, skyT = 0, frameNo = 0, letters = 0, built = 0, resolving = 0;
   let skMode = 0, skPrev = 0, skSwitch = -99;      // Skytree: 0 Iki (sky blue), 1 Miyabi (purple + gold)
   let ttMode = 0, ttPrev = 0, ttSwitch = -99;      // Tokyo Tower: 0 Landmark (orange), 1 Diamond Veil
@@ -1098,7 +1100,9 @@
       const t1 = t, typed1 = titleCount(t);
       skyT += dt;
       if (!reduced) {
-        t += dt;
+        // Linger on the finished city: the scene clock waits just before the fade for one more music loop.
+        if (t < T.FADE - 0.3) linger = 0;
+        if (linger < LINGER && t + dt >= T.FADE - 0.3) { t = Math.max(t, T.FADE - 0.3); linger += dt; } else t += dt;
         if (t >= T.END) { t = 0; music('restart'); }
         if (t > 3 && t < T.FADE && skyT > nextShoot) {
           spawnShooter(W * (0.15 + 0.7 * Math.random()), H * (0.05 + 0.15 * Math.random()));

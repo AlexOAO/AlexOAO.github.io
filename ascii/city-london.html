@@ -531,6 +531,8 @@
   }
 
   // ---------- Scene state ----------
+  const LINGER = 24;   // extra seconds the finished city stays up (one 24 s music loop)
+  let linger = 0;
   let t = T_START, skyT = 0, wt = 0, mistT = 0, loopN = 0, fadeA = 1;
   let par = 0, parTo = 0, ptrX = -1e4, ptrY = -1e4, ptrA = 0, ptrATo = 0, stir = 0;
   let letters = 0, built = 0, litWin = 0, litPrev = -1, typed = 0;
@@ -1151,7 +1153,9 @@
       const t1 = t;
       skyT += dt; wt += dt * CALM; mistT += dt * CALM * (1 + 5 * stir);
       if (!reduced) {
-        t += dt;
+        // Linger on the finished city: the scene clock waits just before the fade for one more music loop.
+        if (t < T.FADE - 0.3) linger = 0;
+        if (linger < LINGER && t + dt >= T.FADE - 0.3) { t = Math.max(t, T.FADE - 0.3); linger += dt; } else t += dt;
         if (t >= T.END) { t -= T.END; loopN++; litPrev = -1; typed = 0; music('restart'); }
         if (crossed(t1, t, T.RIVER + 0.4)) spawnBoat(0.35 + 0.3 * Math.random(), loopN % 2 ? -1 : 1);
       }

@@ -535,6 +535,8 @@
   }
 
   // ---------- Scene state ----------
+  const LINGER = 24;   // extra seconds the finished city stays up (one 24 s music loop)
+  let linger = 0;
   let t = T_START, skyT = 0, loops = 0, frameNo = 0;
   let par = 0, parTo = 0;           // pointer parallax, -1..1 (eased; reduced motion keeps it at 0)
   let ledMode = 0, ledPrev = 0, ledT = -99, tapRound = 0;
@@ -545,7 +547,9 @@
     const t0 = t, s0 = skyT;
     skyT += dt;
     if (!reduced) {
-      t += dt;
+      // Linger on the finished city: the scene clock waits just before the fade for one more music loop.
+      if (t < T.FADE - 0.3) linger = 0;
+      if (linger < LINGER && t + dt >= T.FADE - 0.3) { t = Math.max(t, T.FADE - 0.3); linger += dt; } else t += dt;
       if (t >= T.END) {
         t = 0; loops++;
         fountains = fountains.filter(f => !f.auto);

@@ -348,6 +348,8 @@
   }
 
   // ---------- Scene state ----------
+  const LINGER = 24;   // extra seconds the finished city stays up (one 24 s music loop)
+  let linger = 0;
   let t = T_START, skyT = 0, bandShift = 0, drop = 0, pulse = 0, lift = 0, liftTo = 0, par = 0, parTo = 0;
   let total = 0, done = 0, letters = 0, typed = 0, nextBoat = 0, nextAuto = 0, heliDone = false;
 
@@ -846,7 +848,9 @@
     const t1 = t;
     skyT += dt * (reduced ? 0.5 : 1);
     if (!reduced) {
-      t += dt;
+      // Linger on the finished city: the scene clock waits just before the fade for one more music loop.
+      if (t < T.FADE - 0.3) linger = 0;
+      if (linger < LINGER && t + dt >= T.FADE - 0.3) { t = Math.max(t, T.FADE - 0.3); linger += dt; } else t += dt;
       if (t >= T.END) { t = 0; initCars(); heli = null; heliDone = false; boats = boats.filter(b => b.user); music('restart'); }
     }
     bandShift += dt * (reduced ? 0.03 : 0.22) + dt * drop * (reduced ? 0.6 : 3.2);
