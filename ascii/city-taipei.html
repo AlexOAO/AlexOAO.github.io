@@ -1,0 +1,1534 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ASCII Taipei at Night | Alex Li (李翔緯)</title>
+  <meta name="description" content="Taipei at night seen from Elephant Mountain, drawn entirely with coloured ASCII characters: the Yangmingshan ridges, the Grand Hotel glowing on its hill, the Xinyi skyline and Taipei 101 with its eight flaring segments resolving into place, night-market signs, an elevated MRT line and hikers' torches on the hill. Tap Taipei 101 for a New Year's Eve countdown and fireworks, the Grand Hotel to gild its roof, the MRT track for a train, the sky for fireworks or a sky lantern. Vanilla JS on a single canvas.">
+  <meta name="theme-color" content="#050a18">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;600;800&display=swap">
+  <style>
+    :root {
+      --bg: #0b1120;
+      --sky: #050a18;
+      --text: #f3f0e6;
+      --muted: #b4bccf;
+      --accent: #f5b942;
+      --mono: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--sky);
+      color: var(--text);
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    canvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100svh;
+      display: block;
+      touch-action: none; /* taps trigger the shows, drags move the parallax */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .back {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(245, 185, 66, 0.45);
+      background: rgba(70, 40, 20, 0.4);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .back:hover, .back:focus-visible {
+      background: rgba(245, 185, 66, 0.26);
+      border-color: var(--accent);
+      outline: none;
+    }
+    .hud, .hint {
+      position: fixed;
+      z-index: 1;
+      bottom: 12px;
+      color: var(--muted);
+      opacity: 0.8;
+      font: 11px/1.4 var(--mono);
+      white-space: pre;
+      pointer-events: none;
+      max-width: calc(100% - 24px);
+      overflow: hidden;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    }
+    .hud { left: 12px; }
+    .hint {
+      right: 12px;
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    @media (max-width: 640px) {
+      .hud, .hint { font-size: 10px; }
+      .hint { bottom: 30px; } /* stack above the HUD on narrow screens */
+    }
+  </style>
+</head>
+<body>
+  <h1 class="sr-only">ASCII Taipei at Night</h1>
+  <a class="back" href="./">← ASCII</a>
+  <canvas id="c" role="img" aria-label="Animated night view of Taipei from Elephant Mountain drawn with coloured ASCII characters: a crescent moon over the Yangmingshan ridges, the red-roofed Grand Hotel on its hill, the Xinyi skyline and Taipei 101 with eight flaring segments whose lights change colour, night-market signs, an elevated MRT line with trains and hikers' torches on the dark green hill, then the title Taipei at Night; tapping Taipei 101 starts a New Year's Eve countdown with fireworks, tapping the Grand Hotel lights its roof gold, tapping the track sends a train and tapping the sky launches fireworks or a sky lantern"></canvas>
+  <div class="hud" id="hud" aria-hidden="true"></div>
+  <div class="hint" id="hint"></div>
+
+<script src="ascii-audio.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  // ---------- Timeline (seconds of scene time, one 24 s loop) ----------
+  const T = {
+    MOON: 0.3, MTN: 0.8, MTN_DUR: 1.6,      // Yangmingshan ridges resolve left -> right
+    HOTEL: 2.0, CITY: 3.0,                   // Grand Hotel on its hill, then the Xinyi skyline
+    T101: 5.0, T101_DUR: 3.4,                // Taipei 101, ground -> spire
+    SEG: 8.6, SEG_STEP: 0.2,                 // its eight segments light up one by one
+    MRT: 10.2, NEON: 11.2, NEON_DUR: 1.8,    // elevated MRT line, then the night-market signs
+    HILL: 12.8, TORCH: 14.0,                 // Elephant Mountain in the foreground, hikers' torches
+    TITLE: 15.4,                             // "TAIPEI", then " AT NIGHT"
+    FADE: 21.0, FADE_DUR: 2.4, END: 24.0
+  };
+  const PHASES = [[0, 'sky'], [T.MTN, 'mountains'], [T.HOTEL, 'grand hotel'], [T.CITY, 'city'], [T.T101, 'taipei 101'],
+    [T.SEG, 'segments'], [T.MRT, 'mrt'], [T.NEON, 'night market'], [T.HILL, 'elephant mtn'], [T.TITLE, 'title'], [17.8, 'hold'], [T.FADE, 'fade']];
+  const TITLE_A = 'TAIPEI', TITLE_B = ' AT NIGHT';
+  const TA_STEP = 0.14, TB_START = T.TITLE + 1.3, TB_STEP = 0.11;
+
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T_START = reduced ? 18.5 : 0;   // reduced motion: open (and stay) on the finished night view
+  const RES = 0.45;                     // seconds a cell spends as scrambled glyphs before it resolves
+  const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  // Stateless integer hash -> [0, 1).
+  function hash2(a, b) {
+    let h = Math.imul(a ^ Math.imul(b, 0x9E3779B1), 0x85EBCA6B);
+    h ^= h >>> 13; h = Math.imul(h, 0xC2B2AE35); h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
+  }
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+  function vnoise(x, y) {
+    const xi = Math.floor(x), yi = Math.floor(y);
+    let fx = x - xi, fy = y - yi;
+    fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+    const a = hash2(xi, yi), b = hash2(xi + 1, yi), c = hash2(xi, yi + 1), d = hash2(xi + 1, yi + 1);
+    return a + (b - a) * fx + (c - a + (a - b - c + d) * fx) * fy;
+  }
+
+  // ---------- Characters & colours ----------
+  const CH = [];
+  const ci = s => { let i = CH.indexOf(s); if (i < 0) { CH.push(s); i = CH.length - 1; } return i; };
+  const C_SP = ci(' '); // occluder: hides what is behind, never drawn
+  const C_SL = ci('/'), C_BS = ci('\\'), C_BAR = ci('|'), C_HASH = ci('#'), C_EQ = ci('='),
+        C_US = ci('_'), C_DASH = ci('-'), C_DOT = ci('.'), C_STAR = ci('*'), C_PLUS = ci('+'), C_o = ci('o'),
+        C_O = ci('O'), C_COLON = ci(':'), C_LB = ci('['), C_RB = ci(']'), C_CARET = ci('^'), C_AT = ci('@'),
+        C_TILDE = ci('~'), C_LP = ci('('), C_RP = ci(')'), C_Q = ci("'"), C_COMMA = ci(','), C_A = ci('A'),
+        C_SEMI = ci(';'), C_LT = ci('<'), C_GT = ci('>');
+  const SCR = [...'01#$%&*+=?@<>/\\:;'].map(ci);
+  const STAR_G = [C_DOT, C_DOT, C_Q, C_PLUS, C_DOT, C_STAR];
+  const letter = s => ci(s);
+
+  const LEVELS = 16;
+  const PAL = [];
+  const pal = (r, g, b) => { PAL.push([r, g, b]); return PAL.length - 1; };
+  const hsl = (h, s, l) => {
+    const a = s * Math.min(l, 1 - l), f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); };
+    return [f(0) * 255, f(8) * 255, f(4) * 255];
+  };
+  const P_WHITE = pal(255, 255, 255), P_SCR = pal(120, 255, 210), P_STAR = pal(200, 210, 255);
+  const P_MOON = pal(255, 224, 150), P_MOON_D = pal(110, 116, 160);
+  const P_MTN = pal(56, 92, 112), P_MTN_E = pal(96, 140, 150);
+  const P_JHILL = pal(48, 96, 76), P_JHILL_E = pal(80, 140, 104);
+  const P_ROOF = pal(236, 96, 52), P_ROOF_E = pal(255, 160, 80), P_GOLD = pal(255, 212, 96);
+  const P_HOT_R = pal(255, 64, 56), P_HOT_W = pal(255, 214, 140);
+  const P_FAR = pal(70, 88, 140), P_FAR_LIT = pal(255, 190, 120);
+  const P_BLD = pal(86, 110, 170), P_WOFF = pal(64, 80, 128);
+  const P_WIN = [pal(255, 204, 120), pal(255, 234, 190), pal(160, 210, 255), pal(255, 176, 96)];
+  // Taipei 101's weekday colours, Monday first.
+  const DAY = [pal(255, 76, 80), pal(255, 150, 56), pal(255, 226, 84), pal(84, 232, 140), pal(76, 166, 255), pal(124, 120, 255), pal(204, 108, 255)];
+  const P_101G = pal(96, 178, 170), P_101E = pal(196, 240, 226), P_101W = pal(255, 236, 196);
+  const P_RED = pal(255, 48, 56);
+  const NEON = [pal(255, 70, 120), pal(80, 255, 150), pal(70, 220, 255), pal(255, 224, 70), pal(255, 140, 50), pal(190, 110, 255), pal(255, 90, 200)];
+  const P_MRT = pal(176, 124, 84), P_PIL = pal(104, 100, 120), P_STN = pal(200, 210, 230);
+  const P_TRAIN = pal(214, 224, 240), P_TRAIN_W = pal(255, 236, 190), P_HEAD = pal(255, 250, 225);
+  const P_HILL = pal(34, 86, 56), P_HILL_E = pal(66, 138, 86), P_ROCK = pal(118, 128, 124), P_TRAIL = pal(150, 120, 90);
+  const P_TORCH = pal(255, 204, 110), P_FLY = pal(196, 255, 120), P_LANT = pal(255, 150, 56);
+  const P_ROCKET = pal(255, 225, 170);
+  const RB = [];
+  for (let k = 0; k < 12; k++) RB.push(pal(...hsl(k * 30, 1, 0.62)));
+
+  const NCOLOR = PAL.length * LEVELS;
+  const COLSTR = new Array(NCOLOR);
+  PAL.forEach(([r, g, b], p) => {
+    for (let l = 0; l < LEVELS; l++) {
+      const m = 0.18 + 1.12 * l / (LEVELS - 1), w = Math.max(0, m - 1) * 170;
+      const lift = v => Math.min(255, v * m + w) | 0;
+      COLSTR[p * LEVELS + l] = `rgb(${lift(r)},${lift(g)},${lift(b)})`;
+    }
+  });
+
+  // ---------- Canvas, grid, layout ----------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const hudEl = document.getElementById('hud');
+  const hintEl = document.getElementById('hint');
+
+  let W = 0, H = 0, fs = 10, cw = 6, ch = 11, cols = 0, rows = 0, hr = 0, yH = 0;
+  let cellFont = '', bgGrad = null;
+  let stampA, cchar, ccol, ckind, clb, touched, order, nT = 0, stamp = 0;
+  const counts = new Uint32Array(NCOLOR);
+  let needResize = true, dirty = true;
+  // Landmark geometry (cells)
+  let kc1 = 0, h1 = 0, top1 = 0, hw1 = 0;           // Taipei 101: centre column, height px, tip row, max half-width
+  const segRow = new Int16Array(8), segHw = new Int16Array(8);   // each segment's top row and half-width there
+  let kcH = 0, rHill = 0, hotTop = 0, hotHw = 0;     // Grand Hotel
+  let rM = 0;                                         // MRT deck row
+  let hillOff = 8, hillTop = null;                    // foreground hill: top row per column (index c + hillOff)
+  let ridge = null;                                   // mountain ridge row per column
+  let moonX = 0, moonY = 0, moonR = 0;
+  let nS = 0, nBack = 0, sC, sR, sCh, sP, sB, sT0, sL, sG, sY, sX, sF;
+  let nSolid = 0;
+  let stars = [];
+  let signs = [];
+  let trails = [];                                    // hiking paths: arrays of [c, r]
+  let torches = [];
+
+  const G_STATIC = 0, G_WIN = 1, G_101 = 2, G_HOTEL = 3, G_NEON = 4, G_BEACON = 5, G_MRT = 6;
+  const F_HALO = 1, F_EDGE = 2, F_BAND = 4, F_RUYI = 8, F_SPIRE = 16, F_ROOF = 32, F_GLASS = 64;
+
+  function resize() {
+    needResize = false;
+    W = canvas.clientWidth || innerWidth;
+    H = canvas.clientHeight || innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    fs = clamp(Math.round(Math.min(W, H) / 90), 7, 13);
+    cellFont = `${fs}px ${MONO}`;
+    ctx.font = cellFont;
+    cw = ctx.measureText('M').width || fs * 0.6;
+    ch = Math.round(fs * 1.15);
+    cols = Math.ceil(W / cw);
+    rows = Math.ceil(H / ch);
+    hr = Math.round(H * 0.7 / ch);
+    yH = hr * ch;
+    const n = cols * rows;
+    stampA = new Uint32Array(n);
+    cchar = new Uint8Array(n); ccol = new Uint16Array(n); ckind = new Uint8Array(n); clb = new Float32Array(n);
+    touched = new Int32Array(n); order = new Int32Array(n); stamp = 0;
+
+    bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, '#030716');
+    bgGrad.addColorStop(0.42, '#08112c');
+    bgGrad.addColorStop(0.66, '#231a3a');   // warm city glow over the basin
+    bgGrad.addColorStop(0.72, '#0b1420');
+    bgGrad.addColorStop(1, '#03070a');
+
+    makeHalos();
+    buildScene();
+    dirty = true;
+  }
+
+  // ---------- Scene construction ----------
+  let A = null;
+  function add(L, col, row, chr, p, b, t0, g, y, x, f) {
+    if (col < -6 || col >= cols + 6 || row < 0 || row >= rows) return;
+    A.c.push(col); A.r.push(row); A.ch.push(chr); A.p.push(p); A.b.push(b); A.t0.push(t0);
+    A.l.push(L); A.g.push(g || 0); A.y.push(y || 0); A.x.push(x || 0); A.f.push(f || 0);
+  }
+
+  function buildScene() {
+    A = { c: [], r: [], ch: [], p: [], b: [], t0: [], l: [], g: [], y: [], x: [], f: [] };
+    const wide = W / H > 1.2;
+    kc1 = Math.round(cols * (wide ? 0.6 : 0.58));
+    kcH = Math.round(cols * (wide ? 0.2 : 0.2));
+    h1 = yH - H * 0.07;
+    moonX = W * (wide ? 0.86 : 0.86); moonY = H * 0.13; moonR = Math.max(ch * 2.4, Math.min(W, H) * 0.055);
+    rM = hr - 3;
+    computeHill();
+
+    buildMoon();
+    buildMountains();
+    buildHotel();
+    buildFar();
+    buildCity();
+    build101();
+    buildSigns();
+    buildMRT();
+    nBack = A.c.length;
+    buildHill();
+
+    nS = A.c.length;
+    sC = Int16Array.from(A.c); sR = Int16Array.from(A.r); sCh = Uint8Array.from(A.ch); sP = Uint16Array.from(A.p);
+    sB = Float32Array.from(A.b); sT0 = Float32Array.from(A.t0); sL = Uint8Array.from(A.l); sG = Uint8Array.from(A.g);
+    sY = Float32Array.from(A.y); sX = Int16Array.from(A.x); sF = Uint8Array.from(A.f);
+    nSolid = 0;
+    for (let i = 0; i < nS; i++) if (sCh[i] !== C_SP) nSolid++;
+    A = null;
+
+    // Stars only in open sky above the ridges.
+    const r2 = mulberry32(7);
+    stars = [];
+    const ns = Math.round(cols * hr * 0.012);
+    for (let i = 0; i < ns; i++) {
+      const c = (r2() * cols) | 0, r = (r2() * (hr * 0.6)) | 0;
+      if (r >= ridge[c] - 2) continue;
+      if (Math.hypot((c + 0.5) * cw - moonX, (r + 0.5) * ch - moonY) < moonR * 1.6) continue;
+      stars.push({ c, r, g: STAR_G[(r2() * STAR_G.length) | 0], ph: r2() * 6.283, sp: 0.5 + r2() * 1.8, b: 0.3 + 0.5 * r2() });
+    }
+    // Hikers' torches wander the two trails.
+    const rt = mulberry32(5);
+    torches = [];
+    trails.forEach((tr, k) => {
+      const n = k === 0 ? 4 : 2;
+      for (let i = 0; i < n; i++) torches.push({ tr: k, s: rt() * (tr.length - 1), v: (rt() < 0.5 ? -1 : 1) * (0.8 + 1.4 * rt()) * (reduced ? 0.4 : 1), ph: rt() * 6 });
+    });
+  }
+
+  function buildMoon() {
+    const c0 = Math.floor((moonX - moonR) / cw) - 1, c1 = Math.ceil((moonX + moonR) / cw) + 1;
+    const r0 = Math.floor((moonY - moonR) / ch) - 1, r1 = Math.ceil((moonY + moonR) / ch) + 1;
+    for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+      const dx = (c + 0.5) * cw - moonX, dy = (r + 0.5) * ch - moonY, d = Math.hypot(dx, dy);
+      if (d > moonR) continue;
+      const q = d / moonR;
+      const shadow = Math.hypot(dx - moonR * 0.55, dy + moonR * 0.25) < moonR * 0.9;
+      const t0 = T.MOON + q * 0.8 + hash2(c, r) * 0.15;
+      if (shadow) add(0, c, r, (c + r) % 2 ? C_DOT : C_SP, P_MOON_D, 0.18, t0, G_STATIC);
+      else add(0, c, r, q > 0.84 ? C_o : C_AT, P_MOON, 0.78 + 0.2 * (1 - q), t0, G_STATIC);
+    }
+  }
+
+  // Yangmingshan: two broad humps with a noisy ridge, hazy dotted slopes.
+  function buildMountains() {
+    ridge = new Int16Array(cols + 1);
+    for (let c = 0; c <= cols; c++) {
+      const x = c / cols;
+      const m = 0.6 * Math.exp(-(((x - 0.3) / 0.24) ** 2)) + 0.42 * Math.exp(-(((x - 0.78) / 0.22) ** 2)) + 0.16 * vnoise(c * 0.07, 1.3) + 0.07 * vnoise(c * 0.3, 4.2);
+      ridge[c] = hr - Math.round(yH * (0.2 + 0.34 * m) / ch);
+    }
+    for (let c = 0; c < cols; c++) {
+      const top = ridge[c], L = c > 0 ? ridge[c - 1] : top, R = ridge[c + 1];
+      const t0 = T.MTN + (c / cols) * T.MTN_DUR;
+      for (let r = top; r < hr; r++) {
+        const tj = t0 + hash2(c, r) * 0.2 + (r - top) * 0.02;
+        if (r === top) {
+          const chr = L > top && R >= top ? (R > top ? C_CARET : C_SL) : R > top ? C_BS : C_US;
+          add(0, c, r, chr, P_MTN_E, 0.62, tj, G_STATIC);
+          continue;
+        }
+        if (r < Math.min(L, R)) { add(0, c, r, L < R ? C_BS : C_SL, P_MTN_E, 0.5, tj, G_STATIC); continue; }
+        const h = hash2(c * 7, r), dep = (r - top) / Math.max(1, hr - top);
+        add(0, c, r, h < 0.14 ? C_COLON : h < 0.42 ? C_DOT : h < 0.46 ? C_Q : C_SP, P_MTN, 0.3 + 0.12 * (1 - dep), tj, G_STATIC);
+      }
+    }
+  }
+
+  // The Grand Hotel on Jiantan hill: two tiers of red palace roofs with upturned eaves and red columns.
+  function buildHotel() {
+    let W1 = clamp(Math.round(cols * 0.085), 13, 23); if (!(W1 & 1)) W1++;
+    let a = Math.max(3, Math.round(W1 * 0.33)); if (!(a & 1)) a++;
+    hotHw = (W1 >> 1) + 2;
+    rHill = hr - Math.max(6, Math.round(yH * 0.2 / ch));
+    // Hill: a low dome under the hotel.
+    const hw = Math.max(hotHw * 2.2, cols * 0.13);
+    for (let c = Math.floor(kcH - hw); c <= Math.ceil(kcH + hw); c++) {
+      const u = (c - kcH) / hw;
+      if (Math.abs(u) > 1) continue;
+      const dome = cc => Math.round(rHill + 1 + (hr - rHill) * ((cc - kcH) / hw) ** 2);
+      const top = dome(c), L = dome(c - 1), Rr = dome(c + 1);
+      for (let r = top; r < hr; r++) {
+        const t0 = T.HOTEL + Math.abs(u) * 0.5 + hash2(c, r) * 0.2;
+        if (r === top) { add(0, c, r, L > top && Rr < top ? C_SL : L < top && Rr > top ? C_BS : L > top && Rr > top ? C_CARET : C_US, P_JHILL_E, 0.5, t0, G_STATIC); continue; }
+        if (r < L || r < Rr) { add(0, c, r, L < Rr ? C_BS : C_SL, P_JHILL_E, 0.45, t0, G_STATIC); continue; }
+        const h = hash2(c * 3, r * 5);
+        if (h < 0.05) add(0, c, r, C_DOT, P_HOT_W, 0.7, t0 + 0.6, G_STATIC);   // path lamps
+        else add(0, c, r, h < 0.2 ? C_COMMA : h < 0.34 ? C_DOT : C_SP, P_JHILL, 0.36, t0, G_STATIC);
+      }
+    }
+    const body = n => { let s = ''; for (let j = 0; j < n; j++) s += j % 2 ? '|' : 'o'; return s; };
+    const R = [
+      ['^' + '='.repeat(a) + '^', 'ridge'],
+      ['/' + '#'.repeat(a + 2) + '\\', 'roof'],
+      ['~' + '='.repeat(a + 4) + '~', 'eave'],
+      ['|' + body(a + 2) + '|', 'body'],
+      ['^' + '='.repeat(W1 - 4) + '^', 'ridge'],
+      ['/' + '#'.repeat(W1 - 2) + '\\', 'roof'],
+      ['/' + '#'.repeat(W1) + '\\', 'roof'],
+      ['~' + '='.repeat(W1 + 2) + '~', 'eave'],
+      ['|' + body(W1 - 2) + '|', 'body'],
+      ['|' + body(W1 - 2) + '|', 'body'],
+      ['|' + body(W1 - 2) + '|', 'body'],
+      ['_'.repeat(W1 + 2), 'base']
+    ];
+    hotTop = rHill - R.length + 1;
+    R.forEach(([s, k], j) => {
+      const r = hotTop + j, c0 = kcH - (s.length >> 1);
+      const t0 = T.HOTEL + 0.5 + (R.length - 1 - j) / R.length * 1.1;
+      [...s].forEach((q, x) => {
+        const c = c0 + x, d = Math.abs(c - kcH), chr = letter(q), tj = t0 + hash2(c, r) * 0.08;
+        if (k === 'body') add(0, c, r, chr, q === 'o' ? P_HOT_W : P_HOT_R, q === 'o' ? 0.82 : 0.78, tj, G_HOTEL, 0, d, 0);
+        else if (k === 'base') add(0, c, r, chr, P_HOT_W, 0.5, tj, G_HOTEL, 0, d, 0);
+        else {
+          const isE = q === '^' || q === '~';
+          add(0, c, r, chr, isE ? P_ROOF_E : P_ROOF, k === 'roof' ? 0.66 : 0.82, tj, G_HOTEL, k === 'ridge' ? 1 : 0, d, F_ROOF | (q === '^' ? F_HALO : 0));
+        }
+      });
+    });
+  }
+
+  function buildFar() {
+    const r = mulberry32(77);
+    let c = 0;
+    while (c < cols) {
+      const w = 3 + ((r() * 6) | 0), xf = c / cols;
+      const nearHill = Math.abs(c + w / 2 - kcH) < cols * 0.16;
+      let h = (nearHill ? 0.03 + 0.04 * r() : 0.08 + 0.16 * r()) * yH;
+      const top = hr - 1 - Math.max(2, Math.round(h / ch));
+      for (let x = c; x < Math.min(cols, c + w); x++) {
+        const t0 = T.CITY - 0.4 + xf * 1.3 + hash2(x, 3) * 0.2;
+        for (let y = top; y < hr; y++) {
+          if (y === top) { add(0, x, y, x === c || x === c + w - 1 ? C_DOT : C_COLON, P_FAR, 0.34, t0, G_STATIC); continue; }
+          const hh = hash2(x * 5, y);
+          if (hh < 0.06) add(0, x, y, C_DOT, P_FAR_LIT, 0.55, t0 + 1, G_STATIC);
+          else add(0, x, y, hh < 0.22 ? C_DOT : hh < 0.3 ? C_COLON : C_SP, P_FAR, 0.24, t0, G_STATIC);
+        }
+      }
+      c += w + (r() < 0.3 ? 1 : 0);
+    }
+  }
+
+  // Xinyi district: outlined blocks with window grids, taller around 101.
+  function buildCity() {
+    const r = mulberry32(2026);
+    const base = Math.max(5, Math.round(cols / 22));
+    const PAT = [C_EQ, C_HASH, C_COLON, C_EQ];
+    let c = -1;
+    while (c < cols) {
+      const w = Math.max(4, Math.round(base * (0.7 + 0.8 * r())));
+      const mid = c + w / 2, xf = mid / cols;
+      let h = (0.06 + 0.13 * r()) * yH;
+      if (Math.abs(mid - kc1) < cols * 0.13) h = (0.12 + 0.2 * r()) * yH;
+      else if (Math.abs(mid - kcH) < cols * 0.13) h = (0.03 + 0.05 * r()) * yH;
+      const top = hr - 1 - Math.max(3, Math.round(h / ch));
+      const pat = PAT[(r() * PAT.length) | 0], winP = (r() * P_WIN.length) | 0;
+      const c1 = c + w - 1;
+      for (let x = c; x <= c1; x++) {
+        const tx = T.CITY + clamp(xf, 0, 1) * 1.8;
+        for (let y = top; y < hr; y++) {
+          const t0 = tx + (hr - 1 - y) / Math.max(1, hr - top) * 0.6 + hash2(x, y) * 0.1;
+          if (y === top) { add(1, x, y, x === c || x === c1 ? C_DOT : C_US, P_BLD, 0.46, t0, G_STATIC); continue; }
+          if (x === c || x === c1) { add(1, x, y, C_BAR, P_BLD, 0.4, t0, G_STATIC); continue; }
+          const win = (x - c) % 2 === 1 && (y - top) % 2 === 0 && y < hr - 1;
+          if (win) {
+            const hh = hash2(x * 13 + 7, y);
+            add(1, x, y, pat, P_WIN[(winP + (hh < 0.15 ? 1 : 0)) % P_WIN.length], 0.75, t0, G_WIN, 0.4 + hash2(y, x * 3) * 4, hh < 0.62 ? 1 : 0);
+          } else add(1, x, y, C_SP, 0, 0, t0, G_STATIC);
+        }
+      }
+      if (h > 0.2 * yH && r() < 0.8) {
+        const mx = c + (w >> 1);
+        add(1, mx, top - 1, C_BAR, P_BLD, 0.4, T.CITY + xf * 1.8 + 0.6, G_STATIC);
+        add(1, mx, top - 2, C_DOT, P_RED, 0.9, T.CITY + xf * 1.8 + 0.7, G_BEACON, 0, 0, F_HALO);
+      }
+      c += w + (r() < 0.3 ? 1 : -1);
+    }
+  }
+
+  // Taipei 101 (fractions of its height): tapering base, a band of ruyi motifs, eight segments
+  // that flare outward like stacked bamboo joints, a stepped top and the spire.
+  const Y_BASE = 0.205, Y_RUYI = 0.235, SEG_H = 0.066, Y_TOP = Y_RUYI + 8 * SEG_H, Y_SPIRE = 0.84;
+  function hw101(y) {
+    if (y < Y_BASE) return 0.078 - 0.02 * y / Y_BASE;
+    if (y < Y_RUYI) return 0.058;
+    if (y < Y_TOP) { const u = ((y - Y_RUYI) / SEG_H) % 1; return 0.047 + 0.018 * u; }
+    if (y < 0.79) return 0.038;
+    if (y < 0.815) return 0.03;
+    if (y < Y_SPIRE) return 0.022;
+    return 0;
+  }
+  const segOf = y => (y >= Y_RUYI && y < Y_TOP) ? Math.min(7, Math.floor((y - Y_RUYI) / SEG_H)) : -1;
+  function build101() {
+    const k = h1 / cw * (W / H > 0.8 ? 1.08 : 0.86), dy = ch / h1;
+    let tip = hr - 1;
+    hw1 = 0;
+    for (let r = hr - 1; r >= 0; r--) {
+      const yB = (yH - (r + 1) * ch) / h1, yT = (yH - r * ch) / h1, yM = (yB + yT) / 2;
+      if (yB >= 1) break;
+      tip = r;
+      const t0 = T.T101 + yM * T.T101_DUR * 0.97;
+      const seg = segOf(yM);
+      const A1 = (d, chr, b, f) => add(1, kc1 + d, r, chr, 0, b, t0 + hash2(d + 40, r) * 0.08, G_101, yM, seg < 0 ? 8 : seg, f);
+      if (yM >= Y_SPIRE) {
+        A1(0, yM > 0.97 ? C_BAR : (r % 3 === 0 ? C_PLUS : C_BAR), 0.8, F_SPIRE);
+        if (yM < 0.86) { A1(-1, C_LB, 0.7, F_SPIRE); A1(1, C_RB, 0.7, F_SPIRE); }
+        continue;
+      }
+      const o = Math.max(1, Math.round(hw101(yM) * k));
+      if (o > hw1) hw1 = o;
+      const band = seg >= 0 && segOf(yM + dy) !== seg;
+      if (band) { segRow[seg] = r; segHw[seg] = o; }
+      const slope = yM < Y_BASE ? -0.02 / Y_BASE : seg >= 0 ? 0.018 / SEG_H : 0;
+      const dHw = slope * dy * k;
+      for (let d = -o; d <= o; d++) {
+        const ad = Math.abs(d), left = d < 0;
+        if (ad === o) {
+          let chr;
+          if (yM >= Y_TOP) chr = left ? C_LB : C_RB;
+          else if (Math.abs(dHw) < 0.25) chr = C_BAR;
+          else chr = (dHw > 0) === left ? C_BS : C_SL;
+          A1(d, chr, 0.85, F_EDGE | (band ? F_BAND : 0));
+          continue;
+        }
+        if (yM < Y_BASE) {
+          const lit = hash2(d * 7 + 3, r) < 0.3;
+          A1(d, (d & 1) ? C_HASH : C_BAR, lit ? 0.72 : 0.46, lit ? 0 : F_GLASS);
+        } else if (yM < Y_RUYI) {
+          const m = ((d % 3) + 3) % 3;
+          A1(d, m === 0 ? C_O : m === 1 ? C_RP : C_LP, 0.85, F_RUYI);
+        } else if (seg >= 0) {
+          if (band) A1(d, C_EQ, 0.95, F_BAND);
+          else A1(d, (d & 1) ? C_COLON : C_BAR, 0.44, 0);
+        } else A1(d, (r & 1) ? C_EQ : C_HASH, 0.7, F_GLASS);
+      }
+    }
+    add(1, kc1, tip - 1, C_STAR, P_RED, 1, T.T101 + T.T101_DUR, G_BEACON, 0, 0, F_HALO);
+    top1 = tip - 1;
+  }
+
+  // Night-market signs on the low blocks, clear of 101 and the hotel hill.
+  const V_WORDS = ['YESHI', 'BOBA', 'NOODLE', 'HOTPOT', 'KTV', 'BAOZI', 'TEA', '24H', 'HOTEL', 'JIPAI', 'CAFE', 'BEEF', 'TAIPEI', 'BAR', 'SNACK'];
+  const H_WORDS = ['[NIGHT MARKET]', '[BUBBLE TEA]', '[DUMPLINGS]', '[KTV]', '[FRIED CHICKEN]', '[NOODLES]'];
+  function buildSigns() {
+    signs = [];
+    const r = mulberry32(88);
+    const blocked = c => Math.abs(c - kc1) <= hw1 + 2 || Math.abs(c - kcH) < cols * 0.1 || c < 1 || c >= cols - 1 ||
+      hillTop[clamp(c + hillOff, 0, hillTop.length - 1)] < rM;
+    const step = Math.max(4, Math.round(cols / 15));
+    let vi = 0, hi = 0, k = 0;
+    const cand = [];
+    for (let c = Math.round(step * 0.6); c < cols - 2; c += step) cand.push(c + Math.round((r() - 0.5) * step * 0.4));
+    for (let i = cand.length - 1; i > 0; i--) { const j = (r() * (i + 1)) | 0; [cand[i], cand[j]] = [cand[j], cand[i]]; }
+    const maxRow = hr - 1 - Math.round(yH * 0.24 / ch);
+    for (const c of cand) {
+      const horiz = r() < 0.32;
+      const word = horiz ? H_WORDS[hi++ % H_WORDS.length] : V_WORDS[vi++ % V_WORDS.length];
+      const p = NEON[(k * 3 + ((r() * 2) | 0)) % NEON.length];
+      if (horiz) {
+        const c0 = c - (word.length >> 1);
+        let ok = true;
+        for (let x = c0 - 1; x <= c0 + word.length; x++) if (blocked(x)) ok = false;
+        if (!ok) continue;
+        const row = rM - 3 - ((r() * Math.max(1, Math.round(yH * 0.06 / ch))) | 0);
+        signs.push({ on: T.NEON, pal: p });
+        [...word].forEach((s, j) => add(1, c0 + j, row, letter(s), p, 0.95, T.CITY + 1.5, G_NEON, j, signs.length - 1, s === '[' || s === ']' ? 0 : F_HALO));
+      } else {
+        if (blocked(c)) continue;
+        const L = word.length, bottom = rM - 3 - ((r() * 3) | 0), top = Math.max(maxRow, bottom - L + 1);
+        if (bottom - top + 1 < L) continue;
+        signs.push({ on: T.NEON, pal: p });
+        [...word].forEach((s, j) => add(1, c, top + j, letter(s), p, 0.95, T.CITY + 1.5, G_NEON, j, signs.length - 1, F_HALO));
+      }
+      k++;
+    }
+    signs.forEach((s, i) => { s.on = T.NEON + (i / Math.max(1, signs.length)) * T.NEON_DUR + hash2(i, 9) * 0.3; });
+  }
+
+  // Elevated MRT viaduct across the city, with a station and pillars.
+  function buildMRT() {
+    const st0 = Math.round(cols * 0.3), st1 = st0 + Math.max(10, Math.round(cols * 0.07));
+    for (let c = -4; c < cols + 4; c++) {
+      const t0 = T.MRT + clamp(c / cols, 0, 1) * 0.9 + hash2(c, 21) * 0.1;
+      add(1, c, rM, c % 6 === 0 ? C_PLUS : C_EQ, P_MRT, 0.62, t0, G_MRT, 0, c, 0);
+      if (((c % 9) + 9) % 9 === 4) for (let r = rM + 1; r < hr; r++) add(1, c, r, C_BAR, P_PIL, 0.4, t0 + 0.1, G_STATIC);
+      if (c >= st0 && c <= st1) {
+        add(1, c, rM - 2, c === st0 ? C_SL : c === st1 ? C_BS : C_US, P_STN, 0.6, t0 + 0.2, G_STATIC);
+        if (c === st0 || c === st1) add(1, c, rM - 1, C_BAR, P_STN, 0.5, t0 + 0.2, G_STATIC);
+        if ((c - st0) % 4 === 2) add(1, c, rM - 2, C_DOT, P_HOT_W, 0.9, t0 + 0.4, G_STATIC, 0, 0, F_HALO);
+      }
+    }
+  }
+
+  // Elephant Mountain: the hill top row for every column, with the big rocks on the left.
+  let rocks = [], baseTop = null;
+  function computeHill() {
+    hillOff = 8;
+    const n = cols + 2 * hillOff;
+    hillTop = new Float32Array(n); baseTop = new Int16Array(n);
+    for (let c = -hillOff; c < cols + hillOff; c++) {
+      const x = c / cols;
+      const tp = hr + 0.8 - 9 * Math.pow(Math.max(0, 0.3 - x) / 0.3, 1.5) - 6 * Math.pow(Math.max(0, x - 0.76) / 0.24, 1.4)
+        + 1.6 * (vnoise(c * 0.22, 7.1) - 0.5);
+      hillTop[c + hillOff] = tp; baseTop[c + hillOff] = Math.round(tp);
+    }
+    const top = c => hillTop[clamp(Math.round(c) + hillOff, 0, n - 1)];
+    const rd = Math.max(5, Math.round(cols * 0.045));
+    rocks = [
+      { cx: cols * 0.075, rx: rd, ry: 3.2 },
+      { cx: cols * 0.075 + rd * 1.55, rx: rd * 0.75, ry: 2.2 }
+    ];
+    rocks.forEach(k => { k.cy = top(k.cx) + 0.6; });
+    for (let c = -hillOff; c < cols + hillOff; c++) {
+      let tp = hillTop[c + hillOff];
+      for (const k of rocks) {
+        const u = (c + 0.5 - k.cx) / k.rx;
+        if (Math.abs(u) < 1) tp = Math.min(tp, k.cy - k.ry * Math.sqrt(1 - u * u));
+      }
+      hillTop[c + hillOff] = tp;
+    }
+    // Two hiking trails zig-zagging down the hill on either side.
+    const P = (xf, yf) => [Math.round(xf * cols), yf];
+    const paths = [
+      [P(0.97, 0), P(0.85, 0.28), P(0.95, 0.55), P(0.86, 0.8), P(0.93, 1)],
+      [P(0.025, 0.12), P(0.14, 0.4), P(0.04, 0.7), P(0.12, 1)]
+    ];
+    trails = paths.map(pts => {
+      const out = [];
+      for (let i = 0; i < pts.length - 1; i++) {
+        const [c0, f0] = pts[i], [c1, f1] = pts[i + 1];
+        const steps = Math.max(Math.abs(c1 - c0), 6);
+        for (let s = 0; s < steps; s++) {
+          const u = s / steps, c = Math.round(c0 + (c1 - c0) * u), f = f0 + (f1 - f0) * u;
+          const t = Math.ceil(top(c)) + 2, r = Math.round(t + f * (rows - 2 - t));
+          const last = out[out.length - 1];
+          if (!last || last[0] !== c || last[1] !== r) out.push([c, r]);
+        }
+      }
+      return out;
+    });
+  }
+  function buildHill() {
+    const TOP = c => Math.round(hillTop[clamp(c + hillOff, 0, hillTop.length - 1)]);
+    const minTop = Math.min(...Array.from(hillTop, Math.round));
+    const span = Math.max(1, rows - minTop);
+    const tr = new Set();
+    trails.forEach(p => p.forEach(([c, r]) => tr.add(r * 4096 + c + 8)));
+    for (let c = -hillOff + 1; c < cols + hillOff - 1; c++) {
+      const tp = TOP(c), L = TOP(c - 1), R = TOP(c + 1), bt = baseTop[c + hillOff];
+      const rocky = tp < bt - 0.5;
+      // Trees poking above the ridge line.
+      if (!rocky && hash2(c, 11) < 0.34) {
+        const tall = hash2(c, 12) < 0.4 ? 2 : 1;
+        for (let j = 1; j <= tall; j++) add(2, c, tp - j, j === tall ? C_CARET : C_A, P_HILL_E, 0.5, T.HILL + hash2(c, j) * 0.2, G_STATIC);
+      }
+      for (let r = tp; r < rows; r++) {
+        const t0 = T.HILL + (r - minTop) / span * 1.0 + hash2(c, r) * 0.15;
+        if (r < bt) {
+          // The giant rocks: grey outline, faint speckle inside.
+          let chr;
+          if (r === tp) chr = L > tp && R <= tp ? C_SL : R > tp && L <= tp ? C_BS : L > tp && R > tp ? C_CARET : C_US;
+          else if (r < L) chr = C_LP;
+          else if (r < R) chr = C_RP;
+          else { const h = hash2(c * 5, r); chr = h < 0.25 ? C_COLON : h < 0.5 ? C_DOT : h < 0.6 ? C_Q : C_SP; }
+          add(2, c, r, chr, P_ROCK, r === tp || r < L || r < R ? 0.8 : 0.46, t0, G_STATIC);
+          continue;
+        }
+        if (tr.has(r * 4096 + c + 8)) { add(2, c, r, C_DOT, P_TRAIL, 0.5, t0, G_STATIC); continue; }
+        if (r === tp) {
+          const chr = L > tp && R < tp ? C_SL : L < tp && R > tp ? C_BS : L > tp && R > tp ? C_CARET : C_US;
+          add(2, c, r, chr, P_HILL_E, 0.6, t0, G_STATIC);
+          continue;
+        }
+        if (r < L || r < R) { add(2, c, r, L < R ? C_BS : C_SL, P_HILL_E, 0.5, t0, G_STATIC); continue; }
+        // Foliage: a dense canopy band under the ridge, sparser undergrowth below.
+        const dep = r - tp, h = hash2(c * 3 + 1, r * 7), fade = 1 - 0.45 * dep / Math.max(1, rows - tp);
+        if (dep <= 2) {
+          const chr = h < 0.3 ? C_CARET : h < 0.5 ? C_A : h < 0.75 ? C_STAR : h < 0.88 ? C_COMMA : C_SP;
+          add(2, c, r, chr, P_HILL_E, 0.42 - dep * 0.05, t0, G_STATIC);
+        } else add(2, c, r, h < 0.12 ? C_COMMA : h < 0.26 ? C_DOT : h < 0.32 ? C_Q : h < 0.35 ? C_SEMI : C_SP, h < 0.12 ? P_HILL_E : P_HILL, 0.4 * fade, t0, G_STATIC);
+      }
+    }
+  }
+
+  // ---------- Cell buffer ----------
+  function put(c, chr, p, b, kind) {
+    if (stampA[c] !== stamp) { stampA[c] = stamp; touched[nT++] = c; }
+    let l = (b * 15.99) | 0;
+    if (l < 0) l = 0; else if (l > 15) l = 15;
+    cchar[c] = chr; ccol[c] = p * LEVELS + l; ckind[c] = kind; clb[c] = b > 1 ? 1 : b;
+  }
+  function putXY(x, y, chr, p, b, kind) {
+    if (x < 0 || y < 0) return;
+    const col = (x / cw) | 0, row = (y / ch) | 0;
+    if (col >= cols || row >= rows) return;
+    put(row * cols + col, chr, p, b, kind);
+  }
+  function putCR(col, row, chr, p, b, kind) {
+    if (col < 0 || row < 0 || col >= cols || row >= rows) return;
+    put(row * cols + col, chr, p, b, kind);
+  }
+
+  // ---------- Scene state ----------
+  const LINGER = 24;   // extra seconds the finished city stays up (one 24 s music loop)
+  let linger = 0;
+  let t = T_START, skyT = 0, frameNo = 0, letters = 0, built = 0, resolving = 0;
+  const DAY0 = (new Date().getDay() + 6) % 7;      // today's colour, Monday = 0
+  let day = DAY0, dayPrev = DAY0, daySwitch = -99, nextDay = 12;
+  let hotMode = 0, hotPrev = 0, hotSwitch = -99;   // Grand Hotel roof: 0 red, 1 gold
+  let show = null;                                 // Taipei 101 New Year's Eve show
+  const CDB = reduced ? 0.6 : 0.42, CD = 8 * CDB, SHOW_END = CD + 7.5;
+  const SH = [0, 0, 0];                            // per-layer parallax shift in cells: far, city, hill
+
+  function signOn(k) {
+    const s = signs[k], a = t - s.on;
+    if (a < -0.7) return 0;
+    if (a < 0) return reduced ? 0 : (hash2(k, (skyT * 14) | 0) < 0.45 + 0.5 * (1 + a / 0.7) * 0.6 ? 1 : 0);
+    if (!reduced && hash2(k + 50, (skyT * 7) | 0) < 0.012) return 0.3;
+    return 1;
+  }
+
+  function drawSprites(i0, i1) {
+    const gT = reduced ? 0 : skyT;
+    const scrF = (skyT * 22) | 0;
+    const sa = show ? skyT - show.t0 : -1;
+    for (let i = i0; i < i1; i++) {
+      const age = t - sT0[i];
+      if (age < -RES) continue;
+      const col = sC[i] + SH[sL[i]];
+      if (col < 0 || col >= cols) continue;
+      const idx = sR[i] * cols + col;
+      const chr0 = sCh[i];
+      if (age < 0) {
+        if (chr0 === C_SP && hash2(i, 3) < 0.6) continue;
+        resolving++;
+        put(idx, SCR[(hash2(i, scrF) * SCR.length) | 0], P_SCR, 0.22 + 0.5 * (1 + age / RES), 0);
+        continue;
+      }
+      if (chr0 === C_SP) { put(idx, C_SP, 0, 0, 0); continue; }
+      built++;
+      const flash = age < 0.35 ? 0.6 * (1 - age / 0.35) : 0;
+      let p = sP[i], b = sB[i] + flash, chr = chr0, kind = 0;
+      const f = sF[i];
+      switch (sG[i]) {
+        case G_STATIC: break;
+        case G_WIN: {
+          let on = sX[i] && age > sY[i];
+          if (!reduced && hash2(i, ((skyT * 0.25 + sY[i] * 7) | 0)) < 0.04) on = !on && age > sY[i];
+          if (!on) { p = P_WOFF; b = 0.36 + flash; }
+          else b = 0.66 + 0.25 * hash2(i, 1) + flash;
+          break;
+        }
+        case G_101: {
+          const y = sY[i], seg = sX[i];
+          const sw = skyT - (daySwitch + y * 1.2);
+          const dc = DAY[sw >= 0 ? day : dayPrev];
+          const segLit = seg < 8 ? t - (T.SEG + seg * T.SEG_STEP) : 0;
+          if (f & F_SPIRE) p = P_101E;
+          else if (f & F_RUYI) { p = P_GOLD; kind = 1; }
+          else if (seg < 8) {
+            if (segLit < 0 && !reduced) { p = P_101G; b = (f & F_BAND ? 0.4 : f & F_EDGE ? 0.5 : 0.3) + flash; }
+            else {
+              p = dc;
+              if (f & F_BAND) { kind = 1; b = 0.95 + (segLit < 0.4 && !reduced ? 0.5 * (1 - segLit / 0.4) : 0); }
+              else if (f & F_EDGE) b = 0.82;
+              else b = 0.42 + 0.08 * Math.sin(gT * 1.2 - y * 14 + sC[i] * 0.4);
+            }
+          } else if (f & F_EDGE) p = P_101E;
+          else p = f & F_GLASS ? P_101G : P_101W;
+          if (sw >= 0 && sw < 0.25 && seg < 8 && !reduced) { b += 0.4; }
+          // New Year's Eve show: the segments count down from the top, flash, then chase in rainbow colours.
+          if (sa >= 0 && sa < SHOW_END) {
+            if (sa < CD) {
+              const on = seg < 8 && sa >= (7 - seg) * CDB;
+              if (seg < 8) {
+                if (on) {
+                  const a = sa - (7 - seg) * CDB;
+                  p = a < 0.15 && !reduced ? P_WHITE : P_GOLD; b = f & F_BAND ? 1.05 : 0.8; kind = f & F_BAND ? 1 : 0;
+                } else { p = dc; b = 0.16; kind = 0; }
+              } else b *= 0.5;
+            } else if (sa < CD + 0.35) {
+              p = reduced ? P_GOLD : P_WHITE; b = 1.1; kind = f & (F_BAND | F_EDGE) ? 1 : 0;
+            } else if (seg < 8) {
+              const sp = reduced ? 0.6 : 4;
+              p = DAY[(seg + Math.floor(sa * sp)) % 7]; b = f & F_BAND ? 1 : f & F_EDGE ? 0.85 : 0.55; kind = f & F_BAND ? 1 : 0;
+              if (!reduced && !(f & F_EDGE) && hash2(i, (skyT * 8) | 0) < 0.04) { chr = C_STAR; p = P_WHITE; b = 1; kind = 1; }
+            }
+          }
+          break;
+        }
+        case G_HOTEL: {
+          if (!(f & F_ROOF)) break;
+          const sw = skyT - (hotSwitch + sX[i] * 0.06);
+          const mode = sw >= 0 ? hotMode : hotPrev;
+          if (mode === 1) {
+            p = P_GOLD; b = (sY[i] ? 1.05 : 0.85) + 0.1 * Math.sin(gT * 2 - sX[i] * 0.5); kind = 1;
+            if (!reduced && hash2(i, (skyT * 6) | 0) < 0.03) { p = P_WHITE; b = 1.1; }
+          } else kind = f & F_HALO;
+          if (sw >= 0 && sw < 0.3 && !reduced) { p = P_WHITE; b = 1.1; kind = 1; }
+          break;
+        }
+        case G_NEON: {
+          const on = signOn(sX[i]);
+          if (!on) { b = 0.14; break; }
+          b = (0.82 + 0.12 * Math.sin(gT * 3 + sY[i])) * on + flash;
+          if (on === 1) kind = f & F_HALO;
+          break;
+        }
+        case G_MRT: if (sX[i] % 6 === 0 && age > 0.6) { p = P_HOT_W; b = 0.8; kind = 1; } break;
+        case G_BEACON: { const on = reduced || ((skyT + sC[i] * 0.07) % 1.4) < 0.55; b = on ? 1 : 0.35; kind = on ? 1 : 0; break; }
+      }
+      put(idx, chr, p, b, kind | (f & F_HALO && sG[i] === G_STATIC ? 1 : 0));
+    }
+  }
+
+  function drawStars() {
+    const a = smooth(skyT / 1.2);
+    const sh = SH[0];
+    for (const s of stars) {
+      const col = s.c + sh;
+      if (col < 0 || col >= cols) continue;
+      const tw = reduced ? 0.8 : 0.5 + 0.5 * Math.sin(skyT * s.sp + s.ph);
+      put(s.r * cols + col, s.g, P_STAR, a * s.b * (0.35 + 0.65 * tw), 2);
+    }
+  }
+
+  // ---------- MRT trains ----------
+  let trains = [], nextTrain = 0;
+  const CAR = 5, NCAR = 3;
+  function sendTrain(dir, user, x) {
+    if (trains.length >= 6) trains.shift();
+    const sp = (reduced ? 6 : 15 + 6 * Math.random());
+    trains.push({ x: dir > 0 ? -2 : cols + 1, v: dir * sp });
+    music('event', 'train', { x: x == null ? (dir > 0 ? 0 : 1) : x / W, user: !!user });
+  }
+  function updateTrains(dt) {
+    for (const tr of trains) tr.x += tr.v * dt;
+    trains = trains.filter(tr => tr.v > 0 ? tr.x - CAR * NCAR < cols + 2 : tr.x + CAR * NCAR > -2);
+  }
+  function drawTrains() {
+    const row = rM - 1, sh = SH[1];
+    for (const tr of trains) {
+      const dir = tr.v > 0 ? 1 : -1, head = Math.round(tr.x);
+      putCR(head + sh, row, C_STAR, P_HEAD, 1, 1);
+      for (let j = 1; j <= CAR * NCAR; j++) {
+        const c = head - dir * j + sh, m = (j - 1) % CAR;
+        const edge = m === 0 ? (dir > 0 ? C_RB : C_LB) : m === CAR - 1 ? (dir > 0 ? C_LB : C_RB) : -1;
+        if (edge >= 0) putCR(c, row, edge, P_TRAIN, 0.85, 0);
+        else putCR(c, row, C_o, P_TRAIN_W, 0.95, 0);
+      }
+      // Rails glint under the train.
+      for (let j = 0; j <= CAR * NCAR; j += 2) putCR(head - dir * j + sh, rM, C_EQ, P_TRAIN_W, 0.7, 0);
+    }
+  }
+
+  // ---------- Hikers' torches and fireflies ----------
+  function drawTorches() {
+    if (!reduced && t < T.TORCH) return;
+    const sh = SH[2];
+    const a = reduced ? 1 : smooth((t - T.TORCH) / 0.8);
+    for (const tc of torches) {
+      const tr = trails[tc.tr];
+      if (!tr || tr.length < 2) continue;
+      const k = clamp(Math.round(tc.s), 0, tr.length - 1);
+      const [c, r] = tr[k];
+      const fl = reduced ? 1 : 0.8 + 0.2 * Math.sin(skyT * 13 + tc.ph) * Math.sin(skyT * 7.3 + tc.ph * 2);
+      putCR(c + sh, r, C_o, P_TORCH, a * fl, 1);
+      const k2 = clamp(k - Math.sign(tc.v) * 2, 0, tr.length - 1);
+      putCR(tr[k2][0] + sh, tr[k2][1], C_DOT, P_TORCH, a * 0.4, 0);
+    }
+  }
+  function updateTorches(dt) {
+    for (const tc of torches) {
+      const n = trails[tc.tr] ? trails[tc.tr].length - 1 : 0;
+      tc.s += tc.v * dt;
+      if (tc.s < 0) { tc.s = 0; tc.v = Math.abs(tc.v); }
+      if (tc.s > n) { tc.s = n; tc.v = -Math.abs(tc.v); }
+    }
+  }
+  let flies = [];
+  function spawnFlies(x, y) {
+    const n = reduced ? 8 : 18;
+    for (let i = 0; i < n; i++) flies.push({ x: x + (Math.random() - 0.5) * cw * 6, y: y + (Math.random() - 0.5) * ch * 3,
+      vx: (Math.random() - 0.5) * cw * 3, vy: -ch * (0.5 + Math.random()), age: 0, life: 4 + Math.random() * 3, ph: Math.random() * 6 });
+    if (flies.length > 80) flies.splice(0, flies.length - 80);
+    music('event', 'flies', { x: x / W });
+  }
+  function updateFlies(dt) {
+    const k = reduced ? 0.4 : 1;
+    for (const f of flies) {
+      f.age += dt;
+      f.vx += (Math.random() - 0.5) * cw * 8 * dt * k; f.vy += (Math.random() - 0.55) * ch * 4 * dt * k;
+      f.vx *= 0.97; f.vy *= 0.97;
+      f.x += f.vx * dt * k; f.y += f.vy * dt * k;
+    }
+    flies = flies.filter(f => f.age < f.life);
+  }
+  function drawFlies() {
+    for (const f of flies) {
+      const blink = reduced ? 0.8 : Math.max(0, Math.sin(f.age * 3 + f.ph));
+      const a = Math.min(1, f.age * 3) * (1 - smooth((f.age - f.life + 1.2) / 1.2));
+      if (blink * a < 0.08) continue;
+      putXY(f.x, f.y, blink > 0.7 ? C_STAR : C_DOT, P_FLY, 0.3 + 0.75 * blink * a, 3);
+    }
+  }
+
+  // ---------- Sky lanterns (Pingxi style) ----------
+  let lanterns = [];
+  function releaseLantern(x, y, user) {
+    if (lanterns.length >= 12) lanterns.shift();
+    lanterns.push({ x, y, ph: Math.random() * 6, sp: H * (reduced ? 0.02 : 0.034) * (0.8 + 0.4 * Math.random()), age: 0, life: 15 });
+    music('event', 'lantern', { x: x / W, user: !!user });
+  }
+  function updateLanterns(dt) {
+    for (const l of lanterns) {
+      l.age += dt; l.y -= l.sp * dt;
+      l.x += Math.sin(l.age * 0.7 + l.ph) * cw * 0.6 * dt;
+    }
+    lanterns = lanterns.filter(l => l.age < l.life && l.y > -ch * 3);
+  }
+  function drawLanterns() {
+    for (const l of lanterns) {
+      const a = Math.min(1, l.age * 2) * (1 - smooth((l.age - l.life + 3) / 3));
+      const fl = reduced ? 1 : 0.85 + 0.15 * Math.sin(l.age * 11 + l.ph);
+      const c = Math.floor(l.x / cw), r = Math.floor(l.y / ch);
+      putCR(c - 1, r - 1, C_LB, P_LANT, 0.7 * a, 2); putCR(c, r - 1, C_EQ, P_LANT, 0.8 * a, 2); putCR(c + 1, r - 1, C_RB, P_LANT, 0.7 * a, 2);
+      putCR(c - 1, r, C_LP, P_LANT, 0.9 * a * fl, 3); putCR(c, r, C_HASH, P_GOLD, 1.05 * a * fl, 3); putCR(c + 1, r, C_RP, P_LANT, 0.9 * a * fl, 3);
+      putCR(c, r + 1, C_Q, P_GOLD, 0.7 * a * fl, 2);
+    }
+  }
+
+  // ---------- Shooting stars ----------
+  let shooters = [];
+  function spawnShooter(x, y, user) {
+    const dir = x > W * 0.5 ? -1 : 1;
+    const sp = (reduced ? 0.35 : 1) * Math.min(W, H) * (0.7 + 0.3 * Math.random());
+    const ang = 0.38 + 0.2 * Math.random();
+    shooters.push({ x: x - dir * Math.cos(ang) * sp * 0.25, y: y - Math.sin(ang) * sp * 0.25, vx: dir * Math.cos(ang) * sp, vy: Math.sin(ang) * sp, age: 0, life: reduced ? 1.8 : 0.9 });
+    music('event', 'shoot', { x: x / W, user: !!user });
+  }
+  function updateShooters(dt) {
+    for (const s of shooters) { s.age += dt; s.x += s.vx * dt; s.y += s.vy * dt; }
+    shooters = shooters.filter(s => s.age < s.life);
+  }
+  function drawShooters() {
+    for (const s of shooters) {
+      const a = 1 - s.age / s.life, sp = Math.hypot(s.vx, s.vy), ux = s.vx / sp, uy = s.vy / sp;
+      const chr = ux * uy > 0 ? C_BS : C_SL;
+      for (let k = 0; k < 12; k++) {
+        const x = s.x - ux * k * cw * 0.9, y = s.y - uy * k * cw * 0.9;
+        if (y >= (ridge ? ridge[clamp((x / cw) | 0, 0, cols)] * ch : yH)) continue;
+        putXY(x, y, k === 0 ? C_STAR : k < 4 ? chr : C_DOT, k === 0 ? P_WHITE : P_STAR, a * (1.1 - k * 0.08), k === 0 ? 3 : 2);
+      }
+    }
+  }
+
+  // ---------- Fireworks (fixed pools, no per-frame allocation) ----------
+  const MAXP = 4000, MAXR = 12;
+  const fx = new Float32Array(MAXP), fy = new Float32Array(MAXP), fvx = new Float32Array(MAXP), fvy = new Float32Array(MAXP),
+        fage = new Float32Array(MAXP), flife = new Float32Array(MAXP), fp = new Uint16Array(MAXP);
+  const rx = new Float32Array(MAXR), ry = new Float32Array(MAXR), rvy = new Float32Array(MAXR), rty = new Float32Array(MAXR),
+        rg = new Float32Array(MAXR), rp = new Uint16Array(MAXR);
+  let np = 0, nr = 0;
+  const FW = [NEON[0], NEON[1], NEON[2], NEON[3], NEON[5], P_GOLD, P_WHITE, RB[0]];
+  function launch(x, y, y0) {
+    if (nr >= MAXR) return;
+    const i = nr++;
+    rx[i] = x; ry[i] = y0 == null ? yH : y0;
+    rty[i] = Math.min(y, ry[i] - 6 * ch);
+    rg[i] = H * (reduced ? 0.8 : 1.2);
+    rvy[i] = -Math.sqrt(2 * rg[i] * (ry[i] - rty[i]));
+    rp[i] = FW[(Math.random() * FW.length) | 0];
+    music('event', 'launch', { x: x / W, dur: Math.sqrt(2 * (ry[i] - rty[i]) / rg[i]) });
+  }
+  function emit(x, y, vx, vy, life, p) {
+    if (np >= MAXP) return;
+    const i = np++;
+    fx[i] = x; fy[i] = y; fvx[i] = vx; fvy[i] = vy; fage[i] = 0; flife[i] = life; fp[i] = p;
+  }
+  function burst(x, y, p) {
+    const n = reduced ? 50 + ((Math.random() * 20) | 0) : 120 + ((Math.random() * 70) | 0);
+    let p2 = p;
+    while (p2 === p) p2 = FW[(Math.random() * FW.length) | 0];
+    const sp = H * (0.11 + 0.07 * Math.random()) * (reduced ? 0.55 : 1);
+    music('event', 'burst', { x: x / W, calm: reduced });
+    for (let j = 0; j < n; j++) {
+      const z = 2 * Math.random() - 1, a = Math.random() * 6.2832, rr = Math.sqrt(1 - z * z);
+      const v = sp * (0.85 + 0.15 * Math.random());
+      emit(x, y, rr * Math.cos(a) * v, rr * Math.sin(a) * v, 1.3 + Math.random() * 0.9, j % 3 ? p : p2);
+    }
+    for (let j = 0; j < (reduced ? 12 : 30); j++) {
+      const a = Math.random() * 6.2832, v = sp * 0.3 * Math.random();
+      emit(x, y, Math.cos(a) * v, Math.sin(a) * v - H * 0.02, 2.4 + Math.random(), P_ROCKET);
+    }
+  }
+  // Sideways jets out of one segment corner, as on New Year's Eve.
+  function jet(seg, side, p) {
+    const x = (kc1 + SH[1] + 0.5 + side * (segHw[seg] + 1)) * cw, y = (segRow[seg] + 0.5) * ch;
+    const n = reduced ? 8 : 16, sp = H * (reduced ? 0.18 : 0.36);
+    for (let j = 0; j < n; j++) {
+      const a = (Math.random() - 0.7) * 0.45, v = sp * (0.55 + 0.45 * Math.random());
+      emit(x, y, side * Math.cos(a) * v, Math.sin(a) * v, 0.8 + Math.random() * 0.8, j % 4 ? p : P_WHITE);
+    }
+  }
+  function cascade(seg) {
+    for (const side of [-1, 1]) {
+      const x = (kc1 + SH[1] + 0.5 + side * (segHw[seg] + 0.5)) * cw, y = (segRow[seg] + 0.5) * ch;
+      for (let j = 0; j < (reduced ? 5 : 12); j++)
+        emit(x + side * Math.random() * cw * 2, y, side * Math.random() * H * 0.02, H * (0.01 + 0.03 * Math.random()), 1.6 + Math.random() * 1.4, P_GOLD);
+    }
+  }
+  function updateFireworks(dt) {
+    for (let i = 0; i < nr; i++) {
+      rvy[i] += rg[i] * dt; ry[i] += rvy[i] * dt;
+      if (ry[i] <= rty[i] || rvy[i] > -H * 0.05) {
+        burst(rx[i], Math.max(ry[i], rty[i]), rp[i]);
+        nr--; rx[i] = rx[nr]; ry[i] = ry[nr]; rvy[i] = rvy[nr]; rty[i] = rty[nr]; rg[i] = rg[nr]; rp[i] = rp[nr]; i--;
+      }
+    }
+    const g = H * 0.075, drag = 1 - Math.min(0.5, 0.9 * dt);
+    for (let i = 0; i < np; i++) {
+      fage[i] += dt;
+      if (fage[i] >= flife[i]) {
+        np--; fx[i] = fx[np]; fy[i] = fy[np]; fvx[i] = fvx[np]; fvy[i] = fvy[np];
+        fage[i] = fage[np]; flife[i] = flife[np]; fp[i] = fp[np]; i--; continue;
+      }
+      fvx[i] *= drag; fvy[i] = fvy[i] * drag + g * dt;
+      fx[i] += fvx[i] * dt; fy[i] += fvy[i] * dt;
+    }
+  }
+  function drawFireworks() {
+    for (let i = 0; i < nr; i++) {
+      putXY(rx[i], ry[i], C_CARET, P_ROCKET, 1, 3);
+      for (let k = 1; k <= 4; k++) putXY(rx[i], ry[i] + k * ch, k < 3 ? C_COLON : C_DOT, P_ROCKET, 0.75 - 0.14 * k, 2);
+    }
+    for (let i = 0; i < np; i++) {
+      const a = fage[i] / flife[i];
+      if (fy[i] >= yH) continue;
+      if (a > 0.55 && hash2(i, frameNo) < 0.25) continue;
+      const chr = a < 0.25 ? C_STAR : a < 0.4 ? C_o : a < 0.7 ? C_PLUS : C_DOT;
+      putXY(fx[i], fy[i], chr, fp[i], 0.3 + 0.8 * Math.pow(1 - a, 0.7), 2);
+    }
+  }
+
+  // ---------- Taipei 101 show ----------
+  function startShow() {
+    const ev = [];
+    for (let k = 0; k < 8; k++) ev.push([k * CDB, () => music('event', 'count', { n: 8 - k })]);
+    ev.push([CD, () => { music('event', 'zero', { calm: reduced }); }]);
+    const jp = [P_GOLD, NEON[0], NEON[2], NEON[1], NEON[3], NEON[6]];
+    // Three volleys of jets: bottom -> top, top -> bottom, then alternating sides.
+    const pulses = reduced ? 2 : 4;
+    for (let s = 0; s < 8; s++) {
+      for (let k = 0; k < pulses; k++) {
+        ev.push([CD + s * 0.06 + k * 0.09, () => { jet(s, -1, P_GOLD); jet(s, 1, P_GOLD); if (!k) music('event', 'jet', { x: kc1 / cols }); }]);
+        if (!reduced) {
+          ev.push([CD + 1.5 + (7 - s) * 0.06 + k * 0.09, () => { const p = jp[s % jp.length]; jet(s, -1, p); jet(s, 1, p); if (!k) music('event', 'jet', { x: kc1 / cols }); }]);
+          ev.push([CD + 3.0 + s * 0.14 + k * 0.09, () => { jet(s, s & 1 ? 1 : -1, jp[(s + 2) % jp.length]); if (!k) music('event', 'jet', { x: kc1 / cols }); }]);
+        }
+      }
+      ev.push([CD + 3.8, () => cascade(s)]);
+      if (!reduced) ev.push([CD + 4.6, () => cascade(s)]);
+    }
+    const roof = () => [(kc1 + SH[1] + 0.5 + (Math.random() - 0.5) * 2) * cw, top1 * ch];
+    const aer = reduced ? [0.4] : [0.3, 0.8, 1.3, 2.2, 3.0];
+    aer.forEach((d, j) => ev.push([CD + d, () => {
+      const [x0, y0] = roof();
+      launch(clamp(x0 + (j % 2 ? 1 : -1) * W * (0.08 + 0.12 * Math.random()), cw * 4, W - cw * 4), H * (0.06 + 0.16 * Math.random()), y0);
+    }]));
+    ev.sort((a, b) => a[0] - b[0]);
+    show = { t0: skyT, ev, k: 0 };
+  }
+  function updateShow() {
+    if (!show) return;
+    const sa = skyT - show.t0;
+    while (show.k < show.ev.length && show.ev[show.k][0] <= sa) show.ev[show.k++][1]();
+    if (sa > SHOW_END) show = null;
+  }
+  function drawCountdown(alpha) {
+    if (!show) return;
+    const sa = skyT - show.t0;
+    if (sa >= CD) return;
+    const k = Math.floor(sa / CDB), a = (sa - k * CDB) / CDB;
+    const n = 8 - k;
+    const cx = (kc1 + SH[1] + 0.5) * cw, cy = yH - (Y_RUYI + 4 * SEG_H) * h1;
+    const tf = Math.round(clamp(hw1 * cw * 3.6, 28, 150));
+    ctx.save();
+    ctx.globalAlpha = reduced ? 0.95 : 1 - 0.45 * smooth((a - 0.5) * 2);
+    ctx.font = `800 ${tf}px ${MONO}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(255,150,40,1)';
+    ctx.shadowBlur = tf * 0.3;
+    ctx.lineWidth = Math.max(2, tf * 0.06);
+    ctx.strokeStyle = 'rgba(60,20,0,0.85)';
+    ctx.fillStyle = '#fffbe8';
+    const sc = reduced ? 1 : 1.15 - 0.15 * smooth(a * 3);
+    ctx.translate(cx, cy); ctx.scale(sc, sc);
+    ctx.strokeText(String(n), 0, 0);
+    ctx.fillText(String(n), 0, 0);
+    ctx.restore();
+  }
+
+  // ---------- Drawing ----------
+  function drawCells(alpha) {
+    counts.fill(0);
+    for (let i = 0; i < nT; i++) counts[ccol[touched[i]]]++;
+    let acc = 0;
+    for (let c = 0; c < NCOLOR; c++) { const n = counts[c]; counts[c] = acc; acc += n; }
+    for (let i = 0; i < nT; i++) { const c = touched[i]; order[counts[ccol[c]]++] = c; }
+    let cur = -1, n = 0, fw = -1;
+    for (let i = 0; i < nT; i++) {
+      const c = order[i];
+      if (cchar[c] === C_SP) continue;
+      const f = ckind[c] & 2;
+      if (f !== fw) { fw = f; ctx.globalAlpha = f ? 1 : alpha; }
+      const cc = ccol[c];
+      if (cc !== cur) { cur = cc; ctx.fillStyle = COLSTR[cc]; }
+      const row = (c / cols) | 0;
+      ctx.fillText(CH[cchar[c]], (c - row * cols) * cw, row * ch);
+      n++;
+    }
+    ctx.globalAlpha = 1;
+    letters = n;
+  }
+
+  let halos = [];
+  function makeHalos() {
+    const R = Math.max(6, cw * 2.2);
+    halos = PAL.map(([r, g, b]) => {
+      const c = document.createElement('canvas');
+      c.width = c.height = Math.ceil(R * 2);
+      const x = c.getContext('2d'), gr = x.createRadialGradient(R, R, 0, R, R, R);
+      gr.addColorStop(0, 'rgba(255,255,255,0.7)');
+      gr.addColorStop(0.2, `rgba(${r | 0},${g | 0},${b | 0},0.6)`);
+      gr.addColorStop(0.55, `rgba(${r | 0},${g | 0},${b | 0},0.14)`);
+      gr.addColorStop(1, `rgba(${r | 0},${g | 0},${b | 0},0)`);
+      x.fillStyle = gr; x.fillRect(0, 0, c.width, c.height);
+      return c;
+    });
+  }
+  function drawHalos(alpha) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < nT; i++) {
+      const c = touched[i];
+      if (!(ckind[c] & 1) || cchar[c] === C_SP) continue;
+      const img = halos[(ccol[c] / LEVELS) | 0], row = (c / cols) | 0;
+      ctx.globalAlpha = clb[c] * (ckind[c] & 2 ? 1 : alpha) * 0.6;
+      ctx.drawImage(img, (c - row * cols + 0.5) * cw - img.width / 2, (row + 0.5) * ch - img.height / 2);
+    }
+    ctx.restore();
+  }
+
+  const glow = document.createElement('canvas'), gctx = glow.getContext('2d');
+  const GLOW_DIV = 5, GLOW_A = 0.8;
+  function drawGlow() {
+    const gw = Math.ceil(W / GLOW_DIV), gh = Math.ceil(H / GLOW_DIV);
+    if (glow.width !== gw || glow.height !== gh) { glow.width = gw; glow.height = gh; }
+    gctx.setTransform(1, 0, 0, 1, 0, 0);
+    gctx.globalCompositeOperation = 'copy';
+    gctx.filter = 'blur(2px)';
+    gctx.drawImage(canvas, 0, 0, gw, gh);
+    gctx.filter = 'none';
+    gctx.globalCompositeOperation = 'difference';
+    gctx.setTransform(gw / W, 0, 0, gh / H, 0, 0);
+    gctx.fillStyle = bgGrad;
+    gctx.fillRect(0, 0, W, H);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = GLOW_A;
+    ctx.drawImage(glow, 0, 0, W, H);
+    ctx.restore();
+  }
+
+  // Title typed out over the dark hill in warm lantern gold.
+  let typed = 0;
+  function titleCount(tt) {
+    if (tt < T.TITLE) return 0;
+    if (tt < TB_START) return Math.min(TITLE_A.length, 1 + Math.floor((tt - T.TITLE) / TA_STEP));
+    return TITLE_A.length + Math.min(TITLE_B.length, 1 + Math.floor((tt - TB_START) / TB_STEP));
+  }
+  function drawTitle(alpha) {
+    const n = titleCount(t);
+    typed = n;
+    if (!n || alpha < 0.01) return;
+    const full = TITLE_A + TITLE_B;
+    const tf = Math.round(clamp(Math.min(W * 0.075, H * 0.06), 20, 58));
+    ctx.save();
+    ctx.font = `700 ${tf}px ${MONO}`;
+    ctx.textBaseline = 'middle';
+    const adv = ctx.measureText('M').width * 1.08;
+    const yTop = (hr + 2) * ch, y = yTop + (H - yTop) * 0.4;
+    const x0 = W / 2 - adv * full.length / 2;
+    ctx.globalAlpha = alpha;
+    ctx.shadowColor = 'rgba(255,110,40,0.95)';
+    ctx.shadowBlur = tf * 0.45;
+    for (let k = 0; k < n; k++) {
+      const s = full[k];
+      if (s === ' ') continue;
+      const tk = k < TITLE_A.length ? T.TITLE + k * TA_STEP : TB_START + (k - TITLE_A.length) * TB_STEP;
+      const fresh = reduced ? 0 : clamp(1 - (t - tk) / 0.25, 0, 1);
+      ctx.fillStyle = fresh > 0 ? `rgb(255,${(196 + 59 * fresh) | 0},${(96 + 159 * fresh) | 0})` : '#ffc45e';
+      ctx.fillText(s, x0 + k * adv, y);
+    }
+    const doneT = TB_START + TITLE_B.length * TB_STEP;
+    if (!reduced && t < doneT + 1.6 && (skyT % 0.8) < 0.45) { ctx.fillStyle = '#ffe6b0'; ctx.fillText('_', x0 + n * adv, y); }
+    const sub = smooth((t - doneT - 0.2) / 0.8);
+    if (sub > 0) {
+      ctx.globalAlpha = alpha * sub * 0.85;
+      ctx.shadowBlur = tf * 0.3;
+      ctx.font = `500 ${Math.round(tf * 0.38)}px "Noto Sans TC", system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#ffe2a8';
+      ctx.fillText('台 北 之 夜', W / 2, y + tf * 0.78);
+    }
+    ctx.restore();
+  }
+
+  function render() {
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+    ctx.textBaseline = 'top';
+    ctx.font = cellFont;
+    const alpha = reduced ? 1 : Math.min(smooth(t / 0.8), 1 - smooth((t - T.FADE) / T.FADE_DUR));
+    stamp++; nT = 0; built = 0; resolving = 0;
+    drawStars();
+    drawShooters();
+    drawFireworks();
+    if (alpha > 0.001) {
+      drawSprites(0, nBack);
+      if (reduced || t > T.MRT + 0.8) drawTrains();
+    }
+    drawLanterns();
+    if (alpha > 0.001) {
+      drawSprites(nBack, nS);
+      drawTorches();
+    }
+    drawFlies();
+    drawCells(alpha);
+    drawHalos(alpha);
+    drawGlow();
+    drawCountdown(alpha);
+    drawTitle(alpha);
+  }
+
+  // ---------- Loop, HUD, controls ----------
+  let paused = false, last = performance.now();
+  let par = 0, parTo = 0;
+  let frames = 0, fpsT = last, fps = 0, hudT = 0, nextShoot = 6;
+
+  function phaseName() {
+    let s = PHASES[0][1];
+    for (const [a, nm] of PHASES) if (t >= a) s = nm;
+    return s;
+  }
+  function updateHud(now) {
+    const tail = paused ? 'paused' : `${fps} fps`;
+    const pct = nSolid ? (100 * built / nSolid).toFixed(1) : '0.0';
+    hudEl.textContent = W < 640 ? `${phaseName()}  built ${pct}%  ${tail}`
+      : `phase ${phaseName()}  built ${pct}%  letters ${letters.toLocaleString('en-US')}  ${tail}`;
+    hudT = now;
+  }
+
+  function frame(now) {
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000));
+    last = now;
+    if (needResize) resize();
+    if (!paused) {
+      const t1 = t, typed1 = titleCount(t);
+      skyT += dt;
+      if (!reduced) {
+        // Linger on the finished city: the scene clock waits just before the fade for one more music loop.
+        if (t < T.FADE - 0.3) linger = 0;
+        if (linger < LINGER && t + dt >= T.FADE - 0.3) { t = Math.max(t, T.FADE - 0.3); linger += dt; } else t += dt;
+        if (t >= T.END) { t = 0; music('restart'); }
+        if (t > 3 && t < T.FADE && skyT > nextShoot) {
+          spawnShooter(W * (0.15 + 0.7 * Math.random()), H * (0.04 + 0.12 * Math.random()));
+          nextShoot = skyT + 8 + Math.random() * 6;
+        }
+        // Taipei 101 changes to the next weekday colour every so often.
+        if (t > T.SEG + 2 && t < T.FADE && skyT > nextDay && !show) {
+          dayPrev = day; day = (day + 1) % 7; daySwitch = skyT; nextDay = skyT + 9;
+          music('event', 'day', { i: day });
+        }
+      }
+      if ((reduced || (t > T.MRT + 1 && t < T.FADE)) && skyT > nextTrain) {
+        sendTrain(Math.random() < 0.5 ? 1 : -1, false);
+        nextTrain = skyT + (reduced ? 14 : 7) + Math.random() * 5;
+      }
+      frameNo++;
+      updateTrains(dt);
+      updateTorches(dt);
+      updateFlies(dt);
+      updateLanterns(dt);
+      updateShow();
+      updateFireworks(dt);
+      updateShooters(dt);
+      if (Math.abs(parTo - par) > 0.002) par += (parTo - par) * Math.min(1, dt * 1.6);
+      SH[0] = Math.round(-par * 1); SH[1] = Math.round(-par * 2); SH[2] = Math.round(-par * 3.5);
+      render(); dirty = false; frames++;
+      soundCues(t1, t, typed1);
+    } else if (dirty) { render(); dirty = false; frames++; }
+    if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
+    if (now - hudT >= 250) updateHud(now);
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- Sound cues ----------
+  const music = (fn, ...a) => window.AsciiAudio && AsciiAudio[fn](...a);
+  const crossed = (a, b, x) => a < x && x <= b;
+  function soundCues(a, b, typed1) {
+    if (!window.AsciiAudio || b < a) return;
+    if (crossed(a, b, T.MOON)) music('event', 'moon');
+    if (crossed(a, b, T.MTN)) music('event', 'build', { dur: T.MTN_DUR, low: 1 });
+    if (crossed(a, b, T.HOTEL)) music('event', 'build', { dur: 1.6, low: 1 });
+    if (crossed(a, b, T.T101)) music('event', 'build', { dur: T.T101_DUR });
+    if (resolving > 0) music('event', 'resolve');
+    for (let s = 0; s < 8; s++) if (crossed(a, b, T.SEG + s * T.SEG_STEP)) music('event', 'segOn', { i: s });
+    if (crossed(a, b, T.MRT)) music('event', 'build', { dur: 1, low: 1 });
+    signs.forEach((s, i) => { if (crossed(a, b, s.on)) music('event', 'neon', { i }); });
+    if (crossed(a, b, T.HILL)) music('event', 'build', { dur: 1.2, low: 1 });
+    if (crossed(a, b, T.TORCH)) music('event', 'torch');
+    const n = titleCount(b);
+    if (n > typed1) music('event', 'type', { space: (TITLE_A + TITLE_B)[n - 1] === ' ' });
+    if (crossed(a, b, TB_START + TITLE_B.length * TB_STEP + 0.1)) music('event', 'titleDone');
+    if (crossed(a, b, T.FADE)) music('event', 'fade');
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
+  function replay() {
+    t = T_START; linger = 0; np = 0; nr = 0; shooters = []; trains = []; lanterns = []; flies = []; show = null;
+    hotMode = hotPrev = 0; hotSwitch = -99; paused = false; dirty = true; music('resume'); music('restart');
+  }
+
+  // Hit tests in screen pixels (each landmark lives on its own parallax layer).
+  const isBuilt = t0 => reduced || (t >= t0 && t < T.FADE + T.FADE_DUR * 0.6);
+  const hillAt = x => hillTop[clamp(Math.round(x / cw - SH[2]) + hillOff, 0, hillTop.length - 1)];
+  function on101(x, y) {
+    if (!isBuilt(T.T101 + 0.6)) return false;
+    const cx = (kc1 + SH[1] + 0.5) * cw;
+    return y >= (top1 - 1) * ch && y <= yH && Math.abs(x - cx) <= (hw1 + 2) * cw;
+  }
+  function onHotel(x, y) {
+    if (!isBuilt(T.HOTEL + 1.2)) return false;
+    const c = x / cw - SH[0], r = y / ch;
+    return Math.abs(c - kcH - 0.5) <= hotHw + 2 && r >= hotTop - 1.5 && r <= rHill + 1.5;
+  }
+  function onMRT(x, y) {
+    if (!isBuilt(T.MRT + 0.6)) return false;
+    return Math.abs(y / ch - (rM - 0.5)) <= 1.8;
+  }
+  function tapAt(x, y) {
+    const hillY = hillAt(x) * ch;
+    if (y >= hillY - ch * 0.5 && isBuilt(T.HILL + 0.6)) spawnFlies(x, y);
+    else if (onMRT(x, y)) sendTrain(x < W / 2 ? 1 : -1, true, x);   // the viaduct runs in front of 101's base
+    else if (on101(x, y)) startShow();
+    else if (onHotel(x, y)) {
+      hotPrev = hotMode; hotMode = 1 - hotMode; hotSwitch = skyT;
+      music('event', 'hotel', { mode: hotMode, x: x / W });
+    }
+    else if (y < H * 0.32) launch(x, y);
+    else releaseLantern(x, y, true);
+    dirty = true;
+  }
+
+  addEventListener('resize', () => { needResize = true; });
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
+    else if (e.key === 'r' || e.key === 'R') replay();
+  });
+  let downX = 0, downY = 0, pressed = false, dragged = false, tapTimer = 0, tapResumed = false;
+  const setPar = e => { if (!reduced) parTo = clamp(e.clientX / W * 2 - 1, -1, 1); };
+  canvas.addEventListener('pointerdown', e => {
+    pressed = true; dragged = false; downX = e.clientX; downY = e.clientY;
+    if (e.pointerType !== 'mouse') setPar(e);
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (e.pointerType === 'mouse' || pressed) setPar(e);
+    if (pressed && Math.hypot(e.clientX - downX, e.clientY - downY) >= 8) dragged = true;
+  });
+  const ptrOff = () => { pressed = false; parTo = 0; };
+  canvas.addEventListener('pointerleave', ptrOff);
+  canvas.addEventListener('pointercancel', ptrOff);
+  canvas.addEventListener('pointerup', e => {
+    const wasTap = pressed && !dragged;
+    pressed = false;
+    if (e.pointerType !== 'mouse') parTo = 0;
+    if (e.button > 0 || !wasTap) return;
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; if (!tapResumed) togglePause(); return; }
+    tapTimer = setTimeout(() => { tapTimer = 0; }, 280);
+    tapResumed = paused;
+    if (paused) { togglePause(); return; }
+    tapAt(e.clientX, e.clientY);
+  });
+
+  // Hint language: ?lang= wins, then saved site preference, then browser.
+  let pref = null;
+  try { pref = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (!pref) { try { pref = localStorage.getItem('lang'); } catch (e) {} }
+  if (!pref) pref = navigator.language || 'en';
+  const zh = String(pref).toLowerCase().startsWith('zh');
+  document.documentElement.lang = zh ? 'zh-Hant' : 'en';
+  const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  hintEl.textContent = touch ? (zh ? '點101跨年煙火 · 點飯店金頂 · 點捷運發車 · 點天空煙火天燈 · 雙擊暫停' : 'tap 101: NYE show · hotel: gold roof · MRT: train · sky: fireworks')
+                             : (zh ? '點台北101看跨年倒數 · 點圓山大飯店點亮金頂 · 點捷運軌道發車 · 點天空放煙火或天燈 · 點山坡螢火蟲 · 雙擊/空白鍵 暫停 · R 重播 · M 音樂'
+                                   : 'click Taipei 101 for a New Year countdown · Grand Hotel: gold roof · MRT: train · sky: fireworks / lantern · hill: fireflies · double-click / Space pause · R replay · M music');
+
+  // Score: an original Mandopop-ballad / lo-fi city-pop piece in D major at 80 bpm, 8 bars = one 24 s
+  // scene loop (restarted every loop). Bar 0: a guzheng-like pentatonic run over a pad while the sky
+  // and mountains appear; bars 1-6: soft kick, rim and swung hats, a warm bass, e-piano chords
+  // (Bm9 Gmaj9 A13sus F#m7 Bm7 Em9) and an erhu-like lead singing a D-major-pentatonic melody, doubled
+  // by celesta as the title types; bar 7: the groove drops out and the guzheng descends for the fade.
+  if (window.AsciiAudio) AsciiAudio.init({
+    bpm: 80, master: 0.7, reverb: 0.3, reverbTime: 3,
+    build(a) {
+      const N = AsciiAudio.notes, TR = AsciiAudio.transpose, LOOP = 32;
+      const BARS = [
+        ['D2', ['F#3', 'A3', 'C#4', 'E4']], ['B1', ['A3', 'C#4', 'D4', 'F#4']], ['G2', ['B3', 'D4', 'F#4', 'A4']],
+        ['A2', ['G3', 'B3', 'D4', 'F#4']], ['F#2', ['A3', 'C#4', 'E4', 'F#4']], ['B2', ['A3', 'B3', 'D4', 'F#4']],
+        ['E2', ['G3', 'B3', 'D4', 'F#4']], ['A2', ['G3', 'C#4', 'E4', 'F#4']]
+      ];
+      const ep = (tt, notes, dur, vel) => notes.forEach((nt, j) => {
+        const u = tt + j * 0.018;
+        a.pluck(u, nt, dur, { type: 'triangle', vel, pan: -0.3 + j * 0.18, wet: 0.32 });
+        a.bell(u, nt, dur * 0.5, { vel: vel * 0.1, wet: 0.35 });
+      });
+      a.every(0.25, (tt, s) => {
+        const beat = (s * 0.25) % LOOP, bar = Math.floor(beat / 4), q = beat % 4;
+        const [root, vo] = BARS[bar];
+        const groove = bar >= 1 && bar <= 6;
+        if (q === 0) a.pad(tt, vo, a.beats(bar === 7 ? 4.5 : 4), { vel: groove ? 0.2 : 0.32, cutoff: 1200, attack: 0.5, release: 1.6 });
+        if (groove) {
+          if (q === 0) ep(tt, vo, a.beats(1.6), 0.3);
+          if (q === 1.5) ep(tt, vo.slice(1), a.beats(0.9), 0.2);
+          if (q === 3) ep(tt, vo.slice(2), a.beats(0.9), 0.17);
+          if (q === 0) a.bass(tt, root, a.beats(1.3), { vel: 0.55 });
+          if (q === 2.5) a.bass(tt, TR(root, 7), a.beats(0.4), { vel: 0.38 });
+          if (q === 3) a.bass(tt, TR(root, 12), a.beats(0.8), { vel: 0.36 });
+          if (q === 0 || q === 2.5) a.kick(tt, 0.42);
+          if (q === 1 || q === 3) {
+            a.noise(tt, { dur: 0.12, filter: 'bandpass', freq: 1900, q: 1.4, attack: 0.003, vel: 0.22, wet: 0.25 });
+            a.noise(tt + 0.01, { dur: 0.06, filter: 'highpass', freq: 4200, attack: 0.002, vel: 0.08, wet: 0.2 });
+          }
+          if (q % 1 === 0) a.hat(tt, q % 2 ? 0.09 : 0.13, { pan: 0.25 });
+          else if (q % 1 === 0.5) a.hat(tt + a.beats(0.08), 0.07, { pan: 0.3 });
+          if (Math.random() < 0.08) a.noise(tt + Math.random() * 0.1, { dur: 0.01, filter: 'highpass', freq: 5000, vel: 0.03, wet: 0 });   // vinyl dust
+        } else if (bar === 7 && q === 0) {
+          ep(tt, vo, a.beats(3), 0.26);
+          a.bass(tt, root, a.beats(3), { vel: 0.4 });
+        } else if (bar === 0 && q === 0) a.bass(tt, root, a.beats(3.5), { vel: 0.3 });
+      });
+      // Guzheng: a bright plucked string with a soft octave shimmer.
+      const zheng = (tt, note, dur, vel) => {
+        a.pluck(tt, note, Math.max(0.5, dur), { type: 'sawtooth', vel, pan: -0.25, wet: 0.38 });
+        a.musicBox(tt + 0.006, TR(note, 12), 0.6, { vel: vel * 0.1, pan: 0.2, wet: 0.4 });
+      };
+      a.part(N('D5:.5 E5 F#5 A5 B5:1 A5:.5 F#5'), (tt, e) => zheng(tt, e.note, e.sec * 1.8, 0.48), { length: LOOP, offset: 0 });
+      a.part(N('A5:.25 F#5 E5 D5'), (tt, e) => zheng(tt, e.note, e.sec * 3, 0.32), { length: LOOP, offset: 11 });
+      a.part(N('B5:.25 A5 F#5 E5'), (tt, e) => zheng(tt, e.note, e.sec * 3, 0.3), { length: LOOP, offset: 19 });
+      a.part(N('A5:.5 F#5 E5 D5 B4 A4 F#4:1'), (tt, e) => zheng(tt, e.note, e.sec * 2, 0.44), { length: LOOP, offset: 28 });
+      // Erhu-like lead: a filtered saw with delayed vibrato.
+      a.part(N('F#5:1.5 E5:.5 D5:1 B4:1 | D5:1 E5:.5 F#5 A5:2 | B5:1 A5:.5 F#5 E5:1 D5:1 | E5:1.5 F#5:.5 A5:2 | B5:1 A5:.5 F#5 E5 D5 B4:1 | D5:1 E5 F#5:.5 E5 D5:1'),
+        (tt, e) => {
+          a.lead(tt, e.note, e.sec * 0.95, { type: 'sawtooth', vel: 0.34, cutoff: 1700, pan: 0.12, wet: 0.36 });
+          if (e.beat >= 16) a.celesta(tt, TR(e.note, 12), e.sec, { vel: 0.1, pan: -0.15, wet: 0.4 });
+        }, { length: LOOP, offset: 4 });
+
+      // Sound effects in sync with the picture.
+      const SP = AsciiAudio.scale('D5', 'pentatonic', 10);
+      const pan = x => ((x == null ? 0.5 : x) * 2 - 1) * 0.8;
+      a.on('moon', (a, d, t) => a.chime(t, 'A5', 3, { vel: 0.14 }));
+      a.on('build', (a, d, t) => a.sweep(t, d.dur || 2, { from: d.low ? 80 : 140, to: d.low ? 700 : 1500, q: 2.2, attack: (d.dur || 2) * 0.85, vel: 0.26, bus: 'sfx', wet: 0.3 }), { gap: 0.5 });
+      a.on('resolve', (a, d, t) => a.tick(t, { vel: 0.05 }), { gap: 0.13 });
+      a.on('segOn', (a, d, t) => a.bell(t, SP[d.i % SP.length], 1.4, { vel: 0.12, bus: 'sfx', pan: 0.2, wet: 0.5 }));
+      a.on('day', (a, d, t) => a.sparkle(t, { count: 3, vel: 0.06, notes: SP }), { gap: 1 });
+      a.on('neon', (a, d, t) => {
+        a.noise(t, { dur: 0.22, filter: 'bandpass', freq: 160 + (d.i % 4) * 40, q: 6, attack: 0.01, vel: 0.45, bus: 'sfx', wet: 0.1 });
+        a.ding(t + 0.06, SP[(d.i * 3) % SP.length], { vel: 0.08, dur: 1 });
+      }, { gap: 0.12 });
+      a.on('torch', (a, d, t) => ['D6', 'A6', 'F#6'].forEach((n, i) => a.bell(t + i * 0.2, n, 1.2, { vel: 0.07, bus: 'sfx', wet: 0.6 })));
+      a.on('type', (a, d, t) => { if (!d.space) a.tick(t, { vel: 0.16 }); }, { gap: 0.05 });
+      a.on('titleDone', (a, d, t) => a.chime(t, 'D5', 3, { vel: 0.24 }));
+      a.on('fade', (a, d, t) => a.sweep(t, T.FADE_DUR, { from: 3000, to: 300, q: 1.2, attack: 0.8, vel: 0.12, bus: 'sfx', wet: 0.6 }));
+      // Taps.
+      a.on('count', (a, d, t) => {
+        a.tick(t, { vel: 0.22, bell: true });
+        a.bell(t, SP[clamp(8 - d.n, 0, SP.length - 1)], 0.8, { vel: 0.14, bus: 'sfx', pan: 0.1, wet: 0.3 });
+      });
+      a.on('zero', (a, d, t) => {
+        a.boom(t, { vel: d.calm ? 0.2 : 0.4 });
+        a.chime(t + 0.05, 'D6', 3, { vel: 0.22 });
+        a.whoosh(t, { dur: 1.2, freq: 600, freqEnd: 5000, vel: 0.1 });
+        a.sparkle(t + 0.3, { count: 8, vel: 0.12, notes: SP });
+      });
+      a.on('jet', (a, d, t) => {
+        a.noise(t, { dur: 0.35, filter: 'highpass', freq: 2500, freqEnd: 6000, attack: 0.01, vel: 0.22, pan: pan(d.x), bus: 'sfx', wet: 0.25 });
+        for (let i = 0; i < 4; i++) a.noise(t + 0.15 + Math.random() * 0.4, { dur: 0.02, filter: 'highpass', freq: 3500 + Math.random() * 3000, vel: 0.12, pan: pan(d.x) + (Math.random() - 0.5) * 0.6, bus: 'sfx', wet: 0.2 });
+      }, { gap: 0.12 });
+      a.on('hotel', (a, d, t) => {
+        const p = pan(d.x);
+        if (d.mode === 1) {
+          a.bass(t, 'D2', 2.5, { vel: 0.35, bus: 'sfx' });
+          a.bell(t, 'D4', 3.5, { vel: 0.22, bus: 'sfx', pan: p, wet: 0.6 });   // temple-gong colour
+          a.sparkle(t + 0.25, { count: 6, vel: 0.12, notes: SP, spread: 0.07 });
+        } else ['A5', 'F#5', 'D5'].forEach((n, i) => a.bell(t + i * 0.1, n, 1.4, { vel: 0.12, bus: 'sfx', pan: p, wet: 0.45 }));
+      }, { gap: 0.3 });
+      a.on('train', (a, d, t) => {
+        const p = pan(d.x);
+        a.noise(t, { dur: 2.2, filter: 'lowpass', freq: 220, freqEnd: 420, attack: 0.6, vel: d.user ? 0.5 : 0.25, pan: p, bus: 'sfx', wet: 0.15 });
+        if (d.user) { a.bell(t, 'F#6', 0.9, { vel: 0.12, bus: 'sfx', pan: p, wet: 0.35 }); a.bell(t + 0.22, 'D6', 1.2, { vel: 0.11, bus: 'sfx', pan: p, wet: 0.35 }); a.bell(t + 0.44, 'A6', 1.4, { vel: 0.1, bus: 'sfx', pan: p, wet: 0.35 }); }
+      }, { gap: 0.4 });
+      a.on('lantern', (a, d, t) => {
+        const p = pan(d.x);
+        a.whoosh(t, { dur: 1.2, freq: 300, freqEnd: 1200, vel: 0.07, pan: p });
+        ['D5', 'E5', 'F#5', 'A5', 'B5', 'D6'].forEach((n, i) => a.pluck(t + i * 0.06, n, 0.9, { type: 'sawtooth', vel: 0.26 - i * 0.02, bus: 'sfx', pan: p, wet: 0.45 }));
+      }, { gap: 0.25 });
+      a.on('flies', (a, d, t) => a.sparkle(t, { count: 5, vel: 0.08, notes: AsciiAudio.scale('D6', 'pentatonic', 8), spread: 0.09 }), { gap: 0.25 });
+      a.on('shoot', (a, d, t) => { a.whoosh(t, { dur: 0.6, freq: 2000, freqEnd: 6500, q: 1.4, vel: d.user ? 0.12 : 0.06, pan: pan(d.x), wet: 0.5 }); a.ding(t + 0.25, 'A6', { vel: d.user ? 0.08 : 0.04, pan: pan(d.x) }); }, { gap: 0.3 });
+      a.on('launch', (a, d, t) => {
+        const dur = Math.max(0.6, Math.min(2, d.dur || 1.4));
+        a.noise(t, { dur, filter: 'bandpass', freq: 700, freqEnd: 2600, q: 16, attack: dur * 0.85, vel: 0.45, pan: pan(d.x), bus: 'sfx', wet: 0.25 });
+      }, { gap: 0.25 });
+      a.on('burst', (a, d, t) => {
+        const p = pan(d.x);
+        a.boom(t, { vel: d.calm ? 0.18 : 0.3, pan: p });
+        for (let i = 0; i < (d.calm ? 4 : 10); i++) a.noise(t + 0.25 + Math.random() * 0.9, { dur: 0.02 + Math.random() * 0.03, filter: 'highpass',
+          freq: 3000 + Math.random() * 3000, vel: 0.1 + Math.random() * 0.1, pan: p + (Math.random() - 0.5) * 0.4, bus: 'sfx', wet: 0.2 });
+      }, { gap: 0.2 });
+    }
+  });
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

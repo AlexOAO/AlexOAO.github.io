@@ -1,0 +1,1391 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ASCII Cairo &amp; the Pyramids | Alex Li (李翔緯)</title>
+  <meta name="description" content="A desert night at Giza drawn entirely with coloured ASCII characters: the Milky Way and a crescent moon, the three pyramids resolving course by course and floodlit in sand-gold, the Sphinx, a camel caravan on the dunes, Cairo's domes, minarets and lotus tower on the horizon, and feluccas with lanterns on the Nile. Tap a pyramid for a sound-and-light show, the Sphinx to wake it, the desert for a caravan, the Nile for a felucca. Vanilla JS on a single canvas.">
+  <meta name="theme-color" content="#05050d">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;600;800&display=swap">
+  <style>
+    :root {
+      --bg: #05050d;
+      --text: #f7eedc;
+      --muted: #cdbd9e;
+      --accent: #f0b955;
+      --mono: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    canvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100svh;
+      display: block;
+      touch-action: none; /* taps and drags drive the scene, so no scrolling or zooming */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: crosshair;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .back {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(240, 185, 85, 0.45);
+      background: rgba(32, 22, 8, 0.45);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .back:hover, .back:focus-visible {
+      background: rgba(240, 185, 85, 0.25);
+      border-color: var(--accent);
+      outline: none;
+    }
+    .hud, .hint {
+      position: fixed;
+      z-index: 1;
+      bottom: 12px;
+      color: var(--muted);
+      opacity: 0.8;
+      font: 11px/1.4 var(--mono);
+      white-space: pre;
+      pointer-events: none;
+      max-width: calc(100% - 24px);
+      overflow: hidden;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    }
+    .hud { left: 12px; }
+    .hint {
+      right: 12px;
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    @media (max-width: 640px) {
+      .hud, .hint { font-size: 10px; }
+      .hint { bottom: 30px; } /* stack above the HUD on narrow screens */
+    }
+  </style>
+</head>
+<body>
+  <h1 class="sr-only">ASCII Cairo &amp; the Pyramids</h1>
+  <a class="back" href="./">← ASCII</a>
+  <canvas id="c" role="img" aria-label="Animated night view of Giza and Cairo drawn with coloured ASCII characters: a starry sky with the Milky Way and a crescent moon, the three pyramids floodlit in gold, the Sphinx, a camel caravan on the dunes, the domes, minarets and lotus tower of Cairo on the horizon, and felucca sailboats with lanterns on the Nile"></canvas>
+  <div class="hud" id="hud" aria-hidden="true"></div>
+  <div class="hint" id="hint"></div>
+
+<script src="ascii-audio.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  // ---------- Timeline (seconds of scene time, one 24 s loop) ----------
+  const T = {
+    SKY: 0.0,                         // night sky, Milky Way and the crescent moon resolve
+    DESERT: 1.0,                      // dunes; the Nile and its bank
+    NILE: 1.6,
+    CITY: 2.6,                        // Cairo on the horizon: houses, domes, minarets, the Citadel
+    TOWER: 3.8,                       // Cairo Tower
+    PYR: 5.0,                         // Khufu, Khafre and Menkaure rise course by course
+    SPHINX: 8.8, SPHINX_DUR: 1.6,
+    LIFE: 10.4,                       // palms, feluccas and the caravan
+    LIGHTS: 11.8, LIGHTS_DUR: 3.0,    // floodlights warm the stone from moon-grey to gold
+    REFL: 13.8, REFL_DUR: 2.2,        // reflections spread over the Nile
+    TITLE: 16.0, TITLE_CPS: 8,        // "CAIRO & THE PYRAMIDS" types out on the river
+    HOLD: 18.6,
+    FADE: 21.6, FADE_DUR: 2.0, END: 24.0
+  };
+  const PYR_AT = [[0, 2.4], [0.9, 2.6], [2.0, 1.6]];   // start offset and duration per pyramid (Khufu, Khafre, Menkaure)
+  const RES = 0.5;                    // seconds a cell flickers through random glyphs before it settles
+
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T_START = reduced ? 19.2 : 0; // reduced motion: open (and stay) on the finished, lit scene
+  const SHOW_DUR = 11.2;              // tap on a pyramid: sound-and-light show
+  const SPH_DUR = 4.8;                // tap on the Sphinx: it wakes
+  const TOW_DUR = 6.5;                // tap on Cairo: tower light show
+  const BEAT = T.END / 40;            // the score: 40 beats per scene loop (100 bpm)
+  const TITLE = 'CAIRO & THE PYRAMIDS';
+  const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  // Stateless integer hash -> [0, 1).
+  function hash2(a, b) {
+    let h = Math.imul(a ^ Math.imul(b, 0x9E3779B1), 0x85EBCA6B);
+    h ^= h >>> 13; h = Math.imul(h, 0xC2B2AE35); h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
+  }
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+
+  // ---------- Tileable value-noise fbm (Milky Way dust, sand, ripples) ----------
+  const CNX = 256, CNY = 64;
+  const NZ = new Float32Array(CNX * CNY);
+  (function buildNoise() {
+    const r = mulberry32(3050);
+    let amp = 1, tot = 0;
+    for (let o = 0; o < 5; o++) {
+      const gx = 6 << o, gy = Math.min(3 << o, 32);
+      const lat = new Float32Array(gx * gy);
+      for (let i = 0; i < lat.length; i++) lat[i] = r();
+      for (let y = 0; y < CNY; y++) {
+        const fy = y / CNY * gy, y0 = fy | 0, ty = smooth(fy - y0), y1 = (y0 + 1) % gy;
+        for (let x = 0; x < CNX; x++) {
+          const fx = x / CNX * gx, x0 = fx | 0, tx = smooth(fx - x0), x1 = (x0 + 1) % gx;
+          const a = lat[y0 * gx + x0], b = lat[y0 * gx + x1], c = lat[y1 * gx + x0], d = lat[y1 * gx + x1];
+          NZ[y * CNX + x] += amp * (a + (b - a) * tx + (c - a + (a - b - c + d) * tx) * ty);
+        }
+      }
+      tot += amp; amp *= 0.5;
+    }
+    let lo = 1e9, hi = -1e9;
+    for (let i = 0; i < NZ.length; i++) { const v = NZ[i] / tot; NZ[i] = v; if (v < lo) lo = v; if (v > hi) hi = v; }
+    for (let i = 0; i < NZ.length; i++) NZ[i] = (NZ[i] - lo) / (hi - lo);
+  })();
+  function noise(u, v) {
+    u = (u - Math.floor(u)) * CNX; v = (v - Math.floor(v)) * CNY;
+    const x0 = u | 0, y0 = v | 0, fx = u - x0, fy = v - y0;
+    const x1 = (x0 + 1) & (CNX - 1), y1 = (y0 + 1) & (CNY - 1), r0 = y0 * CNX, r1 = y1 * CNX;
+    const a = NZ[r0 + x0], b = NZ[r0 + x1], c = NZ[r1 + x0], d = NZ[r1 + x1];
+    return a + (b - a) * fx + (c - a + (a - b - c + d) * fx) * fy;
+  }
+
+  // ---------- Glyphs ----------
+  const CH = [' '];
+  const ci = s => { let i = CH.indexOf(s); if (i < 0) { CH.push(s); i = CH.length - 1; } return i; };
+  const set = s => Uint8Array.from([...s].map(ci));
+  const G_SCR = set('#%&@$*+=?/\\<>{}[]01xX');      // characters flickering before they resolve
+  const G_RIP = set('-~=-~-');
+  const C_DOT = ci('.'), C_COLON = ci(':'), C_APOS = ci("'"), C_STAR = ci('*'), C_PLUS = ci('+'), C_PIPE = ci('|');
+  const C_US = ci('_'), C_FS = ci('/'), C_BS = ci('\\'), C_EQ = ci('='), C_HASH = ci('#'), C_DASH = ci('-');
+  const C_TILDE = ci('~'), C_O = ci('o'), C_AT = ci('@'), C_CARET = ci('^'), C_LP = ci('('), C_RP = ci(')');
+  const C_X = ci('X'), C_COMMA = ci(','), C_PCT = ci('%'), C_BQ = ci('`'), C_EXCL = ci('!');
+
+  // Materials of the static scene cells.
+  const M_FAR = 1, M_HE = 2, M_HB = 3, M_HW = 4, M_DE = 5, M_DOME = 6, M_MIN = 7, M_MTOP = 8, M_MBAL = 9, M_WALL = 10;
+  const M_TW = 11, M_TX = 12, M_TCR = 13, M_TDK = 14, M_RED = 15;
+  const M_PE = 16, M_PL = 17, M_PR = 18, M_PJL = 19, M_PJR = 20, M_PC = 21;
+  const M_SN = 22, M_SN2 = 23, M_SF = 24, M_SEYE = 25, M_SB = 26, M_SP = 27;
+  const M_PF = 28, M_PT = 29, M_BANK = 30, M_LAMP = 31;
+  // Structure ids (taps and shows).
+  const S_KHUFU = 1, S_KHAFRE = 2, S_MENK = 3, S_SPHINX = 4, S_CITY = 5, S_TOWER = 6, S_MOSQUE = 7, S_PALM = 8, S_BANK = 9;
+
+  // Colour keys: 5 bits per channel, so fillStyle changes once per quantised colour.
+  const NKEY = 32768;
+  const COLSTR = new Array(NKEY);
+  const colStr = k => COLSTR[k] || (COLSTR[k] = `rgb(${(k >> 10) * 8 + 4},${((k >> 5) & 31) * 8 + 4},${(k & 31) * 8 + 4})`);
+  const counts = new Uint32Array(NKEY);
+
+  // ---------- Canvas, grid, layout ----------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const hudEl = document.getElementById('hud');
+  const hintEl = document.getElementById('hint');
+  const back = document.createElement('canvas'), bctx = back.getContext('2d', { willReadFrequently: true });
+  const emis = document.createElement('canvas'), ectx = emis.getContext('2d', { willReadFrequently: true });
+  const glow = document.createElement('canvas'), gctx = glow.getContext('2d');
+  const halo = document.createElement('canvas'), hctx = halo.getContext('2d');
+  let bImg = null, eImg = null;
+
+  let W = 0, H = 0, fs = 9, cw = 5, ch = 10, cols = 0, rows = 0, n = 0, hr = 0, yH = 0, rN = 0, yN = 0, M = 500, S = 500, cellFont = '';
+  let dH = 10, nR = 10, C1, C2;                    // desert depth, river depth, the two dune crest rows per column
+  let CR, CG, CB, CK, EMI, OCC, HSH, keys, order, BKV;   // BKV: backing brightness override (desert), -1 = from the glyph colour
+  let SG, SM, ST, SY, SX, SS, sIdx, nS = 0;       // static cells: glyph, material, appear time, height, side, structure
+  let sphL = 0, sphB = 0, sphHX = 0, sphHY = 0;    // Sphinx sprite position and its head (px)
+  let pyX0 = 0, pyX1 = 1, pyCx = 0, towC = 0, towTop = 0, towH = 1;
+  let lanes = [];
+  let needResize = true, dirty = true;
+
+  function resize() {
+    needResize = false;
+    W = canvas.clientWidth || innerWidth;
+    H = canvas.clientHeight || innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    fs = clamp(Math.round(Math.min(W, H * 1.2) / 118), 7, 11);
+    cellFont = `${fs}px ${MONO}`;
+    ctx.font = cellFont;
+    cw = ctx.measureText('M').width || fs * 0.6;
+    ch = Math.round(fs * 1.15);
+    cols = Math.ceil(W / cw);
+    rows = Math.ceil(H / ch);
+    n = cols * rows;
+    const tall = W < H;
+    hr = Math.round(H * (tall ? 0.5 : 0.56) / ch);
+    rN = Math.round(H * (tall ? 0.76 : 0.78) / ch);
+    yH = hr * ch; yN = rN * ch;
+    dH = rN - hr; nR = rows - rN;
+    M = Math.min(W, H * 0.95);
+    S = Math.min(W * 1.1, H * 1.45);
+
+    CR = new Float32Array(n); CG = new Float32Array(n); CB = new Float32Array(n);
+    CK = new Uint8Array(n); EMI = new Uint8Array(n); OCC = new Uint8Array(n);
+    keys = new Uint16Array(n); order = new Int32Array(n); BKV = new Float32Array(n);
+    HSH = new Uint8Array(n);
+    const r = mulberry32(77);
+    for (let i = 0; i < n; i++) HSH[i] = (r() * 256) | 0;
+    back.width = cols; back.height = rows; bImg = bctx.createImageData(cols, rows);
+    emis.width = cols; emis.height = rows; eImg = ectx.createImageData(cols, rows);
+    glow.width = cols; glow.height = rows; halo.width = cols; halo.height = rows;
+
+    // Two dune crests between the horizon and the river: the caravan walks along the first.
+    C1 = new Int16Array(cols); C2 = new Int16Array(cols);
+    for (let c = 0; c < cols; c++) {
+      C1[c] = hr + 2 + Math.round(0.8 * Math.sin(c * 0.06 + 0.5) + 0.5 * Math.sin(c * 0.17));
+      C2[c] = clamp(hr + Math.round(dH * 0.62) + Math.round(1.8 * Math.sin(c * 0.035 + 2.1) + 0.7 * Math.sin(c * 0.11)), C1[c] + 2, rN - 2);
+    }
+    const l1 = Math.max(rN + 2, rN + Math.round(nR * 0.2)), l2 = Math.max(l1 + 3, rN + Math.round(nR * 0.4));
+    lanes = [{ row: l1, h: clamp(Math.round(nR * 0.32), 4, 8) }, { row: l2, h: clamp(Math.round(nR * 0.42), 5, 10) }];
+    buildStatic();
+    gX = gXTo = W * 0.5; gY = gYTo = H * 0.3;
+    for (const b of boats) b.row = lanes[b.lane].row, b.h = lanes[b.lane].h;
+    dirty = true;
+  }
+
+  // ---------- Static geometry (cells with an appear time each) ----------
+  function cell(c, r, g, m, ta, y, sid, sx) {
+    if (c < 0 || c >= cols || r < 0 || r >= rows) return;
+    const i = r * cols + c;
+    SG[i] = g; SM[i] = m; ST[i] = ta; SY[i] = y; SS[i] = sid; SX[i] = sx || 0;
+  }
+
+  // Sphinx in profile, facing right: striped nemes headdress, face, the long lion body and paws.
+  const SPHINX = [
+    '                       .-----.          ',
+    '                      /|||||||\\         ',
+    '                     |||||||| o\\        ',
+    '                     |||||||    >       ',
+    '                      \\||||  __/        ',
+    '                       ||||  |          ',
+    '    _____.-----------\'\'\'\'\'    \\___      ',
+    '  _/                               \'--. ',
+    ' /   .     .     .     .     .  ______\\_',
+    '|_______________________________|_______|'
+  ];
+
+  function buildStatic() {
+    SG = new Uint8Array(n); SM = new Uint8Array(n); ST = new Float32Array(n); SY = new Float32Array(n);
+    SX = new Float32Array(n); SS = new Uint8Array(n);
+    const rnd = mulberry32(1969);
+    const jit = (c, r) => hash2(c * 13 + 7, r) * 0.25;
+    const cityR = Math.round(cols * 0.36);
+    const rowsOf = px => Math.max(1, Math.round(px / ch));
+
+    // Hazy far city along the left horizon.
+    for (let c = 0; c < cityR; c++) {
+      const fall = 1 - c / cityR, h = Math.max(1, Math.round((1 + 2.5 * hash2(c, 4)) * (0.4 + 0.6 * fall)));
+      for (let q = 0; q < h; q++) cell(c, hr - 1 - q, hash2(c, q) < 0.5 ? C_COLON : C_DOT, M_FAR, T.CITY + c / cityR * 1.0 + q * 0.15 + jit(c, q), q / h, S_CITY);
+    }
+    // Flat-roofed houses with lit windows, lower towards the pyramids.
+    for (let c = 0; c < cityR;) {
+      const w = 2 + ((rnd() * 5) | 0), fall = 1 - c / cityR;
+      const h = Math.max(1, Math.round((0.012 + 0.034 * rnd()) * S / ch * (0.45 + 0.55 * fall)));
+      const top = hr - h;
+      for (let x = c; x < c + w && x < cityR; x++) {
+        for (let r = top; r < hr; r++) {
+          const k = hr - 1 - r, ta = T.CITY + x / cityR * 1.3 + k * 0.12 + jit(x, r);
+          let g = 0, m = M_HB;
+          if (r === top) { g = C_US; m = M_HE; }
+          else if (x === c || x === c + w - 1) { g = C_PIPE; m = M_HE; }
+          else if ((x - c) % 2 === 1) { g = k % 2 ? C_APOS : C_COLON; m = M_HW; }
+          cell(x, r, g, m, ta, k / h, S_CITY);
+        }
+      }
+      c += w + (rnd() < 0.3 ? 1 : 0);
+    }
+
+    // A dome: a half-ellipse of cells with slanted rims and a finial.
+    const dome = (cx, R, base, t0, sid) => {
+      const hR = Math.max(1, Math.round(R / ch)), wR = R / cw;
+      for (let q = 0; q < hR; q++) {
+        const r = base - q, dy = (q + 0.5) / hR, hw = wR * Math.sqrt(Math.max(0, 1 - dy * dy));
+        const cL = Math.round(cx - hw), cR = Math.round(cx + hw);
+        for (let x = cL; x <= cR; x++) {
+          let g = C_COLON, m = M_DOME;
+          if (q === hR - 1 && x !== cL && x !== cR) { g = C_DASH; m = M_DE; }
+          else if (x === cL) { g = dy < 0.45 ? C_LP : C_FS; m = M_DE; }
+          else if (x === cR) { g = dy < 0.45 ? C_RP : C_BS; m = M_DE; }
+          else if ((x + q) % 2) g = C_DOT;
+          cell(x, r, g, m, t0 + q * 0.15 + jit(x, r), q / hR, sid);
+        }
+      }
+      cell(Math.round(cx), base - hR, C_PIPE, M_MTOP, t0 + hR * 0.15 + 0.1, 1, sid);
+    };
+    // A pencil minaret: a slim shaft, lit balconies and a pointed cap.
+    const minaret = (cx, h, t0, sid) => {
+      for (let k = 0; k < h; k++) {
+        const r = hr - 1 - k, y = k / h, ta = t0 + y * 0.9;
+        const bal = k === Math.round(h * 0.45) || k === Math.round(h * 0.75);
+        if (bal) { for (let x = cx - 1; x <= cx + 1; x++) cell(x, r, C_EQ, M_MBAL, ta, y, sid); }
+        else cell(cx, r, C_PIPE, M_MIN, ta, y, sid);
+      }
+      cell(cx, hr - 1 - h, C_CARET, M_MTOP, t0 + 1, 1, sid);
+    };
+
+    // Scattered small domes and minarets over the old city.
+    for (let k = 0; k < 5; k++) {
+      const cx = Math.round(cityR * (0.08 + 0.2 * k + 0.08 * rnd()));
+      if (Math.abs(cx - cols * 0.11) < S * 0.07 / cw || Math.abs(cx - cols * 0.24) < 4) continue;
+      const base = hr - 1 - Math.round((0.012 + 0.02 * rnd()) * S / ch);
+      if (k % 2 === 0) dome(cx, S * (0.012 + 0.006 * rnd()), base, T.CITY + 0.6 + k * 0.2, S_CITY);
+      else minaret(cx, rowsOf(S * (0.06 + 0.03 * rnd())), T.CITY + 0.6 + k * 0.2, S_CITY);
+    }
+
+    // The Citadel on its hill: crenellated walls, the mosque's great dome, two semi-domes, two pencil minarets.
+    const cM = Math.round(cols * 0.11), Rd = Math.max(ch * 1.6, S * 0.034), wW = Math.round(Rd * 2.6 / cw);
+    const hillH = Math.max(1, rowsOf(S * 0.022)), bodyH = Math.max(1, rowsOf(S * 0.016));
+    for (let x = cM - wW; x <= cM + wW; x++) {
+      const slope = Math.max(0, Math.abs(x - cM) - wW + 3);
+      for (let q = 0; q < hillH - (slope > 1 ? 1 : 0); q++) {
+        const r = hr - 1 - q, top = q === hillH - 1 - (slope > 1 ? 1 : 0);
+        cell(x, r, top ? (x % 2 ? C_US : C_PIPE) : (x + q) % 3 ? C_HASH : C_EQ, M_WALL, T.CITY + 1.0 + q * 0.2 + jit(x, r), q / hillH, S_MOSQUE);
+      }
+    }
+    const bTop = hr - 1 - hillH, bw = Math.round(Rd * 1.5 / cw);
+    for (let q = 0; q < bodyH; q++) {
+      for (let x = cM - bw; x <= cM + bw; x++) {
+        const edge = x === cM - bw || x === cM + bw;
+        cell(x, bTop - q, edge ? C_PIPE : (x - cM) % 2 ? C_HASH : C_COLON, edge ? M_DE : M_HW, T.CITY + 1.4 + q * 0.2 + jit(x, q), q, S_MOSQUE);
+      }
+    }
+    const dBase = bTop - bodyH;
+    dome(cM - Rd * 0.95 / cw, Rd * 0.55, dBase, T.CITY + 1.7, S_MOSQUE);
+    dome(cM + Rd * 0.95 / cw, Rd * 0.55, dBase, T.CITY + 1.7, S_MOSQUE);
+    dome(cM, Rd, dBase, T.CITY + 1.9, S_MOSQUE);
+    const mH = hr - 1 - dBase + Math.round(Rd / ch) * 2 + 2;
+    minaret(cM - bw - 1, mH, T.CITY + 2.2, S_MOSQUE);
+    minaret(cM + bw + 1, mH, T.CITY + 2.3, S_MOSQUE);
+
+    // Cairo Tower: a slim lattice shaft (the lotus stem) that flares into the lotus crown, a lit deck and a mast.
+    towC = Math.round(cols * 0.24);
+    const hw = Math.max(1, Math.round(S * 0.009 / cw));
+    towH = rowsOf(S * 0.2);
+    const kCr = Math.round(towH * 0.8);
+    for (let k = 0; k < towH; k++) {
+      const r = hr - 1 - k, y = k / towH, ta = T.TOWER + y * 1.6 + jit(towC, r) * 0.5;
+      const crown = k >= kCr, kk = k - kCr;
+      const w = crown ? hw + Math.min(2, kk) : k < 2 ? hw + 1 : hw, c0 = towC - w, per = 2 * w;
+      for (let x = c0; x <= towC + w; x++) {
+        const p = x - c0;
+        let g = 0, m = M_TW;
+        if (crown && k === towH - 1) { g = C_EQ; m = M_TDK; }
+        else if (p === 0) { g = crown && kk > 0 && kk <= 2 ? C_BS : C_PIPE; m = crown ? M_TCR : M_TW; }
+        else if (p === per) { g = crown && kk > 0 && kk <= 2 ? C_FS : C_PIPE; m = crown ? M_TCR : M_TW; }
+        else if (crown) { g = (p + k) % 2 ? C_PIPE : C_COLON; m = M_TCR; }
+        else {
+          const a = ((p - k) % per + per) % per === 0, b = ((p + k) % per) === 0;
+          if (a && b) { g = C_X; m = M_TX; } else if (a) { g = C_FS; m = M_TX; } else if (b) { g = C_BS; m = M_TX; }
+        }
+        cell(x, r, g, m, ta, y, S_TOWER);
+      }
+    }
+    towTop = hr - 1 - towH;
+    cell(towC, towTop, C_US, M_TCR, T.TOWER + 1.7, 1, S_TOWER);
+    for (let q = 1; q <= 3; q++) cell(towC, towTop - q, q === 3 ? C_DOT : C_PIPE, q === 3 ? M_RED : M_TW, T.TOWER + 1.8, 1.1, S_TOWER);
+
+    // The pyramids: courses of stone with staggered joints, lit (left) and shaded (right) faces.
+    // Khafre (drawn first, behind) keeps a cap of its smooth casing; Khufu has lost its capstone.
+    const sl = (ch / cw) / Math.tan(52 * Math.PI / 180);
+    const pyr = (cxF, hPx, sid, t0, dur, casing, flat) => {
+      const hRows = Math.max(4, Math.round(hPx / ch)), cx = cxF * cols;
+      for (let k = flat ? 1 : 0; k < hRows; k++) {
+        const r = hr - hRows + k, hwk = (k + 0.5) * sl, y = 1 - (k + 0.5) / hRows;
+        const cL = Math.round(cx - hwk), cR = Math.round(cx + hwk);
+        for (let c = cL; c <= cR; c++) {
+          const ta = t0 + y * dur + jit(c, r) * 0.8, sx = (c - cx) / Math.max(1, hwk), left = c < cx;
+          let g, m;
+          if (c === cL) { g = C_FS; m = M_PE; }
+          else if (c === cR) { g = C_BS; m = M_PE; }
+          else if (casing && y > 1 - casing) { g = (c + k) % 3 ? C_COLON : C_DOT; m = M_PC; }
+          else if ((c + (k & 1) * 2 + sid) % 4 === 0) { g = C_PIPE; m = left ? M_PJL : M_PJR; }
+          else { g = hash2(c * 3 + sid, r) < 0.05 ? C_DOT : C_US; m = left ? M_PL : M_PR; }
+          cell(c, r, g, m, ta, y, sid, sx);
+        }
+      }
+      return [cx - hRows * sl, cx + hRows * sl];
+    };
+    const kh = pyr(0.68, S * 0.27, S_KHAFRE, T.PYR + PYR_AT[1][0], PYR_AT[1][1], 0.2, false);
+    const ku = pyr(0.46, S * 0.25, S_KHUFU, T.PYR + PYR_AT[0][0], PYR_AT[0][1], 0, true);
+    const me = pyr(0.885, S * 0.14, S_MENK, T.PYR + PYR_AT[2][0], PYR_AT[2][1], 0, false);
+    pyX0 = Math.min(ku[0], kh[0]); pyX1 = Math.max(me[1], kh[1]);
+    pyCx = (pyX0 + pyX1) / 2 * cw;
+
+    // The Sphinx, in front of the pyramids; interior blanks between its outline are solid body.
+    sphL = Math.round(cols * 0.34) - 20;
+    sphB = hr + Math.max(3, Math.round(dH * 0.66));
+    const sh = SPHINX.length;
+    for (let q = 0; q < sh; q++) {
+      const row = SPHINX[q], r = sphB - (sh - 1 - q);
+      const a = row.search(/\S/), b = row.length - 1 - [...row].reverse().join('').search(/\S/);
+      for (let x = a; x <= b; x++) {
+        const s = row[x];
+        let g = s === ' ' ? 0 : ci(s), m;
+        if (q <= 5) m = s === 'o' ? M_SEYE : s === '|' ? ((x & 1) ? M_SN : M_SN2) : M_SF;
+        else if (q === sh - 1) m = M_SP;
+        else m = x >= 31 && q >= 7 ? M_SP : M_SB;
+        if (!g && m === M_SB && hash2(x, q) < 0.12) g = C_DOT;
+        cell(sphL + x, r, g, m, T.SPHINX + (sh - 1 - q) / sh * T.SPHINX_DUR + hash2(x, q) * 0.3, (sh - 1 - q) / sh, S_SPHINX);
+      }
+    }
+    sphHX = (sphL + 30 + 0.5) * cw; sphHY = (sphB - 7 + 0.5) * ch;   // the eye
+
+    // Palms on the river bank (none in front of the Sphinx).
+    const PALM = [
+      [[-2, C_DASH], [-1, C_BS], [0, C_PIPE], [1, C_FS], [2, C_DASH]],
+      [[-2, C_FS], [0, C_RP], [2, C_BS]],
+      [[0, C_LP]], [[0, C_RP]], [[0, C_LP]]
+    ];
+    [0.04, 0.6, 0.73, 0.96, 0.16].forEach((f, pi) => {
+      const x = Math.round(cols * f);
+      if (x >= sphL - 3 && x <= sphL + 43) return;
+      for (let q = 0; q < 5; q++) {
+        const r = rN - 5 + q;
+        for (const [dx, g] of PALM[q]) cell(x + dx, r, g, g === C_LP || g === C_RP ? M_PT : M_PF, T.LIFE + pi * 0.1 + (4 - q) * 0.12, (4 - q) / 4, S_PALM);
+      }
+    });
+    // The corniche along the bank, with lamps.
+    for (let x = 0; x < cols; x++) cell(x, rN, x % 12 === 6 ? C_O : C_EQ, x % 12 === 6 ? M_LAMP : M_BANK, T.NILE + x / cols * 0.8, 0, S_BANK);
+
+    nS = 0;
+    for (let i = 0; i < n; i++) if (SM[i]) nS++;
+    sIdx = new Int32Array(nS);
+    for (let i = 0, q = 0; i < n; i++) if (SM[i]) sIdx[q++] = i;
+  }
+
+  // ---------- Moving things and user effects ----------
+  let showT0 = -99, sphT0 = -99, towT0 = -99;
+  let shoots = [], boats = [], caravans = [], nextShoot = 6;
+
+  function shootingStar(x, y) {
+    const dir = x == null ? (Math.random() < 0.5 ? -1 : 1) : (x < W / 2 ? 1 : -1), slow = reduced ? 0.4 : 1;
+    shoots.push({ x: x != null ? x : W * (0.2 + 0.6 * Math.random()), y: y != null ? y : H * (0.05 + 0.2 * Math.random()),
+                  vx: dir * M * 0.75 * slow, vy: M * 0.28 * slow, age: 0, life: reduced ? 2.6 : 1.2 });
+    music('event', 'shoot', { pan: clamp((x == null ? W / 2 : x) / W * 2 - 1, -0.8, 0.8) });
+  }
+  // A felucca: `amb` boats drift slowly and wrap around; tapped ones sail across with a wake.
+  function addBoat(x, lane, dir, amb) {
+    const L = lanes[lane];
+    boats.push({ x, lane, row: L.row, h: L.h, dir, amb, v: (amb ? 0.012 : 0.07) * W * (reduced ? 0.5 : 1) * (0.85 + 0.3 * Math.random()), born: skyT });
+  }
+  function sailBy(x, y) {
+    if (boats.filter(b => !b.amb).length >= 3) return;
+    const lane = y > (lanes[0].row + lanes[1].row) / 2 * ch ? 1 : 0, dir = x < W / 2 ? 1 : -1;
+    addBoat(dir > 0 ? -W * 0.06 : W * 1.06, lane, dir, false);
+    music('event', 'felucca', { pan: dir > 0 ? -0.6 : 0.6 });
+  }
+  function addCaravan(dir, amb) {
+    const n = amb ? 3 : 2 + ((Math.random() * 3) | 0);
+    caravans.push({ x: dir > 0 ? -2 * cw : W + 2 * cw, dir, n, amb, v: W / (reduced ? 60 : 32), bell: -1 });
+  }
+  function callCaravan(x) {
+    if (caravans.filter(c => !c.amb).length >= 2) return;
+    addCaravan(x < W / 2 ? 1 : -1, false);
+    music('event', 'caravan', { pan: x < W / 2 ? -0.6 : 0.6 });
+  }
+  function spawnAmbient() {
+    if (!boats.some(b => b.amb)) { addBoat(W * 0.18, 0, 1, true); addBoat(W * 0.78, 1, -1, true); }
+    if (!caravans.some(c => c.amb)) addCaravan(-1, true);
+  }
+  function clearAmbient() { boats = boats.filter(b => !b.amb); caravans = caravans.filter(c => !c.amb); }
+  function clearEffects() { shoots = []; boats = []; caravans = []; showT0 = sphT0 = towT0 = -99; }
+
+  const CARAVAN_SP = 13;  // columns between the walkers of a caravan
+  function updateEffects(dt) {
+    for (const s of shoots) { s.age += dt; s.x += s.vx * dt; s.y += s.vy * dt; }
+    shoots = shoots.filter(s => s.age < s.life);
+    if (!reduced && t > T.SKY + 3 && skyT > nextShoot) { shootingStar(); nextShoot = skyT + 8 + Math.random() * 8; }
+    for (const b of boats) {
+      b.x += b.dir * b.v * dt;
+      if (b.amb) { if (b.dir > 0 && b.x > W * 1.12) b.x = -W * 0.12; if (b.dir < 0 && b.x < -W * 0.12) b.x = W * 1.12; }
+    }
+    boats = boats.filter(b => b.amb || (b.x > -W * 0.15 && b.x < W * 1.15));
+    for (const c of caravans) {
+      c.x += c.dir * c.v * dt;
+      const len = (c.n + 1) * CARAVAN_SP * cw;
+      const gone = c.dir > 0 ? c.x - len > W + 20 : c.x + len < -20;
+      if (gone && c.amb) { c.x = c.dir > 0 ? -2 * cw : W + 2 * cw; c.gone = false; }
+      else if (gone) c.gone = true;
+      // Camel bells, about twice a second while the caravan is on screen.
+      const step = Math.floor(skyT * 1.8);
+      if (step !== c.bell && c.x > -len && c.x < W + len && (!c.amb || fa > 0.3)) { c.bell = step; music('event', 'cbell', { pan: clamp(c.x / W * 2 - 1, -0.8, 0.8) }); }
+    }
+    caravans = caravans.filter(c => !c.gone);
+  }
+
+  // ---------- Scene state ----------
+  const LINGER = 24;   // extra seconds the finished city stays up (one 24 s music loop)
+  let linger = 0;
+  let t = T_START, skyT = 0, fa = 1, built = 0, letters = 0;
+  let par = 0, parTo = 0, gX = 0, gY = 0, gXTo = 0, gYTo = 0, gK = 0.4, gKTo = 0.4, lastMove = -1e9;
+
+  // Write one cell; `e` > 0 makes it glow. Timeline cells are scaled by the loop fade `fa`.
+  function put(i, r, g, b, k, e) {
+    CR[i] = r * fa; CG[i] = g * fa; CB[i] = b * fa; CK[i] = k; EMI[i] = e ? Math.min(255, e * fa) : 0; BKV[i] = -1;
+  }
+  const hsv = (h, s, v, out) => {
+    h = ((h % 1) + 1) % 1 * 6;
+    const i = h | 0, f = h - i, p = v * (1 - s), q = v * (1 - s * f), u = v * (1 - s * (1 - f));
+    const m = [[v, u, p], [q, v, p], [p, v, u], [p, q, v], [u, p, v], [v, p, q]][i];
+    out[0] = m[0] * 255; out[1] = m[1] * 255; out[2] = m[2] * 255;
+  };
+  const tmp = [0, 0, 0];
+  const mix = (a, b, k) => a + (b - a) * k;
+
+  function buildScene() {
+    fa = reduced ? 1 : 1 - smooth((t - T.FADE) / T.FADE_DUR);
+    const lit = reduced ? 1 : smooth((t - T.LIGHTS) / T.LIGHTS_DUR);
+    OCC.fill(0);
+
+    // ---- Sky: gradient, warm glow over the floodlit pyramids, Milky Way, crescent moon, stars ----
+    const ox = par * M * 0.035;                         // parallax: the sky drifts against the land
+    const P0x = -W * 0.05, P0y = H * 0.62, P1x = W * 1.05, P1y = H * 0.0;
+    const Lb = Math.hypot(P1x - P0x, P1y - P0y), ux = (P1x - P0x) / Lb, uy = (P1y - P0y) / Lb;
+    const bw = M * 0.1, gR2 = (M * 0.2) ** 2;
+    const skyIn = smooth((t - T.SKY) / 1.2);
+    const mx = W * 0.15 + ox * 0.5, my = H * 0.12, mR = Math.max(M * 0.055, ch * 2.6);
+    const dmx = mx + mR * 0.06, dmy = my - mR * 0.5, dR = mR * 0.9;
+    const moonIn = smooth((t - T.SKY - 0.6) / 1.2);
+    for (let r = 0; r < hr; r++) {
+      const f = r / hr, f8 = f ** 8;
+      const y = (r + 0.5) * ch;
+      for (let c = 0; c < cols; c++) {
+        const i = r * cols + c, h = HSH[i];
+        const x = (c + 0.5) * cw;
+        const warm = f8 * (0.25 + lit) * (0.35 + 0.65 * Math.exp(-(((x - pyCx) / (W * 0.3)) ** 2)));
+        const bgR = (4 + 9 * f + 60 * warm) * skyIn, bgG = (4 + 7 * f + 32 * warm) * skyIn, bgB = (14 + 20 * f + 8 * warm) * skyIn;
+        const ta = T.SKY + h / 256 * 1.3 + f * 0.5;
+        if (t < ta - RES) { put(i, bgR, bgG, bgB, 0, 0); continue; }
+        if (t < ta) { put(i, bgR + 40, bgG + 45, bgB + 80, G_SCR[(hash2(i, (skyT * 18) | 0) * G_SCR.length) | 0], 0); continue; }
+        let R = bgR, G = bgG, B = bgB, k = 0, e = 0;
+        // Crescent moon, horns up, with faint earthshine and a halo.
+        const dm = Math.hypot(x - mx, (y - my) * 1.0);
+        if (dm < mR * 2.6 && moonIn > 0) {
+          if (dm < mR) {
+            const dd = Math.hypot(x - dmx, y - dmy);
+            if (dd > dR) {
+              const v = clamp((dd - dR) / (mR * 0.35), 0, 1);
+              k = v > 0.6 ? C_AT : v > 0.3 ? C_HASH : C_PCT;
+              R = 255 * moonIn; G = (226 + 20 * v) * moonIn; B = (160 + 40 * v) * moonIn; e = (120 + 120 * v) * moonIn;
+            } else if (h < 60) { k = C_DOT; R += 40 * moonIn; G += 40 * moonIn; B += 56 * moonIn; }
+            put(i, R, G, B, k, e); continue;
+          }
+          const hl = (1 - (dm - mR) / (mR * 1.6)) ** 2 * moonIn;
+          R += 30 * hl; G += 28 * hl; B += 24 * hl;
+          if (dm < mR * 1.5) { put(i, R, G, B, 0, 0); continue; }
+        }
+        const xs = x + ox;
+        const dx = xs - P0x, dy = y - P0y;
+        const a = (dx * ux + dy * uy) / Lb, d = (dx * -uy + dy * ux) / bw;
+        if (d > -2.8 && d < 2.8) {
+          let den = Math.exp(-d * d * 1.2) * (0.3 + 0.95 * noise(a * 2.2 + 0.41, 0.5 + d * 0.16));
+          const dust = noise(a * 4.3 + 0.9, 0.2 + d * 0.3);
+          den *= 1 - 0.75 * smooth((dust - 0.5) / 0.18) * Math.exp(-(d + 0.2) * (d + 0.2) * 3);
+          const gp = Math.exp(-((x - gX) ** 2 + (y - gY) ** 2) / gR2) * gK;
+          den += gp * 0.45 * Math.exp(-d * d * 0.8);
+          den *= 1 - 0.5 * f8;                          // the floodlit haze hides the band near the horizon
+          // Dithered threshold, so the band thins out into scattered dots at its edges.
+          if (den > 0.24 + (h / 256) * 0.26) {
+            const v = clamp(den, 0, 1.2), s = Math.pow(v, 1.5);
+            k = v > 0.95 ? C_STAR : v > 0.75 ? C_PLUS : v > 0.55 ? C_COLON : v > 0.4 ? C_APOS : C_DOT;
+            R += 30 + 130 * s + 80 * gp; G += 26 + 116 * s + 50 * gp; B += 50 + 130 * s + 24 * gp;
+            if (v > 0.9) e = 30 + 70 * gp;
+          }
+        }
+        if (!k && h < 3 && f < 0.85) {
+          const tw = 0.5 + 0.5 * Math.sin(skyT * (reduced ? 0.6 : 2) + h * 7 + c);
+          if (tw > 0.2) { k = h === 0 ? C_PLUS : C_DOT; R += 175 * tw; G += 172 * tw; B += 190 * tw; e = h === 0 ? 70 * tw : 0; }
+        }
+        put(i, R, G, B, k, e);
+      }
+    }
+
+    // ---- Shooting stars (behind the land; not faded by the loop) ----
+    const fa0 = fa; fa = 1;
+    for (const s of shoots) {
+      const p = s.age / s.life, a = Math.sin(Math.PI * Math.min(1, p * 1.4)) * (1 - p * 0.4);
+      const sp = Math.hypot(s.vx, s.vy), ux2 = s.vx / sp, uy2 = s.vy / sp;
+      const g = (ux2 > 0) === (uy2 > 0) ? C_BS : C_FS;
+      for (let q = 0; q < 10; q++) {
+        const c = Math.floor((s.x - ux2 * q * cw * 1.1) / cw), r = Math.floor((s.y - uy2 * q * cw * 1.1) / ch);
+        if (c < 0 || c >= cols || r < 0 || r >= hr) continue;
+        const b = a * (1 - q / 10);
+        put(r * cols + c, 220 + 35 * b, 215 + 40 * b, 190 + 60 * b, q === 0 ? C_STAR : q < 4 ? g : C_DOT, (reduced ? 90 : 200) * b);
+      }
+    }
+    fa = fa0;
+
+    // ---- Desert: plateau, two moonlit dunes, floodlight spill under the pyramids ----
+    const dIn = T.DESERT;
+    for (let r = hr; r < rN; r++) {
+      for (let c = 0; c < cols; c++) {
+        const i = r * cols + c, h = HSH[i];
+        const ta = dIn + (r - hr) / dH * 0.8 + h / 256 * 0.4;
+        if (t < ta - RES) { put(i, 2, 2, 4, 0, 0); continue; }
+        if (t < ta) { put(i, 90, 80, 70, G_SCR[(hash2(i, (skyT * 18) | 0) * G_SCR.length) | 0], 0); continue; }
+        const x = (c + 0.5) * cw, c1 = C1[c], c2 = C2[c];
+        const L = r < c1 ? 0 : r < c2 ? 1 : 2;
+        const spill = lit * Math.exp(-(((x - pyCx) / (W * 0.3)) ** 2)) * Math.exp(-(r - hr) / Math.max(2, dH * 0.3));
+        // Each dune is brightest just under its crest (moonlit slope) and darkens towards its foot.
+        const sl = L === 0 ? 0.55 : L === 1 ? 1 - 0.5 * (r - c1) / Math.max(1, c2 - c1) : 1 - 0.6 * (r - c2) / Math.max(1, rN - c2);
+        const tx = noise(x / (M * (0.05 + 0.03 * L)) + par * (0.02 + 0.03 * L), r * 0.23 + L * 0.31);
+        let R = (14 + 18 * sl + 6 * tx) + 110 * spill, G = (12 + 14 * sl + 5 * tx) + 74 * spill, B = (12 + 12 * sl + 5 * tx) + 26 * spill, k = 0, e = 0;
+        if (r === c1 || r === c2) {
+          const nb = r === c1 ? C1 : C2, pr = c > 0 ? nb[c - 1] : r, nx = c < cols - 1 ? nb[c + 1] : r;
+          k = nx < r ? C_FS : pr < r ? C_BS : C_US;
+          R += 80 + 90 * spill; G += 68 + 60 * spill; B += 60 + 20 * spill;
+        } else if (tx > 0.58 - 0.04 * L) {
+          k = L === 0 ? (h & 1 ? C_DOT : C_COMMA) : h % 3 ? C_TILDE : C_DASH;
+          R += 46 * tx; G += 38 * tx; B += 30 * tx;
+        } else if (h < 14) { k = h < 4 ? C_BQ : C_DOT; R += 22; G += 18; B += 14; }
+        put(i, R, G, B, k, e);
+        BKV[i] = (0.6 + 0.4 * sl) * (1 + 3 * spill) * (r === c1 || r === c2 ? 1.6 : 1);   // a smooth sand backing, whatever the glyph
+      }
+    }
+
+    // ---- Static cells: each flickers through random glyphs, then resolves ----
+    let vis = 0;
+    const showT = skyT - showT0, show = showT >= 0 && showT < SHOW_DUR;
+    const sphT = skyT - sphT0, sph = sphT >= 0 && sphT < SPH_DUR;
+    const towT = skyT - towT0, tow = towT >= 0 && towT < TOW_DUR;
+    const redOn = reduced || (skyT * 0.8 % 1) < 0.5;
+    const sphGlow = sph ? Math.sin(Math.PI * clamp(sphT / SPH_DUR, 0, 1)) ** 0.6 : 0;
+    const shimmer = !reduced && t > T.TITLE && t < T.FADE;
+    for (let q = 0; q < nS; q++) {
+      const i = sIdx[q], ta = ST[i];
+      if (t < ta - RES) continue;
+      OCC[i] = 1;
+      if (t < ta) {
+        const p = 1 - (ta - t) / RES;
+        put(i, 150 + 90 * p, 120 + 80 * p, 70 + 60 * p, G_SCR[(hash2(i, (skyT * 20) | 0) * G_SCR.length) | 0], 50 * p);
+        continue;
+      }
+      vis++;
+      const m = SM[i], hv = hash2(i, 3), y = SY[i];
+      let g = SG[i], R = 0, G = 0, B = 0, e = 0;
+      switch (m) {
+        case M_FAR:
+          R = 34; G = 30; B = 46;
+          if (hv < 0.1 * (0.3 + lit)) { R = 240; G = 180; B = 100; e = 70; }
+          break;
+        case M_HE: R = mix(90, 170, lit); G = mix(82, 126, lit); B = mix(90, 72, lit); break;
+        case M_HB: R = 26; G = 20; B = 18; break;
+        case M_HW: {
+          let on = hv < 0.12 + 0.6 * lit;
+          if (hash2(i + 77, Math.floor(skyT * 0.2 + hv * 40)) < 0.03) on = !on;
+          if (on) { R = 255; G = 186 + 40 * hv; B = 96 + 40 * hv; e = 120; } else { R = 70; G = 54; B = 40; }
+          break;
+        }
+        case M_DE: R = mix(140, 255, lit); G = mix(140, 226, lit); B = mix(160, 168, lit); e = 70 * lit; break;
+        case M_DOME: R = mix(90, 220, lit); G = mix(94, 184, lit); B = mix(118, 120, lit); e = 40 * lit; break;
+        case M_MIN: R = mix(140, 240, lit); G = mix(140, 220, lit); B = mix(160, 180, lit); e = 40 * lit; break;
+        case M_MTOP: R = mix(150, 255, lit); G = mix(150, 230, lit); B = mix(160, 150, lit); e = 90 * lit; break;
+        case M_MBAL: R = mix(80, 110, lit); G = mix(90, 255, lit); B = mix(100, 150, lit); e = 170 * lit; break;   // Cairo's green minaret lights
+        case M_WALL: R = mix(80, 190, lit); G = mix(70, 140, lit); B = mix(80, 84, lit); e = 20 * lit; break;
+        case M_TW: R = mix(110, 120, lit); G = mix(120, 210, lit); B = mix(140, 255, lit); e = 70 * lit; break;
+        case M_TX: R = mix(80, 170, lit); G = mix(90, 235, lit); B = mix(110, 255, lit); e = 90 * lit; break;
+        case M_TCR: R = mix(140, 255, lit); G = mix(140, 228, lit); B = mix(150, 170, lit); e = 140 * lit; break;
+        case M_TDK: R = mix(150, 255, lit); G = mix(150, 245, lit); B = mix(150, 210, lit); e = 210 * lit; break;
+        case M_RED: R = redOn ? 255 : 110; G = redOn ? 60 : 24; B = redOn ? 50 : 24; e = redOn ? 200 : 0; break;
+        case M_PE: case M_PL: case M_PR: case M_PJL: case M_PJR: case M_PC: {
+          // Moon-grey stone warms to sand-gold under the floodlights, brightest near the base.
+          const fl = lit * (0.82 + 0.3 * (1 - y)) * (0.92 + 0.16 * hv);
+          if (m === M_PE) { R = mix(150, 255, fl); G = mix(150, 222, fl); B = mix(172, 150, fl); e = 110 * fl; }
+          else if (m === M_PL) { R = mix(118, 255, fl); G = mix(116, 190, fl); B = mix(136, 104, fl); e = 60 * fl; }
+          else if (m === M_PR) { R = mix(74, 196, fl); G = mix(74, 128, fl); B = mix(98, 64, fl); e = 25 * fl; }
+          else if (m === M_PJL) { R = mix(96, 200, fl); G = mix(94, 138, fl); B = mix(116, 70, fl); e = 30 * fl; }
+          else if (m === M_PJR) { R = mix(60, 140, fl); G = mix(60, 88, fl); B = mix(82, 44, fl); }
+          else { R = mix(170, 255, fl); G = mix(170, 240, fl); B = mix(186, 198, fl); e = 120 * fl; }
+          if (show) {
+            const o = showColour(i, m, showT);
+            if (o) { R = o[0]; G = o[1]; B = o[2]; e = o[3]; }
+          } else if (shimmer && m === M_PE && hash2(i, (skyT * 6) | 0) < 0.015) { g = C_STAR; R = 255; G = 250; B = 220; e = 255; }
+          break;
+        }
+        case M_SN: case M_SN2: case M_SF: case M_SEYE: case M_SB: case M_SP: {
+          const fl = lit * (0.9 + 0.2 * (1 - y));
+          if (m === M_SN) { R = mix(140, 255, fl); G = mix(136, 206, fl); B = mix(150, 120, fl); e = 70 * fl; }
+          else if (m === M_SN2) { R = mix(96, 196, fl); G = mix(94, 138, fl); B = mix(116, 74, fl); e = 30 * fl; }
+          else if (m === M_SF) { R = mix(150, 248, fl); G = mix(146, 196, fl); B = mix(160, 128, fl); e = 60 * fl; }
+          else if (m === M_SEYE) { R = mix(60, 90, fl); G = mix(56, 60, fl); B = mix(70, 40, fl); }
+          else if (m === M_SB) { R = mix(104, 222, fl); G = mix(100, 160, fl); B = mix(120, 92, fl); e = 30 * fl; }
+          else { R = mix(120, 236, fl); G = mix(116, 176, fl); B = mix(134, 104, fl); e = 40 * fl; }
+          if (sphGlow > 0) {
+            if (m === M_SEYE) { R = mix(R, 160, sphGlow); G = mix(G, 255, sphGlow); B = mix(B, 255, sphGlow); e = 255 * sphGlow; g = sphGlow > 0.5 ? C_AT : C_O; }
+            else if (m === M_SF || m === M_SN || m === M_SN2) { R = mix(R, 255, sphGlow * 0.7); G = mix(G, 236, sphGlow * 0.7); B = mix(B, 170, sphGlow * 0.6); e = Math.max(e, 190 * sphGlow); }
+            else e = Math.max(e, 60 * sphGlow);
+          }
+          if (show && showT > 8.4) e = Math.max(e, 80);
+          break;
+        }
+        case M_PF: R = mix(40, 70, lit); G = mix(90, 170, lit); B = mix(70, 90, lit); e = 15 * lit; break;
+        case M_PT:
+          if (hv < 0.5 * lit) { R = 255; G = 196; B = 110; e = 110; } else { R = 130; G = 92; B = 56; }
+          break;
+        case M_BANK: R = mix(70, 140, lit); G = mix(62, 104, lit); B = mix(60, 56, lit); break;
+        case M_LAMP: R = mix(120, 255, lit); G = mix(100, 214, lit); B = mix(70, 140, lit); e = 210 * lit; break;
+      }
+      if (tow && (SS[i] === S_TOWER || SS[i] === S_MOSQUE)) {
+        const o = towerColour(i, m, towT);
+        if (o) { R = o[0]; G = o[1]; B = o[2]; e = o[3]; }
+      }
+      put(i, R, G, B, g, e);
+    }
+    built = nS ? vis / nS : 0;
+
+    // ---- Lasers from the Sphinx into the sky (show finale), the Sphinx's voice rings ----
+    fa = 1;
+    if (show && showT > 8.4 && showT < SHOW_DUR - 0.3) drawLasers(showT - 8.4);
+    if (sph) drawRings(sphT);
+    // ---- Caravans walking the first dune crest ----
+    for (const cv of caravans) { fa = cv.amb ? fa0 : 1; drawCaravan(cv); }
+    fa = fa0;
+
+    // ---- The Nile: ripples, reflections, the moon's glitter path ----
+    const reflK = reduced ? 1 : smooth((t - T.REFL) / T.REFL_DUR);
+    const mgx = mx;
+    for (let r = rN + 1; r < rows; r++) {
+      const p = (r - rN) / Math.max(1, nR), dark = 1 - 0.4 * p;
+      const fu = M * (0.08 + 0.5 * p), vv = r * 0.13 + skyT * 0.025;
+      const bgR = 3 * dark, bgG = 8 * dark, bgB = 20 * dark, fade = Math.exp(-p * 1.6);
+      const rs = rN - Math.round((r - rN) * 1.4);
+      const gw = W * (0.015 + 0.05 * p);
+      for (let c = 0; c < cols; c++) {
+        const i = r * cols + c, h = HSH[i];
+        const ta = T.NILE + p * 1.4 + h / 256 * 0.4;
+        if (t < ta - RES) { put(i, bgR * 0.5, bgG * 0.5, bgB * 0.5, 0, 0); continue; }
+        if (t < ta) { put(i, bgR + 30, bgG + 50, bgB + 70, G_SCR[(hash2(i, (skyT * 18) | 0) * G_SCR.length) | 0], 0); continue; }
+        const x = (c + 0.5) * cw;
+        const rn = noise(x / fu + skyT * 0.012 * (r & 1 ? 1 : -1) + par * 0.04, vv);
+        let R = bgR + 14 * rn, G = bgG + 22 * rn, B = bgB + 40 * rn, k = 0, e = 0;
+        if (rn > 0.56) { k = G_RIP[(rn * 37 + h) % G_RIP.length | 0]; R += 12; G += 20; B += 38; }
+        // Moonlight glitter.
+        const gm = Math.exp(-(((x - mgx) / gw) ** 2)) * skyIn;
+        if (gm > 0.25 && rn > 0.5 && hash2(i, (skyT * 3) | 0) < 0.4 * gm) { k = rn > 0.62 ? C_DASH : C_DOT; R += 100 * gm; G += 94 * gm; B += 80 * gm; e = 40 * gm; }
+        if (rs >= 0 && reflK > 0) {
+          const sc = clamp(c + Math.round((rn - 0.5) * (2 + 6 * p)), 0, cols - 1), j = rs * cols + sc;
+          let s = EMI[j] / 255 + (OCC[j] ? 0.14 : 0);
+          s *= reflK * fade * (rn > 0.42 ? 1 : 0.3);
+          if (s > 0.03) {
+            R += CR[j] * s * 0.85; G += CG[j] * s * 0.8; B += CB[j] * s * 0.8;
+            if (s > 0.12) { k = s > 0.3 ? C_EQ : C_DASH; e = Math.min(130, EMI[j] * s * 0.9); }
+          }
+        }
+        put(i, R, G, B, k, e);
+      }
+    }
+
+    // ---- Feluccas (on the river, in front of everything) ----
+    for (const b of boats) drawBoat(b, b.amb ? fa0 : 1);
+  }
+
+  // Sound-and-light show on the pyramids: a gold wash sweeps across, blue rises from the sand,
+  // purple and magenta trade faces on the beat under a scanning laser line, then a gold-to-rose finale.
+  const SHO = [0, 0, 0, 0];
+  function showColour(i, m, tau) {
+    const fin = smooth((SHOW_DUR - tau) / 0.8);
+    if (hash2(i, 5) > fin) return null;            // cells drop back to normal one by one at the end
+    const c = i % cols, y = SY[i], sx = SX[i];
+    const xf = (c - pyX0) / Math.max(1, pyX1 - pyX0);
+    const sh = m === M_PE ? 1.1 : m === M_PR || m === M_PJR ? 0.72 : m === M_PJL ? 0.85 : 1;
+    let R, G, B, e;
+    if (tau < 2.8) {
+      const front = -0.15 + tau / 2.1;
+      if (xf > front) return null;
+      const band = Math.exp(-(((front - xf) * 10) ** 2));
+      R = 255; G = 186 + 60 * band; B = 70 + 160 * band; e = 150 + 100 * band;
+    } else if (tau < 5.6) {
+      const front = (tau - 2.8) / 2.0 * 1.25 - 0.1;
+      if (y > front) { R = 230; G = 160; B = 70; e = 90; }
+      else {
+        const band = Math.exp(-(((front - y) * 9) ** 2));
+        R = 50 + 170 * band; G = 100 + 150 * band; B = 255; e = 150 + 90 * band;
+      }
+    } else if (tau < 8.4) {
+      const b = Math.floor((tau - 5.6) / BEAT), swap = reduced ? 0 : b & 1;
+      if ((sx < 0) !== !!swap) { R = 170; G = 70; B = 255; } else { R = 255; G = 70; B = 190; }
+      e = 170;
+      const line = 1 - ((tau - 5.6) / 1.4) % 1;
+      if (!reduced && Math.abs(y - line) < 0.035) { R = 255; G = 240; B = 255; e = 255; }
+    } else {
+      hsv(0.11 - 0.14 * y + 0.03 * Math.sin(tau * 2), 0.62, 1, tmp);
+      R = tmp[0]; G = tmp[1]; B = tmp[2]; e = 200;
+      if (!reduced && hash2(i, (tau * 9) | 0) < 0.03) { R = 255; G = 255; B = 240; e = 255; }
+    }
+    SHO[0] = R * sh; SHO[1] = G * sh; SHO[2] = B * sh; SHO[3] = e * sh;
+    return SHO;
+  }
+
+  // Cairo Tower and the Citadel during the tower show: colours climb the lattice, the minarets glow.
+  const TWO = [0, 0, 0, 0];
+  function towerColour(i, m, tau) {
+    const fin = smooth((TOW_DUR - tau) / 0.7);
+    if (hash2(i, 9) > fin) return null;
+    const y = SY[i];
+    if (SS[i] === S_MOSQUE) {
+      const k = smooth(tau / 1.2);
+      if (m === M_MBAL || m === M_MTOP) { TWO[0] = 120; TWO[1] = 255; TWO[2] = 170; TWO[3] = 255 * k; return TWO; }
+      if (m === M_DOME || m === M_DE) { TWO[0] = 255; TWO[1] = 230; TWO[2] = 170; TWO[3] = 150 * k; return TWO; }
+      return null;
+    }
+    const front = tau / 1.6;
+    if (y > front) return null;
+    hsv(y * 0.9 - tau * (reduced ? 0.08 : 0.35), 0.7, 1, TWO);
+    TWO[3] = 200;
+    if (m === M_TDK || m === M_TCR) { const p = reduced ? 1 : 0.6 + 0.4 * Math.sin(tau * 6); TWO[0] = 255; TWO[1] = 236 * p + 19; TWO[2] = 180 * p; TWO[3] = 240; }
+    return TWO;
+  }
+
+  // Laser fan from the Sphinx (sky cells only), sweeping slowly.
+  function drawLasers(tau) {
+    const env = smooth(tau / 0.4) * smooth((SHOW_DUR - 8.4 - 0.3 - tau) / 0.5);
+    const ox = sphHX, oy = sphHY, NB = 5;
+    for (let k = 0; k < NB; k++) {
+      const ang = -Math.PI / 2 + (k - 2) * 0.3 + (reduced ? 0.06 : 0.28) * Math.sin(tau * (reduced ? 0.5 : 1.6) + k * 0.9);
+      const dx = Math.cos(ang), dy = Math.sin(ang);
+      const g = Math.abs(dx) < 0.25 ? C_PIPE : dx > 0 ? C_FS : C_BS;
+      const col = k % 2 ? [120, 255, 170] : [110, 220, 255];
+      for (let s = 0; s < 600; s++) {
+        const px = ox + dx * s * ch * 0.5, py = oy + dy * s * ch * 0.5;
+        const c = Math.floor(px / cw), r = Math.floor(py / ch);
+        if (r < 0 || c < 0 || c >= cols) break;
+        if (r >= hr) continue;
+        const i = r * cols + c;
+        if (OCC[i]) continue;
+        const b = env * (0.55 + 0.45 * (1 - s / 600)) * (reduced ? 0.7 : 0.85 + 0.15 * Math.sin(skyT * 20 + s));
+        put(i, col[0] * b, col[1] * b, col[2] * b, g, 230 * b);
+      }
+    }
+  }
+
+  // The Sphinx "speaks": arcs of light ripple out from its face.
+  function drawRings(tau) {
+    for (let k = 0; k < 3; k++) {
+      const tt = tau - 0.5 - k * 0.7;
+      if (tt <= 0) continue;
+      const rad = tt * M * 0.16, a = Math.max(0, 1 - tt / 2.6);
+      if (a <= 0) continue;
+      for (let s = -10; s <= 10; s++) {
+        const ang = s / 10 * 0.9;
+        const px = sphHX + Math.cos(ang) * rad, py = sphHY + Math.sin(ang) * rad * 0.8;
+        const c = Math.floor(px / cw), r = Math.floor(py / ch);
+        if (r < 0 || r >= rN || c < 0 || c >= cols) continue;
+        const i = r * cols + c;
+        if (SS[i] === S_SPHINX && OCC[i]) continue;
+        put(i, 255 * a, 226 * a, 150 * a, Math.abs(s) > 6 ? (s < 0 ? C_FS : C_BS) : C_RP, 200 * a);
+      }
+    }
+  }
+
+  // Sprites: a lantern-bearer and camels, drawn as dark silhouettes against the floodlit stone.
+  const CAMEL = [
+    ['    .-.      ', ' .-\'   \'-./o', '/ \\_____/ \' ', '  /\\    /\\  '],
+    ['    .-.      ', ' .-\'   \'-./o', '/ \\_____/ \' ', '  ||    ||  ']
+  ];
+  const GUIDE = [[' o  ', '/|\\*', ' |  ', '/ \\ '], [' o  ', '/|\\*', ' |  ', ' |  ']];
+  const FLIP = { '/': '\\', '\\': '/', '(': ')', ')': '(', '<': '>', '>': '<' };
+  const flipRow = s => [...s].reverse().map(x => FLIP[x] || x).join('');
+  const SPR = {};
+  [['c0', CAMEL[0]], ['c1', CAMEL[1]], ['g0', GUIDE[0]], ['g1', GUIDE[1]]].forEach(([k, rs]) => {
+    SPR[k + 'R'] = rs; SPR[k + 'L'] = rs.map(flipRow);
+  });
+  function drawSprite(rs, c0, bot) {
+    const hgt = rs.length;
+    for (let q = 0; q < hgt; q++) {
+      const row = rs[q], r = bot - (hgt - 1 - q);
+      if (r < 0 || r >= rN) continue;
+      const a = row.search(/\S/);
+      if (a < 0) continue;
+      const b = row.length - 1 - [...row].reverse().join('').search(/\S/);
+      for (let x = a; x <= b; x++) {
+        const c = c0 + x;
+        if (c < 0 || c >= cols) continue;
+        const i = r * cols + c;
+        if (SS[i] === S_SPHINX && OCC[i]) continue;   // hidden behind the Sphinx
+        const s = row[x];
+        if (s === '*') { put(i, 255, 210, 120, C_STAR, 240); continue; }
+        put(i, 120, 92, 68, s === ' ' ? 0 : ci(s), 0);
+      }
+    }
+  }
+  function drawCaravan(cv) {
+    const side = cv.dir > 0 ? 'R' : 'L', fr = Math.floor(skyT * (reduced ? 1.5 : 3.2));
+    for (let j = 0; j <= cv.n; j++) {
+      const x = cv.x - cv.dir * j * CARAVAN_SP * cw, cc = Math.round(x / cw);
+      if (cc < -14 || cc > cols + 14) continue;
+      const crest = C1[clamp(cc, 0, cols - 1)];
+      const rs = SPR[(j === 0 ? 'g' : 'c') + ((fr + j) & 1) + side];
+      drawSprite(rs, cc - (rs[0].length >> 1), crest - 1);
+    }
+  }
+
+  // A felucca: lateen sail on a mast, hull, a lantern; its reflection wobbles below.
+  function drawBoat(b, alpha) {
+    if (alpha <= 0.01) return;
+    const fa0 = fa; fa = alpha;
+    const base = b.row, hS = b.h, mc = Math.round(b.x / cw), d = b.dir;
+    const wOf = j => Math.max(1, Math.round((j + 1) * 1.25));
+    const wMax = wOf(hS - 1);
+    const rf = (r, c, R, G, B, g, e) => {     // reflected cell
+      const rr = base + (base - r);
+      if (rr <= base || rr >= rows || rr <= rN) return;
+      const cc = c + Math.round(Math.sin(skyT * 2.2 + rr * 1.3) * 0.7);
+      if (cc < 0 || cc >= cols || hash2(rr * 31 + cc, (skyT * 6) | 0) < 0.35) return;
+      const k = 0.32 * Math.max(0, 1 - (rr - base) / (hS * 0.9));
+      if (k > 0.02) put(rr * cols + cc, R * k, G * k, B * k, g === C_PIPE ? C_COLON : C_DASH, e * k);
+    };
+    for (let j = 0; j < hS; j++) {
+      const r = base - hS + j, w = wOf(j);
+      for (let q = 0; q <= w; q++) {
+        const c = mc - d * q;
+        if (c < 0 || c >= cols || r < 0) continue;
+        let g, R, G, B, e;
+        if (q === 0) { g = C_PIPE; R = 150; G = 110; B = 70; e = 0; }
+        else if (q === w) { g = d > 0 ? C_FS : C_BS; R = 245; G = 240; B = 228; e = 70; }
+        else if (j === hS - 1) { g = C_US; R = 220; G = 212; B = 196; e = 40; }
+        else { g = (q + j) % 3 ? C_COLON : C_DOT; R = 228; G = 224; B = 214; e = 50; }
+        put(r * cols + c, R, G, B, g, e);
+        rf(r, c, R, G, B, g, e);
+      }
+    }
+    // Hull.
+    for (let q = -3; q <= wMax + 1; q++) {
+      const c = mc - d * q;
+      if (c < 0 || c >= cols) continue;
+      const end = q === -3 ? (d > 0 ? C_FS : C_BS) : q === wMax + 1 ? (d > 0 ? C_BS : C_FS) : C_US;
+      put(base * cols + c, 150, 98, 58, end, 0);
+    }
+    // Lantern on the mast and its long warm streak on the water.
+    const lc = mc + d, lr = base - 1;
+    if (lc >= 0 && lc < cols) {
+      const fl = reduced ? 1 : 0.85 + 0.15 * Math.sin(skyT * 9 + b.born);
+      put(lr * cols + lc, 255, 200 * fl, 110 * fl, C_O, 255 * fl);
+      for (let q = 1; q < hS + 2; q++) {
+        const rr = base + q;
+        if (rr >= rows) break;
+        const cc = lc + Math.round(Math.sin(skyT * 2.5 + q) * 0.6);
+        if (cc < 0 || cc >= cols || hash2(rr + lc, (skyT * 7) | 0) < 0.3) continue;
+        const k = 0.75 * (1 - q / (hS + 2));
+        put(rr * cols + cc, 255 * k, 180 * k, 90 * k, q & 1 ? C_PIPE : C_COLON, 160 * k);
+      }
+    }
+    // Wake behind a felucca that is sailing by.
+    if (!b.amb) {
+      for (let q = 0; q < 10; q++) {
+        const c = mc - d * (wMax + 3 + q), rr = base + (q > 5 ? 1 : 0);
+        if (c < 0 || c >= cols || rr >= rows) continue;
+        const k = 0.6 * (1 - q / 10);
+        put(rr * cols + c, 160 * k + 30, 200 * k + 30, 230 * k + 40, (q + Math.floor(skyT * 8)) % 2 ? C_TILDE : C_DASH, 60 * k);
+      }
+    }
+    fa = fa0;
+  }
+
+  // Quantise, bucket by colour and draw; fill the backing and glow images.
+  function drawCells() {
+    const bd = bImg.data, ed = eImg.data;
+    counts.fill(0);
+    let nl = 0;
+    for (let i = 0; i < n; i++) {
+      const R = CR[i], G = CG[i], B = CB[i];
+      const r = Math.min(255, R * 1.15 + 6), g = Math.min(255, G * 1.15 + 6), b = Math.min(255, B * 1.15 + 6);
+      const key = ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3);
+      keys[i] = key; counts[key]++;
+      if (CK[i]) nl++;
+      const j = i * 4;
+      const bk = BKV[i];
+      if (bk < 0) { bd[j] = R * 0.32; bd[j + 1] = G * 0.32; bd[j + 2] = B * 0.32; }
+      else { bd[j] = 9 * bk * fa; bd[j + 1] = 7.5 * bk * fa; bd[j + 2] = 6 * bk * fa; }
+      bd[j + 3] = 255;
+      const e = EMI[i];
+      if (e) { const s = e / 255; ed[j] = Math.min(255, R) * s; ed[j + 1] = Math.min(255, G) * s; ed[j + 2] = Math.min(255, B) * s; ed[j + 3] = 255; }
+      else { ed[j] = 0; ed[j + 1] = 0; ed[j + 2] = 0; ed[j + 3] = 0; }
+    }
+    letters = nl;
+    bctx.putImageData(bImg, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(back, 0, 0, cols * cw, rows * ch);
+
+    let acc = 0;
+    for (let c = 0; c < NKEY; c++) { const v = counts[c]; counts[c] = acc; acc += v; }
+    for (let i = 0; i < n; i++) order[counts[keys[i]]++] = i;
+    ctx.textBaseline = 'top';
+    ctx.font = cellFont;
+    let cur = -1;
+    for (let k = 0; k < n; k++) {
+      const i = order[k], ky = keys[i];
+      if (CK[i] === 0) continue;
+      if (ky !== cur) { cur = ky; ctx.fillStyle = colStr(ky); }
+      const row = (i / cols) | 0;
+      ctx.fillText(CH[CK[i]], (i - row * cols) * cw, row * ch);
+    }
+
+    // Bloom from emissive cells, blurred at grid resolution.
+    ectx.putImageData(eImg, 0, 0);
+    gctx.globalCompositeOperation = 'copy';
+    gctx.filter = 'blur(1.4px)';
+    gctx.drawImage(emis, 0, 0);
+    gctx.filter = 'none';
+    hctx.globalCompositeOperation = 'copy';
+    hctx.filter = 'blur(3.5px)';
+    hctx.drawImage(emis, 0, 0);
+    hctx.filter = 'none';
+    ctx.save();
+    ctx.imageSmoothingEnabled = true;
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 0.55;
+    ctx.drawImage(glow, 0, 0, cols * cw, rows * ch);
+    ctx.globalAlpha = 0.5;
+    ctx.drawImage(halo, 0, 0, cols * cw, rows * ch);
+    ctx.restore();
+  }
+
+  // "CAIRO & THE PYRAMIDS" typed in gold on the river, with a blinking cursor while it types.
+  let typed = 0;
+  function drawTitle() {
+    typed = t < T.TITLE ? 0 : Math.min(TITLE.length, Math.floor((t - T.TITLE) * T.TITLE_CPS) + 1);
+    if (!typed || fa <= 0.01) return;
+    const tfs = clamp(Math.round(Math.min(W * 0.05, H * 0.05)), 16, 38), step = tfs * 0.8;
+    const x0 = (W - TITLE.length * step) / 2, y = yN + (H - yN) * 0.62;
+    ctx.save();
+    ctx.globalAlpha = fa;
+    ctx.font = `700 ${tfs}px ${MONO}`;
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(255, 176, 60, 0.9)';
+    ctx.shadowBlur = tfs * 0.6;
+    ctx.fillStyle = '#ffd47a';
+    for (let k = 0; k < typed; k++) ctx.fillText(TITLE[k], x0 + k * step, y);
+    const typing = t < T.TITLE + TITLE.length / T.TITLE_CPS + 1.2;
+    if (typing && !reduced && (skyT * 2.4) % 1 < 0.6) ctx.fillRect(x0 + typed * step + step * 0.1, y - tfs * 0.45, step * 0.6, tfs * 0.9);
+    ctx.restore();
+  }
+
+  function render() {
+    ctx.fillStyle = '#05050d';
+    ctx.fillRect(0, 0, W, H);
+    buildScene();
+    drawCells();
+    drawTitle();
+  }
+
+  // ---------- Loop, HUD, controls ----------
+  let paused = false, last = performance.now();
+  let frames = 0, fpsT = last, fps = 0, hudT = 0;
+  const music = (fn, ...a) => window.AsciiAudio && AsciiAudio[fn](...a);
+
+  // Hint/HUD language: ?lang= wins, then saved site preference, then browser.
+  let pref = null;
+  try { pref = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (!pref) { try { pref = localStorage.getItem('lang'); } catch (e) {} }
+  if (!pref) pref = navigator.language || 'en';
+  const zh = String(pref).toLowerCase().startsWith('zh');
+  document.documentElement.lang = zh ? 'zh-Hant' : 'en';
+
+  const PHASES = [
+    ['sky', '夜空', T.SKY], ['desert', '沙漠', T.DESERT], ['cairo', '開羅', T.CITY], ['pyramids', '金字塔', T.PYR],
+    ['sphinx', '獅身人面像', T.SPHINX], ['caravan', '駝隊', T.LIFE], ['lights', '點燈', T.LIGHTS], ['reflect', '倒影', T.REFL],
+    ['title', '標題', T.TITLE], ['hold', '停留', T.HOLD], ['fade', '淡出', T.FADE]
+  ];
+  function phaseName() {
+    if (skyT - showT0 < SHOW_DUR) return zh ? '聲光秀' : 'light show';
+    if (skyT - towT0 < TOW_DUR) return zh ? '開羅塔燈光' : 'tower lights';
+    if (skyT - sphT0 < SPH_DUR) return zh ? '獅身像甦醒' : 'sphinx wakes';
+    let p = PHASES[0];
+    for (const q of PHASES) if (t >= q[2]) p = q;
+    return zh ? p[1] : p[0];
+  }
+  function updateHud(now) {
+    const tail = paused ? (zh ? '暫停' : 'paused') : `${fps} fps`;
+    const pct = (built * 100).toFixed(1) + '%';
+    hudEl.textContent = W < 640 ? `${phaseName()}  ${pct}  ${letters.toLocaleString('en-US')}  ${tail}`
+      : zh ? `階段 ${phaseName()}  完成 ${pct}  字元 ${letters.toLocaleString('en-US')}  ${tail}`
+           : `phase ${phaseName()}  built ${pct}  letters ${letters.toLocaleString('en-US')}  ${tail}`;
+    hudT = now;
+  }
+
+  function frame(now) {
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); // no jumps after a hidden tab
+    last = now;
+    if (needResize) resize();
+    if (!paused) {
+      const t1 = t, s1 = skyT, typed1 = typed;
+      skyT += dt;
+      if (!reduced) {
+        // Linger on the finished city: the scene clock waits just before the fade for one more music loop.
+        if (t < T.FADE - 0.3) linger = 0;
+        if (linger < LINGER && t + dt >= T.FADE - 0.3) { t = Math.max(t, T.FADE - 0.3); linger += dt; } else t += dt;
+        if (t >= T.END) { t = 0; clearAmbient(); music('restart'); }
+        if (t1 < T.LIFE && t >= T.LIFE) spawnAmbient();
+      }
+      updateEffects(dt);
+      if (now - lastMove > 2500) {
+        // Idle: the Milky Way's glow drifts slowly along the band.
+        const a = 0.5 + 0.3 * Math.sin(skyT * 0.07);
+        gXTo = -W * 0.05 + a * W * 1.1; gYTo = H * 0.62 - a * H * 0.62; gKTo = 0.35; parTo = 0;
+      }
+      render(); dirty = false; frames++;
+      soundCues(t1, t, s1, skyT, typed1);
+    } else if (dirty) { render(); dirty = false; frames++; }
+    const k = Math.min(1, dt * 2);
+    gX += (gXTo - gX) * k; gY += (gYTo - gY) * k; gK += (gKTo - gK) * k;
+    if (Math.abs(parTo - par) > 0.002) { par += (parTo - par) * Math.min(1, dt * 1.8); dirty = true; }
+    if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
+    if (now - hudT >= 250) updateHud(now);
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- Sound cues ----------
+  const crossed = (a, b, x) => a < x && x <= b;
+  function soundCues(a, b, sa, sb, typed1) {
+    if (!window.AsciiAudio) return;
+    if (crossed(a, b, T.CITY)) music('event', 'build', { g: 0 });
+    if (crossed(a, b, T.TOWER)) music('event', 'build', { g: 1 });
+    PYR_AT.forEach(([o], k) => { if (crossed(a, b, T.PYR + o)) music('event', 'pyramid', { k }); });
+    if (crossed(a, b, T.SPHINX)) music('event', 'sphinxUp');
+    if (crossed(a, b, T.LIGHTS)) music('event', 'lights');
+    if (typed > typed1 && b > a && TITLE[typed - 1] !== ' ') music('event', 'type', { last: typed === TITLE.length });
+    if (crossed(a, b, T.FADE)) music('event', 'fade');
+    // Show stages.
+    const l0 = sa - showT0, l1 = sb - showT0;
+    [2.8, 5.6, 8.4].forEach((s, k) => { if (crossed(l0, l1, s)) music('event', 'wash', { k: k + 1 }); });
+    if (l1 > 5.6 && l1 < 8.4 && Math.floor((l0 - 5.6) / BEAT) !== Math.floor((l1 - 5.6) / BEAT)) music('event', 'pulse');
+    if (crossed(l0, l1, 8.4)) music('event', 'laser');
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
+  function replay() {
+    t = T_START; linger = 0; clearEffects(); if (reduced) spawnAmbient();
+    paused = false; dirty = true; music('resume'); music('restart');
+  }
+
+  // Which structure is under (or right next to) the screen point, if it has appeared?
+  function structAt(x, y) {
+    const c0 = Math.floor(x / cw), r0 = Math.floor(y / ch);
+    for (const [dc, dr] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1]]) {
+      const c = c0 + dc, r = r0 + dr;
+      if (c < 0 || c >= cols || r < 0 || r >= rows) continue;
+      const i = r * cols + c;
+      if (SS[i] && t >= ST[i]) return SS[i];
+    }
+    return 0;
+  }
+  function tapAt(x, y) {
+    const s = structAt(x, y);
+    if (s === S_KHUFU || s === S_KHAFRE || s === S_MENK) {
+      showT0 = skyT; music('event', 'show');
+    } else if (s === S_SPHINX) {
+      sphT0 = skyT; music('event', 'sphinx');
+    } else if ((s === S_TOWER || s === S_MOSQUE || s === S_CITY) && y < yH) {
+      towT0 = skyT; music('event', 'tower');
+    } else if (y > yN + ch * 0.5) sailBy(x, y);
+    else if (y > yH) callCaravan(x);
+    else shootingStar(x, y);
+    dirty = true;
+  }
+
+  addEventListener('resize', () => { needResize = true; });
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return; // leave Cmd/Ctrl+R alone
+    if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
+    else if (e.key === 'r' || e.key === 'R') replay();
+  });
+  // A press only counts as a tap if it moved less than 8 px; moving (or dragging a finger) steers the
+  // parallax and the Milky Way's glow. Two quick taps = pause / resume.
+  let downX = 0, downY = 0, pressed = false, dragged = false, tapTimer = 0, tapResumed = false;
+  const steer = e => {
+    if (!reduced) parTo = clamp(e.clientX / W * 2 - 1, -1, 1);
+    gXTo = e.clientX; gYTo = e.clientY; gKTo = 1; lastMove = performance.now();
+  };
+  canvas.addEventListener('pointerdown', e => {
+    pressed = true; dragged = false; downX = e.clientX; downY = e.clientY;
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (e.pointerType === 'mouse' || pressed) steer(e);
+    if (pressed && Math.hypot(e.clientX - downX, e.clientY - downY) >= 8) dragged = true;
+  });
+  const ptrOff = () => { pressed = false; };
+  canvas.addEventListener('pointercancel', ptrOff);
+  canvas.addEventListener('pointerup', e => {
+    const wasTap = pressed && !dragged;
+    pressed = false;
+    if (e.button > 0 || !wasTap) return;
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; if (!tapResumed) togglePause(); return; }
+    tapTimer = setTimeout(() => { tapTimer = 0; }, 280);
+    tapResumed = paused;
+    if (paused) { togglePause(); return; }   // a tap on the paused scene just resumes it
+    tapAt(e.clientX, e.clientY);
+  });
+
+  // Touch screens have no keyboard, and the full hint would not fit on a phone.
+  const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  hintEl.textContent = touch ? (zh ? '點金字塔 · 獅身像 · 開羅 · 沙漠 · 尼羅河 · 天空 · 雙擊暫停' : 'tap pyramids · Sphinx · Cairo · desert · Nile · sky · double-tap pause')
+                             : (zh ? '點金字塔看聲光秀 · 點獅身像喚醒它 · 點開羅點亮開羅塔 · 點沙漠招來駝隊 · 點尼羅河駛來帆船 · 點天空看流星 · 雙擊/空白鍵 暫停 · R 重播 · M 音樂'
+                                   : 'click a pyramid: light show · the Sphinx · Cairo: tower lights · desert: caravan · Nile: felucca · sky: shooting star · Space pause · R replay · M music');
+
+  // Score: an original Egyptian-flavoured instrumental in maqam Bayati on D (D, E half-flat, F, G, A,
+  // Bb, C) at 100 bpm, 40 beats = one 24 s scene loop, restarted with every loop. The E is tuned a real
+  // quarter tone flat. A D-A drone; a ney (breathy sine with vibrato) opens with a short taqsim; a
+  // qanun ripples up the mode; then a darbuka plays baladi (DUM DUM . tek DUM . tek .) with a riq's
+  // jingles, and a doubled oud pluck carries the tune, borrowing Hijaz (Eb, F#) for two bars before
+  // coming home. Effects follow the picture: qanun runs as Cairo resolves, a frame-drum hit for each
+  // pyramid, chords and drum rolls for the light show, laser zaps, camel bells, water for feluccas.
+  if (window.AsciiAudio) AsciiAudio.init({
+    bpm: 40 * 60 / T.END, master: 0.88, reverb: 0.32, reverbTime: 3.4,
+    build(a) {
+      const N = AsciiAudio.notes, F = AsciiAudio.freq, LOOP = 40;
+      const QT = Math.pow(2, -0.5 / 12);                       // a quarter tone down
+      const hz = nm => /^E-?\d$/.test(nm) ? F(nm) * QT : F(nm); // Bayati's E half-flat; 'Eb' stays Hijaz's Eb
+      const barOf = beat => Math.floor((beat % LOOP) / 4);
+      const DRONE = [['D2', 'A2'], ['D2', 'A2'], ['D2', 'A2'], ['D2', 'A2'], ['G2', 'D3'], ['D2', 'A2'], ['D2', 'A2'], ['C2', 'G2'], ['G2', 'D3'], ['D2', 'A2']];
+      const ROOT = ['D2', 'D2', 'D2', 'D2', 'G2', 'D2', 'D2', 'C2', 'G2', 'D2'];
+
+      a.every(4, (tt, s) => {
+        const bar = s % 10;
+        a.pad(tt, DRONE[bar], a.beats(4), { vel: 0.3, attack: bar === 0 ? 2 : 0.8, release: 1.6, cutoff: 520 });
+        a.pad(tt, [F(DRONE[bar][1]) * 2], a.beats(4), { vel: 0.1, attack: 1.2, release: 1.6, cutoff: 1300 });
+      });
+
+      // Darbuka (baladi) with riq from bar 2; a whisper of riq in bar 1; one dum to close the loop.
+      const dum = (tt, v) => { a.kick(tt, v); a.noise(tt, { dur: 0.32, filter: 'lowpass', freq: 220, vel: v * 0.5, wet: 0.12 }); };
+      const tek = (tt, v, pan) => a.noise(tt, { dur: 0.055, filter: 'bandpass', freq: 3600, q: 1.6, attack: 0.002, vel: v, pan: pan || 0.15, wet: 0.12 });
+      a.every(0.5, (tt, s) => {
+        const beat = (s * 0.5) % LOOP, bar = barOf(beat), e8 = s % 8;
+        if (bar === 1) { if (e8 % 2) a.jingle(tt, 0.05, { pan: 0.3 }); return; }
+        if (bar < 2) return;
+        if (bar === 9) { if (e8 === 0) { dum(tt, 0.4); a.bass(tt, 'D2', a.beats(3), { vel: 0.4 }); } return; }
+        if (e8 === 0 || e8 === 1 || e8 === 4) {
+          dum(tt, e8 === 1 ? 0.3 : 0.42);
+          if (e8 !== 1) a.bass(tt, ROOT[bar], a.beats(e8 ? 1.2 : 0.9), { vel: 0.4 });
+        }
+        if (e8 === 3 || e8 === 6) tek(tt, 0.2);
+        if (e8 === 7 || e8 === 2) tek(tt, 0.07, -0.2);
+        if (e8 % 2 === 1) a.jingle(tt, 0.07, { pan: 0.35 });
+        if ((bar === 5 || bar === 8) && e8 >= 6) tek(tt + a.beats(0.25), 0.12, -0.1);   // roll into the next phrase
+      });
+
+      // Oud: a doubled, slightly detuned pluck with an octave ghost; long notes get a tremolo (risha).
+      const oud = (tt, note, dur, vel) => {
+        const f = hz(note), reps = dur > a.beats(1.4) ? Math.floor(dur / a.beats(0.25)) : 1;
+        for (let k = 0; k < reps; k++) {
+          const u = tt + k * a.beats(0.25), v = vel * (k ? 0.5 * (1 - k / (reps + 2)) : 1);
+          a.pluck(u, f, Math.min(dur, 0.9), { vel: v, pan: -0.2, wet: 0.32 });
+          a.pluck(u + 0.011, f * 1.003, Math.min(dur, 0.8), { vel: v * 0.55, pan: 0.2, wet: 0.32 });
+          if (!k) a.pluck(u, f / 2, 0.5, { type: 'triangle', vel: v * 0.35, wet: 0.3 });
+        }
+      };
+      const tune = N('D4:1 E4:.5 F4 G4:1 F4:.5 E4 | D4:1.5 E4:.5 F4:1 E4:.5 D4 | ' +
+                     'A4:1 Bb4:.5 A4 G4:1 F4:.5 G4 | A4:2 G4:.5 F4 E4 F4 | ' +
+                     'G4:1 F#4:.5 Eb4 D4:1 Eb4:.5 F#4 | G4:.5 A4 Bb4 C5 Bb4:1 A4:1 | ' +
+                     'G4:.5 F4 E4 F4 G4:1 E4:.5 F4 | D4:3 r:1');
+      a.part(tune, (tt, e) => oud(tt, e.note, e.sec, 0.58), { length: LOOP, offset: 8 });
+
+      // Ney: breathy sine with vibrato; a short taqsim to open, then it doubles the high phrases.
+      const ney = (tt, note, dur, vel) => {
+        const f = hz(note);
+        a.lead(tt, f, dur, { type: 'sine', vel, cutoff: 2600, wet: 0.5 });
+        a.noise(tt, { dur: dur * 0.9, filter: 'bandpass', freq: f * 2, q: 3, attack: 0.08, vel: vel * 0.12, wet: 0.45 });
+      };
+      const taqsim = N('A4:2 Bb4:.5 A4 G4:1 | A4:3 r:1');
+      a.part(taqsim, (tt, e) => ney(tt, e.note, e.sec * 0.95, 0.75), { length: LOOP, offset: 0 });
+      const high = N('A5:2 G5:.5 F5 E5 F5 | G5:1 F#5:.5 Eb5 D5:2');
+      a.part(high, (tt, e) => ney(tt, e.note, e.sec * 0.95, 0.42), { length: LOOP, offset: 20 });
+      a.part(N('D5:3'), (tt, e) => ney(tt, e.note, e.sec, 0.5), { length: LOOP, offset: 36 });
+
+      // Qanun: quick plucked runs through the mode.
+      const SC = ['D4', 'E4', 'F4', 'G4', 'A4', 'Bb4', 'C5', 'D5', 'E5', 'F5', 'G5', 'A5'];
+      const HJ = ['D4', 'Eb4', 'F#4', 'G4', 'A4', 'Bb4', 'C5', 'D5', 'Eb5', 'F#5', 'G5', 'A5'];
+      const qanun = (tt, from, to, step, vel, sc, bus) => {
+        const dir = to >= from ? 1 : -1;
+        for (let j = from, k = 0; dir > 0 ? j <= to : j >= to; j += dir, k++) {
+          a.pluck(tt + k * step, hz((sc || SC)[j]), 0.55, { type: 'triangle', vel, pan: -0.5 + j / 11, wet: 0.45, bus });
+          a.pluck(tt + k * step, hz((sc || SC)[j]) * 2, 0.3, { vel: vel * 0.25, pan: -0.5 + j / 11, wet: 0.45, bus });
+        }
+      };
+      a.every(LOOP, tt => qanun(tt, 0, 11, a.beats(0.25), 0.55), { offset: 4 });
+      a.every(LOOP, tt => qanun(tt, 4, 11, a.beats(0.25), 0.4, HJ), { offset: 26 });
+      a.every(LOOP, tt => qanun(tt, 11, 0, a.beats(1 / 6), 0.45), { offset: 37 });
+
+      // Effects in sync with the picture.
+      a.on('build', (a, d, t) => qanun(t, d.g ? 4 : 0, d.g ? 11 : 7, 0.06, 0.4, SC, 'sfx'), { gap: 0.3 });
+      a.on('pyramid', (a, d, t) => {
+        a.thud(t, { freq: 90 - (d.k || 0) * 10, vel: 0.4 });
+        a.sweep(t, 2.2, { from: 160, to: 1800, q: 2.5, attack: 1.6, vel: 0.07, bus: 'sfx', wet: 0.5 });
+      }, { gap: 0.3 });
+      a.on('sphinxUp', (a, d, t) => a.bell(t, 'D4', 3, { vel: 0.2, bus: 'sfx', wet: 0.6 }));
+      a.on('lights', (a, d, t) => { a.chime(t, 'D5', 3.5, { vel: 0.2 }); a.sweep(t, 2.5, { from: 200, to: 2400, q: 1.5, attack: 1.8, vel: 0.06, bus: 'sfx', wet: 0.5 }); });
+      a.on('type', (a, d, t) => d.last ? a.chime(t, 'D6', 4, { vel: 0.2 }) : a.tick(t, { vel: 0.11 }), { gap: 0.05 });
+      a.on('fade', (a, d, t) => a.sweep(t, 2, { from: 2400, to: 320, q: 1.2, attack: 0.7, vel: 0.1, bus: 'sfx', wet: 0.6 }));
+      // Sound-and-light show: an opening drum and run, a chord stab per colour wash, beats, lasers.
+      a.on('show', (a, d, t) => {
+        a.boom(t, { vel: 0.3 });
+        qanun(t + 0.05, 0, 11, 0.05, 0.45, SC, 'sfx');
+        a.pad(t, ['D3', 'A3', 'D4'], 2.6, { vel: 0.3, attack: 0.4, release: 1.2, cutoff: 1400, bus: 'sfx' });
+      }, { gap: 1 });
+      const WASH = [['G2', 'D3', 'G3', 'Bb3'], ['D3', 'F#3', 'A3', 'C4'], ['D3', 'A3', 'D4', 'F4']];
+      a.on('wash', (a, d, t) => {
+        const k = clamp((d.k || 1) - 1, 0, 2);
+        a.kick(t, 0.4, { bus: 'sfx' });
+        a.pad(t, WASH[k], 2.6, { vel: 0.28, attack: 0.08, release: 1.4, cutoff: 1600, bus: 'sfx' });
+        for (let j = 0; j < 6; j++) tek(t + 0.4 + j * 0.06, 0.06 + j * 0.02);
+      }, { gap: 0.5 });
+      a.on('pulse', (a, d, t) => { a.thud(t, { freq: 120, vel: 0.28 }); a.jingle(t, 0.1, { bus: 'sfx' }); }, { gap: 0.25 });
+      a.on('laser', (a, d, t) => {
+        for (let k = 0; k < 5; k++) a.sweep(t + k * 0.12, 0.5, { from: 5200, to: 900, q: 6, attack: 0.02, vel: 0.05, pan: -0.6 + k * 0.3, bus: 'sfx', wet: 0.4 });
+        a.chime(t + 0.4, 'A5', 3, { vel: 0.18 });
+      }, { gap: 1 });
+      a.on('sphinx', (a, d, t) => {
+        a.pad(t, ['D2', 'A2'], 3, { vel: 0.3, attack: 0.6, release: 1.5, cutoff: 400, bus: 'sfx' });
+        a.chime(t + 0.2, 'A5', 3.5, { vel: 0.2 });
+        a.bell(t + 0.9, 'D6', 2.5, { vel: 0.1, bus: 'sfx', wet: 0.6 });
+      }, { gap: 1 });
+      a.on('tower', (a, d, t) => { qanun(t, 0, 11, 0.07, 0.45, SC, 'sfx'); a.sparkle(t + 0.9, { count: 4, vel: 0.2, notes: ['D6', 'F6', 'A6', 'D7'] }); }, { gap: 0.8 });
+      a.on('felucca', (a, d, t) => {
+        a.noise(t, { dur: 2.4, filter: 'lowpass', freq: 300, freqEnd: 900, attack: 0.9, vel: 0.12, pan: d.pan || 0, bus: 'sfx', wet: 0.4 });
+        ['A3', 'Bb3', 'A3', 'G3', 'A3'].forEach((nt, k) => oud(t + 0.3 + k * 0.22, nt, k === 4 ? 0.6 : 0.3, 0.4));
+      }, { gap: 1 });
+      a.on('caravan', (a, d, t) => { for (let k = 0; k < 4; k++) a.bell(t + k * 0.3, k % 2 ? 'A5' : 'D6', 1.2, { vel: 0.08, pan: d.pan || 0, bus: 'sfx', wet: 0.4 }); }, { gap: 1 });
+      a.on('cbell', (a, d, t) => a.bell(t, Math.random() < 0.5 ? 'A5' : 'G5', 0.9, { vel: 0.035, pan: d.pan || 0, bus: 'sfx', wet: 0.4 }), { gap: 0.25 });
+      a.on('shoot', (a, d, t) => { a.sweep(t, 0.9, { from: 5200, to: 1400, q: 3, attack: 0.1, vel: 0.05, pan: d.pan || 0, bus: 'sfx', wet: 0.5 }); a.ding(t + 0.1, 'A6', { vel: 0.07 }); }, { gap: 0.6 });
+    }
+  });
+
+  if (reduced) { resize(); spawnAmbient(); }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

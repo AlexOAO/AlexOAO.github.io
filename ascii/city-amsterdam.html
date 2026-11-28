@@ -1,0 +1,1513 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ASCII Amsterdam Canals | Alex Li (李翔緯)</title>
+  <meta name="description" content="Amsterdam at night drawn entirely with coloured ASCII characters: scrambled letters resolve into a row of narrow canal houses with step, neck and bell gables, a windmill and the Westerkerk-style spire, arched brick bridges strung with light bulbs that reflect as perfect ovals, elms, bicycles and houseboats along the canal. Tap a bridge, a house, the street, the canal, the spire or the sky. Vanilla JS on a single canvas.">
+  <meta name="theme-color" content="#060814">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;600;800&display=swap">
+  <style>
+    :root {
+      --bg: #0b1120;
+      --sky: #060814;
+      --text: #eef0fb;
+      --muted: #aab3d6;
+      --accent: #fbbf24;
+      --mono: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--sky);
+      color: var(--text);
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    canvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100svh;
+      display: block;
+      touch-action: none; /* taps light things up, drags move the parallax and ripple the canal */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .back {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(251, 191, 36, 0.45);
+      background: rgba(60, 40, 16, 0.4);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .back:hover, .back:focus-visible {
+      background: rgba(251, 191, 36, 0.24);
+      border-color: var(--accent);
+      outline: none;
+    }
+    .hud, .hint {
+      position: fixed;
+      z-index: 1;
+      bottom: 12px;
+      color: var(--muted);
+      opacity: 0.8;
+      font: 11px/1.4 var(--mono);
+      white-space: pre;
+      pointer-events: none;
+      max-width: calc(100% - 24px);
+      overflow: hidden;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    }
+    .hud { left: 12px; }
+    .hint {
+      right: 12px;
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    @media (max-width: 640px) {
+      .hud, .hint { font-size: 10px; }
+      .hint { bottom: 30px; } /* stack above the HUD on narrow screens */
+    }
+  </style>
+</head>
+<body>
+  <h1 class="sr-only">ASCII Amsterdam Canals</h1>
+  <a class="back" href="./">← ASCII</a>
+  <canvas id="c" role="img" aria-label="Animated night view of an Amsterdam canal drawn with coloured ASCII characters: tall narrow canal houses with gables and warm windows, a windmill and a church spire behind, arched brick bridges outlined with strings of light bulbs mirrored as ovals in the water, elm trees, parked bicycles and houseboats, then the title Amsterdam Canals; tapping a bridge runs its bulbs in a chase, a house lights up and shows a cat, the street sends a cyclist, the canal a tour boat, the spire rings its carillon and the sky a shooting star"></canvas>
+  <div class="hud" id="hud" aria-hidden="true"></div>
+  <div class="hint" id="hint"></div>
+
+<script src="ascii-audio.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  // ---------- Timeline (seconds of scene time, one 24 s loop) ----------
+  const T = {
+    MOON: 0.3, FAR: 0.9,                 // distant houses and the windmill
+    HOUSES: 1.8, HOUSES_DUR: 3.2,        // canal houses resolve left to right, each bottom -> gable
+    SPIRE: 4.8, SPIRE_DUR: 2.6,          // church tower bottom -> crown
+    BRIDGE: 7.4,                         // brick bridges
+    QUAY: 8.6,                           // elms, lamps, bicycles, houseboats
+    LIGHTS: 10.2,                        // windows switch on one by one
+    BULBS: 11.6,                         // bridge bulb strings run out from the crown
+    REFL: 13.0,                          // reflections settle into ovals
+    TITLE: 15.4,                         // "AMSTERDAM", then " CANALS"
+    FADE: 21.0, FADE_DUR: 2.4, END: 24.0
+  };
+  const PHASES = [[0, 'sky'], [T.FAR, 'windmill'], [T.HOUSES, 'houses'], [T.SPIRE, 'spire'], [T.BRIDGE, 'bridges'],
+    [T.QUAY, 'quay'], [T.LIGHTS, 'lights'], [T.BULBS, 'bulbs'], [T.REFL, 'reflections'], [T.TITLE, 'title'], [17.8, 'night'], [T.FADE, 'fade']];
+  const TITLE_A = 'AMSTERDAM', TITLE_B = ' CANALS';
+  const TA_STEP = 0.13, TB_START = T.TITLE + 1.4, TB_STEP = 0.12;
+
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T_START = reduced ? 18.5 : 0;   // reduced motion: open (and stay) on the finished night view
+  const RES = 0.45;                     // seconds a cell spends as scrambled glyphs before it resolves
+  const CHASE = 3.0;                    // seconds of a tapped bulb chase along a bridge
+  const HOUSE_DUR = 9;                  // seconds a tapped house stays lit (and its cat stays)
+  const CARIL = 3.2;                    // seconds of the carillon light show
+  const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function hash2(a, b) {
+    let h = Math.imul(a ^ Math.imul(b, 0x9E3779B1), 0x85EBCA6B);
+    h ^= h >>> 13; h = Math.imul(h, 0xC2B2AE35); h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
+  }
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+  function vnoise(x, y) {
+    const xi = Math.floor(x), yi = Math.floor(y);
+    let fx = x - xi, fy = y - yi;
+    fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+    const a = hash2(xi, yi), b = hash2(xi + 1, yi), c = hash2(xi, yi + 1), d = hash2(xi + 1, yi + 1);
+    return a + (b - a) * fx + (c - a + (a - b - c + d) * fx) * fy;
+  }
+
+  // ---------- Characters & colours ----------
+  const CH = [];
+  const ci = s => { let i = CH.indexOf(s); if (i < 0) { CH.push(s); i = CH.length - 1; } return i; };
+  const C_SP = ci(' '); // occluder: hides what is behind, never drawn
+  const C_SL = ci('/'), C_BS = ci('\\'), C_BAR = ci('|'), C_HASH = ci('#'), C_EQ = ci('='), C_US = ci('_'),
+        C_DASH = ci('-'), C_DOT = ci('.'), C_STAR = ci('*'), C_PLUS = ci('+'), C_o = ci('o'), C_O = ci('O'),
+        C_COLON = ci(':'), C_LB = ci('['), C_RB = ci(']'), C_CARET = ci('^'), C_AT = ci('@'), C_TILDE = ci('~'),
+        C_LP = ci('('), C_RP = ci(')'), C_Q = ci("'"), C_COMMA = ci(','), C_T = ci('T'), C_AMP = ci('&'),
+        C_PCT = ci('%'), C_v = ci('v'), C_n = ci('n'), C_u = ci('u'), C_A = ci('A'), C_GT = ci('>'), C_LT = ci('<');
+  const SCR = [...'01#$%&*+=?@<>/\\:;'].map(ci);
+  const STAR_G = [C_DOT, C_DOT, C_Q, C_PLUS, C_DOT, C_STAR];
+  // Mirror image of each glyph, for the reflections.
+  const MIR = { '/': '\\', '\\': '/', '_': '-', '^': 'v', 'v': '^', 'n': 'u', 'u': 'n', "'": ',', ',': "'", 'A': 'v', 'T': '+' };
+  const FLIP = CH.map((s, i) => MIR[s] ? ci(MIR[s]) : i);
+
+  const LEVELS = 16;
+  const PAL = [];
+  const pal = (r, g, b) => { PAL.push([r, g, b]); return PAL.length - 1; };
+  const P_WHITE = pal(255, 255, 255), P_SCR = pal(120, 255, 210), P_STAR = pal(200, 210, 255);
+  const P_MOON = pal(255, 236, 190), P_MOON_D = pal(170, 160, 150);
+  const P_FAR = pal(70, 86, 140), P_FAR_LIT = pal(255, 190, 120);
+  const P_MILL = pal(118, 130, 190), P_MILL_LIT = pal(255, 200, 120);
+  const P_SPB = pal(214, 128, 86), P_SPS = pal(244, 222, 184), P_CROWN = pal(90, 150, 255), P_GOLD = pal(255, 206, 100), P_CLOCK = pal(255, 244, 210);
+  const HOUSE_P = [pal(150, 78, 62), pal(112, 84, 70), pal(84, 104, 120), pal(170, 146, 112), pal(96, 96, 118), pal(132, 70, 76), pal(80, 112, 96)];
+  const P_TRIM = pal(236, 230, 214), P_DOOR = pal(90, 140, 110);
+  const P_WOFF = pal(70, 74, 104);
+  const P_WIN = [pal(255, 200, 110), pal(255, 226, 170), pal(255, 176, 92), pal(250, 238, 206)];
+  const P_CURT = [pal(255, 132, 120), pal(255, 186, 96), pal(240, 120, 170)];
+  const P_CAT = pal(200, 190, 226), P_EYE = pal(170, 255, 120);
+  const P_TREE = pal(64, 120, 84), P_TREE_LIT = pal(160, 170, 96), P_TRUNK = pal(110, 88, 72);
+  const P_LAMP = pal(255, 200, 118), P_POST = pal(100, 108, 140);
+  const P_BIKE = [pal(130, 140, 190), pal(200, 90, 90), pal(110, 170, 210), pal(170, 170, 170)];
+  const P_BRICK = pal(176, 88, 66), P_STONE = pal(176, 166, 154), P_QUAY = pal(130, 76, 64), P_STREET = pal(110, 110, 132);
+  const P_BULB = pal(255, 212, 136), P_BULB_OFF = pal(120, 104, 86);
+  const P_HB = pal(84, 136, 116), P_HB_ROOF = pal(176, 100, 76), P_PORT = pal(255, 214, 140), P_PLANT = pal(240, 120, 150);
+  const P_WATER = pal(56, 88, 160), P_RIP = pal(170, 214, 255);
+  const P_BOAT = pal(220, 230, 250), P_GLASS = pal(130, 196, 236), P_BOAT_WIN = pal(255, 232, 176);
+  const P_RED = pal(255, 64, 64), P_GREEN = pal(90, 255, 140), P_BEAM = pal(255, 236, 170), P_RING = pal(255, 226, 160);
+
+  const NCOLOR = PAL.length * LEVELS;
+  const COLSTR = new Array(NCOLOR);
+  PAL.forEach(([r, g, b], p) => {
+    for (let l = 0; l < LEVELS; l++) {
+      const m = 0.18 + 1.12 * l / (LEVELS - 1), w = Math.max(0, m - 1) * 170;
+      const lift = v => Math.min(255, v * m + w) | 0;
+      COLSTR[p * LEVELS + l] = `rgb(${lift(r)},${lift(g)},${lift(b)})`;
+    }
+  });
+
+  // ---------- Canvas, grid, layout ----------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const hudEl = document.getElementById('hud');
+  const hintEl = document.getElementById('hint');
+
+  let W = 0, H = 0, fs = 10, cw = 6, ch = 11, cols = 0, rows = 0, hr = 0, wl = 0, K = 8, fh = 4;
+  let cellFont = '', bgGrad = null;
+  let stampA, cchar, ccol, ckind, clb, touched, order, nT = 0, stamp = 0;
+  const counts = new Uint32Array(NCOLOR);
+  let needResize = true, dirty = true;
+  // Landmarks
+  let bridges = [], houses = [];
+  let kcS = 0, spA = 3, spTop = 0, spBell = 0, spLow = 0;        // spire column, half width, top row, belfry row
+  let kcW = 0, millHub = 0, millL = 0;                          // windmill column, hub row, sail length (px)
+  let moonX = 0, moonY = 0, moonR = 0;
+  let nS = 0, nFar = 0, sC, sR, sCh, sP, sB, sT0, sL, sG, sY, sX, sF;
+  let nSolid = 0;
+  let stars = [];
+
+  const G_STATIC = 0, G_WIN = 1, G_BULB = 2, G_SPIRE = 3, G_LAMP = 4, G_PORT = 5, G_TREE = 6;
+  const F_HALO = 1, F_BELL = 4, F_CROWN = 8, F_LIT = 16, F_CLOCK = 32;
+
+  function resize() {
+    needResize = false;
+    W = canvas.clientWidth || innerWidth;
+    H = canvas.clientHeight || innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    fs = clamp(Math.round(Math.min(W, H) / 90), 7, 13);
+    cellFont = `${fs}px ${MONO}`;
+    ctx.font = cellFont;
+    cw = ctx.measureText('M').width || fs * 0.6;
+    ch = Math.round(fs * 1.15);
+    cols = Math.ceil(W / cw);
+    rows = Math.ceil(H / ch);
+    hr = Math.round(H * 0.56 / ch);                       // street row in front of the houses
+    K = clamp(Math.round(H * 0.12 / ch), 8, 13);          // street + quay wall rows above the water
+    wl = Math.min(hr + K, rows - 6);                      // first water row
+    fh = clamp(Math.round(H * 0.05 / ch), 3, 5);          // rows per storey
+    const n = cols * rows;
+    stampA = new Uint32Array(n);
+    cchar = new Uint8Array(n); ccol = new Uint16Array(n); ckind = new Uint8Array(n); clb = new Float32Array(n);
+    touched = new Int32Array(n); order = new Int32Array(n); stamp = 0;
+
+    bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, '#04061a');
+    bgGrad.addColorStop(0.4, '#0a0d2c');
+    bgGrad.addColorStop(wl * ch / H - 0.02, '#1c1630');   // warm city glow above the rooftops' feet
+    bgGrad.addColorStop(wl * ch / H + 0.005, '#070a1e');
+    bgGrad.addColorStop(1, '#03040c');
+
+    makeHalos();
+    buildScene();
+    dirty = true;
+  }
+
+  // ---------- Scene construction ----------
+  let A = null;
+  function add(L, col, row, chr, p, b, t0, g, y, x, f) {
+    if (col < -4 || col >= cols + 4 || row < 0 || row >= rows) return;
+    A.c.push(col); A.r.push(row); A.ch.push(chr); A.p.push(p); A.b.push(b); A.t0.push(t0);
+    A.l.push(L); A.g.push(g || 0); A.y.push(y || 0); A.x.push(x || 0); A.f.push(f || 0);
+  }
+
+  function buildScene() {
+    A = { c: [], r: [], ch: [], p: [], b: [], t0: [], l: [], g: [], y: [], x: [], f: [] };
+    const wide = W / H > 1.2;
+    // Bridges: one big arch in the middle-left, a smaller one on the right when there is room.
+    bridges = [];
+    const rhA = clamp(Math.round((K - 3) * 2.6), 8, Math.round(cols * (wide ? 0.075 : 0.17)));
+    const rvA = Math.min(K - 3, Math.max(4, Math.round(rhA * 0.6)));
+    const mk = (bc, rv, rh) => ({ bc, rv, rh, bL: bc - rh - 4, bR: bc + rh + 4, idx: bridges.length, chaseT: -99 });
+    bridges.push(mk(Math.round(cols * (wide ? 0.37 : 0.4)), rvA, rhA));
+    if (cols >= 130) {
+      const rvB = Math.max(3, rvA - 2);
+      bridges.push(mk(Math.round(cols * 0.82), rvB, Math.round(rvB * 2.5)));
+    }
+    kcS = Math.round(cols * (wide ? 0.6 : 0.62));
+    kcW = Math.round(cols * (wide ? 0.06 : 0.1));
+    moonX = W * (wide ? 0.88 : 0.86); moonY = H * (wide ? 0.15 : 0.12); moonR = Math.max(ch * 2.2, Math.min(W, H) * 0.05);
+
+    buildMoon();
+    buildMill();
+    buildSpire();
+    buildFarGap();
+    nFar = A.c.length;
+    buildHouses();
+    buildQuay();
+    bridges.forEach(buildBridge);
+    buildHouseboats();
+    buildTrees();
+    buildBikes();
+
+    nS = A.c.length;
+    sC = Int16Array.from(A.c); sR = Int16Array.from(A.r); sCh = Uint8Array.from(A.ch); sP = Uint16Array.from(A.p);
+    sB = Float32Array.from(A.b); sT0 = Float32Array.from(A.t0); sL = Uint8Array.from(A.l); sG = Uint8Array.from(A.g);
+    sY = Float32Array.from(A.y); sX = Int16Array.from(A.x); sF = Uint8Array.from(A.f);
+    nSolid = 0;
+    for (let i = 0; i < nS; i++) if (sCh[i] !== C_SP) nSolid++;
+    A = null;
+
+    // Stars only in open sky, above the gables.
+    const r2 = mulberry32(17);
+    stars = [];
+    const ns = Math.round(cols * hr * 0.011);
+    for (let i = 0; i < ns; i++) {
+      const c = (r2() * cols) | 0, r = (r2() * (hr * 0.5)) | 0;
+      if (Math.hypot((c + 0.5) * cw - moonX, (r + 0.5) * ch - moonY) < moonR * 1.6) continue;
+      stars.push({ c, r, g: STAR_G[(r2() * STAR_G.length) | 0], ph: r2() * 6.283, sp: 0.5 + r2() * 1.8, b: 0.3 + 0.5 * r2() });
+    }
+  }
+
+  // Full moon with a few darker "seas".
+  function buildMoon() {
+    const c0 = Math.floor((moonX - moonR) / cw) - 1, c1 = Math.ceil((moonX + moonR) / cw) + 1;
+    const r0 = Math.floor((moonY - moonR) / ch) - 1, r1 = Math.ceil((moonY + moonR) / ch) + 1;
+    for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+      const dx = (c + 0.5) * cw - moonX, dy = (r + 0.5) * ch - moonY, d = Math.hypot(dx, dy);
+      if (d > moonR) continue;
+      const q = d / moonR, t0 = T.MOON + q * 0.8 + hash2(c, r) * 0.15;
+      const sea = vnoise(dx / moonR * 2.2 + 5, dy / moonR * 2.2 + 3) > 0.62;
+      if (sea) add(0, c, r, C_COLON, P_MOON_D, 0.5, t0, G_STATIC, 0, 0, 0);
+      else add(0, c, r, q > 0.86 ? C_o : C_AT, P_MOON, 0.74 + 0.22 * (1 - q), t0, G_STATIC, 0, 0, q < 0.5 ? F_HALO : 0);
+    }
+  }
+
+  // Windmill on the far left: tapered body, gallery and cap (its sails are drawn every frame).
+  function buildMill() {
+    const base = hr - 1;
+    millHub = Math.max(3, hr - 1 - Math.round(fh * 5.4));
+    millL = Math.min(W * 0.22, (base - millHub) * ch * 0.7);
+    const H0 = base - millHub;
+    const wb = Math.max(3, Math.round(fh * 1.3)), wt = Math.max(2, Math.round(fh * 0.6));
+    let prev = wb;
+    for (let r = base; r > millHub; r--) {
+      const y = (base - r) / H0, half = wb + (wt - wb) * y, e = Math.round(half);
+      const t0 = T.FAR + 0.3 + y * 1.1 + hash2(r, 5) * 0.05;
+      const gal = Math.abs(y - 0.34) < 0.5 / H0;
+      for (let d = -e - (gal ? 2 : 0); d <= e + (gal ? 2 : 0); d++) {
+        const c = kcW + d;
+        if (gal) { add(0, c, r, Math.abs(d) > e ? C_DASH : C_EQ, P_MILL, 0.5, t0, G_STATIC); continue; }
+        if (Math.abs(d) === e) { add(0, c, r, prev - half > 0.3 ? (d < 0 ? C_SL : C_BS) : C_BAR, P_MILL, 0.5, t0, G_STATIC); continue; }
+        if (d === 0 && Math.abs(y - 0.62) < 0.6 / H0) add(0, c, r, C_n, P_MILL_LIT, 0.8, t0 + 1.8, G_STATIC, 0, 0, F_HALO);
+        else if (d === 0 && r === base) add(0, c, r, C_n, P_MILL_LIT, 0.6, t0, G_STATIC);
+        else add(0, c, r, hash2(c, r * 3) < 0.15 ? C_DOT : C_SP, P_MILL, 0.24, t0, G_STATIC);
+      }
+      prev = half;
+    }
+    // Cap: a little thatched hood with the hub in front.
+    const capT = T.FAR + 1.5;
+    for (let d = -wt - 1; d <= wt + 1; d++) add(0, kcW + d, millHub, Math.abs(d) === wt + 1 ? (d < 0 ? C_SL : C_BS) : C_US, P_MILL, 0.55, capT, G_STATIC);
+    for (let d = -wt; d <= wt; d++) add(0, kcW + d, millHub - 1, Math.abs(d) === wt ? (d < 0 ? C_SL : C_BS) : d === 0 ? C_CARET : C_SP, P_MILL, 0.5, capT + 0.1, G_STATIC);
+  }
+
+  // Westerkerk-like tower: brick shaft, stone stages with a clock, the belfry, a blue-and-gold crown, the needle.
+  function buildSpire() {
+    spA = Math.max(3, Math.round(fh * 0.9));
+    spTop = Math.max(2, Math.round(hr * 0.07));
+    const base = hr - 1, HS = base - spTop;
+    const a = spA;
+    spBell = spTop; spLow = base;
+    let clockDone = false;
+    for (let r = base; r >= spTop; r--) {
+      const y = (base - r + 0.5) / HS;
+      const t0 = T.SPIRE + y * T.SPIRE_DUR * 0.97;
+      const S = (d, chr, p, b, f) => add(0, kcS + d, r, chr, p, b, t0 + hash2(d + 30, r) * 0.06, G_SPIRE, y, 0, f || 0);
+      const bal = (half) => { for (let d = -half; d <= half; d++) S(d, Math.abs(d) === half ? (d < 0 ? C_LB : C_RB) : C_EQ, P_SPS, 0.72); };
+      if (y < 0.47) {
+        for (let d = -a; d <= a; d++) {
+          if (Math.abs(d) === a) { S(d, C_BAR, P_SPB, 0.62); continue; }
+          if (d === 0 && (r % 6) < 3) { S(d, (r % 6) === 2 ? C_n : C_BAR, P_WIN[0], 0.7, F_HALO * 0); continue; }
+          S(d, (r % 3 === 0) ? C_EQ : ((d + r) & 1 ? C_HASH : C_COLON), P_SPB, 0.38);
+        }
+      } else if (y < 0.5) bal(a + 1);
+      else if (y < 0.63) {
+        const h = a - 1;
+        const clockRow = !clockDone && y > 0.555;
+        if (clockRow) clockDone = true;
+        for (let d = -h; d <= h; d++) {
+          if (Math.abs(d) === h) { S(d, C_BAR, P_SPS, 0.66); continue; }
+          if (clockRow && Math.abs(d) <= 1) { S(d, d === 0 ? C_O : d < 0 ? C_LP : C_RP, P_CLOCK, 0.95, F_CLOCK | F_HALO); continue; }
+          S(d, (d & 1) ? C_COLON : C_BAR, P_SPS, 0.42);
+        }
+      } else if (y < 0.655) bal(a);
+      else if (y < 0.76) {
+        const h = Math.max(2, a - 2);
+        if (spBell === spTop) spBell = r;
+        for (let d = -h; d <= h; d++) {
+          if (Math.abs(d) === h) { S(d, C_BAR, P_SPS, 0.66, F_BELL); continue; }
+          S(d, d === 0 ? C_A : (Math.abs(d) === 1 ? (d < 0 ? C_LP : C_RP) : C_COLON), d === 0 ? P_GOLD : P_SPS, d === 0 ? 0.6 : 0.42, F_BELL);
+        }
+      } else if (y < 0.785) bal(Math.max(2, a - 1));
+      else if (y < 0.86) {
+        const h = Math.max(1, a - 2);
+        const topRow = y + 1 / HS >= 0.86;
+        for (let d = -h; d <= h; d++) {
+          if (topRow) { S(d, (d & 1) ? C_DOT : C_CARET, P_GOLD, 0.9, F_CROWN); continue; }
+          if (Math.abs(d) === h) S(d, d < 0 ? C_LP : C_RP, P_GOLD, 0.85, F_CROWN);
+          else S(d, (d + r) & 1 ? C_HASH : C_AT, (d + r) & 1 ? P_CROWN : P_GOLD, 0.8, F_CROWN);
+        }
+      } else if (r === spTop) S(0, C_PLUS, P_GOLD, 1, F_CROWN | F_HALO);
+      else if (r === spTop + 1) S(0, C_o, P_GOLD, 1, F_CROWN | F_HALO);
+      else S(0, C_BAR, P_SPS, 0.7);
+    }
+  }
+
+  // Through each bridge opening: smaller, hazier houses along the side canal.
+  function buildFarGap() {
+    const rnd = mulberry32(31);
+    for (const B of bridges) {
+      let c = B.bL - 2;
+      while (c < B.bR + 2) {
+        const w = 3 + ((rnd() * 4) | 0), top = hr - 1 - Math.round(fh * (1.6 + rnd() * 1.8));
+        for (let x = c; x < Math.min(B.bR + 3, c + w); x++) {
+          const t0 = T.FAR + 0.2 + hash2(x, 9) * 0.9;
+          for (let y = top; y < hr; y++) {
+            if (y === top) { add(0, x, y, x === c ? C_SL : x === c + w - 1 ? C_BS : C_US, P_FAR, 0.4, t0); continue; }
+            const h = hash2(x * 7, y);
+            if (h < 0.1) add(0, x, y, C_DOT, P_FAR_LIT, 0.6, t0 + 1);
+            else add(0, x, y, h < 0.3 ? C_COLON : C_SP, P_FAR, 0.22, t0);
+          }
+        }
+        c += w;
+      }
+    }
+  }
+
+  // Canal houses: narrow brick fronts with gables, tall windows and a hoisting beam.
+  function buildHouses() {
+    houses = [];
+    const rnd = mulberry32(1609);
+    const segs = [];
+    let s0 = -4;
+    for (const B of bridges) { segs.push([s0, B.bL - 1]); s0 = B.bR + 1; }
+    segs.push([s0, cols + 3]);
+    for (const [a, b] of segs) {
+      let c = a;
+      while (c <= b) {
+        let w = fh + 3 + ((rnd() * 4) | 0);
+        if (b - (c + w) + 1 < fh + 2) w = b - c + 1;
+        if (w < 4) break;
+        makeHouse(c, w, rnd);
+        c += w;
+      }
+    }
+  }
+
+  function gableRows(type, c, w, rnd) {
+    const c1 = c + w - 1, cc = (c + c1) / 2, hw = (w - 1) / 2;
+    const out = [];   // { L, R, lc, rc, fill, extra: [[col, chr]] }
+    if (type === 0) {                       // step gable
+      const s = w >= 10 ? 2 : 1;
+      for (let j = 1; j < 20; j++) {
+        const lev = (j - 1) >> 1, L = c + lev * s, R = c1 - lev * s;
+        if (R - L < 2) { out.push({ L: Math.round(cc), R: Math.round(cc), lc: C_CARET, rc: C_CARET, extra: [] }); break; }
+        const ex = [];
+        if ((j & 1) && lev > 0) for (let k = 1; k <= s; k++) { ex.push([L - k, C_US]); ex.push([R + k, C_US]); }
+        out.push({ L, R, lc: C_BAR, rc: C_BAR, extra: ex });
+      }
+    } else if (type === 1) {                // neck gable with scrolled shoulders
+      const nh = Math.max(1, Math.round(hw * 0.45)), L = Math.round(cc - nh), R = Math.round(cc + nh);
+      const gh = fh + 1;
+      for (let j = 1; j <= gh; j++) {
+        const ex = [];
+        if (j === 1) {
+          ex.push([L - 1, C_LP], [R + 1, C_RP]);
+          for (let x = c + 1; x < L - 1; x++) ex.push([x, C_US]);
+          for (let x = R + 2; x < c1; x++) ex.push([x, C_US]);
+        }
+        if (j === gh) out.push({ L, R, lc: C_SL, rc: C_BS, fill: C_DASH, extra: ex });
+        else out.push({ L, R, lc: C_BAR, rc: C_BAR, extra: ex });
+      }
+      if (R - L >= 4) out.push({ L: Math.round(cc), R: Math.round(cc), lc: C_CARET, rc: C_CARET, extra: [] });
+    } else if (type === 2 || type === 4) {  // bell gable (curved) or a plain pointed gable
+      const gh = type === 2 ? fh + 2 : Math.max(2, Math.round(hw * 0.9) + 1);
+      let pL = c, pR = c1;
+      for (let j = 1; j <= gh; j++) {
+        const e = type === 2 ? (hw - 0.3) * Math.cos(j / (gh + 0.6) * Math.PI / 2) : hw * (1 - j / (gh + 0.4));
+        const L = Math.round(cc - e), R = Math.round(cc + e);
+        if (R < L) break;
+        const ex = [];
+        for (let x = pL + 1; x < L; x++) ex.push([x, C_US]);
+        for (let x = R + 1; x < pR; x++) ex.push([x, C_US]);
+        const steep = L - pL <= 1;
+        if (L === R) out.push({ L, R, lc: type === 2 ? C_o : C_CARET, rc: C_CARET, extra: ex });
+        else out.push({ L, R, lc: type === 2 && steep ? C_LP : C_SL, rc: type === 2 && steep ? C_RP : C_BS, extra: ex });
+        pL = L; pR = R;
+        if (L === R) break;
+      }
+    } else {                                // flat cornice with a small dormer
+      const m = Math.floor(cc);
+      out.push({ L: m - 1, R: m + 1, lc: C_LB, rc: C_RB, extra: [] });
+      out.push({ L: m - 1, R: m + 1, lc: C_SL, rc: C_BS, fill: C_CARET, extra: [] });
+    }
+    return out;
+  }
+
+  function makeHouse(c, w, rnd) {
+    const idx = houses.length;
+    const c1 = c + w - 1, cc = (c + c1) / 2;
+    const xf = clamp((c + w / 2) / cols, 0, 1);
+    const nearMill = Math.abs(c + w / 2 - kcW) < Math.max(fh * 3, millL / cw * 0.9);
+    let nf = 3 + ((rnd() * 3) | 0);
+    if (nearMill) nf = 2;
+    const bodyTop = hr - 1 - nf * fh;
+    const p = HOUSE_P[(rnd() * HOUSE_P.length) | 0];
+    const lean = rnd() < 0.3 ? (rnd() < 0.5 ? -1 : 1) : 0;
+    const type = (rnd() * 5) | 0;
+    const tx = T.HOUSES + xf * T.HOUSES_DUR * 0.8;
+    const gr = gableRows(type, c, w, rnd);
+    const top = bodyTop - gr.length;
+    const span = hr - top;
+    const sh = r => lean ? Math.round(lean * clamp((hr - 1 - r) / span, 0, 1) * 1.2) : 0;
+    const A1 = (col, row, chr, pp, b, g, y, x, f) =>
+      add(1, col + sh(row), row, chr, pp, b, tx + (hr - 1 - row) / span * 0.7 + hash2(col, row) * 0.08, g, y, x, f);
+    const h = { c0: c, c1, top, tapT: -99, catC: 0, catR: 0, firstOn: 99 };
+    houses.push(h);
+    // Window layout: groups of two columns with one column of wall between.
+    const n = w - 2, nw = Math.max(1, Math.floor((n + 1) / 3)), m0 = Math.floor((n - (nw * 3 - 1)) / 2);
+    const winOf = x => { const o = x - (c + 1) - m0; return o >= 0 && o < nw * 3 - 1 && o % 3 !== 2 ? Math.floor(o / 3) : -1; };
+    const doorW = Math.floor((nw - 1) / 2);
+    const catK = Math.min(nf - 1, 1 + (idx % 2)), catW = idx % nw;
+    for (let r = hr - 1; r >= bodyTop; r--) {
+      for (let x = c; x <= c1; x++) {
+        if (r === bodyTop) { A1(x, r, C_EQ, P_TRIM, 0.5); continue; }
+        if (x === c || x === c1) { A1(x, r, C_BAR, p, 0.44); continue; }
+        const k = Math.floor((hr - 1 - r) / fh), q = (hr - 1 - r) % fh;
+        const wi = winOf(x);
+        if (wi >= 0 && k === 0 && wi === doorW && nw > 1) {
+          // Front door with a lit fanlight.
+          if (q === fh - 1) A1(x, r, C_n, P_WIN[1], 0.75, G_WIN, T.LIGHTS + hash2(idx, 77) * 2, idx, F_LIT);
+          else A1(x, r, (x - (c + 1) - m0) % 3 === 0 ? C_LB : C_RB, P_DOOR, 0.5);
+          continue;
+        }
+        if (wi >= 0 && q >= 1) {
+          const hh = hash2(idx * 31 + wi, k * 7 + 3);
+          const lit = hh < (k === 0 ? 0.5 : 0.6);
+          const onT = T.LIGHTS + hash2(idx * 17 + wi, k) * 2.8;
+          if (lit && onT < h.firstOn) h.firstOn = onT;
+          A1(x, r, q === fh - 1 ? C_EQ : C_HASH, P_WIN[(idx + wi + k) % P_WIN.length], 0.75, G_WIN, onT, idx, lit ? F_LIT : 0);
+          if (k === catK && wi === catW && q === fh - 1 && (x - (c + 1) - m0) % 3 === 0) { h.catC = x + sh(r); h.catR = r; }
+          continue;
+        }
+        if (wi >= 0 && q === 0 && k > 0) { A1(x, r, C_DASH, P_TRIM, 0.3); continue; }
+        A1(x, r, hash2(x, r * 5) < 0.1 ? C_DOT : C_SP, p, 0.22);
+      }
+    }
+    // Gable: trimmed outline, an attic window and the hoisting beam near the top.
+    let beamDone = false;
+    for (let j = gr.length - 1; j >= 0; j--) {
+      const g = gr[j], r = bodyTop - 1 - j;
+      for (const [x, chr] of g.extra) A1(x, r, chr, P_TRIM, 0.5);
+      for (let x = g.L; x <= g.R; x++) {
+        if (x === g.L) { A1(x, r, g.lc, P_TRIM, 0.56); continue; }
+        if (x === g.R) { A1(x, r, g.rc, P_TRIM, 0.56); continue; }
+        if (g.fill != null) { A1(x, r, g.fill, P_TRIM, 0.5); continue; }
+        const mid = Math.abs(x - cc) < 0.6;
+        if (!beamDone && mid && j >= 1 && g.R - g.L >= 2) { A1(x, r, C_T, P_TRIM, 0.5); beamDone = true; continue; }
+        if (j === 0 && Math.abs(x - cc) < 1 && g.R - g.L >= 3) {
+          A1(x, r, C_HASH, P_WIN[(idx + 1) % P_WIN.length], 0.7, G_WIN, T.LIGHTS + hash2(idx, 5) * 3, idx, hash2(idx, 6) < 0.5 ? F_LIT : 0);
+          continue;
+        }
+        A1(x, r, C_SP, 0, 0);
+      }
+    }
+    if (!h.catR) { h.catC = c + 1 + m0 + sh(bodyTop + 1); h.catR = hr - 1 - catK * fh - (fh - 1); }
+  }
+
+  // Street, kerb and brick quay wall (left out where the bridges are).
+  function buildQuay() {
+    const inBridge = c => bridges.some(B => c >= B.bL && c <= B.bR);
+    for (let c = -3; c < cols + 3; c++) {
+      if (inBridge(c)) continue;
+      const t0 = T.BRIDGE - 0.6 + clamp(c / cols, 0, 1) * 1.2;
+      for (let r = hr; r <= hr + 2; r++) {
+        const h = hash2(c * 3, r);
+        if (h < 0.14) add(1, c, r, h < 0.07 ? C_DOT : C_COMMA, P_STREET, 0.2, t0);
+      }
+      add(1, c, hr + 3, C_EQ, P_STONE, 0.4, t0);
+      for (let r = hr + 4; r < wl; r++) {
+        const j = (c + (r & 1) * 2) % 4 === 0;
+        add(1, c, r, j ? C_BAR : C_US, P_QUAY, 0.2, t0 + (r - hr) * 0.04);
+      }
+    }
+  }
+
+  // Arched brick bridge: parapet, a bulb line along the deck and another around the arch.
+  function buildBridge(B) {
+    const { bc, rv, rh, bL, bR, idx } = B;
+    const B0 = T.BRIDGE + idx * 0.5;
+    const xAt = h => h >= rv ? -1 : rh * Math.sqrt(1 - (h / rv) * (h / rv));
+    for (let c = bL; c <= bR; c++) {
+      const d = c - bc, ad = Math.abs(d);
+      const tc = B0 + ad / (rh + 4) * 0.5;
+      // Parapet: stone posts at the ends, iron railing between.
+      add(1, c, hr, c === bL ? C_LB : c === bR ? C_RB : ad >= rh + 2 ? C_EQ : (c % 3 === 0 ? C_PLUS : C_DASH), ad >= rh + 2 ? P_STONE : P_POST, 0.5, tc + 0.7);
+      // Deck fascia: a bulb on every other cell.
+      if ((c - bL) % 2 === 0) add(1, c, hr + 1, C_o, P_BULB, 0.9, tc + 0.5, G_BULB, (c - bL) / (bR - bL), idx, F_HALO);
+      else add(1, c, hr + 1, C_EQ, P_STONE, 0.35, tc + 0.5);
+      for (let r = hr + 2; r < wl; r++) {
+        const hT = wl - r, hB = wl - r - 1;
+        const xa = xAt(hT), xb = xAt(hB);
+        const t0 = tc + (wl - r) / K * 0.4;
+        if (xb >= 0 && ad <= Math.round(xb) && ad >= Math.max(0, Math.round(xa))) {
+          add(1, c, r, C_o, P_BULB, 0.9, t0, G_BULB, clamp((d + rh) / (2 * rh), 0, 1), idx, F_HALO);
+        } else if (xa >= 0 && ad < Math.round(xa)) {
+          // The opening: dark, with a glint of the side canal at the bottom.
+          if (r === wl - 1 && hash2(c, 41) < 0.5) add(1, c, r, hash2(c, 42) < 0.3 ? C_DASH : C_TILDE, hash2(c, 43) < 0.25 ? P_FAR_LIT : P_WATER, 0.3, t0);
+          else add(1, c, r, C_SP, 0, 0, t0);
+        } else if (ad === rh + 4) add(1, c, r, C_BAR, P_STONE, 0.4, t0);
+        else {
+          const j = (c + (r & 1) * 2) % 4 === 0;
+          add(1, c, r, j ? C_BAR : C_US, P_BRICK, 0.3, t0);
+        }
+      }
+    }
+    // Lanterns on the bridge ends.
+    for (const lc of [bL + 1, bR - 1]) {
+      for (let r = hr - fh; r < hr; r++) add(1, lc, r, C_BAR, P_POST, 0.45, B0 + 0.9);
+      add(1, lc, hr - fh - 1, C_o, P_LAMP, 1, B0 + 1.1, G_LAMP, 0, lc, F_HALO);
+      add(1, lc, hr - fh - 2, C_CARET, P_POST, 0.5, B0 + 1.1);
+    }
+  }
+
+  // Free stretches of the quay (outside the bridges), as [c0, c1] ranges.
+  function quaySpans() {
+    const spans = [];
+    let s0 = -2;
+    for (const B of bridges) { spans.push([s0, B.bL - 2]); s0 = B.bR + 2; }
+    spans.push([s0, cols + 1]);
+    return spans.filter(([a, b]) => b - a > 3);
+  }
+
+  // Houseboats moored against the quay wall: roof with flower pots, lit portholes, hull.
+  function buildHouseboats() {
+    const spans = quaySpans().sort((a, b) => (b[1] - b[0]) - (a[1] - a[0]));
+    const L = clamp(Math.round(cols * 0.09), 12, 22);
+    let n = 0;
+    for (const [a, b] of spans) {
+      if (n >= (cols >= 130 ? 2 : 1)) break;
+      const x0 = Math.max(a + 1, 1), x1 = Math.min(b - 1, cols - 2);
+      if (x1 - x0 < L + 2) continue;
+      const x = Math.round(x0 + (x1 - x0 - L) * (n ? 0.75 : 0.35));
+      const t0 = T.QUAY + 0.4 + n * 0.5;
+      for (let k = 0; k < L; k++) {
+        const c = x + k, tk = t0 + k / L * 0.6;
+        // Roof (one column in from each end), pots on top now and then.
+        if (k >= 2 && k <= L - 3) add(1, c, wl - 3, C_US, P_HB_ROOF, 0.55, tk);
+        if (k >= 3 && k <= L - 4 && hash2(c, 61) < 0.2) add(1, c, wl - 4, hash2(c, 62) < 0.5 ? C_STAR : C_AMP, hash2(c, 63) < 0.5 ? P_PLANT : P_TREE, 0.6, tk + 0.2);
+        // Cabin wall with portholes.
+        if (k === 1) add(1, c, wl - 2, C_BAR, P_HB, 0.55, tk);
+        else if (k === L - 2) add(1, c, wl - 2, C_BAR, P_HB, 0.55, tk);
+        else if (k > 1 && k < L - 2) {
+          if ((k - 2) % 3 === 1) add(1, c, wl - 2, C_o, P_PORT, 0.85, tk, G_PORT, T.LIGHTS + 0.5 + hash2(c, 64) * 2, c, F_HALO);
+          else add(1, c, wl - 2, C_SP, 0, 0, tk);
+        }
+        // Hull.
+        add(1, c, wl - 1, k === 0 ? C_BS : k === L - 1 ? C_SL : C_EQ, P_HB, 0.5, tk);
+      }
+      n++;
+    }
+  }
+
+  // Elms along the quay (lit from below by the lamps) and old street lanterns.
+  let trees = [];
+  function buildTrees() {
+    trees = [];
+    const step = Math.max(26, Math.round(cols / 5));
+    const spans = quaySpans();
+    let k = 0;
+    for (const [a, b] of spans) {
+      for (let c = a + Math.round(step * 0.35); c < b - 3; c += step) {
+        const tc = c + Math.round((hash2(c, 71) - 0.5) * 4);
+        if (tc < 1 || tc > cols - 2) continue;
+        trees.push(tc);
+        const rc = Math.round(fh * 1.9), rr = Math.max(3, Math.round(fh * 0.95));
+        const cr = hr - 2 - rr - Math.round(fh * 0.5);
+        const t0 = T.QUAY + (k++ * 0.25) % 1.2;
+        for (let r = cr + rr - 1; r <= hr + 2; r++) add(2, tc, r, C_BAR, P_TRUNK, 0.42, t0 + (hr + 2 - r) * 0.03);
+        for (let dr = -rr; dr <= rr; dr++) for (let dc = -rc; dc <= rc; dc++) {
+          const x = tc + dc, y = cr + dr;
+          const q = (dc / rc) ** 2 + (dr / rr) ** 2 + (vnoise(x * 0.4, y * 0.6) - 0.5) * 0.7;
+          if (q > 1) continue;
+          const nz = vnoise(x * 0.7 + 3, y * 0.9);
+          if (nz < 0.24) continue;   // gaps between the leaves
+          const low = (dr + rr) / (2 * rr);
+          add(2, x, y, nz > 0.72 ? C_AT : nz > 0.52 ? C_AMP : nz > 0.38 ? C_PCT : C_STAR,
+            low > 0.62 ? P_TREE_LIT : P_TREE, 0.26 + 0.22 * low, t0 + 0.3 + (1 - low) * 0.5 + hash2(x, y) * 0.1, G_TREE, 0, 0, 0);
+        }
+      }
+    }
+    // Lanterns between the trees.
+    for (const [a, b] of spans) {
+      for (let c = a + Math.round(step * 0.85); c < b - 2; c += step) {
+        if (trees.some(tc => Math.abs(tc - c) < 4) || c < 1 || c > cols - 2) continue;
+        const top = hr + 2 - (fh + 2);
+        for (let r = top + 1; r <= hr + 2; r++) add(2, c, r, C_BAR, P_POST, 0.42, T.QUAY + 0.6);
+        add(2, c, top, C_o, P_LAMP, 1, T.QUAY + 0.8, G_LAMP, 0, c, F_HALO);
+        add(2, c, top - 1, C_CARET, P_POST, 0.5, T.QUAY + 0.8);
+      }
+    }
+  }
+
+  // Bicycles parked along the canal edge.
+  function buildBikes() {
+    const rnd = mulberry32(55);
+    for (const [a, b] of quaySpans()) {
+      let c = a + 2 + ((rnd() * 6) | 0);
+      while (c < b - 5) {
+        const nb = 2 + ((rnd() * 4) | 0);
+        for (let i = 0; i < nb && c < b - 5; i++, c += 5) {
+          if (trees.some(tc => Math.abs(tc - c - 1.5) < 3)) continue;
+          const p = P_BIKE[(rnd() * P_BIKE.length) | 0], t0 = T.QUAY + 1 + rnd() * 0.8;
+          add(2, c + 1, hr + 1, C_US, p, 0.5, t0);
+          add(2, c + 3, hr + 1, C_COMMA, p, 0.5, t0);
+          add(2, c, hr + 2, C_O, P_BIKE[3], 0.4, t0);
+          add(2, c + 1, hr + 2, C_SL, p, 0.5, t0);
+          add(2, c + 2, hr + 2, C_BS, p, 0.5, t0);
+          add(2, c + 3, hr + 2, C_O, P_BIKE[3], 0.4, t0);
+        }
+        c += 8 + ((rnd() * 14) | 0);
+      }
+    }
+  }
+
+  // ---------- Cell buffer ----------
+  function put(c, chr, p, b, kind) {
+    if (stampA[c] !== stamp) { stampA[c] = stamp; touched[nT++] = c; }
+    let l = (b * 15.99) | 0;
+    if (l < 0) l = 0; else if (l > 15) l = 15;
+    cchar[c] = chr; ccol[c] = p * LEVELS + l; ckind[c] = kind; clb[c] = b > 1 ? 1 : b;
+  }
+  function putXY(x, y, chr, p, b, kind) {
+    if (x < 0 || y < 0) return;
+    const col = (x / cw) | 0, row = (y / ch) | 0;
+    if (col >= cols || row >= rows) return;
+    put(row * cols + col, chr, p, b, kind);
+  }
+  function putRC(col, row, chr, p, b, kind) {
+    if (col < 0 || col >= cols || row < 0 || row >= rows) return;
+    put(row * cols + col, chr, p, b, kind);
+  }
+
+  // ---------- Scene state ----------
+  const LINGER = 24;   // extra seconds the finished city stays up (one 24 s music loop)
+  let linger = 0;
+  let t = T_START, skyT = 0, frameNo = 0, letters = 0, built = 0, resolving = 0;
+  let spT = -99;                                   // carillon tapped at
+  let millA = 0, millW = 0.35;                     // windmill sail angle and speed (rad/s)
+  const SH = [0, 0, 0];                            // per-layer parallax shift in cells: far, canal, trees
+
+  function drawSprites(i0, i1) {
+    const gT = reduced ? 0 : skyT;
+    const scrF = (skyT * 22) | 0;
+    for (let i = i0; i < i1; i++) {
+      const age = t - sT0[i];
+      if (age < -RES) continue;
+      const col = sC[i] + SH[sL[i]];
+      if (col < 0 || col >= cols) continue;
+      const idx = sR[i] * cols + col;
+      const chr0 = sCh[i];
+      if (age < 0) {
+        if (chr0 === C_SP && hash2(i, 3) < 0.6) continue;
+        resolving++;
+        put(idx, SCR[(hash2(i, scrF) * SCR.length) | 0], P_SCR, 0.22 + 0.5 * (1 + age / RES), 0);
+        continue;
+      }
+      if (chr0 === C_SP) { put(idx, C_SP, 0, 0, 0); continue; }
+      built++;
+      const flash = age < 0.35 ? 0.6 * (1 - age / 0.35) : 0;
+      let p = sP[i], b = sB[i] + flash, chr = chr0, kind = 0;
+      const f = sF[i];
+      switch (sG[i]) {
+        case G_STATIC: if (f & F_HALO) kind = 1; break;
+        case G_WIN: {
+          const onT = sY[i];
+          let on = (f & F_LIT) && t >= onT;
+          if (!reduced && t >= onT && hash2(i, ((skyT * 0.2 + onT * 7) | 0)) < 0.03) on = !on;
+          const h = houses[sX[i]], ha = skyT - h.tapT - (hr - sR[i]) * 0.03;
+          if (ha >= 0 && ha < HOUSE_DUR) {
+            // Tapped: every window glows through warm curtains, floor by floor from the bottom.
+            p = P_CURT[(sX[i] + ((sR[i] / fh) | 0)) % P_CURT.length];
+            b = 0.82 + (reduced ? 0 : 0.12 * Math.sin(skyT * 2.2 + sC[i] * 0.7));
+            if (!reduced && ha < 0.25) { p = P_WHITE; b = 1.05; }
+            if (ha > HOUSE_DUR - 1) b *= HOUSE_DUR - ha + 0.2;
+            kind = 1;
+            break;
+          }
+          if (!on) { p = P_WOFF; b = 0.32 + flash; }
+          else b = 0.62 + 0.25 * hash2(i, 1) + flash + (t - onT < 0.25 && !reduced ? 0.4 : 0);
+          break;
+        }
+        case G_BULB: {
+          const B = bridges[sX[i]], s = sY[i];
+          const lit = t - (T.BULBS + B.idx * 0.6 + Math.abs(s - 0.5) * 1.4);
+          if (lit < 0 && !reduced) { p = P_BULB_OFF; b = 0.3 + flash; break; }
+          b = 0.82 + (reduced ? 0 : 0.08 * Math.sin(gT * 1.7 + s * 40)) + (lit < 0.35 && !reduced ? 0.5 * (1 - lit / 0.35) : 0);
+          kind = 1;
+          const ca = skyT - B.chaseT;
+          if (ca >= 0 && ca < CHASE) {
+            if (reduced) b = 1;
+            else {
+              const head = ca / CHASE * 1.5 - 0.25, dh = s - head;
+              if (dh < 0.03 && dh > -0.05) { p = P_WHITE; b = 1.2; }
+              else if (dh < 0) b = ((sC[i] + sR[i] + Math.floor(ca * 12)) % 3 === 0) ? 1.15 : 0.45;
+            }
+          }
+          break;
+        }
+        case G_SPIRE: {
+          const y = sY[i];
+          if (!reduced && !(f & F_CROWN)) b += 0.05 * Math.sin(gT * 0.9 + y * 6);
+          const ca = skyT - spT;
+          if (ca >= 0 && ca < CARIL) {
+            if (f & F_BELL) {
+              const k = Math.floor(ca / 0.32), ph = ca - k * 0.32;
+              p = P_GOLD; kind = 1;
+              b = reduced ? 1 : 0.85 + 0.35 * Math.max(0, 1 - ph / 0.2);
+              if (!reduced && k < 8 && hash2(i, k) < 0.25) chr = C_STAR;
+            } else if (!reduced) {
+              const sw = ca * 1.4 - y;
+              if (sw > 0 && sw < 0.1) { p = P_WHITE; b = 1.05; }
+            }
+          }
+          if (f & (F_CLOCK | F_HALO)) kind = 1;
+          break;
+        }
+        case G_LAMP: b += reduced ? 0 : 0.1 * Math.sin(gT * 2.3 + sX[i]); kind = 1; break;
+        case G_PORT: {
+          if (t < sY[i]) { p = P_WOFF; b = 0.3; break; }
+          b = 0.72 + (reduced ? 0 : 0.14 * Math.sin(gT * 2.6 + sX[i])); kind = 1;
+          break;
+        }
+        case G_TREE: if (!reduced) b += 0.05 * Math.sin(gT * 1.1 + sC[i] * 0.3 + sR[i] * 0.5); break;
+      }
+      put(idx, chr, p, b, kind);
+    }
+  }
+
+  function drawStars() {
+    const a = smooth(skyT / 1.2), sh = SH[0];
+    for (const s of stars) {
+      const col = s.c + sh;
+      if (col < 0 || col >= cols) continue;
+      const tw = reduced ? 0.8 : 0.5 + 0.5 * Math.sin(skyT * s.sp + s.ph);
+      put(s.r * cols + col, s.g, P_STAR, a * s.b * (0.35 + 0.65 * tw), 2);
+    }
+  }
+
+  // Windmill sails: four lattice arms turning round the hub.
+  function drawSails() {
+    const vis = reduced ? 1 : smooth((t - (T.FAR + 1.5)) / 0.6);
+    if (vis <= 0.01) return;
+    const hx = (kcW + SH[0] + 0.5) * cw, hy = (millHub + 0.5) * ch;
+    const step = Math.min(cw, ch) * 0.7;
+    for (let k = 0; k < 4; k++) {
+      const ang = millA + k * Math.PI / 2, ux = Math.cos(ang), uy = Math.sin(ang);
+      const aa = ((ang % Math.PI) + Math.PI) % Math.PI;
+      const spar = aa < 0.39 || aa > 2.75 ? C_DASH : aa < 1.18 ? C_BS : aa < 1.96 ? C_BAR : C_SL;
+      for (let d = step; d <= millL; d += step) {
+        const x = hx + ux * d, y = hy + uy * d;
+        putXY(x, y, spar, P_MILL, 0.72 * vis, 0);
+        if (d < millL * 0.22) continue;
+        // Sail cloth on one side of the spar.
+        for (let o = step; o <= cw * 2.6; o += step) {
+          const px = x - uy * o, py = y + ux * o;
+          const edge = o + step > cw * 2.6;
+          putXY(px, py, edge ? spar : ((((d / step) | 0) + ((o / step) | 0)) & 1 ? C_PLUS : C_COLON), P_MILL, (edge ? 0.66 : 0.5) * vis, 0);
+        }
+      }
+    }
+    putXY(hx, hy, C_o, P_MILL_LIT, 0.8 * vis, 0);
+  }
+
+  // A cat in the window of each tapped house.
+  function drawCats() {
+    for (const h of houses) {
+      const a = skyT - h.tapT;
+      if (a < 0.8 || a > HOUSE_DUR - 0.6) continue;
+      const c = h.catC + SH[1], r = h.catR;
+      const blink = !reduced && hash2(h.c0, (skyT * 1.5) | 0) < 0.12;
+      putRC(c, r, C_CARET, P_CAT, 0.9, 0);
+      putRC(c + 1, r, C_CARET, P_CAT, 0.9, 0);
+      putRC(c, r + 1, blink ? C_DASH : C_o, P_EYE, 1, 1);
+      putRC(c + 1, r + 1, blink ? C_DASH : C_o, P_EYE, 1, 1);
+      if (fh > 3) { putRC(c, r + 2, C_LP, P_CAT, 0.8, 0); putRC(c + 1, r + 2, C_RP, P_CAT, 0.8, 0); }
+      const tail = Math.sin(skyT * 3) > 0 ? C_TILDE : C_RP;
+      putRC(c + 2, r + Math.min(fh - 2, 2), reduced ? C_TILDE : tail, P_CAT, 0.7, 0);
+    }
+  }
+
+  // ---------- Cyclists on the street ----------
+  let cyclists = [];
+  function spawnCyclist(x, user) {
+    if (cyclists.length > 4) cyclists.shift();
+    const dir = x == null ? (Math.random() < 0.5 ? 1 : -1) : (x > W / 2 ? -1 : 1);
+    const v = (reduced ? 5 : 11 + Math.random() * 5) * dir;
+    cyclists.push({ x: dir > 0 ? -6 : cols + 6, v, dir, user: !!user, rang: false, tx: x == null ? -1 : x / cw });
+    music('event', 'cycle', { x: x == null ? (dir > 0 ? 0 : 1) : x / W, user: !!user });
+  }
+  function updateCyclists(dt) {
+    for (const cy of cyclists) {
+      const x0 = cy.x;
+      cy.x += cy.v * dt;
+      if (cy.user && !cy.rang && (x0 - cy.tx) * (cy.x - cy.tx) <= 0) { cy.rang = true; music('event', 'ring', { x: cy.x / cols }); }
+    }
+    cyclists = cyclists.filter(cy => cy.x > -10 && cy.x < cols + 10);
+  }
+  function drawCyclists() {
+    const sh = SH[1];
+    for (const cy of cyclists) {
+      const c = Math.round(cy.x) + sh, d = cy.dir;
+      // Wheels, frame, rider; the front lamp throws a little beam on the cobbles.
+      const P = P_BIKE[0];
+      putRC(c - d, hr, C_O, P_BIKE[3], 0.7, 0);
+      putRC(c, hr, d > 0 ? C_SL : C_BS, P, 0.75, 0);
+      putRC(c + d, hr, d > 0 ? C_BS : C_SL, P, 0.75, 0);
+      putRC(c + 2 * d, hr, C_O, P_BIKE[3], 0.7, 0);
+      putRC(c - d, hr - 1, C_DOT, P_RED, 0.9, 1);
+      putRC(c, hr - 1, d > 0 ? C_SL : C_BS, P_CAT, 0.7, 0);
+      putRC(c + d, hr - 1, C_DASH, P_CAT, 0.6, 0);
+      putRC(c + 2 * d, hr - 1, C_o, P_BEAM, 1.1, 1);
+      putRC(c, hr - 2, C_o, P_CAT, 0.8, 0);
+      for (let k = 1; k <= 5; k++) putRC(c + (2 + k) * d, hr, k < 3 ? C_DASH : C_DOT, P_BEAM, 0.7 - k * 0.11, 0);
+    }
+  }
+
+  // ---------- Canal boats ----------
+  let boats = [];
+  const boatLen = () => clamp(Math.round(cols * 0.12), 14, 28);
+  function spawnBoat(x, y) {
+    if (boats.length > 2) boats.shift();
+    const dir = x > W / 2 ? -1 : 1, L = boatLen();
+    const row = clamp(Math.round(y / ch) - 1, wl + 2, rows - 5);
+    boats.push({ x: dir > 0 ? -L - 2 : cols + 2, row, dir, L, v: dir * (reduced ? 3 : 7), lastRip: 0 });
+    music('event', 'boat', { x: x / W });
+  }
+  function updateBoats(dt) {
+    for (const b of boats) {
+      b.x += b.v * dt;
+      if (skyT - b.lastRip > 0.45) {
+        b.lastRip = skyT;
+        const stern = b.dir > 0 ? b.x : b.x + b.L;
+        ripple(stern * cw, (b.row + 2.5) * ch, 0.55);
+      }
+    }
+    boats = boats.filter(b => b.x > -b.L - 4 && b.x < cols + 4);
+  }
+  function drawBoats() {
+    for (const b of boats) {
+      const x0 = Math.round(b.x), L = b.L, r = b.row;
+      for (let k = 0; k < L; k++) {
+        const kk = b.dir > 0 ? k : L - 1 - k;   // kk = 0 at the stern
+        const c = x0 + k;
+        if (c < 0 || c >= cols) continue;
+        // Glass roof, lit cabin, white hull with a pointed bow.
+        if (kk >= 2 && kk <= L - 5) putRC(c, r, C_US, P_GLASS, 0.6, 0);
+        if (kk === 1) putRC(c, r + 1, b.dir > 0 ? C_LB : C_RB, P_BOAT, 0.7, 0);
+        else if (kk === L - 4) putRC(c, r + 1, b.dir > 0 ? C_RB : C_LB, P_BOAT, 0.7, 0);
+        else if (kk > 1 && kk < L - 4) putRC(c, r + 1, kk % 3 === 0 ? C_BAR : C_HASH, kk % 3 === 0 ? P_GLASS : P_BOAT_WIN, kk % 3 === 0 ? 0.55 : 0.85, kk % 3 ? 1 : 0);
+        else if (kk === L - 3) putRC(c, r + 1, b.dir > 0 ? C_BS : C_SL, P_BOAT, 0.6, 0);
+        if (kk === 0) putRC(c, r + 2, b.dir > 0 ? C_BS : C_SL, P_BOAT, 0.7, 0);
+        else if (kk === L - 1) putRC(c, r + 2, b.dir > 0 ? C_GT : C_LT, P_BOAT, 0.8, 0);
+        else putRC(c, r + 2, C_EQ, P_BOAT, 0.62, 0);
+        // Window light on the water just below the hull.
+        if (kk > 1 && kk < L - 4 && hash2(c, (skyT * 4) | 0) < 0.55) putRC(c, r + 3, C_DASH, P_BOAT_WIN, 0.35, 0);
+      }
+      putRC(x0 + (b.dir > 0 ? L - 2 : 1), r + 1, C_o, b.dir > 0 ? P_GREEN : P_RED, 1, 1);
+      // Wake.
+      for (let k = 1; k <= 6; k++) putRC(x0 + (b.dir > 0 ? -k : L - 1 + k), r + 2, k & 1 ? C_TILDE : C_DASH, P_RIP, 0.6 - k * 0.08, 0);
+    }
+  }
+
+  // ---------- Water: mirrored ovals, ripples, pointer and tap rings ----------
+  let rips = [];
+  const RIP_LIFE = 2.4, RIP_SPEED = reduced ? 7 : 14;
+  function ripple(x, y, amp) {
+    if (rips.length > 12) rips.shift();
+    rips.push({ c: x / cw, r: y / ch, t0: skyT, amp });
+  }
+  function drawWater() {
+    const reflA = reduced ? 1 : 0.35 + 0.65 * smooth((t - T.REFL) / 2);
+    const depth = rows - wl, gT = skyT, nr = rips.length;
+    for (let r = wl; r < rows; r++) {
+      const p = (r - wl) / Math.max(1, depth);
+      const m = 2 * wl - 1 - r;
+      const fade = 1 - 0.55 * p;
+      const drift = gT * (reduced ? 0.15 : 0.45) * (r & 1 ? 1 : -1);
+      for (let c = 0; c < cols; c++) {
+        const rn = vnoise(c * 0.12 + drift, r * 0.85 + gT * 0.05);
+        let off = 0, hl = 0;
+        for (let k = 0; k < nr; k++) {
+          const R = rips[k], age = gT - R.t0, rad = age * RIP_SPEED, dc = c - R.c;
+          if (dc > rad + 6 || dc < -rad - 6) continue;
+          const dr = (r - R.r) * 2.1, d = Math.sqrt(dc * dc + dr * dr);
+          const w = Math.exp(-(((d - rad) / 1.8) ** 2)) * R.amp * Math.max(0, 1 - age / RIP_LIFE);
+          off += w * 2.2 * Math.sin(d * 0.9); if (w > hl) hl = w;
+        }
+        const sc = c + Math.round((rn - 0.5) * (0.5 + 3.2 * p) + off);
+        const i = r * cols + c;
+        if (m >= 0 && sc >= 0 && sc < cols) {
+          const src = m * cols + sc;
+          if (stampA[src] === stamp && cchar[src] !== C_SP && !(ckind[src] & 2)) {
+            const cc = ccol[src], lv = (cc % LEVELS) / 15, sp = (cc / LEVELS) | 0;
+            if (sp !== P_SCR) {
+              const sch = cchar[src];
+              if (lv > 0.5 && rn > 0.22 + 0.25 * p) {
+                const bulb = sch === C_o && (sp === P_BULB || sp === P_WHITE);
+                put(i, p > 0.5 && !bulb ? (rn > 0.6 ? C_EQ : C_DASH) : FLIP[sch], sp, lv * (0.78 - 0.3 * p) * reflA, bulb ? 1 : 0);
+                continue;
+              }
+              if (lv > 0.22 && rn > 0.5) { put(i, p > 0.3 ? C_DASH : FLIP[sch], sp, lv * 0.42 * fade * reflA, 0); continue; }
+            }
+          }
+        }
+        if (hl > 0.3) { put(i, hl > 0.7 ? C_o : C_TILDE, P_RIP, 0.3 + 0.5 * Math.min(1, hl), 0); continue; }
+        if (rn > 0.64) put(i, C_TILDE, P_WATER, (0.24 + 0.3 * (rn - 0.64)) * fade + 0.06, 0);
+        else if (rn > 0.5) put(i, C_DASH, P_WATER, 0.18 * fade + 0.05, 0);
+        else if (rn > 0.42) put(i, C_DOT, P_WATER, 0.16 * fade + 0.04, 0);
+      }
+    }
+  }
+
+  // ---------- Shooting stars ----------
+  let shooters = [];
+  function spawnShooter(x, y, user) {
+    const dir = x > W * 0.5 ? -1 : 1;
+    const sp = (reduced ? 0.35 : 1) * Math.min(W, H) * (0.7 + 0.3 * Math.random());
+    const ang = 0.38 + 0.2 * Math.random();
+    shooters.push({ x: x - dir * Math.cos(ang) * sp * 0.25, y: y - Math.sin(ang) * sp * 0.25, vx: dir * Math.cos(ang) * sp, vy: Math.sin(ang) * sp, age: 0, life: reduced ? 1.8 : 0.9 });
+    music('event', 'shoot', { x: x / W, user: !!user });
+  }
+  function updateShooters(dt) {
+    for (const s of shooters) { s.age += dt; s.x += s.vx * dt; s.y += s.vy * dt; }
+    shooters = shooters.filter(s => s.age < s.life);
+  }
+  function drawShooters() {
+    for (const s of shooters) {
+      const a = 1 - s.age / s.life, sp = Math.hypot(s.vx, s.vy), ux = s.vx / sp, uy = s.vy / sp;
+      const chr = ux * uy > 0 ? C_BS : C_SL;
+      for (let k = 0; k < 12; k++) {
+        const x = s.x - ux * k * cw * 0.9, y = s.y - uy * k * cw * 0.9;
+        if (y >= hr * ch) continue;
+        putXY(x, y, k === 0 ? C_STAR : k < 4 ? chr : C_DOT, k === 0 ? P_WHITE : P_STAR, a * (1.1 - k * 0.08), k === 0 ? 3 : 2);
+      }
+    }
+  }
+
+  // ---------- Carillon rings (sound made visible), only in open sky ----------
+  let rings = [];
+  function drawRings() {
+    if (!rings.length) return;
+    const cx = (kcS + SH[0] + 0.5) * cw, cy = (spBell + 0.5) * ch, sp = Math.min(W, H) * (reduced ? 0.07 : 0.13);
+    for (const R0 of rings) {
+      const age = skyT - R0;
+      if (age < 0 || age > 2.2) continue;
+      const rad = cw * 3 + age * sp, a = 1 - age / 2.2;
+      const n = Math.max(20, Math.round(rad / cw * 3));
+      for (let k = 0; k < n; k++) {
+        const an = k / n * 6.2832, x = cx + Math.cos(an) * rad, y = cy + Math.sin(an) * rad * 0.8;
+        if (x < 0 || y < 0 || y >= hr * ch) continue;
+        const col = (x / cw) | 0, row = (y / ch) | 0;
+        if (col >= cols) continue;
+        const idx = row * cols + col;
+        if (stampA[idx] === stamp && !(ckind[idx] & 2)) continue;   // stay behind the city
+        put(idx, k % 4 ? C_DOT : C_o, P_RING, a * 0.85, 2);
+      }
+    }
+    rings = rings.filter(r0 => skyT - r0 < 2.2);
+  }
+
+  // ---------- Drawing ----------
+  function drawCells(alpha) {
+    counts.fill(0);
+    for (let i = 0; i < nT; i++) counts[ccol[touched[i]]]++;
+    let acc = 0;
+    for (let c = 0; c < NCOLOR; c++) { const n = counts[c]; counts[c] = acc; acc += n; }
+    for (let i = 0; i < nT; i++) { const c = touched[i]; order[counts[ccol[c]]++] = c; }
+    let cur = -1, n = 0, fw = -1;
+    for (let i = 0; i < nT; i++) {
+      const c = order[i];
+      if (cchar[c] === C_SP) continue;
+      const f = ckind[c] & 2;
+      if (f !== fw) { fw = f; ctx.globalAlpha = f ? 1 : alpha; }
+      const cc = ccol[c];
+      if (cc !== cur) { cur = cc; ctx.fillStyle = COLSTR[cc]; }
+      const row = (c / cols) | 0;
+      ctx.fillText(CH[cchar[c]], (c - row * cols) * cw, row * ch);
+      n++;
+    }
+    ctx.globalAlpha = 1;
+    letters = n;
+  }
+
+  let halos = [];
+  function makeHalos() {
+    const R = Math.max(6, cw * 2.2);
+    halos = PAL.map(([r, g, b]) => {
+      const c = document.createElement('canvas');
+      c.width = c.height = Math.ceil(R * 2);
+      const x = c.getContext('2d'), gr = x.createRadialGradient(R, R, 0, R, R, R);
+      gr.addColorStop(0, 'rgba(255,255,255,0.7)');
+      gr.addColorStop(0.2, `rgba(${r | 0},${g | 0},${b | 0},0.6)`);
+      gr.addColorStop(0.55, `rgba(${r | 0},${g | 0},${b | 0},0.14)`);
+      gr.addColorStop(1, `rgba(${r | 0},${g | 0},${b | 0},0)`);
+      x.fillStyle = gr; x.fillRect(0, 0, c.width, c.height);
+      return c;
+    });
+  }
+  function drawHalos(alpha) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < nT; i++) {
+      const c = touched[i];
+      if (!(ckind[c] & 1) || cchar[c] === C_SP) continue;
+      const img = halos[(ccol[c] / LEVELS) | 0], row = (c / cols) | 0;
+      ctx.globalAlpha = clb[c] * (ckind[c] & 2 ? 1 : alpha) * 0.5;
+      ctx.drawImage(img, (c - row * cols + 0.5) * cw - img.width / 2, (row + 0.5) * ch - img.height / 2);
+    }
+    ctx.restore();
+  }
+
+  const glow = document.createElement('canvas'), gctx = glow.getContext('2d');
+  const GLOW_DIV = 5, GLOW_A = 0.8;
+  function drawGlow() {
+    const gw = Math.ceil(W / GLOW_DIV), gh = Math.ceil(H / GLOW_DIV);
+    if (glow.width !== gw || glow.height !== gh) { glow.width = gw; glow.height = gh; }
+    gctx.setTransform(1, 0, 0, 1, 0, 0);
+    gctx.globalCompositeOperation = 'copy';
+    gctx.filter = 'blur(2px)';
+    gctx.drawImage(canvas, 0, 0, gw, gh);
+    gctx.filter = 'none';
+    gctx.globalCompositeOperation = 'difference';
+    gctx.setTransform(gw / W, 0, 0, gh / H, 0, 0);
+    gctx.fillStyle = bgGrad;
+    gctx.fillRect(0, 0, W, H);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = GLOW_A;
+    ctx.drawImage(glow, 0, 0, W, H);
+    ctx.restore();
+  }
+
+  // Title typed out at the bottom in warm bulb-gold.
+  let typed = 0;
+  function titleCount(tt) {
+    if (tt < T.TITLE) return 0;
+    if (tt < TB_START) return Math.min(TITLE_A.length, 1 + Math.floor((tt - T.TITLE) / TA_STEP));
+    return TITLE_A.length + Math.min(TITLE_B.length, 1 + Math.floor((tt - TB_START) / TB_STEP));
+  }
+  function drawTitle(alpha) {
+    const n = titleCount(t);
+    typed = n;
+    if (!n || alpha < 0.01) return;
+    const full = TITLE_A + TITLE_B;
+    const tf = Math.round(clamp(Math.min(W * 0.072, H * 0.06), 18, 58));
+    ctx.save();
+    ctx.font = `700 ${tf}px ${MONO}`;
+    ctx.textBaseline = 'middle';
+    const adv = ctx.measureText('M').width * 1.08;
+    const yTop = wl * ch, y = yTop + (H - yTop) * 0.6;
+    const x0 = W / 2 - adv * full.length / 2;
+    ctx.globalAlpha = alpha;
+    ctx.shadowColor = 'rgba(255,160,50,0.95)';
+    ctx.shadowBlur = tf * 0.45;
+    for (let k = 0; k < n; k++) {
+      const s = full[k];
+      if (s === ' ') continue;
+      const tk = k < TITLE_A.length ? T.TITLE + k * TA_STEP : TB_START + (k - TITLE_A.length) * TB_STEP;
+      const fresh = reduced ? 0 : clamp(1 - (t - tk) / 0.25, 0, 1);
+      ctx.fillStyle = fresh > 0 ? `rgb(255,${(200 + 55 * fresh) | 0},${(110 + 145 * fresh) | 0})` : '#ffc864';
+      ctx.fillText(s, x0 + k * adv, y);
+    }
+    const doneT = TB_START + TITLE_B.length * TB_STEP;
+    if (!reduced && t < doneT + 1.6 && (skyT % 0.8) < 0.45) { ctx.fillStyle = '#ffe7b0'; ctx.fillText('_', x0 + n * adv, y); }
+    const sub = smooth((t - doneT - 0.2) / 0.8);
+    if (sub > 0) {
+      ctx.globalAlpha = alpha * sub * 0.85;
+      ctx.shadowBlur = tf * 0.3;
+      ctx.font = `500 ${Math.round(tf * 0.36)}px Inter, system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#ffe2a8';
+      ctx.fillText('d e   g r a c h t e n   b i j   n a c h t', W / 2, y + tf * 0.78);
+    }
+    ctx.restore();
+  }
+
+  function render() {
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+    ctx.textBaseline = 'top';
+    ctx.font = cellFont;
+    const alpha = reduced ? 1 : Math.min(smooth(t / 0.8), 1 - smooth((t - T.FADE) / T.FADE_DUR));
+    stamp++; nT = 0; built = 0; resolving = 0;
+    drawStars();
+    drawShooters();
+    if (alpha > 0.001) {
+      drawSprites(0, nFar);
+      drawSails();
+      drawSprites(nFar, nS);
+      drawCats();
+      drawCyclists();
+    }
+    drawRings();
+    if (alpha > 0.001) {
+      drawWater();
+      drawBoats();
+    }
+    drawCells(alpha);
+    drawHalos(alpha);
+    drawGlow();
+    drawTitle(alpha);
+  }
+
+  // ---------- Loop, HUD, controls ----------
+  let paused = false, last = performance.now();
+  let par = 0, parTo = 0;
+  let frames = 0, fpsT = last, fps = 0, hudT = 0, nextShoot = 6, nextBike = T.QUAY + 2;
+
+  function phaseName() {
+    let s = PHASES[0][1];
+    for (const [a, nm] of PHASES) if (t >= a) s = nm;
+    return s;
+  }
+  function updateHud(now) {
+    const tail = paused ? 'paused' : `${fps} fps`;
+    const pct = nSolid ? (100 * built / nSolid).toFixed(1) : '0.0';
+    hudEl.textContent = W < 640 ? `${phaseName()}  built ${pct}%  ${tail}`
+      : `phase ${phaseName()}  built ${pct}%  letters ${letters.toLocaleString('en-US')}  ${tail}`;
+    hudT = now;
+  }
+
+  function frame(now) {
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000));
+    last = now;
+    if (needResize) resize();
+    if (!paused) {
+      const t1 = t, typed1 = titleCount(t);
+      skyT += dt;
+      if (!reduced) {
+        // Linger on the finished city: the scene clock waits just before the fade for one more music loop.
+        if (t < T.FADE - 0.3) linger = 0;
+        if (linger < LINGER && t + dt >= T.FADE - 0.3) { t = Math.max(t, T.FADE - 0.3); linger += dt; } else t += dt;
+        if (t >= T.END) { t = 0; music('restart'); }
+        if (t > 3 && t < T.FADE && skyT > nextShoot) {
+          spawnShooter(W * (0.15 + 0.7 * Math.random()), H * (0.05 + 0.15 * Math.random()));
+          nextShoot = skyT + 7 + Math.random() * 6;
+        }
+        if (t > T.QUAY + 1 && t < T.FADE && skyT > nextBike) {
+          spawnCyclist(null, false);
+          nextBike = skyT + 7 + Math.random() * 7;
+        }
+      }
+      frameNo++;
+      millW += (0.35 - millW) * Math.min(1, dt * 0.35);
+      millA += millW * dt * (reduced ? 0.4 : 1);
+      updateCyclists(dt);
+      updateBoats(dt);
+      updateShooters(dt);
+      rips = rips.filter(r => skyT - r.t0 < RIP_LIFE);
+      if (Math.abs(parTo - par) > 0.002) par += (parTo - par) * Math.min(1, dt * 1.6);
+      SH[0] = Math.round(-par * 1); SH[1] = Math.round(-par * 2); SH[2] = Math.round(-par * 3);
+      render(); dirty = false; frames++;
+      soundCues(t1, t, typed1);
+    } else if (dirty) { render(); dirty = false; frames++; }
+    if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
+    if (now - hudT >= 250) updateHud(now);
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- Sound cues ----------
+  const music = (fn, ...a) => window.AsciiAudio && AsciiAudio[fn](...a);
+  const crossed = (a, b, x) => a < x && x <= b;
+  function soundCues(a, b, typed1) {
+    if (!window.AsciiAudio || b < a) return;
+    if (crossed(a, b, T.MOON)) music('event', 'moon');
+    if (crossed(a, b, T.FAR)) music('event', 'build', { dur: 1.4, low: 1 });
+    if (crossed(a, b, T.HOUSES)) music('event', 'build', { dur: T.HOUSES_DUR });
+    if (crossed(a, b, T.SPIRE)) music('event', 'build', { dur: T.SPIRE_DUR });
+    if (crossed(a, b, T.BRIDGE)) music('event', 'build', { dur: 1.6, low: 1 });
+    if (resolving > 0) music('event', 'resolve');
+    for (const h of houses) if (crossed(a, b, h.firstOn)) music('event', 'light', { x: (h.c0 + h.c1) / 2 / cols });
+    if (crossed(a, b, T.BULBS)) music('event', 'bulbs');
+    const n = titleCount(b);
+    if (n > typed1) music('event', 'type', { space: (TITLE_A + TITLE_B)[n - 1] === ' ' });
+    if (crossed(a, b, TB_START + TITLE_B.length * TB_STEP + 0.1)) music('event', 'titleDone');
+    if (crossed(a, b, T.FADE)) music('event', 'fade');
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
+  function replay() {
+    t = T_START; linger = 0; shooters = []; rips = []; cyclists = []; boats = []; rings = []; spT = -99; millW = 0.35;
+    bridges.forEach(B => { B.chaseT = -99; }); houses.forEach(h => { h.tapT = -99; });
+    paused = false; dirty = true; music('resume'); music('restart');
+  }
+
+  // Hit tests in screen pixels (each layer has its own parallax shift).
+  const isBuilt = t0 => reduced || (t >= t0 && t < T.FADE + T.FADE_DUR * 0.6);
+  function bridgeAt(x, y) {
+    if (!isBuilt(T.BRIDGE + 1)) return null;
+    const c = x / cw - SH[1], r = y / ch;
+    for (const B of bridges) {
+      if (c < B.bL - 0.5 || c > B.bR + 1.5) continue;
+      if (r >= hr - fh - 2 && r <= wl + B.rv + 1) return B;
+    }
+    return null;
+  }
+  function houseAt(x, y) {
+    if (!isBuilt(T.HOUSES + 1)) return null;
+    const c = x / cw - SH[1], r = y / ch;
+    if (r >= hr) return null;
+    for (const h of houses) if (c >= h.c0 && c < h.c1 + 1 && r >= h.top && isBuilt(T.HOUSES + (h.c0 + h.c1) / 2 / cols * T.HOUSES_DUR * 0.8 + 0.5)) return h;
+    return null;
+  }
+  function onSpire(x, y) {
+    if (!isBuilt(T.SPIRE + 1)) return false;
+    const c = x / cw - SH[0], r = y / ch;
+    return r >= spTop - 1 && r < hr && Math.abs(c - kcS - 0.5) <= spA + 2;
+  }
+  function onMill(x, y) {
+    if (!isBuilt(T.FAR + 1.5)) return false;
+    const hx = (kcW + SH[0] + 0.5) * cw, hy = (millHub + 0.5) * ch;
+    return y < hr * ch && Math.hypot(x - hx, y - hy) < millL + cw * 2;
+  }
+  function tapAt(x, y) {
+    const B = bridgeAt(x, y);
+    let h;
+    if (B) {
+      B.chaseT = skyT;
+      music('event', 'chase', { x: x / W, i: B.idx });
+    } else if ((h = houseAt(x, y))) {
+      h.tapT = skyT;
+      music('event', 'house', { x: x / W });
+    } else if (onSpire(x, y)) {
+      spT = skyT;
+      for (let k = 0; k < 8; k += 2) rings.push(skyT + k * 0.32);
+      music('event', 'carillon', { x: x / W });
+    } else if (onMill(x, y)) {
+      millW = reduced ? 1 : 3.2;
+      music('event', 'mill', { x: x / W });
+    } else if (y >= (hr - 2) * ch && y < wl * ch) {
+      spawnCyclist(x, true);
+    } else if (y >= wl * ch) {
+      ripple(x, y, 1.3);
+      spawnBoat(x, y);
+    } else spawnShooter(x, y, true);
+    dirty = true;
+  }
+
+  addEventListener('resize', () => { needResize = true; });
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
+    else if (e.key === 'r' || e.key === 'R') replay();
+  });
+  // A press only counts as a tap if it moved less than 8 px; moving (or dragging a finger)
+  // shifts the parallax and trails soft ripples across the canal.
+  let downX = 0, downY = 0, pressed = false, dragged = false, tapTimer = 0, tapResumed = false, lastRip = 0, ripX = -1e9, ripY = 0;
+  const setPar = e => { if (!reduced) parTo = clamp(e.clientX / W * 2 - 1, -1, 1); };
+  const moveRipple = e => {
+    if (e.clientY <= wl * ch || paused) return;
+    if (skyT - lastRip < 0.15 || Math.hypot(e.clientX - ripX, e.clientY - ripY) < cw * 3) return;
+    lastRip = skyT; ripX = e.clientX; ripY = e.clientY;
+    ripple(e.clientX, e.clientY, 0.6);
+  };
+  canvas.addEventListener('pointerdown', e => {
+    pressed = true; dragged = false; downX = e.clientX; downY = e.clientY;
+    if (e.pointerType !== 'mouse') setPar(e);
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (e.pointerType === 'mouse' || pressed) { setPar(e); moveRipple(e); }
+    if (pressed && Math.hypot(e.clientX - downX, e.clientY - downY) >= 8) dragged = true;
+  });
+  const ptrOff = () => { pressed = false; parTo = 0; };
+  canvas.addEventListener('pointerleave', ptrOff);
+  canvas.addEventListener('pointercancel', ptrOff);
+  canvas.addEventListener('pointerup', e => {
+    const wasTap = pressed && !dragged;
+    pressed = false;
+    if (e.pointerType !== 'mouse') parTo = 0;
+    if (e.button > 0 || !wasTap) return;
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; if (!tapResumed) togglePause(); return; }
+    tapTimer = setTimeout(() => { tapTimer = 0; }, 280);
+    tapResumed = paused;
+    if (paused) { togglePause(); return; }
+    tapAt(e.clientX, e.clientY);
+  });
+
+  // Hint language: ?lang= wins, then saved site preference, then browser.
+  let pref = null;
+  try { pref = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (!pref) { try { pref = localStorage.getItem('lang'); } catch (e) {} }
+  if (!pref) pref = navigator.language || 'en';
+  const zh = String(pref).toLowerCase().startsWith('zh');
+  document.documentElement.lang = zh ? 'zh-Hant' : 'en';
+  const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  hintEl.textContent = touch ? (zh ? '點橋、房子、街道、運河、尖塔或天空 · 雙擊暫停' : 'tap bridges, houses, street, canal, spire, sky')
+                             : (zh ? '點橋跑燈串 · 點房子開燈看貓 · 點街道來單車 · 點運河開船 · 點尖塔敲鐘 · 點風車轉 · 點天空流星 · 雙擊/空白鍵 暫停 · R 重播 · M 音樂'
+                                   : 'click a bridge: bulbs · house: a cat · street: cyclist · canal: boat · spire: bells · windmill · sky: star · double-click / Space pause · R replay · M music');
+
+  // Score: an original street-organ waltz in F major, 3/4 at 120 bpm, 16 bars = one 24 s scene loop
+  // (restarted every loop). Bars 0-1: carillon bells over a soft oom-pah-pah; bars 2-13: the organ tune
+  // (square-wave pipes, a flute an octave down and a glockenspiel an octave up) over bass on the downbeat,
+  // staccato chords on beats 2 and 3 and a little drum; bars 14-15: the carillon closes on a held F chord.
+  if (window.AsciiAudio) AsciiAudio.init({
+    bpm: 120, master: 0.7, reverb: 0.26, reverbTime: 2.6,
+    build(a) {
+      const N = AsciiAudio.notes, TR = AsciiAudio.transpose, LOOP = 48;
+      const F = ['A3', 'C4', 'F4'], C7 = ['G3', 'Bb3', 'E4'], BB = ['Bb3', 'D4', 'F4'], DM = ['A3', 'D4', 'F4'], GM = ['Bb3', 'D4', 'G4'];
+      const BARS = [
+        ['F2', 'C3', F], ['F2', 'C3', F], ['F2', 'C3', F], ['C3', 'G2', C7], ['C3', 'G2', C7], ['F2', 'C3', F],
+        ['F2', 'C3', F], ['Bb2', 'F2', BB], ['Bb2', 'F2', BB], ['F2', 'C3', F], ['D3', 'A2', DM], ['G2', 'D3', GM],
+        ['C3', 'G2', C7], ['F2', 'C3', F], ['F2', 'C3', F], ['F2', 'C3', F]
+      ];
+      a.every(1, (tt, s) => {
+        const beat = s % LOOP, bar = Math.floor(beat / 3), q = beat % 3;
+        const [r1, r2, chd] = BARS[bar];
+        const main = bar >= 2 && bar <= 13;
+        if (q === 0) {
+          if (bar < 15) a.bass(tt, bar % 2 ? r2 : r1, a.beats(bar === 14 ? 4 : 0.8), { vel: main ? 0.5 : 0.34 });
+          if (bar < 15) a.pad(tt, chd, a.beats(bar === 14 ? 4.5 : 2.6), { vel: main ? 0.15 : 0.22, cutoff: 900, attack: 0.15, release: 0.7 });
+          if (main) a.kick(tt, 0.26);
+        } else if (main || bar < 2) {
+          chd.forEach((nt, j) => a.lead(tt + j * 0.006, nt, a.beats(0.2), { type: 'square', vel: main ? 0.3 : 0.16, cutoff: 1500, pan: -0.25 + j * 0.25, wet: 0.18 }));
+          if (main) a.hat(tt, q === 1 ? 0.09 : 0.06, { pan: 0.3 });
+        }
+      });
+      // The organ tune.
+      a.part(N('A4:1 C5 F5 | E5:2 G5:1 | Bb5:1.5 A5:.5 G5:1 | A5:3 | C6:1 A5 F5 | D5:2 F5:1 | Bb5:1.5 A5:.5 G5:1 | F5:3 | D5:1 F5 A5 | Bb5:2 G5:1 | E5:1 G5 C6 | A5:1.5 G5:.5 F5:1'),
+        (tt, e) => {
+          a.lead(tt, e.note, e.sec * 0.9, { type: 'square', vel: 0.5, cutoff: 2600, pan: 0.1, wet: 0.28 });
+          a.lead(tt, TR(e.note, -12), e.sec * 0.9, { type: 'triangle', vel: 0.22, cutoff: 1800, pan: -0.1, wet: 0.25 });
+          a.musicBox(tt, TR(e.note, 12), Math.max(0.6, e.sec * 1.3), { vel: 0.12, pan: 0.3, wet: 0.35 });
+        }, { length: LOOP, offset: 6 });
+      // Glockenspiel answers in the second half.
+      a.part(N('r:1 F6:.5 A6 C7:1 | r:1 G6:.5 Bb6 D7:1 | r:1 A6:.5 F6 D6:1 | r:1 G6:.5 Bb6 G6:1'),
+        (tt, e) => a.musicBox(tt, e.note, 1, { vel: 0.18, pan: -0.35, wet: 0.4 }), { length: LOOP, offset: 27 });
+      // Carillon intro and coda.
+      a.part(N('C6:1 A5 F5 | G5:1 A5 C6'), (tt, e) => a.bell(tt, e.note, 2.4, { vel: 0.34, pan: 0.25, wet: 0.55 }), { length: LOOP, offset: 0 });
+      a.part(N('C6:1 A5 F5 | C5+F5+A5:3'), (tt, e) => e.notes.forEach(nt => a.bell(tt, nt, 3, { vel: 0.3, pan: -0.15, wet: 0.6 })), { length: LOOP, offset: 42 });
+
+      // Sound effects in sync with the picture.
+      const SP = AsciiAudio.scale('F5', 'pentatonic', 10);
+      const pan = x => ((x == null ? 0.5 : x) * 2 - 1) * 0.8;
+      a.on('moon', (a, d, t) => a.chime(t, 'F6', 3, { vel: 0.14 }));
+      a.on('build', (a, d, t) => a.sweep(t, d.dur || 2, { from: d.low ? 80 : 140, to: d.low ? 700 : 1400, q: 2.2, attack: (d.dur || 2) * 0.85, vel: 0.22, bus: 'sfx', wet: 0.3 }), { gap: 0.5 });
+      a.on('resolve', (a, d, t) => a.tick(t, { vel: 0.05 }), { gap: 0.13 });
+      a.on('light', (a, d, t) => a.bell(t, SP[(Math.random() * SP.length) | 0], 1, { vel: 0.05, bus: 'sfx', pan: pan(d.x), wet: 0.5 }), { gap: 0.18 });
+      a.on('bulbs', (a, d, t) => ['F5', 'A5', 'C6', 'F6', 'A6', 'C7'].forEach((nt, i) => a.bell(t + i * 0.13, nt, 1.4, { vel: 0.1, bus: 'sfx', pan: -0.6 + i * 0.24, wet: 0.5 })));
+      a.on('type', (a, d, t) => { if (!d.space) a.tick(t, { vel: 0.16 }); }, { gap: 0.05 });
+      a.on('titleDone', (a, d, t) => a.chime(t, 'F5', 3, { vel: 0.22 }));
+      a.on('fade', (a, d, t) => a.sweep(t, T.FADE_DUR, { from: 2600, to: 300, q: 1.2, attack: 0.8, vel: 0.11, bus: 'sfx', wet: 0.6 }));
+      // Taps.
+      a.on('chase', (a, d, t) => {
+        const p = pan(d.x);
+        ['F5', 'G5', 'A5', 'C6', 'D6', 'F6', 'G6', 'A6', 'C7'].forEach((nt, i) => a.bell(t + i * 0.09, nt, 1.1, { vel: 0.12, bus: 'sfx', pan: p + (i - 4) * 0.05, wet: 0.45 }));
+        a.sparkle(t + 0.9, { count: 4, vel: 0.1, notes: SP });
+      }, { gap: 0.3 });
+      a.on('house', (a, d, t) => {
+        const p = pan(d.x);
+        a.noise(t, { dur: 0.45, filter: 'bandpass', freq: 1800, freqEnd: 4500, q: 0.8, attack: 0.15, vel: 0.22, pan: p, bus: 'sfx', wet: 0.2 });   // curtains
+        a.celesta(t + 0.1, 'A5', 1, { vel: 0.3, bus: 'sfx', pan: p }); a.celesta(t + 0.25, 'C6', 1.2, { vel: 0.26, bus: 'sfx', pan: p });
+        // The cat: a short sliding "mew".
+        const tm = t + 0.95, ctx2 = a.ctx, g = ctx2.createGain(), lp = ctx2.createBiquadFilter();
+        lp.type = 'bandpass'; lp.frequency.value = 1400; lp.Q.value = 1.2;
+        lp.connect(g); g.connect(a._out({ bus: 'sfx', pan: p }, 0.2));
+        g.gain.setValueAtTime(0, tm); g.gain.linearRampToValueAtTime(0.09, tm + 0.06); g.gain.setTargetAtTime(0, tm + 0.32, 0.06);
+        const o = a._osc('sawtooth', 620, tm, tm + 0.8, lp);
+        o.frequency.linearRampToValueAtTime(980, tm + 0.14); o.frequency.linearRampToValueAtTime(560, tm + 0.42);
+      }, { gap: 0.3 });
+      const bikeBell = (a, t, p, vel) => {
+        for (let k = 0; k < 2; k++) for (let i = 0; i < 5; i++)
+          a.bell(t + k * 0.32 + i * 0.04, i & 1 ? 2350 : 2620, 0.5, { vel: vel * (1 - i * 0.12), bus: 'sfx', pan: p, wet: 0.25 });
+      };
+      a.on('cycle', (a, d, t) => {
+        a.noise(t, { dur: 1.6, filter: 'bandpass', freq: 500, freqEnd: 900, q: 0.7, attack: 0.6, vel: 0.07, pan: pan(d.x), bus: 'sfx', wet: 0.1 });
+        if (d.user) bikeBell(a, t + 0.05, pan(d.x), 0.16);
+      }, { gap: 0.3 });
+      a.on('ring', (a, d, t) => bikeBell(a, t, pan(d.x), 0.2), { gap: 0.4 });
+      a.on('boat', (a, d, t) => {
+        const p = pan(d.x);
+        a.lead(t, 'C3', 0.42, { type: 'square', vel: 0.55, cutoff: 900, pan: p, bus: 'sfx', wet: 0.4 });
+        a.lead(t + 0.55, 'F3', 0.7, { type: 'square', vel: 0.55, cutoff: 900, pan: p, bus: 'sfx', wet: 0.45 });
+        for (let i = 0; i < 16; i++) a.noise(t + 0.2 + i * 0.16, { dur: 0.1, filter: 'lowpass', freq: 220, vel: 0.35 * (1 - i / 18), pan: p, bus: 'sfx', wet: 0.05 });
+      }, { gap: 0.5 });
+      a.on('carillon', (a, d, t) => {
+        ['F5', 'A5', 'C6', 'F6', 'E6', 'C6', 'D6', 'F6'].forEach((nt, i) => a.bell(t + i * 0.32, nt, 2.6, { vel: 0.3, bus: 'sfx', pan: pan(d.x) * 0.5, wet: 0.6 }));
+        a.bell(t + 2.56, 'F4', 3.5, { vel: 0.3, bus: 'sfx', wet: 0.6 });
+      }, { gap: 1 });
+      a.on('mill', (a, d, t) => {
+        for (let i = 0; i < 4; i++) a.whoosh(t + i * 0.36, { dur: 0.5, freq: 300, freqEnd: 900, q: 0.9, vel: 0.13 - i * 0.02, pan: pan(d.x) });
+        a.pluck(t, 'D3', 0.5, { type: 'sawtooth', vel: 0.2, bus: 'sfx', pan: pan(d.x) });
+      }, { gap: 0.4 });
+      a.on('shoot', (a, d, t) => { a.whoosh(t, { dur: 0.6, freq: 2000, freqEnd: 6500, q: 1.4, vel: d.user ? 0.12 : 0.06, pan: pan(d.x), wet: 0.5 }); a.ding(t + 0.25, 'F7', { vel: d.user ? 0.08 : 0.04, pan: pan(d.x) }); }, { gap: 0.3 });
+      a.on('ripple', (a, d, t) => { a.pop(t, { freq: 260 + Math.random() * 120, vel: 0.2, pan: pan(d.x) }); }, { gap: 0.12 });
+    }
+  });
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

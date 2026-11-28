@@ -1,0 +1,1504 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ASCII Kuala Lumpur at Night | Alex Li (李翔緯)</title>
+  <meta name="description" content="Kuala Lumpur at night drawn entirely with coloured ASCII characters: a crescent moon and star, the silver Petronas Twin Towers with their stepped crowns and skybridge, KL Tower on its hill, a very tall spire tower, an old-city mosque, palms and the musical fountain lake. Tap the towers for a light wave, KL Tower to change its colours, the lake for a fountain show, the sky for fireworks or lightning. Vanilla JS on a single canvas.">
+  <meta name="theme-color" content="#060a1a">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;600;800&display=swap">
+  <style>
+    :root {
+      --bg: #0b1120;
+      --sky: #060a1a;
+      --text: #eef0fb;
+      --muted: #b4bcd8;
+      --accent: #fbbf24;
+      --mono: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--sky);
+      color: var(--text);
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    canvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100svh;
+      display: block;
+      touch-action: none; /* taps light things up, drags move the parallax and ripple the lake */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .back {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 2;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(251, 191, 36, 0.45);
+      background: rgba(50, 36, 10, 0.4);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .back:hover, .back:focus-visible {
+      background: rgba(251, 191, 36, 0.24);
+      border-color: var(--accent);
+      outline: none;
+    }
+    .hud, .hint {
+      position: fixed;
+      z-index: 1;
+      bottom: 12px;
+      color: var(--muted);
+      opacity: 0.8;
+      font: 11px/1.4 var(--mono);
+      white-space: pre;
+      pointer-events: none;
+      max-width: calc(100% - 24px);
+      overflow: hidden;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    }
+    .hud { left: 12px; }
+    .hint {
+      right: 12px;
+      font-family: Inter, "Noto Sans TC", system-ui, sans-serif;
+    }
+    @media (max-width: 640px) {
+      .hud, .hint { font-size: 10px; }
+      .hint { bottom: 30px; } /* stack above the HUD on narrow screens */
+    }
+  </style>
+</head>
+<body>
+  <h1 class="sr-only">ASCII Kuala Lumpur at Night</h1>
+  <a class="back" href="./">← ASCII</a>
+  <canvas id="c" role="img" aria-label="Animated night view of Kuala Lumpur drawn with coloured ASCII characters: a crescent moon and star, a lit skyline, KL Tower on its hill, a very tall spire tower, an old-city mosque with domes and minarets and the silver Petronas Twin Towers with their stepped crowns and double-deck skybridge resolving into place, palms along the lake and long reflections, then the title Kuala Lumpur at Night; tapping the twin towers sends a light wave up them, tapping KL Tower changes its colours, tapping the lake starts a fountain show and tapping the sky launches fireworks or a gentle lightning flash"></canvas>
+  <div class="hud" id="hud" aria-hidden="true"></div>
+  <div class="hint" id="hint"></div>
+
+<script src="ascii-audio.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  // ---------- Timeline (seconds of scene time, one 24 s loop) ----------
+  const T = {
+    MOON: 0.3, FAR: 1.0, CITY: 1.8,
+    KLT: 3.4, KLT_DUR: 2.2,           // KL Tower: bottom -> top
+    MOSQUE: 5.0, MOSQUE_DUR: 1.4,
+    M118: 6.0, M118_DUR: 2.2,         // the tall spire tower
+    PET: 8.0, PET_DUR: 3.2,           // Petronas Twin Towers, the right one a beat behind
+    BRIDGE: 11.0,                     // skybridge and its legs
+    LIGHTS: 11.8, PALMS: 12.4,        // facade light-up sweep, palms along the lake
+    REFL: 13.6,                       // reflections stretch to full strength
+    TITLE: 15.4,                      // "KUALA LUMPUR", then " AT NIGHT"
+    FADE: 21.0, FADE_DUR: 2.4, END: 24.0
+  };
+  const PHASES = [[0, 'sky', '夜空'], [T.FAR, 'skyline', '天際線'], [T.KLT, 'kl tower', '吉隆坡塔'], [T.MOSQUE, 'mosque', '清真寺'],
+    [T.M118, 'spire', '尖塔'], [T.PET, 'twin towers', '雙子塔'], [T.BRIDGE, 'skybridge', '天橋'], [T.LIGHTS, 'lights', '亮燈'],
+    [T.PALMS, 'palms', '椰影'], [T.REFL, 'reflections', '倒影'], [T.TITLE, 'title', '標題'], [18.2, 'night', '夜色'], [T.FADE, 'fade', '淡出']];
+  const TITLE_A = 'KUALA LUMPUR', TITLE_B = ' AT NIGHT';
+  const TA_STEP = 0.12, TB_START = T.TITLE + 1.7, TB_STEP = 0.11;
+
+  const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T_START = reduced ? 19.2 : 0;   // reduced motion: open (and stay) on the finished night view
+  const RES = 0.45;                     // seconds a cell spends as scrambled glyphs before it resolves
+  const WAVE = 2.0;                     // seconds a tapped light wave takes to climb the twin towers
+  const FOUNT_DUR = 10.8;               // tap on the lake: fountain show
+  const BEAT = 60 / 100;                // the fountain dances to the score's tempo
+  const MONO = 'Menlo, Consolas, "DejaVu Sans Mono", monospace';
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  // Stateless integer hash -> [0, 1).
+  function hash2(a, b) {
+    let h = Math.imul(a ^ Math.imul(b, 0x9E3779B1), 0x85EBCA6B);
+    h ^= h >>> 13; h = Math.imul(h, 0xC2B2AE35); h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
+  }
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+  function vnoise(x, y) {
+    const xi = Math.floor(x), yi = Math.floor(y);
+    let fx = x - xi, fy = y - yi;
+    fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+    const a = hash2(xi, yi), b = hash2(xi + 1, yi), c = hash2(xi, yi + 1), d = hash2(xi + 1, yi + 1);
+    return a + (b - a) * fx + (c - a + (a - b - c + d) * fx) * fy;
+  }
+
+  // ---------- Characters & colours ----------
+  const CH = [];
+  const ci = s => { let i = CH.indexOf(s); if (i < 0) { CH.push(s); i = CH.length - 1; } return i; };
+  const C_SP = ci(' '); // occluder: hides what is behind, never drawn
+  const C_SL = ci('/'), C_BS = ci('\\'), C_X = ci('X'), C_BAR = ci('|'), C_HASH = ci('#'), C_EQ = ci('='),
+        C_US = ci('_'), C_DASH = ci('-'), C_DOT = ci('.'), C_STAR = ci('*'), C_PLUS = ci('+'), C_o = ci('o'),
+        C_COLON = ci(':'), C_LB = ci('['), C_RB = ci(']'), C_CARET = ci('^'), C_AT = ci('@'), C_TILDE = ci('~'),
+        C_i = ci('i'), C_v = ci('v'), C_LP = ci('('), C_RP = ci(')'), C_Q = ci("'"), C_EXCL = ci('!'),
+        C_n = ci('n'), C_COMMA = ci(','), C_H = ci('H');
+  const SCR = [...'01#$%&*+=?@<>/\\:;'].map(ci);   // scrambled glyphs a cell shows before it resolves
+  const STAR_G = [C_DOT, C_DOT, C_Q, C_PLUS, C_DOT, C_STAR];
+  const letter = s => ci(s);
+
+  const LEVELS = 16;
+  const PAL = [];
+  const pal = (r, g, b) => { PAL.push([r, g, b]); return PAL.length - 1; };
+  const hsl = (h, s, l) => {
+    const a = s * Math.min(l, 1 - l), f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); };
+    return [f(0) * 255, f(8) * 255, f(4) * 255];
+  };
+  const P_WHITE = pal(255, 255, 255), P_SCR = pal(120, 255, 210), P_STAR = pal(196, 208, 255);
+  const P_MOON = pal(255, 226, 150), P_MOON_D = pal(110, 116, 170);
+  const P_FAR = pal(70, 86, 140), P_FAR_LIT = pal(255, 196, 120);
+  const P_BLD = pal(82, 106, 168), P_WOFF = pal(64, 80, 130);
+  const P_WIN = [pal(255, 204, 116), pal(255, 234, 190), pal(150, 210, 255), pal(255, 176, 96)];
+  const P_PET = pal(196, 212, 240), P_PET_E = pal(232, 240, 255), P_PET_C = pal(255, 246, 222), P_PET_D = pal(110, 124, 160);
+  const P_GOLD = pal(255, 206, 100), P_BR_W = pal(255, 232, 170);
+  const P_KLT = pal(170, 180, 214), P_KLT_D = pal(110, 118, 160);
+  const POD = [pal(200, 170, 255), pal(255, 80, 190), pal(70, 230, 255), pal(90, 255, 150), pal(255, 200, 70), pal(255, 90, 80)];
+  const P_M118 = pal(110, 140, 204), P_M118_E = pal(186, 214, 255), P_M118_S = pal(140, 240, 255);
+  const P_DOME = pal(240, 222, 178), P_DOME_E = pal(255, 240, 205), P_MOSQ = pal(200, 190, 170), P_MLAMP = pal(120, 255, 170);
+  const P_HILL = pal(40, 96, 72), P_HILL_T = pal(60, 128, 92);
+  const P_PALM = pal(64, 160, 112), P_PALM_L = pal(150, 230, 160), P_TRUNK = pal(150, 116, 86);
+  const P_RED = pal(255, 48, 56);
+  const RB = [];
+  for (let k = 0; k < 12; k++) RB.push(pal(...hsl(k * 30, 1, 0.62)));
+  const P_LAMP = pal(255, 210, 130), P_WATER = pal(60, 96, 170), P_RIP = pal(170, 214, 255), P_STEEL = pal(116, 132, 176);
+  const P_CLOUD = pal(150, 160, 210), P_BOLT = pal(225, 232, 255);
+  const P_ROCKET = pal(255, 225, 170);
+  const P_JET = pal(220, 240, 255);
+
+  // Colour strings cached per (palette entry, brightness level).
+  const NCOLOR = PAL.length * LEVELS;
+  const COLSTR = new Array(NCOLOR);
+  PAL.forEach(([r, g, b], p) => {
+    for (let l = 0; l < LEVELS; l++) {
+      // Top levels overshoot 1 and wash toward white, so lit characters read as glowing.
+      const m = 0.18 + 1.12 * l / (LEVELS - 1), w = Math.max(0, m - 1) * 170;
+      const lift = v => Math.min(255, v * m + w) | 0;
+      COLSTR[p * LEVELS + l] = `rgb(${lift(r)},${lift(g)},${lift(b)})`;
+    }
+  });
+
+  // ---------- Canvas, grid, layout ----------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const hudEl = document.getElementById('hud');
+  const hintEl = document.getElementById('hint');
+
+  let W = 0, H = 0, fs = 10, cw = 6, ch = 11, cols = 0, rows = 0, hr = 0, yH = 0;
+  let cellFont = '', bgGrad = null;
+  let stampA, cchar, ccol, ckind, clb, touched, order, nT = 0, stamp = 0;
+  const counts = new Uint32Array(NCOLOR);
+  let needResize = true, dirty = true;
+  // Landmark geometry (cells / px)
+  let kcP = 0, kL = 0, kR = 0, hw0 = 0, hP = 0, topP = 0, rBr = 0;   // Petronas
+  let kcK = 0, topK = 0, podLo = 0, podHi = 0, podW = 0;             // KL Tower
+  let kcM = 0, topM = 0, hwM = 0;                                     // spire tower
+  let kcQ = 0, bwQ = 0, topQ = 0, minQ = 0, mtopQ = 0;                // mosque
+  let moonX = 0, moonY = 0, moonR = 0;
+  // Sprites: every static cell of the scene, with its build time and colour group.
+  let nS = 0, sC, sR, sCh, sP, sB, sT0, sL, sG, sY, sX, sF;
+  let nSolid = 0;
+  let stars = [];
+
+  const G_STATIC = 0, G_WIN = 1, G_PET = 2, G_KLT = 3, G_POD = 4, G_M118 = 5, G_MOSQ = 6, G_PALM = 7, G_LAMP = 8, G_BEACON = 9;
+  const F_HALO = 1, F_EDGE = 2, F_CROWN = 4, F_BRIDGE = 8, F_PIN = 16, F_LAMP = 32, F_WIN = 64;
+
+  function resize() {
+    needResize = false;
+    W = canvas.clientWidth || innerWidth;
+    H = canvas.clientHeight || innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    fs = clamp(Math.round(Math.min(W, H) / 90), 7, 13);
+    cellFont = `${fs}px ${MONO}`;
+    ctx.font = cellFont;
+    cw = ctx.measureText('M').width || fs * 0.6;
+    ch = Math.round(fs * 1.15);
+    cols = Math.ceil(W / cw);
+    rows = Math.ceil(H / ch);
+    hr = Math.round(H * 0.64 / ch);
+    yH = hr * ch;
+    const n = cols * rows;
+    stampA = new Uint32Array(n);
+    cchar = new Uint8Array(n); ccol = new Uint16Array(n); ckind = new Uint8Array(n); clb = new Float32Array(n);
+    touched = new Int32Array(n); order = new Int32Array(n); stamp = 0;
+
+    bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, '#040719');
+    bgGrad.addColorStop(0.42, '#0a1030');
+    bgGrad.addColorStop(0.62, '#1d1a3c');   // warm city glow above the lake
+    bgGrad.addColorStop(0.66, '#0a0f28');
+    bgGrad.addColorStop(1, '#03050f');
+
+    makeHalos();
+    buildScene();
+    dirty = true;
+  }
+
+  // Boundary character from how far the edge moves sideways per row going up.
+  function edgeChar(delta, s) {
+    const a = Math.abs(delta);
+    if (a > 1.9) return C_US;
+    if (s === 0 || a < 0.35) return C_BAR;
+    return s * delta > 0 ? C_SL : C_BS;
+  }
+  // Character for a straight stroke from its on-screen slope (dr rows per dc cells).
+  function strokeChar(dc, dr) {
+    if (Math.abs(dc) < 1e-6) return C_BAR;
+    const sv = (dr * ch) / (dc * cw);
+    if (Math.abs(sv) > 2.4) return C_BAR;
+    if (Math.abs(sv) < 0.38) return dr > 0 ? C_US : C_DASH;
+    return sv > 0 ? C_BS : C_SL;
+  }
+
+  // ---------- Scene construction ----------
+  let A = null;
+  function add(L, col, row, chr, p, b, t0, g, y, x, f) {
+    if (col < -6 || col >= cols + 6 || row < 0 || row >= rows) return;
+    A.c.push(col); A.r.push(row); A.ch.push(chr); A.p.push(p); A.b.push(b); A.t0.push(t0);
+    A.l.push(L); A.g.push(g || 0); A.y.push(y || 0); A.x.push(x || 0); A.f.push(f || 0);
+  }
+  // A straight stroke between two cells.
+  function stroke(L, c0, r0, c1, r1, p, b, t0, g, y, x, f) {
+    const chr = strokeChar(c1 - c0, r1 - r0);
+    const n = Math.max(Math.abs(c1 - c0), Math.abs(r1 - r0)) * 2 + 1;
+    let pc = -1e9, pr = -1e9;
+    for (let s = 0; s <= n; s++) {
+      const c = Math.round(c0 + (c1 - c0) * s / n), r = Math.round(r0 + (r1 - r0) * s / n);
+      if (c === pc && r === pr) continue;
+      pc = c; pr = r;
+      add(L, c, r, chr, p, b, t0 + s / n * 0.3, g, y, x, f);
+    }
+  }
+
+  function buildScene() {
+    A = { c: [], r: [], ch: [], p: [], b: [], t0: [], l: [], g: [], y: [], x: [], f: [] };
+    const wide = W / H > 1.2;
+    kcK = Math.round(cols * (wide ? 0.15 : 0.1));
+    kcQ = Math.round(cols * (wide ? 0.31 : 0.26));
+    kcP = Math.round(cols * (wide ? 0.54 : 0.53));
+    kcM = Math.round(cols * (wide ? 0.82 : 0.88));
+    moonX = W * (wide ? 0.33 : 0.3); moonY = H * (wide ? 0.16 : 0.1); moonR = Math.max(ch * 2.4, Math.min(W, H) * 0.055);
+
+    buildMoon();
+    buildFar();
+    buildM118();
+    buildCity();
+    buildMosque();
+    buildKLTower();
+    buildPetronas();
+    buildPalms();
+    buildShore();
+
+    nS = A.c.length;
+    sC = Int16Array.from(A.c); sR = Int16Array.from(A.r); sCh = Uint8Array.from(A.ch); sP = Uint16Array.from(A.p);
+    sB = Float32Array.from(A.b); sT0 = Float32Array.from(A.t0); sL = Uint8Array.from(A.l); sG = Uint8Array.from(A.g);
+    sY = Float32Array.from(A.y); sX = Int16Array.from(A.x); sF = Uint8Array.from(A.f);
+    nSolid = 0;
+    for (let i = 0; i < nS; i++) if (sCh[i] !== C_SP) nSolid++;
+    A = null;
+
+    const r2 = mulberry32(11);
+    stars = [];
+    const ns = Math.round(cols * hr * 0.011);
+    for (let i = 0; i < ns; i++) {
+      const c = (r2() * cols) | 0, r = (r2() * (hr * 0.6)) | 0;
+      if (Math.hypot((c + 0.5) * cw - moonX, (r + 0.5) * ch - moonY) < moonR * 1.8) continue;
+      stars.push({ c, r, g: STAR_G[(r2() * STAR_G.length) | 0], ph: r2() * 6.283, sp: 0.5 + r2() * 1.8, b: 0.3 + 0.5 * r2() });
+    }
+  }
+
+  // Crescent moon with a small five-point star beside it.
+  function buildMoon() {
+    const c0 = Math.floor((moonX - moonR) / cw) - 1, c1 = Math.ceil((moonX + moonR) / cw) + 1;
+    const r0 = Math.floor((moonY - moonR) / ch) - 1, r1 = Math.ceil((moonY + moonR) / ch) + 1;
+    for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+      const dx = (c + 0.5) * cw - moonX, dy = (r + 0.5) * ch - moonY, d = Math.hypot(dx, dy);
+      if (d > moonR) continue;
+      const q = d / moonR;
+      const shadow = Math.hypot(dx - moonR * 0.5, dy + moonR * 0.2) < moonR * 0.86;
+      const t0 = T.MOON + q * 0.8 + hash2(c, r) * 0.15;
+      if (shadow) add(0, c, r, (c + r) % 2 ? C_DOT : C_SP, P_MOON_D, 0.16, t0, G_STATIC);
+      else add(0, c, r, q > 0.84 ? C_o : C_AT, P_MOON, 0.78 + 0.2 * (1 - q), t0, G_STATIC);
+    }
+    const sc = Math.round((moonX + moonR * 0.95) / cw), sr = Math.round(moonY / ch);
+    add(0, sc, sr, C_STAR, P_GOLD, 1, T.MOON + 1.0, G_STATIC, 0, 0, F_HALO);
+    add(0, sc - 1, sr, C_DASH, P_GOLD, 0.6, T.MOON + 1.1, G_STATIC);
+    add(0, sc + 1, sr, C_DASH, P_GOLD, 0.6, T.MOON + 1.1, G_STATIC);
+  }
+
+  // Distant hazy skyline.
+  function buildFar() {
+    const r = mulberry32(57);
+    let c = 0;
+    while (c < cols) {
+      const w = 3 + ((r() * 6) | 0), xf = c / cols;
+      const h = (0.08 + 0.17 * r()) * yH;
+      const top = hr - 1 - Math.max(2, Math.round(h / ch));
+      for (let x = c; x < Math.min(cols, c + w); x++) {
+        const t0 = T.FAR + xf * 1.2 + hash2(x, 3) * 0.2;
+        for (let y = top; y < hr; y++) {
+          if (y === top) { add(0, x, y, x === c || x === c + w - 1 ? C_DOT : C_COLON, P_FAR, 0.34, t0, G_STATIC); continue; }
+          const hh = hash2(x * 5, y);
+          if (hh < 0.06) add(0, x, y, C_DOT, P_FAR_LIT, 0.55, t0 + 1, G_STATIC);
+          else add(0, x, y, hh < 0.22 ? C_DOT : hh < 0.3 ? C_COLON : C_SP, P_FAR, 0.24, t0, G_STATIC);
+        }
+      }
+      if (h > 0.2 * yH && c + (w >> 1) < cols) add(0, c + (w >> 1), top - 1, C_DOT, P_RED, 0.8, T.FAR + 1.4, G_BEACON, 0, 0, F_HALO);
+      c += w + (r() < 0.3 ? 1 : 0);
+    }
+  }
+
+  // A very tall spire tower in the distance: faceted body, crown, long needle spire.
+  function hwM118(y) {
+    if (y < 0.6) return 1 - 0.32 * y / 0.6;
+    if (y < 0.69) return 0.68 - 0.5 * (y - 0.6) / 0.09;
+    return 0;
+  }
+  function buildM118() {
+    const hM = yH * (W / H > 1.2 ? 0.86 : 0.8);
+    hwM = Math.max(2, Math.round(hM * 0.05 / cw));
+    let tip = hr - 1;
+    for (let r = hr - 1; r >= 0; r--) {
+      const yB = (yH - (r + 1) * ch) / hM, yT = (yH - r * ch) / hM, yM = (yB + yT) / 2;
+      if (yB >= 1) break;
+      tip = r;
+      const t0 = T.M118 + yM * T.M118_DUR * 0.97;
+      const A1 = (d, chr, p, b, f) => add(0, kcM + d, r, chr, p, b, t0 + hash2(d + 20, r) * 0.08, G_M118, yM, 0, f);
+      if (yM >= 0.69) { A1(0, (r % 4 === 0) ? C_PLUS : yM > 0.9 ? C_EXCL : C_BAR, P_M118_E, 0.8, F_PIN); continue; }
+      const o = Math.max(1, Math.round(hwM118(yM) * hwM)), delta = (hwM118(yB) - hwM118(Math.min(yT, 0.69))) * hwM;
+      for (let d = -o; d <= o; d++) {
+        const ad = Math.abs(d);
+        if (ad === o) { A1(d, yM > 0.6 ? (d < 0 ? C_SL : C_BS) : edgeChar(delta, d < 0 ? 1 : -1), P_M118_E, 0.66, F_EDGE); continue; }
+        A1(d, ((d + r) & 1) ? C_SL : C_BS, P_M118, 0.42 + (yM > 0.55 ? 0.15 : 0), 0);
+      }
+    }
+    add(0, kcM, tip - 1, C_STAR, P_RED, 1, T.M118 + T.M118_DUR, G_BEACON, 0, 0, F_HALO);
+    topM = tip - 1;
+  }
+
+  // Near city: outlined blocks with window grids, kept low around the mosque and the KL Tower hill.
+  function buildCity() {
+    const r = mulberry32(2025);
+    const base = Math.max(5, Math.round(cols / 20));
+    const PAT = [C_EQ, C_HASH, C_COLON, C_EQ];
+    let c = -1;
+    while (c < cols) {
+      const w = Math.max(4, Math.round(base * (0.7 + 0.8 * r())));
+      const xf = (c + w / 2) / cols, mid = c + w / 2;
+      let h = (0.07 + 0.14 * r()) * yH;
+      if (xf < 0.05 || xf > 0.92) h = (0.22 + 0.12 * r()) * yH;
+      if (Math.abs(mid - kcQ) < cols * 0.08) h = (0.03 + 0.04 * r()) * yH;
+      if (Math.abs(mid - kcK) < cols * 0.06) h = (0.05 + 0.04 * r()) * yH;
+      const top = hr - 1 - Math.max(3, Math.round(h / ch));
+      const pat = PAT[(r() * PAT.length) | 0], winP = (r() * P_WIN.length) | 0;
+      const c1 = c + w - 1;
+      for (let x = c; x <= c1; x++) {
+        const tx = T.CITY + clamp(xf, 0, 1) * 1.6;
+        for (let y = top; y < hr; y++) {
+          const t0 = tx + (hr - 1 - y) / Math.max(1, hr - top) * 0.6 + hash2(x, y) * 0.1;
+          if (y === top) { add(1, x, y, x === c || x === c1 ? C_DOT : C_US, P_BLD, 0.46, t0, G_STATIC); continue; }
+          if (x === c || x === c1) { add(1, x, y, C_BAR, P_BLD, 0.4, t0, G_STATIC); continue; }
+          const win = (x - c) % 2 === 1 && (y - top) % 2 === 0 && y < hr - 1;
+          if (win) {
+            const hh = hash2(x * 13 + 7, y);
+            add(1, x, y, pat, P_WIN[(winP + (hh < 0.15 ? 1 : 0)) % P_WIN.length], 0.75, t0, G_WIN, 0.4 + hash2(y, x * 3) * 4, hh < 0.6 ? 1 : 0);
+          } else add(1, x, y, C_SP, 0, 0, t0, G_STATIC);
+        }
+      }
+      if (h > 0.2 * yH && r() < 0.7) add(1, c + (w >> 1), top - 1, C_DOT, P_RED, 0.9, T.CITY + xf * 1.6 + 0.7, G_BEACON, 0, 0, F_HALO);
+      c += w + (r() < 0.3 ? 1 : -1);
+    }
+  }
+
+  // Old-city mosque: arcade body, a big dome and two small ones, two slim minarets with lamps.
+  function buildMosque() {
+    const rd = Math.min(Math.max(cw * 3.6, yH * 0.085), W * 0.05);              // main dome radius (px)
+    const bh = Math.max(3, Math.round(yH * 0.06 / ch));    // body rows
+    bwQ = Math.max(5, Math.round(rd * 1.5 / cw));
+    const bodyTop = hr - bh, M = T.MOSQUE, D = T.MOSQUE_DUR;
+    const mh = Math.max(8, Math.round(yH * 0.27 / ch));
+    minQ = bwQ + 2;
+    mtopQ = hr - 1 - mh;
+    // Minarets.
+    for (const s of [-1, 1]) {
+      const mc = kcQ + s * minQ, bal = hr - 1 - Math.round(mh * 0.72);
+      for (let r = hr - 1; r > hr - 1 - mh; r--) {
+        const k = (hr - 1 - r) / mh, t0 = M + k * D * 0.8;
+        if (r === bal) { add(1, mc - 1, r, C_LB, P_MOSQ, 0.6, t0, G_MOSQ); add(1, mc, r, C_o, P_MLAMP, 0.9, t0, G_MOSQ, 0, 0, F_LAMP); add(1, mc + 1, r, C_RB, P_MOSQ, 0.6, t0, G_MOSQ); continue; }
+        add(1, mc, r, r < bal ? C_BAR : (r & 1 ? C_BAR : C_EXCL), P_MOSQ, 0.5, t0, G_MOSQ);
+      }
+      add(1, mc, hr - 1 - mh, C_CARET, P_DOME_E, 0.75, M + D * 0.85, G_MOSQ, 0, 0, F_EDGE);
+      add(1, mc, hr - 2 - mh, C_DOT, P_GOLD, 0.9, M + D * 0.9, G_MOSQ, 0, 0, F_LAMP);
+    }
+    // Body: cornice and a lit arcade.
+    for (let r = bodyTop; r < hr; r++) for (let d = -bwQ; d <= bwQ; d++) {
+      const t0 = M + 0.1 + hash2(d, r) * 0.2;
+      if (r === bodyTop) { add(1, kcQ + d, r, Math.abs(d) === bwQ ? C_DOT : C_EQ, P_MOSQ, 0.55, t0, G_MOSQ); continue; }
+      if (Math.abs(d) === bwQ) { add(1, kcQ + d, r, C_BAR, P_MOSQ, 0.45, t0, G_MOSQ); continue; }
+      const arch = (d & 1) === 0 && r < hr - 1;
+      add(1, kcQ + d, r, arch ? C_n : r === hr - 1 ? C_US : C_BAR, arch ? P_WIN[0] : P_MOSQ, arch ? 0.7 : 0.38, t0, G_MOSQ, 0, 0, arch ? F_WIN : 0);
+    }
+    // Domes (onion-ish: a slightly tall half ellipse with a finial).
+    const dome = (cc, R, t0) => {
+      const cx = (cc + 0.5) * cw, cy = bodyTop * ch, Ry = R * 1.15;
+      const inside = (c, r) => { const dx = (c + 0.5) * cw - cx, dy = (r + 0.5) * ch - cy; return dy < 0 && (dx / R) ** 2 + (dy / Ry) ** 2 <= 1; };
+      let top = bodyTop;
+      for (let r = bodyTop - 1; r >= bodyTop - Math.ceil(Ry / ch) - 1; r--) {
+        for (let c = Math.floor((cx - R) / cw) - 1; c <= Math.ceil((cx + R) / cw) + 1; c++) {
+          if (!inside(c, r)) continue;
+          top = Math.min(top, r);
+          const dx = (c + 0.5) * cw - cx, dy = (r + 0.5) * ch - cy;
+          const rim = !inside(c - 1, r) || !inside(c + 1, r) || !inside(c, r - 1);
+          const tt = t0 + (bodyTop - r) / Math.max(1, Ry / ch) * 0.5 + hash2(c, r) * 0.08;
+          if (rim) {
+            const chr = Math.abs(dx) < R * 0.28 ? C_DASH : dx < 0 ? (dy > -Ry * 0.55 ? C_LP : C_SL) : (dy > -Ry * 0.55 ? C_RP : C_BS);
+            add(1, c, r, chr, P_DOME_E, 0.72, tt, G_MOSQ, 0, 0, F_EDGE);
+          } else add(1, c, r, (c + r) & 1 ? C_COLON : C_DOT, P_DOME, 0.46, tt, G_MOSQ);
+        }
+      }
+      add(1, cc, top - 1, C_BAR, P_GOLD, 0.8, t0 + 0.6, G_MOSQ, 0, 0, F_LAMP);
+      return top - 1;
+    };
+    const so = Math.round(bwQ * 0.62);
+    dome(kcQ - so, rd * 0.5, M + 0.3);
+    dome(kcQ + so, rd * 0.5, M + 0.3);
+    topQ = dome(kcQ, rd, M + 0.45);
+  }
+
+  // KL Tower: a wooded hill, flared base, slim shaft, the bulb-shaped pod and a long antenna.
+  function buildKLTower() {
+    const hillW = Math.max(8, Math.round(cols * 0.065)), hillR = Math.max(2, Math.round(yH * 0.045 / ch));
+    for (let d = -hillW; d <= hillW; d++) {
+      const hh = Math.round(hillR * (1 - (d / hillW) ** 2) + 0.4);
+      for (let k = 0; k < hh; k++) {
+        const r = hr - 1 - k, t0 = T.KLT - 0.4 + hash2(d, k) * 0.3, top = k === hh - 1;
+        const h = hash2(d * 7, k);
+        add(1, kcK + d, r, top ? (h < 0.5 ? C_CARET : C_DOT) : h < 0.3 ? C_CARET : h < 0.6 ? C_COMMA : C_SP, top ? P_HILL_T : P_HILL, top ? 0.42 : 0.3, t0, G_STATIC);
+      }
+    }
+    const baseRow = hr - 1 - hillR, yBase = (baseRow + 1) * ch;
+    const hK = yH * (W / H > 1.2 ? 0.6 : 0.56);
+    podW = Math.max(3, Math.round(hK * 0.07 / cw));
+    podLo = baseRow; podHi = baseRow;
+    let tip = baseRow, podRow0 = -1;
+    const P0 = 0.62, P1 = 0.75;
+    for (let r = baseRow; r >= 0; r--) {
+      const yM = (yBase - (r + 0.5) * ch) / hK;
+      if (yM >= 1) break;
+      tip = r;
+      const t0 = T.KLT + yM * T.KLT_DUR * 0.97;
+      const A1 = (d, chr, g, p, b, y, f) => add(1, kcK + d, r, chr, p, b, t0 + hash2(d + 50, r) * 0.06, g, y, 0, f);
+      if (yM < 0.05) {
+        for (let d = -3; d <= 3; d++) A1(d, Math.abs(d) === 3 ? (d < 0 ? C_SL : C_BS) : C_HASH, G_KLT, P_KLT, 0.5, yM, 0);
+        continue;
+      }
+      if (yM < P0) { A1(-1, C_BAR, G_KLT, P_KLT, 0.55, yM, F_EDGE); A1(0, r & 1 ? C_COLON : C_EXCL, G_KLT, P_KLT, 0.62, yM, 0); A1(1, C_BAR, G_KLT, P_KLT, 0.55, yM, F_EDGE); continue; }
+      if (yM < P1) {
+        if (podRow0 < 0) podRow0 = r;
+        podHi = r; podLo = podRow0;
+        const u = (yM - P0) / (P1 - P0);
+        const wf = u < 0.42 ? 0.3 + 0.7 * u / 0.42 : u < 0.8 ? 1 : 1 - 0.55 * (u - 0.8) / 0.2;
+        const o = Math.max(1, Math.round(podW * wf)), ring = (podRow0 - r) & 1;
+        for (let d = -o; d <= o; d++) {
+          const ad = Math.abs(d);
+          let chr;
+          if (ad === o) chr = u < 0.42 ? (d < 0 ? C_BS : C_SL) : u < 0.8 ? (d < 0 ? C_LP : C_RP) : (d < 0 ? C_SL : C_BS);
+          else chr = u > 0.8 ? C_EQ : ring ? C_HASH : C_EQ;
+          A1(d, chr, G_POD, POD[0], ad === o ? 0.85 : ring ? 0.8 : 0.6, u, ad === o ? F_EDGE | F_HALO : ring ? F_WIN : 0);
+        }
+        continue;
+      }
+      if (yM < 0.78) { A1(-1, C_DASH, G_KLT, P_KLT, 0.6, yM, 0); A1(0, C_EQ, G_KLT, P_KLT, 0.7, yM, 0); A1(1, C_DASH, G_KLT, P_KLT, 0.6, yM, 0); continue; }
+      A1(0, (r % 3 === 0) ? C_PLUS : C_BAR, G_KLT, P_KLT, 0.7, yM, F_EDGE);
+    }
+    add(1, kcK, tip - 1, C_STAR, P_RED, 1, T.KLT + T.KLT_DUR, G_BEACON, 0, 0, F_HALO);
+    topK = tip - 1;
+  }
+
+  // Petronas Twin Towers: stepped setbacks, a star-lattice crown, pinnacles and the double-deck skybridge.
+  const TIERS = [[0.56, 1], [0.66, 0.86], [0.74, 0.72], [0.8, 0.58], [0.85, 0.46], [0.89, 0.34], [0.92, 0.22]];
+  const petF = y => { for (const [e, f] of TIERS) if (y < e) return f; return 0; };
+  function buildPetronas() {
+    const wide = W / H > 1.2;
+    hP = yH * (wide ? 0.92 : 0.86);
+    hw0 = Math.max(3, Math.round(hP * 0.064 / cw));
+    const gap = Math.max(5, Math.round(hw0 * 2.2));
+    kL = kcP - Math.ceil(gap / 2) - hw0; kR = kcP + Math.ceil(gap / 2) + hw0;
+    const rowOf = y => Math.floor((yH - y * hP) / ch);
+    let tip = hr - 1;
+    [kL, kR].forEach((kc, ti) => {
+      let prevO = -1;
+      for (let r = hr - 1; r >= 0; r--) {
+        const yB = (yH - (r + 1) * ch) / hP, yT = (yH - r * ch) / hP, yM = (yB + yT) / 2;
+        if (yB >= 1) break;
+        if (r < tip) tip = r;
+        const t0 = T.PET + ti * 0.35 + yM * T.PET_DUR * 0.95;
+        const A1 = (d, chr, p, b, f) => add(2, kc + d, r, chr, p, b, t0 + hash2(d + 30 + ti * 9, r) * 0.08, G_PET, yM, ti, f);
+        if (yM >= 0.92) {
+          if (yM < 0.935) { A1(-1, C_LB, P_PET_E, 0.85, F_PIN); A1(0, C_HASH, P_PET_C, 0.95, F_PIN); A1(1, C_RB, P_PET_E, 0.85, F_PIN); }
+          else if (yM > 0.95 && yM < 0.966) { A1(-1, C_LP, P_PET_E, 0.8, F_PIN); A1(0, C_o, P_PET_C, 1, F_PIN | F_HALO); A1(1, C_RP, P_PET_E, 0.8, F_PIN); }
+          else A1(0, yM > 0.985 ? C_Q : (r & 1 ? C_BAR : C_EXCL), P_PET_E, 0.85, F_PIN);
+          continue;
+        }
+        const o = Math.max(1, Math.round(hw0 * petF(yM)));
+        if (prevO > o) for (let d = -prevO; d <= prevO; d++) if (Math.abs(d) > o) A1(d, C_US, P_PET_C, 0.85, F_EDGE | F_CROWN);
+        for (let d = -o; d <= o; d++) {
+          const ad = Math.abs(d);
+          if (ad === o) { A1(d, yM < 0.56 ? C_BAR : (d < 0 ? C_LB : C_RB), P_PET_E, 0.78, F_EDGE); continue; }
+          if (yM > 0.8) { A1(d, ((d + r) & 1) ? C_SL : C_BS, P_PET_C, 0.7, F_CROWN); continue; }
+          if ((hr - 1 - r) % 3 === 0) { A1(d, C_EQ, P_PET, 0.58, 0); continue; }
+          A1(d, ad % 2 === 0 ? C_BAR : C_COLON, P_PET, 0.5 + (ad === 0 ? 0.16 : 0) + 0.1 * yM, 0);
+        }
+        prevO = o;
+      }
+    });
+    add(2, kL, tip - 1, C_STAR, P_PET_C, 1, T.PET + T.PET_DUR, G_STATIC, 0, 0, F_HALO);
+    add(2, kR, tip - 1, C_STAR, P_PET_C, 1, T.PET + T.PET_DUR + 0.35, G_STATIC, 0, 0, F_HALO);
+    topP = tip - 1;
+    // Skybridge: two decks between the towers on an inverted-V of legs.
+    rBr = rowOf(0.41);
+    const c0 = kL + hw0 + 1, c1 = kR - hw0 - 1, half = Math.max(1, (c1 - c0) / 2);
+    for (let c = c0; c <= c1; c++) {
+      const t0 = T.BRIDGE + Math.abs(c - kcP) / half * 0.4;
+      add(2, c, rBr - 1, C_EQ, P_PET_E, 0.78, t0, G_PET, 0.41, 2, F_BRIDGE);
+      add(2, c, rBr, c & 1 ? C_HASH : C_COLON, P_BR_W, 0.82, t0, G_PET, 0.41, 2, F_BRIDGE | F_WIN);
+      add(2, c, rBr + 1, C_EQ, P_PET_E, 0.78, t0, G_PET, 0.41, 2, F_BRIDGE);
+    }
+    const L = Math.max(3, Math.round(hP * 0.1 / ch));
+    stroke(2, kcP, rBr + 2, c0, rBr + 1 + L, P_PET_E, 0.62, T.BRIDGE + 0.4, G_PET, 0.36, 2, F_BRIDGE);
+    stroke(2, kcP, rBr + 2, c1, rBr + 1 + L, P_PET_E, 0.62, T.BRIDGE + 0.4, G_PET, 0.36, 2, F_BRIDGE);
+  }
+
+  // Palm silhouettes along the lake promenade.
+  function palm(c0, h, lean, t0) {
+    let pc = c0;
+    for (let k = 0; k < h; k++) {
+      const r = hr - 1 - k, c = c0 + Math.round(lean * (k / h) * (k / h) * h * 0.4);
+      add(3, c, r, c > pc ? C_SL : c < pc ? C_BS : (k & 1 ? C_RP : C_BAR), P_TRUNK, 0.46, t0 + k / h * 0.4, G_PALM, 0, 0, 0);
+      pc = c;
+    }
+    const cx = pc, cr = hr - 1 - h;
+    const sc = Math.max(0.7, h / 8);
+    const FR = [[-1, 0.9, 4.5], [1, 0.9, 4.5], [-1, 0.15, 6], [1, 0.15, 6], [-1, -0.35, 4.5], [1, -0.35, 4.5], [0.35, 1.6, 2.4], [-0.35, 1.6, 2.4]];
+    FR.forEach(([dir, up, len], fi) => {
+      const Lf = len * sc;
+      let lc = cx, lr = cr;
+      for (let s = 0.6; s <= Lf; s += 0.5) {
+        const x = cx + dir * s * 1.4, y = cr - up * s * 0.5 + 0.09 * s * s;
+        const c = Math.round(x), r = Math.round(y);
+        if (c === lc && r === lr) continue;
+        const tip = s > Lf - 0.8;
+        add(3, c, r, tip ? C_DOT : strokeChar(x - (cx + dir * (s - 0.5) * 1.4), y - (cr - up * (s - 0.5) * 0.5 + 0.09 * (s - 0.5) * (s - 0.5))),
+          tip && fi < 4 ? P_PALM_L : P_PALM, tip ? 0.62 : 0.56, t0 + 0.4 + s / Lf * 0.4, G_PALM, 0, 0, 0);
+        lc = c; lr = r;
+      }
+    });
+    add(3, cx, cr, C_o, P_TRUNK, 0.45, t0 + 0.4, G_PALM);
+  }
+  function buildPalms() {
+    const r = mulberry32(31);
+    const narrow = W / H < 0.8, step = Math.max(narrow ? 13 : 9, Math.round(cols / 10));
+    for (let c = Math.round(step * 0.4); c < cols + 2; c += step) {
+      const cc = c + Math.round((r() - 0.5) * step * 0.5);
+      if (Math.abs(cc - kcP) < hw0 * 1.4) continue;   // keep the twin towers' feet clear
+      const h = Math.max(5, Math.round((narrow ? 0.09 + 0.06 * r() : 0.13 + 0.1 * r()) * yH / ch));
+      palm(cc, h, (r() - 0.5) * 1.4, T.PALMS + c / cols * 1.0);
+      if (r() < 0.45) palm(cc + 3 + ((r() * 2) | 0), Math.max(3, Math.round(h * 0.65)), (r() - 0.2) * 1.2, T.PALMS + c / cols * 1.0 + 0.2);
+    }
+  }
+
+  // Lake promenade with lamps.
+  function buildShore() {
+    const step = Math.max(7, Math.round(cols / 12));
+    for (let c = 0; c < cols; c++) {
+      const t0 = T.CITY + c / cols * 1.4;
+      if ((c + (step >> 1)) % step === 0) add(3, c, hr, C_i, P_LAMP, 0.9, t0, G_LAMP, 0, c, F_HALO);
+      else add(3, c, hr, c % 2 ? C_US : C_DASH, P_STEEL, 0.3, t0, G_STATIC);
+    }
+  }
+
+  // ---------- Cell buffer ----------
+  function put(c, chr, p, b, kind) {
+    if (stampA[c] !== stamp) { stampA[c] = stamp; touched[nT++] = c; }
+    let l = (b * 15.99) | 0;
+    if (l < 0) l = 0; else if (l > 15) l = 15;
+    cchar[c] = chr; ccol[c] = p * LEVELS + l; ckind[c] = kind; clb[c] = b > 1 ? 1 : b;
+  }
+  function putXY(x, y, chr, p, b, kind) {
+    if (x < 0 || y < 0) return;
+    const col = (x / cw) | 0, row = (y / ch) | 0;
+    if (col >= cols || row >= rows) return;
+    put(row * cols + col, chr, p, b, kind);
+  }
+
+  // ---------- Scene state ----------
+  const LINGER = 24;   // extra seconds the finished city stays up (one 24 s music loop)
+  let linger = 0;
+  let t = T_START, skyT = 0, frameNo = 0, letters = 0, built = 0, resolving = 0;
+  let waveT = -99;                              // tapped light wave up the twin towers
+  let podMode = 0, podPrev = 0, podSwitch = -99; // KL Tower pod colour
+  let m118T = -99, mosqT = -99;                 // tapped spire sparkle, mosque glow
+  let fount = null;                             // { c, r, t0, beat }
+  let storm = null;                             // { t0, pts: [[x, y]...] }
+  const SH = [0, 0, 0, 0];                      // per-layer parallax shift in cells: far, city, twin towers, front
+
+  function drawSprites(i0, i1) {
+    const gT = reduced ? 0 : skyT;
+    const scrF = (skyT * 22) | 0;
+    const wa = skyT - waveT, ma = skyT - m118T, qa = skyT - mosqT;
+    const glowQ = smooth(qa / 0.8) * (1 - smooth((qa - 5) / 1.5));
+    for (let i = i0; i < i1; i++) {
+      const age = t - sT0[i];
+      if (age < -RES) continue;
+      const col = sC[i] + SH[sL[i]];
+      if (col < 0 || col >= cols) continue;
+      const idx = sR[i] * cols + col;
+      const chr0 = sCh[i];
+      if (age < 0) {
+        if (chr0 === C_SP && hash2(i, 3) < 0.6) continue;
+        resolving++;
+        put(idx, SCR[(hash2(i, scrF) * SCR.length) | 0], P_SCR, 0.22 + 0.5 * (1 + age / RES), 0);
+        continue;
+      }
+      if (chr0 === C_SP) { put(idx, C_SP, 0, 0, 0); continue; }
+      built++;
+      const flash = age < 0.35 ? 0.6 * (1 - age / 0.35) : 0;
+      let p = sP[i], b = sB[i] + flash, chr = chr0, kind = 0;
+      const f = sF[i];
+      switch (sG[i]) {
+        case G_STATIC: break;
+        case G_WIN: {
+          let on = sX[i] && age > sY[i];
+          if (!reduced && hash2(i, ((skyT * 0.25 + sY[i] * 7) | 0)) < 0.04) on = !on && age > sY[i];
+          if (!on) { p = P_WOFF; b = 0.36 + flash; }
+          else b = 0.66 + 0.25 * hash2(i, 1) + flash;
+          break;
+        }
+        case G_PET: {
+          const y = sY[i];
+          const lit = reduced ? 1 : smooth((t - (T.LIGHTS + y * 1.2)) / 0.5);
+          if (lit < 1) { b = b * (0.55 + 0.45 * lit) + (lit > 0 && lit < 0.6 ? 0.5 * (1 - Math.abs(lit - 0.3) / 0.3) : 0); if (lit < 0.05 && !(f & F_BRIDGE)) p = p === P_PET ? P_PET_D : p; }
+          else b += 0.06 * Math.sin(gT * 1.2 + y * 8);
+          if (f & (F_CROWN | F_PIN)) { kind = lit > 0.5 && (f & F_PIN || hash2(i, 7) < 0.22) ? 1 : 0; if (!reduced && hash2(i, (skyT * 4) | 0) < 0.04) { chr = C_STAR; b = 1.05; } }
+          if (f & F_BRIDGE) {
+            if (lit > 0.5) kind = f & F_WIN ? 1 : 0;
+            // The tapped wave makes the skybridge pulse as it passes.
+            const pa = wa - y * WAVE;
+            if (pa > 0 && pa < 1.8) {
+              const pulse = reduced ? 0.5 * Math.sin(Math.PI * pa / 1.8) : Math.max(0, Math.sin(pa * Math.PI * 3.3)) * (1 - pa / 1.8);
+              p = pulse > 0.4 ? P_WHITE : P_GOLD; b += 0.7 * pulse; kind = 1;
+            }
+            break;
+          }
+          // Tapped light wave: a white-gold band climbs both towers, leaving a warm afterglow.
+          if (wa >= 0 && wa < WAVE + 2.5) {
+            const head = wa / WAVE, dh = head - y;
+            if (!reduced && dh >= 0 && dh < 0.04) { p = P_WHITE; b = 1; kind = f & F_EDGE ? 1 : 0; }
+            else if (dh >= 0.05) {
+              const g = Math.exp(-(dh - 0.05) * WAVE * 1.4) * (reduced ? 0.5 : 1);
+              if (g > 0.08) { p = g > 0.45 ? P_GOLD : p; b += 0.45 * g; }
+            } else if (reduced && dh > -0.1) b += 0.3 * (1 + dh / 0.1);
+          }
+          break;
+        }
+        case G_KLT: {
+          const lit = reduced ? 1 : smooth((t - T.LIGHTS) / 0.8);
+          b *= 0.7 + 0.3 * lit;
+          if (lit > 0.5 && sY[i] > 0.6 && sY[i] < 0.78) p = POD[podMode], b *= 0.7;
+          break;
+        }
+        case G_POD: {
+          const u = sY[i], sw = skyT - (podSwitch + Math.abs(u - 0.5) * 0.5);
+          const mode = sw >= 0 ? podMode : podPrev;
+          const lit = reduced ? 1 : smooth((t - (T.LIGHTS + 0.3)) / 0.6);
+          if (mode === POD.length) {   // rainbow: rings of colour rolling round the pod
+            p = RB[((Math.floor(u * 8 + sC[i] * 0.5 - gT * 3) % 12) + 12) % 12];
+          } else p = POD[mode];
+          if (lit < 0.5) p = P_KLT_D;
+          b = (b + (f & F_WIN && !reduced ? 0.12 * Math.sin(gT * 2 + sC[i]) : 0)) * (0.6 + 0.4 * lit);
+          if (sw >= 0 && sw < 0.3) { p = P_WHITE; b = 1.1; }
+          kind = lit > 0.5 ? f & F_HALO : 0;
+          break;
+        }
+        case G_M118: {
+          const y = sY[i];
+          if (ma >= 0 && ma < 4) {
+            const head = ma / 1.6, dh = head - y;
+            if (!reduced && dh >= 0 && dh < 0.06) { p = P_M118_S; b = 1.05; kind = 1; }
+            else if (dh >= 0 && hash2(i, (skyT * 10) | 0) < 0.1 * (1 - ma / 4) * (reduced ? 0.4 : 1)) { p = P_M118_S; b = 0.95; chr = reduced ? chr : C_STAR; kind = 1; }
+          }
+          if (f & F_EDGE && t > T.LIGHTS) b += 0.12;
+          break;
+        }
+        case G_MOSQ: {
+          const lit = reduced ? 1 : smooth((t - T.LIGHTS) / 1);
+          if (f & F_LAMP) { b = (0.5 + 0.45 * lit) + (reduced ? 0 : 0.08 * Math.sin(gT * 2 + sC[i])); kind = lit > 0.5 ? 1 : 0; }
+          if (f & F_WIN) b *= 0.6 + 0.4 * lit;
+          if (glowQ > 0) {
+            if (p === P_DOME || p === P_DOME_E) { p = glowQ > 0.5 ? P_GOLD : p; b += 0.35 * glowQ; kind = f & F_EDGE ? 1 : kind; }
+            if (f & F_LAMP) { b += 0.3 * glowQ; kind = 1; }
+          }
+          break;
+        }
+        case G_PALM: if (p === P_PALM_L) b += 0.1 * Math.sin(gT * 1.5 + sC[i]); break;
+        case G_LAMP: b += 0.1 * Math.sin(gT * 2.2 + sX[i]); kind = 1; break;
+        case G_BEACON: { const on = reduced || ((skyT + sC[i] * 0.07) % 1.4) < 0.55; b = on ? 1 : 0.35; kind = on ? 1 : 0; break; }
+      }
+      put(idx, chr, p, b, kind | (f & F_HALO && sG[i] === G_STATIC ? 1 : 0));
+    }
+  }
+
+  // Stars and a faint drifting cloud bank that lights up when lightning strikes.
+  function stormEnv() {
+    if (!storm) return 0;
+    const a = skyT - storm.t0;
+    if (reduced) return a < 2.4 ? 0.45 * Math.sin(Math.PI * a / 2.4) : 0;
+    if (a < 0.07) return 1;
+    if (a < 0.13) return 0.25;
+    if (a < 0.22) return 0.8;
+    return 0.7 * Math.exp(-(a - 0.22) * 4);
+  }
+  function drawSky() {
+    const a = smooth(skyT / 1.2);
+    const sh = SH[0];
+    for (const s of stars) {
+      const col = s.c + sh;
+      if (col < 0 || col >= cols) continue;
+      const tw = reduced ? 0.8 : 0.5 + 0.5 * Math.sin(skyT * s.sp + s.ph);
+      put(s.r * cols + col, s.g, P_STAR, a * s.b * (0.35 + 0.65 * tw), 2);
+    }
+    const env = stormEnv();
+    const cr = Math.round(hr * 0.3), drift = skyT * (reduced ? 0.01 : 0.04);
+    for (let r = 0; r < cr; r++) {
+      const fall = 1 - r / cr;
+      for (let c = 0; c < cols; c++) {
+        const n = vnoise(c * 0.045 + drift + r * 0.02, r * 0.28);
+        if (n < 0.64) continue;
+        const k = (n - 0.64) / 0.36;
+        put(r * cols + c, k > 0.5 ? C_TILDE : C_DASH, P_CLOUD, (0.07 + 0.05 * k) * fall * a + env * (0.25 + 0.6 * k) * fall, env > 0.3 ? 3 : 2);
+      }
+    }
+    // The bolt itself, behind every building.
+    if (storm && !reduced && skyT - storm.t0 < 0.5) {
+      const bb = Math.max(env, 0.35);
+      for (const path of storm.paths) for (let k = 1; k < path.length; k++) {
+        const [x0, y0] = path[k - 1], [x1, y1] = path[k];
+        const dx = (x1 - x0) / cw;
+        putXY(x1, y1, Math.abs(dx) < 0.4 ? C_BAR : dx > 0 ? C_BS : C_SL, P_BOLT, bb * (path.main ? 1.1 : 0.8), 3);
+      }
+    }
+  }
+  function strike(x) {
+    const paths = [];
+    const main = [[x, H * 0.04]];
+    const yEnd = yH - yH * (0.2 + 0.2 * Math.random());
+    let px = x, py = H * 0.04;
+    while (py < yEnd) { py += ch; px += (Math.random() - 0.5) * cw * 2.6; main.push([px, py]); }
+    main.main = true;
+    paths.push(main);
+    const k0 = Math.floor(main.length * (0.3 + 0.2 * Math.random())), dir = Math.random() < 0.5 ? -1 : 1;
+    const br = [main[k0]];
+    let bx = main[k0][0], by = main[k0][1];
+    for (let k = 0; k < 6 + ((Math.random() * 5) | 0); k++) { by += ch; bx += dir * cw * (0.6 + Math.random()); br.push([bx, by]); }
+    paths.push(br);
+    storm = { t0: skyT, paths };
+    music('event', 'thunder', { x: x / W, calm: reduced });
+  }
+
+  // ---------- Water: base ripples, stretched reflections, pointer and tap rings ----------
+  let rips = [];   // { c, r, t0, amp }
+  const RIP_LIFE = 2.4, RIP_SPEED = reduced ? 7 : 14;
+  function drawWater() {
+    const reflA = reduced ? 1 : 0.4 + 0.6 * smooth((t - T.REFL) / 2);
+    const depth = rows - hr - 1;
+    const gT = skyT;
+    const nr = rips.length;
+    for (let r = hr + 1; r < rows; r++) {
+      const p = (r - hr) / Math.max(1, depth);
+      const m = hr - 1 - Math.floor((r - hr - 1) * 0.62);
+      const fade = 1 - 0.55 * p;
+      const dir = r & 1 ? 1 : -1;
+      const drift = gT * (reduced ? 0.15 : 0.5) * dir;
+      for (let c = 0; c < cols; c++) {
+        const rn = vnoise(c * 0.11 + drift, r * 0.8 + gT * 0.05);
+        let off = 0, hl = 0;
+        for (let k = 0; k < nr; k++) {
+          const R = rips[k], age = gT - R.t0, rad = age * RIP_SPEED, dc = c - R.c;
+          if (dc > rad + 6 || dc < -rad - 6) continue;
+          const dr = (r - R.r) * 2.1, d = Math.sqrt(dc * dc + dr * dr);
+          const w = Math.exp(-(((d - rad) / 1.8) ** 2)) * R.amp * Math.max(0, 1 - age / RIP_LIFE);
+          off += w * 2.2 * Math.sin(d * 0.9); if (w > hl) hl = w;
+        }
+        const dx = Math.round((rn - 0.5) * (1.5 + 4 * p) + off);
+        const sc = c + dx;
+        const i = r * cols + c;
+        if (m >= 0 && sc >= 0 && sc < cols) {
+          const src = m * cols + sc;
+          if (stampA[src] === stamp && cchar[src] !== C_SP && !(ckind[src] & 2)) {
+            const cc = ccol[src], lv = (cc % LEVELS) / 15, sp = (cc / LEVELS) | 0;
+            if (lv > 0.5 && sp !== P_SCR) {
+              if (rn > 0.43) { put(i, rn > 0.6 ? C_EQ : C_DASH, sp, lv * (0.72 - 0.22 * p) * reflA, 0); continue; }
+            } else if (lv > 0.25 && rn > 0.62 && sp !== P_SCR) { put(i, C_DASH, sp, lv * 0.38 * fade * reflA, 0); continue; }
+          }
+        }
+        if (hl > 0.3) { put(i, hl > 0.7 ? C_o : C_TILDE, P_RIP, 0.3 + 0.5 * Math.min(1, hl), 0); continue; }
+        if (rn > 0.62) put(i, C_TILDE, P_WATER, (0.26 + 0.3 * (rn - 0.62)) * fade + 0.06, 0);
+        else if (rn > 0.47) put(i, C_DASH, P_WATER, 0.2 * fade + 0.05, 0);
+        else if (rn > 0.38) put(i, C_DOT, P_WATER, 0.18 * fade + 0.04, 0);
+      }
+    }
+  }
+
+  // ---------- Musical fountain: a row of coloured jets dancing to the beat ----------
+  function fountEnv(tau) { return smooth(tau / 1.0) * (1 - smooth((tau - (FOUNT_DUR - 1.4)) / 1.4)); }
+  function jetAmp(j, J, tau) {
+    const b = tau / BEAT, mid = (J - 1) / 2, pat = Math.floor(b / 4) % 4, fr = b % 1;
+    if (tau > FOUNT_DUR - 3.0) return 1;                                     // finale: all jets high
+    if (pat === 0) return 0.5 + 0.5 * Math.sin(Math.PI * b - j * 0.6);        // travelling wave
+    if (pat === 1) return (j + Math.floor(b)) % 2 ? 0.3 + 0.7 * Math.exp(-3 * fr) : 0.25;
+    if (pat === 2) return (0.35 + 0.65 * Math.abs(j - mid) / mid) * (0.7 + 0.3 * Math.sin(Math.PI * b));
+    return 0.35 + 0.65 * Math.exp(-3 * fr);
+  }
+  function startFountain(x, y) {
+    const r = clamp(Math.round(y / ch), hr + 3, hr + Math.max(3, Math.round((rows - hr) * 0.3)));
+    fount = { c: Math.round(x / cw), r, t0: skyT, beat: -1 };
+    music('event', 'fountain', { x: x / W });
+  }
+  function updateFountain() {
+    if (!fount) return;
+    const tau = skyT - fount.t0;
+    if (tau > FOUNT_DUR) { fount = null; return; }
+    const bt = Math.floor(tau / BEAT);
+    if (bt !== fount.beat && tau > 0.6 && tau < FOUNT_DUR - 1) { fount.beat = bt; music('event', 'jet', { i: bt, x: fount.c / cols, fin: tau > FOUNT_DUR - 3.0 }); }
+  }
+  function drawFountain() {
+    const tau = skyT - fount.t0, env = fountEnv(tau);
+    if (env <= 0.001) return;
+    const sp = Math.max(2, Math.round(cols / 60)), J = clamp(Math.round(cols * 0.3 / sp) | 1, 7, 17);
+    const base = fount.r, Hmax = Math.max(6, base - hr + Math.round(hr * 0.42)), calm = reduced ? 0.55 : 1;
+    const bi = Math.floor(tau / BEAT);
+    for (let c = fount.c - (J >> 1) * sp - 2; c <= fount.c + (J >> 1) * sp + 2; c++) {
+      if (c < 0 || c >= cols) continue;
+      for (let q = 0; q < 2; q++) {
+        const r = base + q;
+        if (r < rows) put(r * cols + c, (c + q + Math.floor(skyT * 6)) % 3 ? C_TILDE : C_DASH, P_LAMP, env * (0.8 - q * 0.35), 2);
+      }
+    }
+    for (let j = 0; j < J; j++) {
+      const amp = (0.25 + 0.75 * jetAmp(j, J, tau)) * env * calm;
+      const h = Math.max(1, Math.round(Hmax * amp)), cj = fount.c + (j - (J - 1) / 2) * sp;
+      const sw = Math.sin(skyT * (reduced ? 0.6 : 1.6) + j * 0.4) * (reduced ? 0.3 : 1);
+      const hue = RB[((j * 2 + (reduced ? 0 : bi * 3)) % 12 + 12) % 12];
+      let pc = Math.round(cj);
+      for (let q = 0; q <= h; q++) {
+        const r = base - q, lift = q / h;
+        const c = Math.round(cj + sw * Math.pow(lift, 1.5) * h * 0.14), dc = c - pc;
+        pc = c;
+        if (r < 0 || c < 0 || c >= cols) continue;
+        const g = q >= h - 1 ? (hash2(j, (skyT * 12) | 0) < 0.5 ? C_STAR : C_o) : dc > 0 ? C_SL : dc < 0 ? C_BS : lift > 0.7 ? (q & 1 ? C_COLON : C_EXCL) : C_BAR;
+        put(r * cols + c, g, lift < 0.45 ? P_JET : hue, (0.6 + 0.4 * (1 - lift)) * Math.max(env, 0.3), q >= h - 1 ? 3 : 2);
+      }
+      for (let s = 0; s < 3; s++) {
+        const ph = (skyT * 0.9 + hash2(j, s)) % 1, r = base - h + Math.round(ph * h * 0.35), c = Math.round(cj + (s - 1) * (1 + ph * 2) + sw * h * 0.14);
+        if (r < 0 || r >= rows || c < 0 || c >= cols) continue;
+        put(r * cols + c, ph < 0.5 ? C_DOT : C_COMMA, hue, 0.6 * (1 - ph) * env, 2);
+      }
+      for (let q = 2; q < h * 0.4; q++) {
+        const r = base + q, c = Math.round(cj + Math.sin(skyT * 3 + q) * 0.6);
+        if (r >= rows || c < 0 || c >= cols) continue;
+        if (hash2(r * 7 + j, (skyT * 8) | 0) < 0.35) continue;
+        put(r * cols + c, q & 1 ? C_COLON : C_BAR, hue, 0.45 * (1 - q / (h * 0.4)) * env, 2);
+      }
+    }
+  }
+
+  // ---------- Shooting stars ----------
+  let shooters = [];
+  function spawnShooter(x, y) {
+    const dir = x > W * 0.5 ? -1 : 1;
+    const sp = (reduced ? 0.35 : 1) * Math.min(W, H) * (0.7 + 0.3 * Math.random());
+    const ang = 0.38 + 0.2 * Math.random();
+    shooters.push({ x, y, vx: dir * Math.cos(ang) * sp, vy: Math.sin(ang) * sp, age: 0, life: reduced ? 1.8 : 0.9 });
+    music('event', 'shoot', { x: x / W });
+  }
+  function updateShooters(dt) {
+    for (const s of shooters) { s.age += dt; s.x += s.vx * dt; s.y += s.vy * dt; }
+    shooters = shooters.filter(s => s.age < s.life);
+  }
+  function drawShooters() {
+    for (const s of shooters) {
+      const a = 1 - s.age / s.life, sp = Math.hypot(s.vx, s.vy), ux = s.vx / sp, uy = s.vy / sp;
+      const chr = ux * uy > 0 ? C_BS : C_SL;
+      for (let k = 0; k < 12; k++) {
+        const x = s.x - ux * k * cw * 0.9, y = s.y - uy * k * cw * 0.9;
+        if (y >= yH - ch) continue;
+        putXY(x, y, k === 0 ? C_STAR : k < 4 ? chr : C_DOT, k === 0 ? P_WHITE : P_STAR, a * (1.1 - k * 0.08), k === 0 ? 3 : 2);
+      }
+    }
+  }
+
+  // ---------- Fireworks (fixed pools, no per-frame allocation) ----------
+  const MAXP = 2000, MAXR = 10;
+  const fx = new Float32Array(MAXP), fy = new Float32Array(MAXP), fvx = new Float32Array(MAXP), fvy = new Float32Array(MAXP),
+        fage = new Float32Array(MAXP), flife = new Float32Array(MAXP), fp = new Uint16Array(MAXP);
+  const rx = new Float32Array(MAXR), ry = new Float32Array(MAXR), rvy = new Float32Array(MAXR), rty = new Float32Array(MAXR),
+        rg = new Float32Array(MAXR), rp = new Uint16Array(MAXR);
+  let np = 0, nr = 0;
+  const FW = [P_GOLD, RB[0], RB[4], RB[6], RB[9], RB[10], POD[1], P_WHITE];
+  function launch(x, y) {
+    if (nr >= MAXR) return;
+    const i = nr++;
+    rx[i] = x; ry[i] = yH;
+    rty[i] = Math.min(y, yH - 8 * ch);
+    rg[i] = H * (reduced ? 0.8 : 1.2);
+    rvy[i] = -Math.sqrt(2 * rg[i] * (ry[i] - rty[i]));
+    rp[i] = FW[(Math.random() * FW.length) | 0];
+    music('event', 'launch', { x: x / W, dur: Math.sqrt(2 * (ry[i] - rty[i]) / rg[i]) });
+  }
+  function burst(x, y, p) {
+    const n = reduced ? 50 + ((Math.random() * 20) | 0) : 120 + ((Math.random() * 70) | 0);
+    let p2 = p;
+    while (p2 === p) p2 = FW[(Math.random() * FW.length) | 0];
+    const sp = H * (0.11 + 0.07 * Math.random()) * (reduced ? 0.55 : 1);
+    music('event', 'burst', { x: x / W, calm: reduced });
+    for (let j = 0; j < n && np < MAXP; j++) {
+      const z = 2 * Math.random() - 1, a = Math.random() * 6.2832, rr = Math.sqrt(1 - z * z);
+      const v = sp * (0.85 + 0.15 * Math.random()), i = np++;
+      fx[i] = x; fy[i] = y; fvx[i] = rr * Math.cos(a) * v; fvy[i] = rr * Math.sin(a) * v;
+      fage[i] = 0; flife[i] = 1.3 + Math.random() * 0.9; fp[i] = j % 3 ? p : p2;
+    }
+    for (let j = 0; j < (reduced ? 12 : 30) && np < MAXP; j++) {
+      const a = Math.random() * 6.2832, v = sp * 0.3 * Math.random(), i = np++;
+      fx[i] = x; fy[i] = y; fvx[i] = Math.cos(a) * v; fvy[i] = Math.sin(a) * v - H * 0.02;
+      fage[i] = 0; flife[i] = 2.4 + Math.random(); fp[i] = P_ROCKET;
+    }
+  }
+  function updateFireworks(dt) {
+    for (let i = 0; i < nr; i++) {
+      rvy[i] += rg[i] * dt; ry[i] += rvy[i] * dt;
+      if (ry[i] <= rty[i] || rvy[i] > -H * 0.05) {
+        burst(rx[i], Math.max(ry[i], rty[i]), rp[i]);
+        nr--; rx[i] = rx[nr]; ry[i] = ry[nr]; rvy[i] = rvy[nr]; rty[i] = rty[nr]; rg[i] = rg[nr]; rp[i] = rp[nr]; i--;
+      }
+    }
+    const g = H * 0.075, drag = 1 - Math.min(0.5, 0.9 * dt);
+    for (let i = 0; i < np; i++) {
+      fage[i] += dt;
+      if (fage[i] >= flife[i]) {
+        np--; fx[i] = fx[np]; fy[i] = fy[np]; fvx[i] = fvx[np]; fvy[i] = fvy[np];
+        fage[i] = fage[np]; flife[i] = flife[np]; fp[i] = fp[np]; i--; continue;
+      }
+      fvx[i] *= drag; fvy[i] = fvy[i] * drag + g * dt;
+      fx[i] += fvx[i] * dt; fy[i] += fvy[i] * dt;
+    }
+  }
+  function drawFireworks() {
+    for (let i = 0; i < nr; i++) {
+      putXY(rx[i], ry[i], C_CARET, P_ROCKET, 1, 3);
+      for (let k = 1; k <= 4; k++) putXY(rx[i], ry[i] + k * ch, k < 3 ? C_COLON : C_DOT, P_ROCKET, 0.75 - 0.14 * k, 2);
+    }
+    for (let i = 0; i < np; i++) {
+      const a = fage[i] / flife[i];
+      if (fy[i] >= yH) continue;
+      if (a > 0.55 && hash2(i, frameNo) < 0.25) continue;
+      const chr = a < 0.25 ? C_STAR : a < 0.4 ? C_o : a < 0.7 ? C_PLUS : C_DOT;
+      putXY(fx[i], fy[i], chr, fp[i], 0.3 + 0.8 * Math.pow(1 - a, 0.7), 2);
+    }
+  }
+
+  // ---------- Drawing ----------
+  function drawCells(alpha) {
+    counts.fill(0);
+    for (let i = 0; i < nT; i++) counts[ccol[touched[i]]]++;
+    let acc = 0;
+    for (let c = 0; c < NCOLOR; c++) { const n = counts[c]; counts[c] = acc; acc += n; }
+    for (let i = 0; i < nT; i++) { const c = touched[i]; order[counts[ccol[c]]++] = c; }
+    let cur = -1, n = 0, fw = -1;
+    for (let i = 0; i < nT; i++) {
+      const c = order[i];
+      if (cchar[c] === C_SP) continue;
+      const f = ckind[c] & 2;
+      if (f !== fw) { fw = f; ctx.globalAlpha = f ? 1 : alpha; }
+      const cc = ccol[c];
+      if (cc !== cur) { cur = cc; ctx.fillStyle = COLSTR[cc]; }
+      const row = (c / cols) | 0;
+      ctx.fillText(CH[cchar[c]], (c - row * cols) * cw, row * ch);
+      n++;
+    }
+    ctx.globalAlpha = 1;
+    letters = n;
+  }
+
+  let halos = [];
+  function makeHalos() {
+    const R = Math.max(6, cw * 2.2);
+    halos = PAL.map(([r, g, b]) => {
+      const c = document.createElement('canvas');
+      c.width = c.height = Math.ceil(R * 2);
+      const x = c.getContext('2d'), gr = x.createRadialGradient(R, R, 0, R, R, R);
+      gr.addColorStop(0, 'rgba(255,255,255,0.7)');
+      gr.addColorStop(0.2, `rgba(${r | 0},${g | 0},${b | 0},0.6)`);
+      gr.addColorStop(0.55, `rgba(${r | 0},${g | 0},${b | 0},0.14)`);
+      gr.addColorStop(1, `rgba(${r | 0},${g | 0},${b | 0},0)`);
+      x.fillStyle = gr; x.fillRect(0, 0, c.width, c.height);
+      return c;
+    });
+  }
+  function drawHalos(alpha) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < nT; i++) {
+      const c = touched[i];
+      if (!(ckind[c] & 1) || cchar[c] === C_SP) continue;
+      const img = halos[(ccol[c] / LEVELS) | 0], row = (c / cols) | 0;
+      ctx.globalAlpha = clb[c] * (ckind[c] & 2 ? 1 : alpha) * 0.6;
+      ctx.drawImage(img, (c - row * cols + 0.5) * cw - img.width / 2, (row + 0.5) * ch - img.height / 2);
+    }
+    ctx.restore();
+  }
+
+  // Bloom: shrink the frame, remove the background with 'difference', blur, and add it back on top.
+  const glow = document.createElement('canvas'), gctx = glow.getContext('2d');
+  const GLOW_DIV = 5, GLOW_A = 0.8;
+  function drawGlow() {
+    const gw = Math.ceil(W / GLOW_DIV), gh = Math.ceil(H / GLOW_DIV);
+    if (glow.width !== gw || glow.height !== gh) { glow.width = gw; glow.height = gh; }
+    gctx.setTransform(1, 0, 0, 1, 0, 0);
+    gctx.globalCompositeOperation = 'copy';
+    gctx.filter = 'blur(2px)';
+    gctx.drawImage(canvas, 0, 0, gw, gh);
+    gctx.filter = 'none';
+    gctx.globalCompositeOperation = 'difference';
+    gctx.setTransform(gw / W, 0, 0, gh / H, 0, 0);
+    gctx.fillStyle = bgGrad;
+    gctx.fillRect(0, 0, W, H);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = GLOW_A;
+    ctx.drawImage(glow, 0, 0, W, H);
+    ctx.restore();
+  }
+
+  // Title typed out at the bottom in warm gold, with a Malay subtitle.
+  function titleCount(tt) {
+    if (tt < T.TITLE) return 0;
+    if (tt < TB_START) return Math.min(TITLE_A.length, 1 + Math.floor((tt - T.TITLE) / TA_STEP));
+    return TITLE_A.length + Math.min(TITLE_B.length, 1 + Math.floor((tt - TB_START) / TB_STEP));
+  }
+  function drawTitle(alpha) {
+    const n = titleCount(t);
+    if (!n || alpha < 0.01) return;
+    const full = TITLE_A + TITLE_B;
+    const tf = Math.round(clamp(Math.min(W * 0.066, H * 0.058, W * 0.9 / (full.length * 0.65)), 14, 56));
+    ctx.save();
+    ctx.font = `700 ${tf}px ${MONO}`;
+    ctx.textBaseline = 'middle';
+    const adv = ctx.measureText('M').width * 1.08;
+    const y = yH + (H - yH) * 0.6;
+    const x0 = W / 2 - adv * full.length / 2;
+    ctx.globalAlpha = alpha;
+    ctx.shadowColor = 'rgba(255,176,40,0.9)';
+    ctx.shadowBlur = tf * 0.45;
+    for (let k = 0; k < n; k++) {
+      const s = full[k];
+      if (s === ' ') continue;
+      const tk = k < TITLE_A.length ? T.TITLE + k * TA_STEP : TB_START + (k - TITLE_A.length) * TB_STEP;
+      const fresh = reduced ? 0 : clamp(1 - (t - tk) / 0.25, 0, 1);
+      ctx.fillStyle = fresh > 0 ? `rgb(255,${(214 + 41 * fresh) | 0},${(120 + 135 * fresh) | 0})` : '#ffd66e';
+      ctx.fillText(s, x0 + k * adv, y);
+    }
+    const doneT = TB_START + TITLE_B.length * TB_STEP;
+    if (!reduced && t < doneT + 1.6 && (skyT % 0.8) < 0.45) { ctx.fillStyle = '#fff0c4'; ctx.fillText('_', x0 + n * adv, y); }
+    const sub = smooth((t - doneT - 0.2) / 0.8);
+    if (sub > 0) {
+      ctx.globalAlpha = alpha * sub * 0.85;
+      ctx.shadowBlur = tf * 0.3;
+      ctx.font = `500 ${Math.round(clamp(tf * 0.4, 10, 22))}px Inter, system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#ffe3a8';
+      ctx.fillText('M A L A M   D I   K U A L A   L U M P U R', W / 2, y + tf * 0.82);
+    }
+    ctx.restore();
+  }
+
+  function render() {
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+    ctx.textBaseline = 'top';
+    ctx.font = cellFont;
+    const alpha = reduced ? 1 : Math.min(smooth(t / 0.8), 1 - smooth((t - T.FADE) / T.FADE_DUR));
+    stamp++; nT = 0; built = 0; resolving = 0;
+    drawSky();
+    drawShooters();
+    drawFireworks();
+    if (alpha > 0.001) {
+      drawSprites(0, nS);
+      drawWater();
+    }
+    if (fount) drawFountain();
+    drawCells(alpha);
+    drawHalos(alpha);
+    drawGlow();
+    // A gentle sky-wide brightening while lightning flickers.
+    const env = stormEnv();
+    if (env > 0.01) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      ctx.fillStyle = `rgba(140,150,220,${(0.11 * env).toFixed(3)})`;
+      ctx.fillRect(0, 0, W, yH);
+      ctx.restore();
+    }
+    drawTitle(alpha);
+  }
+
+  // ---------- Loop, HUD, controls ----------
+  let paused = false, last = performance.now();
+  let par = 0, parTo = 0;
+  let frames = 0, fpsT = last, fps = 0, hudT = 0, nextShoot = 7;
+  const music = (fn, ...a) => window.AsciiAudio && AsciiAudio[fn](...a);
+
+  // Hint/HUD language: ?lang= wins, then saved site preference, then browser.
+  let pref = null;
+  try { pref = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+  if (!pref) { try { pref = localStorage.getItem('lang'); } catch (e) {} }
+  if (!pref) pref = navigator.language || 'en';
+  const zh = String(pref).toLowerCase().startsWith('zh');
+  document.documentElement.lang = zh ? 'zh-Hant' : 'en';
+
+  function phaseName() {
+    let p = PHASES[0];
+    for (const q of PHASES) if (t >= q[0]) p = q;
+    return zh ? p[2] : p[1];
+  }
+  function updateHud(now) {
+    const tail = paused ? (zh ? '暫停' : 'paused') : `${fps} fps`;
+    const pct = (nSolid ? (100 * built / nSolid) : 0).toFixed(1) + '%';
+    hudEl.textContent = W < 640 ? `${phaseName()}  ${pct}  ${tail}`
+      : zh ? `階段 ${phaseName()}  完成 ${pct}  字元 ${letters.toLocaleString('en-US')}  ${tail}`
+           : `phase ${phaseName()}  built ${pct}  letters ${letters.toLocaleString('en-US')}  ${tail}`;
+    hudT = now;
+  }
+
+  function frame(now) {
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); // no jumps after a hidden tab
+    last = now;
+    if (needResize) resize();
+    if (!paused) {
+      const t1 = t, typed1 = titleCount(t);
+      skyT += dt;
+      if (!reduced) {
+        // Linger on the finished city: the scene clock waits just before the fade for one more music loop.
+        if (t < T.FADE - 0.3) linger = 0;
+        if (linger < LINGER && t + dt >= T.FADE - 0.3) { t = Math.max(t, T.FADE - 0.3); linger += dt; } else t += dt;
+        if (t >= T.END) { t = 0; music('restart'); }
+        if (t > 3 && t < T.FADE && skyT > nextShoot) {
+          spawnShooter(W * (0.15 + 0.7 * Math.random()), H * (0.04 + 0.12 * Math.random()));
+          nextShoot = skyT + 8 + Math.random() * 7;
+        }
+      }
+      frameNo++;
+      updateFireworks(dt);
+      updateShooters(dt);
+      updateFountain();
+      if (storm && skyT - storm.t0 > 3) storm = null;
+      rips = rips.filter(r => skyT - r.t0 < RIP_LIFE);
+      if (Math.abs(parTo - par) > 0.002) par += (parTo - par) * Math.min(1, dt * 1.6);
+      SH[0] = Math.round(-par * 1); SH[1] = Math.round(-par * 2); SH[2] = Math.round(-par * 3); SH[3] = Math.round(-par * 4.5);
+      render(); dirty = false; frames++;
+      soundCues(t1, t, typed1);
+    } else if (dirty) { render(); dirty = false; frames++; }
+    if (now - fpsT >= 500) { fps = Math.round(frames * 1000 / (now - fpsT)); frames = 0; fpsT = now; }
+    if (now - hudT >= 250) updateHud(now);
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- Sound cues ----------
+  const crossed = (a, b, x) => a < x && x <= b;
+  function soundCues(a, b, typed1) {
+    if (!window.AsciiAudio || b < a) return;
+    if (crossed(a, b, T.MOON)) music('event', 'moon');
+    if (crossed(a, b, T.KLT)) music('event', 'build', { dur: T.KLT_DUR });
+    if (crossed(a, b, T.MOSQUE)) music('event', 'build', { dur: T.MOSQUE_DUR, low: 1 });
+    if (crossed(a, b, T.M118)) music('event', 'build', { dur: T.M118_DUR });
+    if (crossed(a, b, T.PET)) music('event', 'build', { dur: T.PET_DUR, big: 1 });
+    if (resolving > 0) music('event', 'resolve');
+    if (crossed(a, b, T.BRIDGE + 0.3)) music('event', 'bridge');
+    if (crossed(a, b, T.LIGHTS)) music('event', 'lightsOn');
+    const n = titleCount(b);
+    if (n > typed1) music('event', 'type', { space: (TITLE_A + TITLE_B)[n - 1] === ' ' });
+    if (crossed(a, b, TB_START + TITLE_B.length * TB_STEP + 0.1)) music('event', 'titleDone');
+    if (crossed(a, b, T.FADE)) music('event', 'fade');
+  }
+
+  function togglePause() { paused = !paused; dirty = true; updateHud(performance.now()); music(paused ? 'pause' : 'resume'); }
+  function replay() {
+    t = T_START; linger = 0; np = 0; nr = 0; shooters = []; rips = []; fount = null; storm = null; waveT = m118T = mosqT = -99;
+    paused = false; dirty = true; music('resume'); music('restart');
+  }
+
+  // Hit tests in screen pixels (each landmark lives on its own parallax layer).
+  const isBuilt = t0 => reduced || (t >= t0 && t < T.FADE + T.FADE_DUR * 0.6);
+  function onPetronas(x, y) {
+    if (!isBuilt(T.PET + 1)) return false;
+    const c = x / cw - SH[2] - 0.5;
+    if (y < (topP - 1) * ch || y > yH) return false;
+    if (Math.abs(c - kL) <= hw0 + 1.5 || Math.abs(c - kR) <= hw0 + 1.5) return true;
+    return c > kL && c < kR && Math.abs(y / ch - rBr - 1) <= 3;
+  }
+  function onKLT(x, y) {
+    if (!isBuilt(T.KLT + 0.5)) return false;
+    const c = x / cw - SH[1] - 0.5, r = y / ch;
+    if (r < topK - 1 || y > yH) return false;
+    const inPod = r >= podHi - 1 && r <= podLo + 1;
+    return Math.abs(c - kcK) <= (inPod ? podW + 1.5 : 2.5);
+  }
+  function onMosque(x, y) {
+    if (!isBuilt(T.MOSQUE + 0.5)) return false;
+    const c = x / cw - SH[1] - 0.5, r = y / ch, dc = Math.abs(c - kcQ);
+    if (y > yH) return false;
+    if (dc <= bwQ + 1 && r >= topQ - 1) return true;
+    return Math.abs(dc - minQ) <= 1.5 && r >= mtopQ - 2;
+  }
+  function onM118(x, y) {
+    if (!isBuilt(T.M118 + 0.5)) return false;
+    const c = x / cw - SH[0] - 0.5;
+    return y >= (topM - 1) * ch && y <= yH && Math.abs(c - kcM) <= hwM + 1.5;
+  }
+  function ripple(x, y, amp) {
+    if (rips.length > 10) rips.shift();
+    rips.push({ c: x / cw, r: y / ch, t0: skyT, amp });
+  }
+  function tapAt(x, y) {
+    if (onPetronas(x, y)) {
+      waveT = skyT;
+      music('event', 'wave', { x: x / W });
+    } else if (onKLT(x, y)) {
+      podPrev = podMode; podMode = (podMode + 1) % (POD.length + 1); podSwitch = skyT;
+      music('event', 'pod', { mode: podMode, x: x / W });
+    } else if (onMosque(x, y)) {
+      mosqT = skyT;
+      music('event', 'mosque', { x: x / W });
+    } else if (onM118(x, y)) {
+      m118T = skyT;
+      music('event', 'spire', { x: x / W });
+    } else if (y > yH + ch) {
+      ripple(x, y, 1.4);
+      startFountain(x, y);
+    } else if (y < H * 0.2) strike(x);
+    else launch(x, y);
+    dirty = true;
+  }
+
+  addEventListener('resize', () => { needResize = true; });
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return; // leave Cmd/Ctrl+R alone
+    if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); togglePause(); }
+    else if (e.key === 'r' || e.key === 'R') replay();
+  });
+  // A press only counts as a tap if it moved less than 8 px; moving (or dragging a finger)
+  // shifts the parallax and trails soft ripples across the lake.
+  let downX = 0, downY = 0, pressed = false, dragged = false, tapTimer = 0, tapResumed = false, lastRip = 0, ripX = -1e9, ripY = 0;
+  const setPar = e => { if (!reduced) parTo = clamp(e.clientX / W * 2 - 1, -1, 1); };
+  const moveRipple = e => {
+    if (e.clientY <= yH + ch || paused) return;
+    if (skyT - lastRip < 0.15 || Math.hypot(e.clientX - ripX, e.clientY - ripY) < cw * 3) return;
+    lastRip = skyT; ripX = e.clientX; ripY = e.clientY;
+    ripple(e.clientX, e.clientY, 0.6);
+  };
+  canvas.addEventListener('pointerdown', e => {
+    pressed = true; dragged = false; downX = e.clientX; downY = e.clientY;
+    if (e.pointerType !== 'mouse') setPar(e);
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (e.pointerType === 'mouse' || pressed) { setPar(e); moveRipple(e); }
+    if (pressed && Math.hypot(e.clientX - downX, e.clientY - downY) >= 8) dragged = true;
+  });
+  const ptrOff = () => { pressed = false; parTo = 0; };
+  canvas.addEventListener('pointerleave', ptrOff);
+  canvas.addEventListener('pointercancel', ptrOff);
+  canvas.addEventListener('pointerup', e => {
+    const wasTap = pressed && !dragged;
+    pressed = false;
+    if (e.pointerType !== 'mouse') parTo = 0;
+    if (e.button > 0 || !wasTap) return;
+    if (tapTimer) { clearTimeout(tapTimer); tapTimer = 0; if (!tapResumed) togglePause(); return; }
+    tapTimer = setTimeout(() => { tapTimer = 0; }, 280);
+    tapResumed = paused;
+    if (paused) { togglePause(); return; }   // a tap on the paused scene just resumes it
+    tapAt(e.clientX, e.clientY);
+  });
+
+  // Touch screens have no keyboard, and the full hint would not fit on a phone.
+  const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  hintEl.textContent = touch ? (zh ? '點雙子塔光波 · 點吉隆坡塔變色 · 點湖面噴泉 · 點天空煙火 · 雙擊暫停' : 'tap towers: light wave · KL Tower: colours · lake: fountain')
+                             : (zh ? '點雙子塔看光波 · 點吉隆坡塔換色 · 點清真寺或尖塔點燈 · 點湖面音樂噴泉 · 點天空煙火/高空閃電 · 雙擊/空白鍵 暫停 · R 重播 · M 音樂'
+                                   : 'click Twin Towers: light wave · KL Tower: colours · mosque, spire · lake: fountain · sky: fireworks / lightning · double-click / Space pause · R replay · M music');
+
+  // Score: an original warm tropical-night piece in D minor at 100 bpm, 10 bars = one 24 s scene loop
+  // (restarted every loop). A gong marks every other bar; gamelan-like metallophones play an
+  // interlocking ostinato on the chord tones; a kompang-like hand-drum pattern and a soft bass carry
+  // bars 2-8 (Bb C Dm Gm A7 Dm Bb Dm, an asli-flavoured turn), a breathy flute-like lead with grace
+  // notes sings the melody, crickets chirp now and then, and bar 9 thins out for the fade.
+  if (window.AsciiAudio) AsciiAudio.init({
+    bpm: 100, master: 0.55, reverb: 0.3, reverbTime: 3.2,
+    build(a) {
+      const N = AsciiAudio.notes, TR = AsciiAudio.transpose, LOOP = 40;
+      const DM = ['D4', 'F4', 'A4'], BB = ['D4', 'F4', 'Bb4'];
+      const BARS = [
+        ['D2', DM], ['D2', DM], ['Bb1', BB], ['C2', ['E4', 'G4', 'C5']], ['D2', DM],
+        ['G2', ['D4', 'G4', 'Bb4']], ['A1', ['C#4', 'E4', 'G4', 'A4']], ['D2', DM], ['Bb1', BB], ['D2', DM]
+      ];
+      const PAT = [0, 1, 2, 1, 2, 0, 1, 2];
+      const KOMPANG = 'T..pP.T.T.pP.p.P';
+      const saron = (tt, note, vel, pan) => {
+        a.bell(tt, note, 0.9, { vel, pan, wet: 0.35 });
+        a.musicBox(tt, note, 0.45, { vel: vel * 0.5, pan, wet: 0.3 });
+      };
+      const tung = (tt, v) => {
+        a.noise(tt, { dur: 0.2, filter: 'bandpass', freq: 230, freqEnd: 150, q: 4, attack: 0.003, vel: v, wet: 0.15 });
+        a.kick(tt, v * 0.3);
+      };
+      const pak = (tt, v) => a.noise(tt, { dur: 0.07, filter: 'bandpass', freq: 1900, q: 1.4, attack: 0.002, vel: v, pan: 0.2, wet: 0.2 });
+      a.every(0.25, (tt, s) => {
+        const beat = (s * 0.25) % LOOP, bar = Math.floor(beat / 4), q = beat % 4, st = Math.round(q * 4);
+        const [root, vo] = BARS[bar];
+        const groove = bar >= 2 && bar <= 8;
+        if (q === 0) a.pad(tt, vo, a.beats(bar === 9 ? 5 : 4), { vel: groove ? 0.16 : 0.24, cutoff: 1000, attack: 0.5, release: 1.5 });
+        // Gong on every other downbeat.
+        if (q === 0 && bar % 2 === 0) {
+          a.bell(tt, 'D3', 5, { vel: 0.2, wet: 0.55 });
+          a.bass(tt, 'D2', a.beats(3), { vel: 0.26 });
+        }
+        // Metallophones: eighth-note ostinato, plus an interlocking upper voice from bar 4.
+        const ct = vo.map(n => TR(n, 12));
+        if (q % 0.5 === 0 && bar < 9) saron(tt, ct[PAT[st >> 1] % ct.length], bar < 2 ? 0.1 : 0.12, -0.35);
+        if (st % 2 === 1 && bar >= 4 && bar <= 8) saron(tt, TR(ct[(PAT[st >> 1] + 1) % ct.length], 12), 0.05, 0.4);
+        if (bar === 9 && q === 0) ct.forEach((n, i) => saron(tt + i * 0.2, n, 0.1, -0.3 + i * 0.3));
+        if (groove) {
+          if (q === 0) a.bass(tt, root, a.beats(0.9), { vel: 0.5 });
+          if (q === 1.5) a.bass(tt, root, a.beats(0.4), { vel: 0.36 });
+          if (q === 2) a.bass(tt, TR(root, 7), a.beats(0.8), { vel: 0.42 });
+          if (q === 3.5) a.bass(tt, TR(root, 12), a.beats(0.35), { vel: 0.3 });
+          const k = KOMPANG[st];
+          if (k === 'T') tung(tt, 0.5);
+          else if (k === 'P') pak(tt, 0.3);
+          else if (k === 'p') pak(tt, 0.14);
+          if (bar >= 4 && q % 0.5 === 0) a.shaker(tt, 0.06);
+        }
+        // Crickets now and then.
+        if (Math.random() < 0.05) {
+          const pn = Math.random() * 1.4 - 0.7;
+          for (let i = 0; i < 3; i++) a.noise(tt + i * 0.045, { dur: 0.03, filter: 'bandpass', freq: 4800, q: 24, attack: 0.004, vel: 0.12, pan: pn, wet: 0.3 });
+        }
+      });
+      // Flute: a breathy triangle lead with a quick upper grace note before longer notes.
+      const flute = (tt, note, sec, beats, vel) => {
+        let t1 = tt;
+        if (beats >= 1) { a.lead(tt, TR(note, 2), 0.07, { vel: vel * 0.5, cutoff: 2600, wet: 0.35 }); t1 = tt + 0.07; }
+        a.lead(t1, note, sec * 0.92, { vel, cutoff: 2600, pan: -0.1, wet: 0.42 });
+        a.noise(t1, { dur: Math.min(0.35, sec), filter: 'bandpass', freq: AsciiAudio.freq(note) * 2, q: 6, attack: 0.04, vel: vel * 0.12, wet: 0.3 });
+      };
+      a.part(N('r:2 A4:1 D5:1 | F5:2 E5:.5 D5 r:1'), (tt, e) => flute(tt, e.note, e.sec, e.beats, 0.3), { length: LOOP, offset: 0 });
+      a.part(N('F5:1 D5:.5 F5 G5:1 F5 | E5:1.5 G5:.5 E5:1 C5 | D5:.5 F5 A5:1.5 G5:.5 F5:1 | G5:1 Bb5 A5:.5 G5 D5:1 | E5:1 C#5:.5 E5 G5:1 F5:.5 E5 | D5:3 r:1'),
+        (tt, e) => flute(tt, e.note, e.sec, e.beats, 0.44), { length: LOOP, offset: 8 });
+      a.part(N('F5:.5 G5 A5:1 C6:1 Bb5:.5 A5 | A5:1 G5:.5 F5 D5:2'), (tt, e) => {
+        flute(tt, e.note, e.sec, e.beats, 0.4);
+        a.celesta(tt, TR(e.note, 12), e.sec, { vel: 0.08, pan: 0.2, wet: 0.45 });
+      }, { length: LOOP, offset: 32 });
+
+      // Sound effects in sync with the picture.
+      const SP = ['D6', 'F6', 'G6', 'A6', 'C7', 'D7'];
+      const pan = x => ((x == null ? 0.5 : x) * 2 - 1) * 0.8;
+      a.on('moon', (a, d, t) => a.chime(t, 'A5', 3, { vel: 0.14 }));
+      a.on('build', (a, d, t) => a.sweep(t, d.dur || 2, { from: d.low ? 90 : 140, to: d.big ? 2200 : d.low ? 800 : 1500, q: 2.2, attack: (d.dur || 2) * 0.85, vel: d.big ? 0.3 : 0.24, bus: 'sfx', wet: 0.3 }), { gap: 0.5 });
+      a.on('resolve', (a, d, t) => a.tick(t, { vel: 0.05 }), { gap: 0.13 });
+      a.on('bridge', (a, d, t) => { a.bell(t, 'A5', 1.4, { vel: 0.12, bus: 'sfx', pan: -0.2, wet: 0.5 }); a.bell(t + 0.18, 'D6', 1.6, { vel: 0.12, bus: 'sfx', pan: 0.2, wet: 0.5 }); });
+      a.on('lightsOn', (a, d, t) => ['D5', 'F5', 'G5', 'A5', 'C6', 'D6'].forEach((n, i) => a.bell(t + i * 0.14, n, 1.4, { vel: 0.1, bus: 'sfx', pan: -0.5 + i * 0.2, wet: 0.5 })));
+      a.on('type', (a, d, t) => { if (!d.space) a.tick(t, { vel: 0.16 }); }, { gap: 0.05 });
+      a.on('titleDone', (a, d, t) => a.chime(t, 'D6', 3, { vel: 0.22 }));
+      a.on('fade', (a, d, t) => a.sweep(t, T.FADE_DUR, { from: 3000, to: 300, q: 1.2, attack: 0.8, vel: 0.12, bus: 'sfx', wet: 0.6 }));
+      // Taps.
+      a.on('wave', (a, d, t) => {
+        const p = pan(d.x);
+        ['D5', 'F5', 'G5', 'A5', 'C6', 'D6', 'F6', 'A6'].forEach((n, i) => a.bell(t + i * (WAVE / 9), n, 1.2, { vel: 0.11, bus: 'sfx', pan: p, wet: 0.5 }));
+        a.sweep(t, WAVE, { from: 400, to: 4000, q: 2, attack: WAVE * 0.9, vel: 0.1, bus: 'sfx', wet: 0.4 });
+        [0, 0.3, 0.6].forEach(k => a.ding(t + WAVE * 0.41 + k, 'A6', { vel: 0.07, pan: p }));
+      }, { gap: 0.3 });
+      a.on('pod', (a, d, t) => {
+        const p = pan(d.x), NOTE = ['D6', 'F6', 'G6', 'A6', 'C7', 'D7', 'F7'];
+        a.ding(t, NOTE[d.mode % NOTE.length], { vel: 0.14, pan: p });
+        a.whoosh(t, { dur: 0.5, freq: 900, freqEnd: 3200, vel: 0.06, pan: p });
+        if (d.mode === POD.length) a.sparkle(t + 0.1, { count: 6, vel: 0.12, notes: SP });
+      }, { gap: 0.2 });
+      a.on('spire', (a, d, t) => { a.sparkle(t, { count: 7, vel: 0.12, notes: SP, spread: 0.12 }); a.bell(t + 0.9, 'D7', 1.6, { vel: 0.08, bus: 'sfx', pan: pan(d.x) }); }, { gap: 0.3 });
+      a.on('mosque', (a, d, t) => {
+        a.pad(t, ['D4', 'A4', 'D5'], 3, { vel: 0.18, cutoff: 1400, attack: 0.6, release: 1.6, bus: 'sfx' });
+        a.chime(t + 0.2, 'A5', 3, { vel: 0.16 });
+      }, { gap: 0.8 });
+      a.on('fountain', (a, d, t) => a.whoosh(t, { dur: 1.2, freq: 300, freqEnd: 2500, vel: 0.12, pan: pan(d.x) }), { gap: 0.5 });
+      a.on('jet', (a, d, t) => {
+        const p = pan(d.x);
+        a.noise(t, { dur: 0.5, filter: 'bandpass', freq: 1400, freqEnd: 3800, q: 0.9, attack: 0.04, vel: d.fin ? 0.22 : 0.14, pan: p, bus: 'sfx', wet: 0.3 });
+        a.ding(t, SP[d.i % SP.length], { vel: 0.06, pan: p, dur: 0.8 });
+      }, { gap: 0.25 });
+      a.on('thunder', (a, d, t) => {
+        const p = pan(d.x), v = d.calm ? 0.5 : 1;
+        if (!d.calm) a.noise(t, { dur: 0.15, filter: 'highpass', freq: 2500, attack: 0.002, vel: 0.12, pan: p, bus: 'sfx', wet: 0.4 });
+        a.noise(t + 0.5, { dur: 2.8, filter: 'lowpass', freq: 260, freqEnd: 60, attack: 0.25, vel: 0.5 * v, pan: p, bus: 'sfx', wet: 0.5 });
+        a.boom(t + 0.55, { vel: 0.16 * v, pan: p });
+      }, { gap: 0.8 });
+      a.on('shoot', (a, d, t) => { a.whoosh(t, { dur: 0.6, freq: 2000, freqEnd: 6500, q: 1.4, vel: 0.06, pan: pan(d.x), wet: 0.5 }); a.ding(t + 0.25, 'D7', { vel: 0.04, pan: pan(d.x) }); }, { gap: 0.3 });
+      a.on('launch', (a, d, t) => {
+        const dur = Math.max(0.6, Math.min(2, d.dur || 1.4));
+        a.noise(t, { dur, filter: 'bandpass', freq: 700, freqEnd: 2600, q: 16, attack: dur * 0.85, vel: 0.45, pan: pan(d.x), bus: 'sfx', wet: 0.25 });
+      }, { gap: 0.25 });
+      a.on('burst', (a, d, t) => {
+        const p = pan(d.x);
+        a.boom(t, { vel: d.calm ? 0.18 : 0.32, pan: p });
+        for (let i = 0; i < (d.calm ? 4 : 10); i++) a.noise(t + 0.25 + Math.random() * 0.9, { dur: 0.02 + Math.random() * 0.03, filter: 'highpass',
+          freq: 3000 + Math.random() * 3000, vel: 0.1 + Math.random() * 0.1, pan: p + (Math.random() - 0.5) * 0.4, bus: 'sfx', wet: 0.2 });
+      }, { gap: 0.2 });
+    }
+  });
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
